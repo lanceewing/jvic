@@ -575,7 +575,7 @@ public class Vic extends MemoryMappedChip {
    * between fetching the screen code for a character from the video matrix and
    * fetching the bitmap of the character line from character memory on alternate
    * cycles. Four pixels are output every cycle. Note that the VIC starts fetching
-   * the data for character it needs to render during the 2 cyles prior to the dots
+   * the data for character it needs to render during the 2 cycles prior to the dots
    * being sent to the TV. So the border column immediately preceding the left 
    * edge of the video matrix area is when it is fetching the data required for 
    * the first column of the video matrix area.
@@ -587,9 +587,7 @@ public class Vic extends MemoryMappedChip {
     int charDataOffset = 0;
     int tempColour = 0;
     
-    // TODO: This needs to change so that it renders one 4 pixels every cycle rather than 8 every 2 cycles.
-    // TODO: And it needs to render pixels 8 in arrears.
-    // TODO: It also needs to handle waiting for the next frame.
+    // TODO: This needs to change so that it renders 4 pixels every cycle rather than 8 every 2 cycles.
     
     // Some points to consider:
     //
@@ -624,7 +622,7 @@ public class Vic extends MemoryMappedChip {
     // every frame, 312 is never enabled.
     
 
-    // TODO: Verify that this is correct, for both PAL and NTSC.
+    // TODO: Verify that this is correct, for both PAL and NTSC. It almost certainly isn't.
     if (verticalCounter > 9) {
       
     // Check that we are inside the text screen.
