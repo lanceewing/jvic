@@ -62,3 +62,13 @@ build/
 
 ## OS Specific
 .DS_Store
+
+# Tapes, Snaps, Carts, and Prgs
+*.crt
+*.CRT
+*.prg
+*.PRG
+*.V20
+*.v20
+*.pcv
+*.PCV
