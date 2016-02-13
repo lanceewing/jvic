@@ -40,7 +40,7 @@ public class MachineScreen implements Screen {
     this.machine = new Machine();
     
     batch = new SpriteBatch();
-    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getVisibleScreenHeight(), Pixmap.Format.RGBA8888);
+    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
     screenTexture = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
     
     camera = new OrthographicCamera();
@@ -67,8 +67,6 @@ public class MachineScreen implements Screen {
   }
 
   private void draw() {
-    //camera.update();
-    
     batch.setProjectionMatrix(camera.combined);
     
     Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -78,17 +76,18 @@ public class MachineScreen implements Screen {
     // will suffice for this initial conversion of JVic. I'll spend more time profiling 
     // other options in the future.
     
-    BufferUtils.copy(machine.getFramePixels(), 0, screenPixmap.getPixels(), 77248);
+    BufferUtils.copy(machine.getFramePixels(), 0, screenPixmap.getPixels(), 88608);
     
     screenTexture.draw(screenPixmap, 0, 0);
-
+    
     batch.begin();
     batch.draw(screenTexture, 
         0,
         0,
         machine.getScreenWidth(), machine.getScreenHeight(), 
         machine.getScreenLeft(), machine.getScreenTop(), 
-        machine.getScreenWidth() >> 1, machine.getScreenHeight(), 
+        machine.getMachineType().getVisibleScreenWidth(), 
+        machine.getMachineType().getVisibleScreenHeight(), 
         false, false);    
     batch.end();
   }
