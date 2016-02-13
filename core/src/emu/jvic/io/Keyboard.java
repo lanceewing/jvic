@@ -150,6 +150,8 @@ public class Keyboard {
     }
   }
   
+  // TODO: Needs to change to keep track keys that are down too quickly, such as on Android. Store a timestamp for key presses. 50 ms.
+  
   /**
    * Performs a row scan of the keyboard.
    *
