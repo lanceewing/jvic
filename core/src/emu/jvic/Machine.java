@@ -132,7 +132,7 @@ public class Machine extends InputAdapter {
     memory = new Memory(cpu, vic, via1, via2, ramExpansion, snapshot);
     
     // Set up the screen dimensions based on the VIC chip settings.
-    screenWidth = (machineType.getVisibleScreenWidth() << 1);
+    screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
     screenHeight = machineType.getVisibleScreenHeight();
     screenLeft = machineType.getHorizontalOffset();
     screenRight = screenLeft + machineType.getVisibleScreenWidth();
