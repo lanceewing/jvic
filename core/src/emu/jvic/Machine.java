@@ -1,8 +1,6 @@
 package emu.jvic;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
@@ -20,7 +18,7 @@ import emu.jvic.video.Vic;
  * 
  * @author Lance Ewing
  */
-public class Machine extends InputAdapter {
+public class Machine {
 
   // Machine components.
   private Memory memory;
@@ -34,7 +32,7 @@ public class Machine extends InputAdapter {
   private Joystick joystick;
 
   private boolean paused;
-
+  
   private MachineType machineType;
   
   // These control what part of the generate pixel data is rendered to the screen. 
@@ -59,6 +57,7 @@ public class Machine extends InputAdapter {
     //init("tapes/16k/BONGO.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/PERILS.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/SKRAMBLE.PRG", "PRG", MachineType.PAL);
+    //init("tapes/screentest.prg", "PRG", MachineType.PAL);
     
     init();
   }
@@ -131,16 +130,13 @@ public class Machine extends InputAdapter {
     // the VIA chips, and the creation of RAM chips and ROM chips.
     memory = new Memory(cpu, vic, via1, via2, ramExpansion, snapshot);
     
-    // Set up the screen dimensions based on the VIC chip settings.
+    // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
     screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
     screenHeight = machineType.getVisibleScreenHeight();
     screenLeft = machineType.getHorizontalOffset();
     screenRight = screenLeft + machineType.getVisibleScreenWidth();
     screenTop = machineType.getVerticalOffset();
     screenBottom = screenTop + machineType.getVisibleScreenHeight();
-
-    // Register this Machine instance as the input processor for keys, etc.
-    Gdx.input.setInputProcessor(this);
 
     // Check if the resource parameters have been set.
     if ((programData != null) && (programData.length > 0)) {
@@ -264,29 +260,21 @@ public class Machine extends InputAdapter {
     return machineType;
   }
   
-  /** 
-   * Called when a key was pressed
+  /**
+   * Gets the Keyboard of this Machine.
    * 
-   * @param keycode one of the constants in {@link Input.Keys}
-   * 
-   * @return whether the input was processed 
+   * @return The Keyboard of this Machine.
    */
-  public boolean keyDown (int keycode) {
-    keyboard.keyPressed(keycode);
-    joystick.keyPressed(keycode);
-    return true;
+  public Keyboard getKeyboard() {
+    return keyboard;
   }
-
-  /** 
-   * Called when a key was released
+  
+  /**
+   * Gets the Joystick of this Machine.
    * 
-   * @param keycode one of the constants in {@link Input.Keys}
-   * 
-   * @return whether the input was processed 
+   * @return The Joystick of this Machine.
    */
-  public boolean keyUp (int keycode) {
-    keyboard.keyReleased(keycode);
-    joystick.keyReleased(keycode);
-    return true;
+  public Joystick getJoystick() {
+    return joystick;
   }
 }
