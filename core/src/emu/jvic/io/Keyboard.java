@@ -17,7 +17,7 @@ public class Keyboard {
    */
   private static int keyConvMapArr[][] = {
     {Keys.BACKSPACE, 1, 128},
-    {/* TODO: DOLLAR. Where is it in libGDX? */ 0, 1, 64},
+    {Keys.POUND, 1, 64},
     {Keys.PLUS, 1, 32},
     {Keys.NUM_9, 1, 16},
     {Keys.NUM_7, 1, 8},
