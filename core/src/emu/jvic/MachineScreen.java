@@ -50,9 +50,6 @@ public class MachineScreen extends InputAdapter implements Screen {
     screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
     screenTexture = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
     
-    // TODO: Support three different keyboard images. The 10x7, the 12x6, and the full keyboard.
-    // TODO: Rework 12x6 image to be 1920 pixels wide, which will be 160x160 squares.
-    // NOTE: 10x7 keyboard has 108x108 squares. Full keyboard has 101 pixel height rows.
     this.keyboardType = KeyboardType.PORTRAIT_10x7;
     
     camera = new OrthographicCamera();
