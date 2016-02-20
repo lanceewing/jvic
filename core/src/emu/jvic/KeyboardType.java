@@ -23,7 +23,8 @@ public enum KeyboardType {
           { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.SLASH, Keys.ENTER, Keys.ENTER },
           { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, -4, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, -5, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT } 
         },
-        "png/keyboard_landscape.png"
+        "png/keyboard_landscape.png",
+        0.5f
       ),
   PORTRAIT_12x6(
         new int[][] {
@@ -34,7 +35,8 @@ public enum KeyboardType {
           { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.SLASH, Keys.ENTER, Keys.ENTER },
           { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, -4, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, -5, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT } 
         },
-        "png/keyboard_portrait_12x6.png"
+        "png/keyboard_portrait_12x6.png",
+        1.0f
       ),
   PORTRAIT_10x7(
         new int[][] {
@@ -46,7 +48,8 @@ public enum KeyboardType {
           { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.ENTER },
           { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT }
         },
-        "png/keyboard_portrait_10x7.png"
+        "png/keyboard_portrait_10x7.png",
+        1.0f
       );
   
   /**
@@ -75,33 +78,42 @@ public enum KeyboardType {
   private Viewport viewport;
   
   /**
+   * The opacity of this KeyboardType.
+   */
+  private float opacity;
+  
+  /**
    * Constructor for KeyboardType.
    * 
    * @param keyMap The position of each key within this KeyboardType.
    * @param keyboardImage The path to the keyboard image file.
+   * @param opacity The opacity of this KeyboardType.
    */
-  KeyboardType(int[][] keyMap, String keyboardImage) {
+  KeyboardType(int[][] keyMap, String keyboardImage, float opacity) {
     this.keyMap = keyMap;
     this.texture = new Texture(keyboardImage);
     this.camera = new OrthographicCamera();
     this.viewport = new ExtendViewport(texture.getWidth(), texture.getHeight(), camera);
     this.keySize = (this.texture.getHeight() / this.keyMap.length);
+    this.opacity = opacity;
   }
 
   /**
-   * @return The size of the keys in this KeyboardType.
+   * Gets the keycode that is mapped to the given X and Y world coordinates.
+   * 
+   * @param x The X position within this KeyboardType's world coordinates.
+   * @param y The Y position within this KeyboardType's world coordinates.
+   * 
+   * @return The keycode that is mapped to the given X and Y world coordinates.
    */
-  public int getKeySize() {
-    return keySize;
+  public Integer getKeyCode(float x, float y) {
+    int keyColumn = (int)(x / keySize);
+    int keyRow = (int)((texture.getHeight() - y) / keySize);
+    if (keyColumn >= texture.getWidth()) keyColumn = texture.getWidth() - 1;
+    int keyCode = keyMap[keyRow][keyColumn];
+    return keyCode;
   }
-
-  /**
-   * @return The position of each key within this KeyboardType.
-   */
-  public int[][] getKeyMap() {
-    return keyMap;
-  }
-
+  
   /**
    * @return The Texture holding the keyboard image for this KeyboardType.
    */
@@ -121,5 +133,12 @@ public enum KeyboardType {
    */
   public Viewport getViewport() {
     return viewport;
+  }
+
+  /**
+   * @return The opacity of this KeyboardType.
+   */
+  public float getOpacity() {
+    return opacity;
   }
 }

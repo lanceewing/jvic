@@ -115,7 +115,7 @@ public class MachineScreen extends InputAdapter implements Screen {
       batch.enableBlending();
       batch.begin();
       c = batch.getColor();
-      batch.setColor(c.r, c.g, c.b, 1.0f);
+      batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
       batch.draw(keyboardType.getTexture(), 0, 0);
       batch.end();
     }
@@ -130,6 +130,9 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera.position.x = machine.getScreenWidth() /2;
     camera.position.y = machine.getScreenHeight() - viewport.getWorldHeight()/2;
     camera.update();
+    
+    // Switch keyboard layout based on the orientation.
+    keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
     
     keyboardType.getViewport().update(width, height, true);
   }
@@ -199,12 +202,10 @@ public class MachineScreen extends InputAdapter implements Screen {
     if (showInput) {
       // If the tap is within the portrait keyboard...
       if (touchXY.y < keyboardType.getTexture().getHeight()) {
-        // In portrait mode, the keyboard is a grid of squares.
-        int keyX = (int)(touchXY.x / keyboardType.getKeySize());
-        int keyY = (int)((keyboardType.getTexture().getHeight() - touchXY.y) / keyboardType.getKeySize());
-        if (keyX >= keyboardType.getTexture().getWidth()) keyX = keyboardType.getTexture().getWidth() - 1;
-        int keyCode = keyboardType.getKeyMap()[keyY][keyX];
-        machine.getKeyboard().keyPressed(keyCode);
+        Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
+        if (keycode != null) {
+          machine.getKeyboard().keyPressed(keycode);
+        }
       }
     }
     
@@ -233,12 +234,10 @@ public class MachineScreen extends InputAdapter implements Screen {
         showInput = false;
         
       } else {
-        // In portrait mode, the keyboard is a grid of squares.
-        int keyX = (int)(touchXY.x / keyboardType.getKeySize());
-        int keyY = (int)((keyboardType.getTexture().getHeight() - touchXY.y) / keyboardType.getKeySize());
-        if (keyX >= keyboardType.getTexture().getWidth()) keyX = keyboardType.getTexture().getWidth() - 1;
-        int keyCode = keyboardType.getKeyMap()[keyY][keyX];
-        machine.getKeyboard().keyReleased(keyCode);
+        Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
+        if (keycode != null) {
+          machine.getKeyboard().keyReleased(keycode);
+        }
       }
     }
     
