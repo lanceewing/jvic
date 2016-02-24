@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  */
 public enum KeyboardType {
 
+  // TODO: Make these constants and handle them properly within the emulator.
   // RESTORE: -5 
   // RUN STOP: -4
   // SHIFTLOCK: -3
@@ -53,7 +54,9 @@ public enum KeyboardType {
         },
         "png/keyboard_portrait_10x7.png",
         1.0f
-      );
+      ),
+  MOBILE_ON_SCREEN,
+  OFF;
   
   /**
    * The size of the keys in this KeyboardType.
@@ -102,6 +105,12 @@ public enum KeyboardType {
   }
 
   /**
+   * Variant of the Constructor that doesn't support any key mapping, or visual appearance
+   */
+  KeyboardType() {
+  }
+  
+  /**
    * Gets the keycode that is mapped to the given X and Y world coordinates. Returns null
    * if there is no matching key at the given position.
    * 
@@ -137,6 +146,9 @@ public enum KeyboardType {
       case PORTRAIT_10x7:
         keyCode = keyMap[keyRow][(int)(x / keySize)];
         break;
+        
+      default:
+        break;
     }
     
     return keyCode;
@@ -168,5 +180,12 @@ public enum KeyboardType {
    */
   public float getOpacity() {
     return opacity;
+  }
+  
+  /**
+   * @return true if this KeyboardType is rendered by the JVic render code; otherwise false.
+   */
+  public boolean isRendered() {
+    return (texture != null);
   }
 }
