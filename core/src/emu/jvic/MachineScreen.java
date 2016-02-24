@@ -1,5 +1,6 @@
 package emu.jvic;
 
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Buttons;
@@ -14,6 +15,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -36,8 +38,6 @@ public class MachineScreen extends InputAdapter implements Screen {
   private Viewport viewport;
   private Camera camera;
   
-  private boolean showInput;
-  
   private KeyboardType keyboardType;
   
   /**
@@ -50,7 +50,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
     screenTexture = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
     
-    this.keyboardType = KeyboardType.PORTRAIT_10x7;
+    this.keyboardType = KeyboardType.OFF;
     
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
@@ -64,13 +64,81 @@ public class MachineScreen extends InputAdapter implements Screen {
     // TODO Decide if this needs to resume, or whether that happens automatically.
   }
 
+  private long lastLogTime;
+  private long avgRenderTime;
+  private long avgUpdateTime;
+  private long avgDrawTime;
+  private long renderCount;
+  
+  // Linux:
+  //  RenderTime: avgUpdateTime: 1981313 avgDrawTime: 416109 avgRenderTime: 2346450 ns renderCount: 601 delta: 0.016525 fps: 60
+  //  RenderTime: avgUpdateTime: 1919198 avgDrawTime: 377756 avgRenderTime: 2239919 ns renderCount: 1201 delta: 0.016679 fps: 60
+  //  RenderTime: avgUpdateTime: 2091536 avgDrawTime: 406210 avgRenderTime: 2435471 ns renderCount: 1801 delta: 0.016684 fps: 60
+  //  RenderTime: avgUpdateTime: 2197919 avgDrawTime: 418328 avgRenderTime: 2552785 ns renderCount: 2401 delta: 0.016760 fps: 60
+  //  RenderTime: avgUpdateTime: 2081874 avgDrawTime: 395140 avgRenderTime: 2413089 ns renderCount: 3000 delta: 0.016661 fps: 60
+  //  RenderTime: avgUpdateTime: 1954413 avgDrawTime: 368573 avgRenderTime: 2259497 ns renderCount: 3600 delta: 0.016667 fps: 60
+  //  RenderTime: avgUpdateTime: 1899786 avgDrawTime: 351931 avgRenderTime: 2189077 ns renderCount: 4200 delta: 0.016406 fps: 60
+  //  RenderTime: avgUpdateTime: 1978363 avgDrawTime: 356863 avgRenderTime: 2273328 ns renderCount: 4800 delta: 0.016696 fps: 60
+  
+  // Android - Oneplus One
+  //  02-20 23:55:09.825: I/RenderTime(32375): avgUpdateTime: 5430502 avgDrawTime: 3003958 avgRenderTime: 8100821 ns renderCount: 630 delta: 0.015177 fps: 61
+  //  02-20 23:55:19.827: I/RenderTime(32375): avgUpdateTime: 6449893 avgDrawTime: 3034441 avgRenderTime: 9028275 ns renderCount: 1251 delta: 0.015992 fps: 63
+  //  02-20 23:55:29.837: I/RenderTime(32375): avgUpdateTime: 7045818 avgDrawTime: 2974562 avgRenderTime: 9518082 ns renderCount: 1874 delta: 0.015699 fps: 64
+  //  02-20 23:55:39.876: I/RenderTime(32375): avgUpdateTime: 7227487 avgDrawTime: 3034167 avgRenderTime: 9736194 ns renderCount: 2498 delta: 0.018163 fps: 63
+  //  02-20 23:55:49.879: I/RenderTime(32375): avgUpdateTime: 7347156 avgDrawTime: 3057218 avgRenderTime: 9861786 ns renderCount: 3125 delta: 0.015083 fps: 63
+  //  02-20 23:55:59.888: I/RenderTime(32375): avgUpdateTime: 7367018 avgDrawTime: 3105098 avgRenderTime: 9917184 ns renderCount: 3752 delta: 0.015854 fps: 64
+  //  02-20 23:56:09.903: I/RenderTime(32375): avgUpdateTime: 7301162 avgDrawTime: 3132884 avgRenderTime: 9868789 ns renderCount: 4378 delta: 0.015967 fps: 65
+  //  02-20 23:56:19.775: I/RenderTime(32375): avgUpdateTime: 7331545 avgDrawTime: 3147967 avgRenderTime: 9905072 ns renderCount: 5005 delta: 0.017148 fps: 64
+  //  02-20 23:56:29.772: I/RenderTime(32375): avgUpdateTime: 7313469 avgDrawTime: 3159467 avgRenderTime: 9890995 ns renderCount: 5633 delta: 0.013460 fps: 64
+  //  02-20 23:56:39.790: I/RenderTime(32375): avgUpdateTime: 7360768 avgDrawTime: 3178611 avgRenderTime: 9951423 ns renderCount: 6258 delta: 0.020102 fps: 63
+  //  02-20 23:56:49.784: I/RenderTime(32375): avgUpdateTime: 7360072 avgDrawTime: 3206466 avgRenderTime: 9973250 ns renderCount: 6887 delta: 0.016099 fps: 63
+  //  02-20 23:56:59.795: I/RenderTime(32375): avgUpdateTime: 7427312 avgDrawTime: 3191925 avgRenderTime: 10023032 ns renderCount: 7504 delta: 0.015853 fps: 63
+  //  02-20 23:57:09.762: I/RenderTime(32375): avgUpdateTime: 7487957 avgDrawTime: 3180946 avgRenderTime: 10070630 ns renderCount: 8123 delta: 0.013127 fps: 62
+  //  02-20 23:57:19.773: I/RenderTime(32375): avgUpdateTime: 7505270 avgDrawTime: 3182673 avgRenderTime: 10087244 ns renderCount: 8749 delta: 0.015861 fps: 64
+  
   @Override
   public void render(float delta) {
+    long renderStartTime = TimeUtils.nanoTime();
+    long fps = Gdx.graphics.getFramesPerSecond();
+    long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
+    
     // Update the machine's state.
     boolean render = machine.update(delta);
     
+    long updateEndTime = TimeUtils.nanoTime();
+    long updateDuration = updateEndTime - renderStartTime;
+    if (renderCount == 0) {
+      avgUpdateTime = updateDuration;
+    } else {
+      avgUpdateTime = ((avgUpdateTime * renderCount) + updateDuration) / (renderCount + 1);
+    }
+    
+    // TODO: For slower phones, might need to skip drawing some frames.
+    
     if (render) {
       draw();
+      long drawDuration = TimeUtils.nanoTime() - updateEndTime;
+      if (renderCount == 0) {
+        avgDrawTime = drawDuration;
+      } else {
+        avgDrawTime = ((avgDrawTime * renderCount) + drawDuration) / (renderCount + 1);
+      }
+    }
+    
+    long renderDuration = TimeUtils.nanoTime() - renderStartTime;
+    if (renderCount == 0) {
+      avgRenderTime = renderDuration;
+    } else {
+      avgRenderTime = ((avgRenderTime * renderCount) + renderDuration) / (renderCount + 1);
+    }
+    
+    renderCount++;
+    
+    if ((lastLogTime == 0) || (renderStartTime - lastLogTime > 10000000000L)) {
+      lastLogTime = renderStartTime;
+      Gdx.app.log("RenderTime", String.format(
+          "avgUpdateTime: %d avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
+          avgUpdateTime, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
     }
   }
 
@@ -105,7 +173,7 @@ public class MachineScreen extends InputAdapter implements Screen {
         false, false);
     batch.end();
     
-    if (showInput) {
+    if (keyboardType.isRendered()) {
       // Render the UI elements, e.g. the keyboard.
       keyboardType.getCamera().update();
       batch.setProjectionMatrix(keyboardType.getCamera().combined);
@@ -128,10 +196,12 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera.position.y = machine.getScreenHeight() - viewport.getWorldHeight()/2;
     camera.update();
     
-    // Switch keyboard layout based on the orientation.
-    keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-    
-    keyboardType.getViewport().update(width, height, true);
+    if (keyboardType.isRendered()) {
+      // Switch keyboard layout based on the orientation.
+      keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+      
+      keyboardType.getViewport().update(width, height, true);
+    }
   }
 
   @Override
@@ -167,7 +237,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     machine.getJoystick().keyPressed(keycode);
     return true;
   }
-
+  
   /** 
    * Called when a key was released
    * 
@@ -192,12 +262,12 @@ public class MachineScreen extends InputAdapter implements Screen {
    * @return whether the input was processed 
    */
   public boolean touchDown (int screenX, int screenY, int pointer, int button) {
-    // Convert the screen coordinates to world coordinates.
-    Vector2 touchXY = new Vector2(screenX, screenY);
-    keyboardType.getViewport().unproject(touchXY);
-
-    if (showInput) {
-      // If the tap is within the portrait keyboard...
+    if (keyboardType.isRendered()) {
+      // Convert the screen coordinates to world coordinates.
+      Vector2 touchXY = new Vector2(screenX, screenY);
+      keyboardType.getViewport().unproject(touchXY);
+      
+      // If the tap is within the keyboard...
       if (touchXY.y < keyboardType.getTexture().getHeight()) {
         Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
         if (keycode != null) {
@@ -218,17 +288,14 @@ public class MachineScreen extends InputAdapter implements Screen {
    * @return whether the input was processed 
    */
   public boolean touchUp (int screenX, int screenY, int pointer, int button) {
-    if (!showInput) {
-      // If the input is not currently showing, then a tap anywhere will bring it up.
-      showInput = true;
-    } else {
+    if (keyboardType.isRendered()) {
       // Convert the screen coordinates to world coordinates.
       Vector2 touchXY = new Vector2(screenX, screenY);
       this.keyboardType.getViewport().unproject(touchXY);
-
+  
       // If the click is above the keyboard, then we hide the input controls.
       if (touchXY.y >= keyboardType.getTexture().getHeight()) {
-        showInput = false;
+        keyboardType = KeyboardType.OFF;
         
       } else {
         Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
@@ -236,8 +303,19 @@ public class MachineScreen extends InputAdapter implements Screen {
           machine.getKeyboard().keyReleased(keycode);
         }
       }
+    } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
+      Gdx.input.setOnscreenKeyboardVisible(false);
+      keyboardType = (Gdx.graphics.getHeight() > Gdx.graphics.getWidth()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+      keyboardType.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+    } else if (keyboardType.equals(KeyboardType.OFF)) {
+      if (Gdx.app.getType().equals(ApplicationType.Android)) {
+        Gdx.input.setOnscreenKeyboardVisible(true);
+        keyboardType = KeyboardType.MOBILE_ON_SCREEN;
+      } else {
+        keyboardType = (Gdx.graphics.getHeight() > Gdx.graphics.getWidth()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+        keyboardType.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+      }
     }
-    
     return true;
   }
 }
