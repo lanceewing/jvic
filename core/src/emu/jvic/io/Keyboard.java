@@ -1,7 +1,14 @@
 package emu.jvic.io;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.utils.TimeUtils;
 
 /**
  * This class emulates the VIC 20 keyboard by listening to key events, translating
@@ -42,6 +49,9 @@ public class Keyboard {
     {Keys.D, 4, 4},
     {Keys.A, 4, 2},
     {Keys.CONTROL_LEFT, 4, 1},
+    
+    // Special Ctrl key mapping for Android Hacker's Keyboard.
+    {113, 4, 1},
     
     {Keys.DOWN, 8, 128},
     {Keys.SLASH, 8, 64},
@@ -127,11 +137,28 @@ public class Keyboard {
   private int keyMatrix[] = new int[513];
   
   /**
+   * Holds the last time that the key was pressed down, or 0 if it has since been released.
+   */
+  private long minKeyReleaseTimes[] = new long[256];
+  
+  /**
+   * Holds a queue of keycodes whose key release processing has been delayed. This is
+   * supported primarily for use with the Android virtual keyboard on some devices, 
+   * where the key pressed and release both get fired on release of the key, so have
+   * virtually no time between them.
+   */
+  private TreeMap<Long, Integer> delayedReleaseKeys = new TreeMap<Long, Integer>();
+  
+  /**
    * Invoked when a key has been pressed.
    *
    * @param keycode The keycode of the key that has been pressed.
    */
   public void keyPressed(int keycode) {
+    // Store the minimum expected release time for this key, i.e. current time + 50ms.
+    minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
+    
+    // Update the key matrix to indicate to the VIC that this key is down.
     int keyDetails[] = (int[])keyConvHashMap.get(new Integer(keycode));
     if (keyDetails != null) {
       keyMatrix[keyDetails[1]] |= keyDetails[2];
@@ -144,13 +171,42 @@ public class Keyboard {
    * @param keycode The keycode of the key that has been released.
    */
   public void keyReleased(int keycode) {
-    int keyDetails[] = (int[])keyConvHashMap.get(new Integer(keycode));
-    if (keyDetails != null) {
-      keyMatrix[keyDetails[1]] &= (~keyDetails[2]);
+    long currentTime = TimeUtils.nanoTime();
+    long minKeyReleaseTime = minKeyReleaseTimes[keycode];
+    minKeyReleaseTimes[keycode] = 0;
+    
+    if (currentTime < minKeyReleaseTime) {
+      // Key hasn't been down long enough (possibly due to it being an Android virtual 
+      // keyboard or something similar that doesn't reflect the actual time the key 
+      // is down), so let's add this keycode to the delayed release list.
+      delayedReleaseKeys.put(minKeyReleaseTime, keycode);
+      
+    } else {
+      // Otherwise we process the release by updating the key matrix that the VIC polls.
+      int keyDetails[] = (int[])keyConvHashMap.get(new Integer(keycode));
+      if (keyDetails != null) {
+        keyMatrix[keyDetails[1]] &= (~keyDetails[2]);
+      }
     }
   }
   
-  // TODO: Needs to change to keep track keys that are down too quickly, such as on Android. Store a timestamp for key presses. 50 ms.
+  /**
+   * Checks if there are any keys whose release processed has been delayed that are 
+   * now able to be processed due to the minimum release time having been passed.
+   */
+  public void checkDelayedReleaseKeys() {
+    if (!delayedReleaseKeys.isEmpty()) {
+      List<Long> processedReleases = new ArrayList<Long>();
+      Set<Long> expiredReleaseTimes = delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet();
+      for (Long keyReleaseTime : expiredReleaseTimes) {
+        keyReleased(delayedReleaseKeys.get(keyReleaseTime));
+        processedReleases.add(keyReleaseTime);
+      }
+      for (Long keyReleaseTime : processedReleases) {
+        delayedReleaseKeys.remove(keyReleaseTime);
+      }
+    }
+  }
   
   /**
    * Performs a row scan of the keyboard.
@@ -170,6 +226,8 @@ public class Keyboard {
     if ((selectedRow & 0x04) != 0) columnData |= keyMatrix[0x04];
     if ((selectedRow & 0x02) != 0) columnData |= keyMatrix[0x02];
     if ((selectedRow & 0x01) != 0) columnData |= keyMatrix[0x01];
+    
+    checkDelayedReleaseKeys();
     
     return ((~(columnData)) & 0xFF);
   }
@@ -192,6 +250,8 @@ public class Keyboard {
     if ((selectedColumn & 0x04) != 0) rowData |= keyMatrix[0x04];
     if ((selectedColumn & 0x02) != 0) rowData |= keyMatrix[0x02];
     if ((selectedColumn & 0x01) != 0) rowData |= keyMatrix[0x01];
+    
+    checkDelayedReleaseKeys();
     
     return ((~(rowData)) & 0xFF);
   }
