@@ -28,7 +28,8 @@ public enum KeyboardType {
           { null, null, null, null, null, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null }
         },
         "png/keyboard_landscape.png",
-        0.5f
+        0.5f,
+        40
       ),
   PORTRAIT_12x6(
         new Integer[][] {
@@ -40,7 +41,8 @@ public enum KeyboardType {
           { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, -4, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, -5, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null } 
         },
         "png/keyboard_portrait_12x6.png",
-        1.0f
+        1.0f,
+        130
       ),
   PORTRAIT_10x7(
         new Integer[][] {
@@ -53,7 +55,8 @@ public enum KeyboardType {
           { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null }
         },
         "png/keyboard_portrait_10x7.png",
-        1.0f
+        1.0f,
+        130
       ),
   MOBILE_ON_SCREEN,
   OFF;
@@ -74,6 +77,11 @@ public enum KeyboardType {
   private Texture texture;
   
   /**
+   * The path to the keyboard image file.
+   */
+  private String keyboardImage;
+  
+  /**
    * The Camera to be used when displaying this KeyboardType.
    */
   private Camera camera;
@@ -89,19 +97,27 @@ public enum KeyboardType {
   private float opacity;
   
   /**
+   * Offset from the bottom of the screen that the keyboard is rendered at.
+   */
+  private int renderOffset;
+  
+  /**
    * Constructor for KeyboardType.
    * 
    * @param keyMap The position of each key within this KeyboardType.
    * @param keyboardImage The path to the keyboard image file.
    * @param opacity The opacity of this KeyboardType.
+   * @param renderOffset Offset from the bottom of the screen that the keyboard is rendered at.
    */
-  KeyboardType(Integer[][] keyMap, String keyboardImage, float opacity) {
+  KeyboardType(Integer[][] keyMap, String keyboardImage, float opacity, int renderOffset) {
     this.keyMap = keyMap;
+    this.keyboardImage = keyboardImage;
     this.texture = new Texture(keyboardImage);
     this.camera = new OrthographicCamera();
     this.viewport = new ExtendViewport(texture.getWidth(), texture.getHeight(), camera);
     this.keySize = (this.texture.getHeight() / this.keyMap.length);
     this.opacity = opacity;
+    this.renderOffset = renderOffset;
   }
 
   /**
@@ -123,7 +139,7 @@ public enum KeyboardType {
     Integer keyCode = null;
     
     // Work out the row for this x/y position. This is common to all layouts.
-    int keyRow = (int)((texture.getHeight() - y) / keySize);
+    int keyRow = (int)((texture.getHeight() - y + renderOffset) / keySize);
     if (keyRow > keyMap.length) keyRow = keyMap.length - 1;
     
     switch (this) {
@@ -158,6 +174,9 @@ public enum KeyboardType {
    * @return The Texture holding the keyboard image for this KeyboardType.
    */
   public Texture getTexture() {
+    if ((texture == null) && (keyboardImage != null)) {
+      texture = new Texture(keyboardImage);
+    }
     return texture;
   }
 
@@ -187,5 +206,33 @@ public enum KeyboardType {
    */
   public boolean isRendered() {
     return (texture != null);
+  }
+
+  /**
+   * @return Offset from the bottom of the screen that the keyboard is rendered at.
+   */
+  public int getRenderOffset() {
+    return renderOffset;
+  }
+  
+  /**
+   * Disposes of the libGDX Textures for all KeyboardTypes.
+   */
+  public static void dispose() {
+    for (KeyboardType keyboardType : KeyboardType.values()) {
+      if (keyboardType.texture != null) {
+        keyboardType.texture.dispose();
+        keyboardType.texture = null;
+      }
+    }
+  }
+  
+  /**
+   * Re-creates the libGDX Textures for all KeyboardTypes. 
+   */
+  public static void init() {
+    for (KeyboardType keyboardType : KeyboardType.values()) {
+      keyboardType.getTexture();
+    }
   }
 }
