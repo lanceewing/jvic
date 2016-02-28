@@ -31,13 +31,27 @@ public class MachineScreen extends InputAdapter implements Screen {
    * This represents the VIC 20 machine.
    */
   private Machine machine;
-  
+
+  /**
+   * SpriteBatch shared by all rendered components.
+   */
   private SpriteBatch batch;
+  
+  // Components to support rendering of the VIC 20 screen.
   private Texture screenTexture;
   private Pixmap screenPixmap;
   private Viewport viewport;
   private Camera camera;
   
+  // UI components.
+  private Texture keyboardIcon1;
+  private Texture keyboardIcon2;
+  private Texture keyboardIcon3;
+  private Texture joystickIcon;
+  
+  /**
+   * The type of keyboard currently being displayed.
+   */
   private KeyboardType keyboardType;
   
   /**
@@ -55,13 +69,13 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
     
+    keyboardIcon1 = new Texture("png/keyboard_icon_1.png");
+    keyboardIcon2 = new Texture("png/keyboard_icon_2.png");
+    keyboardIcon3 = new Texture("png/keyboard_icon_3.png");
+    joystickIcon = new Texture("png/joystick_icon.png");
+    
     // Register this MachineScreen instance as the input processor for keys, etc.
     Gdx.input.setInputProcessor(this);
-  }
-  
-  @Override
-  public void show() {
-    // TODO Decide if this needs to resume, or whether that happens automatically.
   }
 
   private long lastLogTime;
@@ -150,7 +164,8 @@ public class MachineScreen extends InputAdapter implements Screen {
     // will suffice for this initial conversion of JVic. I'll spend more time profiling 
     // other options in the future. It's possible that we could get the Vic class to 
     // write directly in to the Pixmap ByteBuffer. This copy is done natively though, so
-    // is potentially not adding that much overhead.
+    // is potentially not adding that much overhead. I'm also wondering whether an opengl
+    // shader can take care of some of the work, but need to research that further.
     BufferUtils.copy(machine.getFramePixels(), 0, screenPixmap.getPixels(), 
         machine.getMachineType().getTotalScreenWidth() * machine.getMachineType().getTotalScreenHeight());
 
@@ -172,16 +187,20 @@ public class MachineScreen extends InputAdapter implements Screen {
         machine.getMachineType().getVisibleScreenHeight(), 
         false, false);
     batch.end();
-    
+
     if (keyboardType.isRendered()) {
       // Render the UI elements, e.g. the keyboard.
       keyboardType.getCamera().update();
       batch.setProjectionMatrix(keyboardType.getCamera().combined);
       batch.enableBlending();
       batch.begin();
-      c = batch.getColor();
+      
       batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
-      batch.draw(keyboardType.getTexture(), 0, 0);
+      batch.draw(keyboardType.getTexture(), 0, keyboardType.getRenderOffset());
+      
+      batch.setColor(c.r, c.g, c.b, 0.5f);
+      batch.draw(joystickIcon, 0, 0);
+      batch.draw(keyboardIcon3, keyboardType.getViewport().getWorldWidth() - 140, 0);
       batch.end();
     }
   }
@@ -206,20 +225,34 @@ public class MachineScreen extends InputAdapter implements Screen {
 
   @Override
   public void pause() {
+    // On Android, this is also called when the "Home" button is pressed.
     machine.setPaused(true);
   }
 
   @Override
   public void resume() {
+    KeyboardType.init();
     machine.setPaused(false);
   }
-
+  
+  @Override
+  public void show() {
+    KeyboardType.init();
+  }
+  
   @Override
   public void hide() {
+    // On Android, this is also called when the "Back" button is pressed.
+    KeyboardType.dispose();
   }
 
   @Override
   public void dispose() {
+    KeyboardType.dispose();
+    keyboardIcon1.dispose();
+    keyboardIcon2.dispose();
+    keyboardIcon3.dispose();
+    joystickIcon.dispose();
     screenPixmap.dispose();
     screenTexture.dispose();
     batch.dispose();
