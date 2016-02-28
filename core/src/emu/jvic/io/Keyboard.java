@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.utils.TimeUtils;
 
@@ -18,6 +17,10 @@ import com.badlogic.gdx.utils.TimeUtils;
  * @author Lance Ewing
  */
 public class Keyboard {
+
+  public static final int SHIFT_LOCK = -3;
+  public static final int RUN_STOP   = -4;
+  public static final int RESTORE    = -5;
 
   /**
    * Data used to convert Java keypresses into VIC 20 keypresses.
