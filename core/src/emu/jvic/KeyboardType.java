@@ -22,7 +22,7 @@ public enum KeyboardType {
         },
         "png/keyboard_landscape.png",
         0.5f,
-        40
+        0
       ),
   PORTRAIT_12x6(
         new Integer[][] {
@@ -149,6 +149,19 @@ public enum KeyboardType {
     }
     
     return keyCode;
+  }
+  
+  /**
+   * Tests if the given X/Y position is within the bounds of this KeyboardTypes keyboard image.
+   * 
+   * @param x The X position to test.
+   * @param y The Y position to test.
+   * 
+   * @return true if the given X/Y position is within the keyboard image; otherwise false.
+   */
+  public boolean isInKeyboard(float x, float y) {
+    // We only need to test the Y position since the keyboard image will always span the whole width.
+    return  (isRendered() && (y < (getTexture().getHeight() + renderOffset)) && (y > renderOffset));
   }
   
   /**
