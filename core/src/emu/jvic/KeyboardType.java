@@ -1,11 +1,9 @@
 package emu.jvic;
 
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
+
+import static emu.jvic.io.Keyboard.*;
 
 /**
  * Enum representing the different types of keyboard available within JVic.
@@ -14,16 +12,11 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  */
 public enum KeyboardType {
 
-  // TODO: Make these constants and handle them properly within the emulator.
-  // RESTORE: -5 
-  // RUN STOP: -4
-  // SHIFTLOCK: -3
-  
   LANDSCAPE(
         new Integer[][] {
           { Keys.LEFT, Keys.LEFT, Keys.NUM_1, Keys.NUM_1, Keys.NUM_2, Keys.NUM_2, Keys.NUM_3, Keys.NUM_3, Keys.NUM_4, Keys.NUM_4, Keys.NUM_5, Keys.NUM_5, Keys.NUM_6, Keys.NUM_6, Keys.NUM_7, Keys.NUM_7, Keys.NUM_8, Keys.NUM_8, Keys.NUM_9, Keys.NUM_9, Keys.NUM_0, Keys.NUM_0, Keys.PLUS, Keys.PLUS, Keys.MINUS, Keys.MINUS, Keys.POUND, Keys.POUND, Keys.HOME, Keys.HOME, Keys.DEL, Keys.DEL, null, null, null, null, null, null, null, null },
-          { Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.Q, Keys.Q, Keys.W, Keys.W, Keys.E, Keys.E, Keys.R, Keys.R, Keys.T, Keys.T, Keys.Y, Keys.Y, Keys.U, Keys.U, Keys.I, Keys.I, Keys.O, Keys.O, Keys.P, Keys.P, Keys.AT, Keys.AT, Keys.STAR, Keys.STAR, Keys.UP, Keys.UP,  -5, -5, -5, null, null, null, null, null, null, null, null },
-          { -4, -4, -3, -3, Keys.A, Keys.A, Keys.S, Keys.S, Keys.D, Keys.D, Keys.F, Keys.F, Keys.G, Keys.G, Keys.H, Keys.H, Keys.J, Keys.J, Keys.K, Keys.K, Keys.L, Keys.L, Keys.COLON, Keys.COLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.EQUALS, Keys.EQUALS, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, null, null, null, null, null, null, null, null },
+          { Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.Q, Keys.Q, Keys.W, Keys.W, Keys.E, Keys.E, Keys.R, Keys.R, Keys.T, Keys.T, Keys.Y, Keys.Y, Keys.U, Keys.U, Keys.I, Keys.I, Keys.O, Keys.O, Keys.P, Keys.P, Keys.AT, Keys.AT, Keys.STAR, Keys.STAR, Keys.UP, Keys.UP, RESTORE, RESTORE, RESTORE, null, null, null, null, null, null, null, null },
+          { RUN_STOP, RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, Keys.A, Keys.A, Keys.S, Keys.S, Keys.D, Keys.D, Keys.F, Keys.F, Keys.G, Keys.G, Keys.H, Keys.H, Keys.J, Keys.J, Keys.K, Keys.K, Keys.L, Keys.L, Keys.COLON, Keys.COLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.EQUALS, Keys.EQUALS, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, null, null, null, null, null, null, null, null },
           { Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.Z, Keys.Z, Keys.X, Keys.X, Keys.C, Keys.C, Keys.V, Keys.V, Keys.B, Keys.B, Keys.N, Keys.N, Keys.M, Keys.M, Keys.COMMA, Keys.COMMA, Keys.PERIOD, Keys.PERIOD, Keys.SLASH, Keys.SLASH, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.DOWN, Keys.RIGHT, Keys.RIGHT, null, null, null, null, null, null, null, null },
           { null, null, null, null, null, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null }
         },
@@ -38,7 +31,7 @@ public enum KeyboardType {
           { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P, Keys.AT, Keys.STAR, null },
           { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L, Keys.COLON, Keys.SEMICOLON, Keys.EQUALS, null },
           { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.SLASH, Keys.ENTER, Keys.ENTER, null },
-          { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, -4, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, -5, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null } 
+          { Keys.ALT_LEFT, SHIFT_LOCK, Keys.SHIFT_LEFT, RUN_STOP, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, RESTORE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null } 
         },
         "png/keyboard_portrait_12x6.png",
         1.0f,
@@ -47,12 +40,12 @@ public enum KeyboardType {
   PORTRAIT_10x7(
         new Integer[][] {
           { Keys.CONTROL_LEFT, Keys.LEFT, Keys.UP, Keys.F1, Keys.F3, Keys.F5, Keys.F7, Keys.POUND, Keys.HOME, Keys.DEL, null },
-          { Keys.COLON, Keys.SEMICOLON, Keys.EQUALS, Keys.AT, Keys.PLUS, Keys.MINUS, Keys.STAR, Keys.SLASH, -4, -5, null },
+          { Keys.COLON, Keys.SEMICOLON, Keys.EQUALS, Keys.AT, Keys.PLUS, Keys.MINUS, Keys.STAR, Keys.SLASH, RUN_STOP, RESTORE, null },
           { Keys.NUM_1, Keys.NUM_2, Keys.NUM_3, Keys.NUM_4, Keys.NUM_5, Keys.NUM_6, Keys.NUM_7, Keys.NUM_8, Keys.NUM_9, Keys.NUM_0, null },
           { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P, null },
           { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L, Keys.ENTER, null },
           { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.ENTER, null },
-          { Keys.ALT_LEFT, -3, Keys.SHIFT_LEFT, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null }
+          { Keys.ALT_LEFT, SHIFT_LOCK, Keys.SHIFT_LEFT, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT, null }
         },
         "png/keyboard_portrait_10x7.png",
         1.0f,
@@ -82,16 +75,6 @@ public enum KeyboardType {
   private String keyboardImage;
   
   /**
-   * The Camera to be used when displaying this KeyboardType.
-   */
-  private Camera camera;
-  
-  /**
-   * The Viewport to be used when displaying this KeyboardType.
-   */
-  private Viewport viewport;
-  
-  /**
    * The opacity of this KeyboardType.
    */
   private float opacity;
@@ -113,8 +96,6 @@ public enum KeyboardType {
     this.keyMap = keyMap;
     this.keyboardImage = keyboardImage;
     this.texture = new Texture(keyboardImage);
-    this.camera = new OrthographicCamera();
-    this.viewport = new ExtendViewport(texture.getWidth(), texture.getHeight(), camera);
     this.keySize = (this.texture.getHeight() / this.keyMap.length);
     this.opacity = opacity;
     this.renderOffset = renderOffset;
@@ -178,20 +159,6 @@ public enum KeyboardType {
       texture = new Texture(keyboardImage);
     }
     return texture;
-  }
-
-  /**
-   * @return The Camera to be used when displaying this KeyboardType.
-   */
-  public Camera getCamera() {
-    return camera;
-  }
-
-  /**
-   * @return The Viewport to be used when displaying this KeyboardType.
-   */
-  public Viewport getViewport() {
-    return viewport;
   }
 
   /**
