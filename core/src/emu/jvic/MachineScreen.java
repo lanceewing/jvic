@@ -46,10 +46,8 @@ public class MachineScreen extends InputAdapter implements Screen {
   private Camera camera;
   
   // UI components.
-  private Texture keyboardIcon1;
-  private Texture keyboardIcon2;
-  private Texture keyboardIcon3;
   private Texture joystickIcon;
+  private Texture keyboardIcon;
 
   private ViewportManager viewportManager;
   
@@ -73,9 +71,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
     
-    keyboardIcon1 = new Texture("png/keyboard_icon_1.png");
-    keyboardIcon2 = new Texture("png/keyboard_icon_2.png");
-    keyboardIcon3 = new Texture("png/keyboard_icon_3.png");
+    keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
     
     viewportManager = new ViewportManager();
@@ -207,12 +203,20 @@ public class MachineScreen extends InputAdapter implements Screen {
     batch.setColor(c.r, c.g, c.b, 0.5f);
     if (viewportManager.isPortrait()) {
       batch.draw(joystickIcon, 0, 0);
-      batch.draw(keyboardIcon3, viewportManager.getCurrentViewport().getWorldWidth() - 140, 0);
+      batch.draw(keyboardIcon, viewportManager.getCurrentViewport().getWorldWidth() - 145, 0);
+      
+      if (Gdx.app.getType().equals(ApplicationType.Android)) {
+        // Mobile keyboard for debug purpose. Wouldn't normally make this available.
+        batch.setColor(c.r, c.g, c.b, 0.15f);
+        batch.draw(keyboardIcon, 
+            viewportManager.getCurrentViewport().getWorldWidth() - viewportManager.getCurrentViewport().getWorldWidth()/2 - 70, 
+            0);
+      }
     } else {
       batch.draw(joystickIcon, 0, viewportManager.getCurrentViewport().getWorldHeight() - 140);
-      batch.draw(keyboardIcon3, 
-          viewportManager.getCurrentViewport().getWorldWidth() - 140, 
-          viewportManager.getCurrentViewport().getWorldHeight() - 140);
+      batch.draw(keyboardIcon, 
+          viewportManager.getCurrentViewport().getWorldWidth() - 150, 
+          viewportManager.getCurrentViewport().getWorldHeight() - 125);
     }
     batch.end();
   }
@@ -261,9 +265,7 @@ public class MachineScreen extends InputAdapter implements Screen {
   @Override
   public void dispose() {
     KeyboardType.dispose();
-    keyboardIcon1.dispose();
-    keyboardIcon2.dispose();
-    keyboardIcon3.dispose();
+    keyboardIcon.dispose();
     joystickIcon.dispose();
     screenPixmap.dispose();
     screenTexture.dispose();
@@ -307,17 +309,15 @@ public class MachineScreen extends InputAdapter implements Screen {
    * @return whether the input was processed 
    */
   public boolean touchDown (int screenX, int screenY, int pointer, int button) {
-    if (keyboardType.isRendered()) {
-      // Convert the screen coordinates to world coordinates.
-      Vector2 touchXY = new Vector2(screenX, screenY);
-      viewportManager.getCurrentViewport().unproject(touchXY);
-      
-      // If the tap is within the keyboard...
-      if (touchXY.y < keyboardType.getTexture().getHeight()) {
-        Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
-        if (keycode != null) {
-          machine.getKeyboard().keyPressed(keycode);
-        }
+    // Convert the screen coordinates to world coordinates.
+    Vector2 touchXY = new Vector2(screenX, screenY);
+    viewportManager.getCurrentViewport().unproject(touchXY);
+    
+    // If the tap is within the keyboard...
+    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
+      Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
+      if (keycode != null) {
+        machine.getKeyboard().keyPressed(keycode);
       }
     }
     
@@ -333,34 +333,74 @@ public class MachineScreen extends InputAdapter implements Screen {
    * @return whether the input was processed 
    */
   public boolean touchUp (int screenX, int screenY, int pointer, int button) {
-    if (keyboardType.isRendered()) {
-      // Convert the screen coordinates to world coordinates.
-      Vector2 touchXY = new Vector2(screenX, screenY);
-      viewportManager.getCurrentViewport().unproject(touchXY);
-  
-      // If the click is above the keyboard, then we hide the input controls.
-      if (touchXY.y >= keyboardType.getTexture().getHeight()) {
-        keyboardType = KeyboardType.OFF;
-        
+    // Convert the screen coordinates to world coordinates.
+    Vector2 touchXY = new Vector2(screenX, screenY);
+    viewportManager.getCurrentViewport().unproject(touchXY);
+    
+    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
+      Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
+      if (keycode != null) {
+        machine.getKeyboard().keyReleased(keycode);
+      }
+      
+    } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
+      // If the onscreen keyboard is being shown then if we receive a tap event, it won't be
+      // on the virtual keyboard but must therefore be outside it. So we hide the keyboard.
+      Gdx.input.setOnscreenKeyboardVisible(false);
+      keyboardType = KeyboardType.OFF;
+      
+    } else {
+      // TODO: Need to handle the magic numbers in this block in a better way. 
+      // TODO: The ViewportManager should really have a getWidth method that internally gets the current Viewport's world width.
+      boolean keyboardClicked = false;
+      boolean joystickClicked = false;
+      
+      if (viewportManager.isPortrait()) {
+        // Portrait.
+        if (touchXY.y < 130) {
+          if (touchXY.x < 140) {
+            joystickClicked = true;
+            
+          } else if (touchXY.x > (viewportManager.getCurrentViewport().getWorldWidth() - 145)) {
+            keyboardClicked = true;
+            
+          } else if (Gdx.app.getType().equals(ApplicationType.Android)) {
+            // Mobile soft keyboard is only available in portrait mode (debug only)
+            int midWidth = (int)(viewportManager.getCurrentViewport().getWorldWidth() - viewportManager.getCurrentViewport().getWorldWidth()/2);
+            if ((touchXY.x > (midWidth - 70)) && 
+                (touchXY.y < (midWidth + 70))) {
+              Gdx.input.setOnscreenKeyboardVisible(true);
+              keyboardType = KeyboardType.MOBILE_ON_SCREEN;
+            }
+          }
+        }
       } else {
-        Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
-        if (keycode != null) {
-          machine.getKeyboard().keyReleased(keycode);
+        // Landscape.
+        int screenTop = (int)viewportManager.getCurrentViewport().getWorldHeight();
+        if (touchXY.y > (screenTop - 140)) {
+          if (touchXY.x < 140) {
+            joystickClicked = true;
+            
+          } else if (touchXY.x > (viewportManager.getCurrentViewport().getWorldWidth() - 150)) {
+            keyboardClicked = true;
+          }
         }
       }
-    } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
-      Gdx.input.setOnscreenKeyboardVisible(false);
-      keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-      viewportManager.update();
-    } else if (keyboardType.equals(KeyboardType.OFF)) {
-      if (Gdx.app.getType().equals(ApplicationType.Android)) {
-        Gdx.input.setOnscreenKeyboardVisible(true);
-        keyboardType = KeyboardType.MOBILE_ON_SCREEN;
-      } else {
-        keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-        viewportManager.update();
+      
+      if (keyboardClicked) {
+        if (keyboardType.equals(KeyboardType.OFF)) {
+          keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+          viewportManager.update();
+        } else {
+          keyboardType = KeyboardType.OFF;
+        }
+      }
+      
+      if (joystickClicked) {
+        // TODO: Show/Hide joystick.
       }
     }
+    
     return true;
   }
 }
