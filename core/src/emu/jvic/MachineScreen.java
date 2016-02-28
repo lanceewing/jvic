@@ -19,6 +19,8 @@ import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import emu.jvic.ui.ViewportManager;
+
 /**
  * The main screen in the JVic emulator, i.e. the one that shows the video 
  * output of the VIC.
@@ -48,6 +50,8 @@ public class MachineScreen extends InputAdapter implements Screen {
   private Texture keyboardIcon2;
   private Texture keyboardIcon3;
   private Texture joystickIcon;
+
+  private ViewportManager viewportManager;
   
   /**
    * The type of keyboard currently being displayed.
@@ -73,6 +77,8 @@ public class MachineScreen extends InputAdapter implements Screen {
     keyboardIcon2 = new Texture("png/keyboard_icon_2.png");
     keyboardIcon3 = new Texture("png/keyboard_icon_3.png");
     joystickIcon = new Texture("png/joystick_icon.png");
+    
+    viewportManager = new ViewportManager();
     
     // Register this MachineScreen instance as the input processor for keys, etc.
     Gdx.input.setInputProcessor(this);
@@ -112,6 +118,7 @@ public class MachineScreen extends InputAdapter implements Screen {
   
   @Override
   public void render(float delta) {
+    // Note: On some android phones, the render method is invoked over 8000 times a second.
     long renderStartTime = TimeUtils.nanoTime();
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
@@ -188,21 +195,26 @@ public class MachineScreen extends InputAdapter implements Screen {
         false, false);
     batch.end();
 
+    // Render the UI elements, e.g. the keyboard and joystick icons.
+    viewportManager.getCurrentCamera().update();
+    batch.setProjectionMatrix(viewportManager.getCurrentCamera().combined);
+    batch.enableBlending();
+    batch.begin();
     if (keyboardType.isRendered()) {
-      // Render the UI elements, e.g. the keyboard.
-      keyboardType.getCamera().update();
-      batch.setProjectionMatrix(keyboardType.getCamera().combined);
-      batch.enableBlending();
-      batch.begin();
-      
       batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
       batch.draw(keyboardType.getTexture(), 0, keyboardType.getRenderOffset());
-      
-      batch.setColor(c.r, c.g, c.b, 0.5f);
-      batch.draw(joystickIcon, 0, 0);
-      batch.draw(keyboardIcon3, keyboardType.getViewport().getWorldWidth() - 140, 0);
-      batch.end();
     }
+    batch.setColor(c.r, c.g, c.b, 0.5f);
+    if (viewportManager.isPortrait()) {
+      batch.draw(joystickIcon, 0, 0);
+      batch.draw(keyboardIcon3, viewportManager.getCurrentViewport().getWorldWidth() - 140, 0);
+    } else {
+      batch.draw(joystickIcon, 0, viewportManager.getCurrentViewport().getWorldHeight() - 140);
+      batch.draw(keyboardIcon3, 
+          viewportManager.getCurrentViewport().getWorldWidth() - 140, 
+          viewportManager.getCurrentViewport().getWorldHeight() - 140);
+    }
+    batch.end();
   }
   
   @Override
@@ -218,9 +230,9 @@ public class MachineScreen extends InputAdapter implements Screen {
     if (keyboardType.isRendered()) {
       // Switch keyboard layout based on the orientation.
       keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-      
-      keyboardType.getViewport().update(width, height, true);
     }
+    
+    viewportManager.update(width, height);
   }
 
   @Override
@@ -298,7 +310,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     if (keyboardType.isRendered()) {
       // Convert the screen coordinates to world coordinates.
       Vector2 touchXY = new Vector2(screenX, screenY);
-      keyboardType.getViewport().unproject(touchXY);
+      viewportManager.getCurrentViewport().unproject(touchXY);
       
       // If the tap is within the keyboard...
       if (touchXY.y < keyboardType.getTexture().getHeight()) {
@@ -324,7 +336,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     if (keyboardType.isRendered()) {
       // Convert the screen coordinates to world coordinates.
       Vector2 touchXY = new Vector2(screenX, screenY);
-      this.keyboardType.getViewport().unproject(touchXY);
+      viewportManager.getCurrentViewport().unproject(touchXY);
   
       // If the click is above the keyboard, then we hide the input controls.
       if (touchXY.y >= keyboardType.getTexture().getHeight()) {
@@ -338,15 +350,15 @@ public class MachineScreen extends InputAdapter implements Screen {
       }
     } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
       Gdx.input.setOnscreenKeyboardVisible(false);
-      keyboardType = (Gdx.graphics.getHeight() > Gdx.graphics.getWidth()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-      keyboardType.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+      keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+      viewportManager.update();
     } else if (keyboardType.equals(KeyboardType.OFF)) {
       if (Gdx.app.getType().equals(ApplicationType.Android)) {
         Gdx.input.setOnscreenKeyboardVisible(true);
         keyboardType = KeyboardType.MOBILE_ON_SCREEN;
       } else {
-        keyboardType = (Gdx.graphics.getHeight() > Gdx.graphics.getWidth()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-        keyboardType.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
+        viewportManager.update();
       }
     }
     return true;
