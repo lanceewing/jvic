@@ -35,7 +35,7 @@ public enum KeyboardType {
         },
         "png/keyboard_portrait_12x6.png",
         1.0f,
-        130
+        0
       ),
   PORTRAIT_10x7(
         new Integer[][] {
@@ -49,7 +49,7 @@ public enum KeyboardType {
         },
         "png/keyboard_portrait_10x7.png",
         1.0f,
-        130
+        0
       ),
   MOBILE_ON_SCREEN,
   OFF;

@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Buttons;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
@@ -19,6 +20,8 @@ import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import emu.jvic.ui.ConfirmHandler;
+import emu.jvic.ui.ConfirmResponseHandler;
 import emu.jvic.ui.ViewportManager;
 
 /**
@@ -52,14 +55,23 @@ public class MachineScreen extends InputAdapter implements Screen {
   private ViewportManager viewportManager;
   
   /**
+   * Invoked by JVic whenever it would like the user to confirm an action.
+   */
+  private ConfirmHandler confirmHandler;
+  
+  /**
    * The type of keyboard currently being displayed.
    */
   private KeyboardType keyboardType;
   
   /**
    * Constructor for MachineScreen.
+   * 
+   * @param confirmHandler
    */
-  public MachineScreen() {
+  public MachineScreen(ConfirmHandler confirmHandler) {
+    this.confirmHandler = confirmHandler;
+    
     this.machine = new Machine();
     
     batch = new SpriteBatch();
@@ -85,6 +97,7 @@ public class MachineScreen extends InputAdapter implements Screen {
   private long avgUpdateTime;
   private long avgDrawTime;
   private long renderCount;
+  private long drawCount;
   
   // Linux:
   //  RenderTime: avgUpdateTime: 1981313 avgDrawTime: 416109 avgRenderTime: 2346450 ns renderCount: 601 delta: 0.016525 fps: 60
@@ -118,21 +131,31 @@ public class MachineScreen extends InputAdapter implements Screen {
     long renderStartTime = TimeUtils.nanoTime();
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
+    long updateEndTime = renderStartTime;
     
-    // Update the machine's state.
-    boolean render = machine.update(delta);
-    
-    long updateEndTime = TimeUtils.nanoTime();
-    long updateDuration = updateEndTime - renderStartTime;
-    if (renderCount == 0) {
-      avgUpdateTime = updateDuration;
+    // Update the machine's state, but only if the machine is not paused.
+    boolean render = false;
+    if (machine.isPaused()) {
+      // When paused, we limit the draw frequency since there isn't anything to change.
+      render = ((fps < 30) || ((renderCount % (fps/30)) == 0));
+      
     } else {
-      avgUpdateTime = ((avgUpdateTime * renderCount) + updateDuration) / (renderCount + 1);
+      // When not paused, the Machine tells us when to render.
+      render = machine.update(delta);
+    
+      updateEndTime = TimeUtils.nanoTime();
+      long updateDuration = updateEndTime - renderStartTime;
+      if (renderCount == 0) {
+        avgUpdateTime = updateDuration;
+      } else {
+        avgUpdateTime = ((avgUpdateTime * renderCount) + updateDuration) / (renderCount + 1);
+      }
     }
     
     // TODO: For slower phones, might need to skip drawing some frames.
     
     if (render) {
+      drawCount++;
       draw();
       long drawDuration = TimeUtils.nanoTime() - updateEndTime;
       if (renderCount == 0) {
@@ -154,8 +177,8 @@ public class MachineScreen extends InputAdapter implements Screen {
     if ((lastLogTime == 0) || (renderStartTime - lastLogTime > 10000000000L)) {
       lastLogTime = renderStartTime;
       Gdx.app.log("RenderTime", String.format(
-          "avgUpdateTime: %d avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
-          avgUpdateTime, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
+          "[%d] avgUpdateTime: %d avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
+          drawCount, avgUpdateTime, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
     }
   }
 
@@ -200,23 +223,26 @@ public class MachineScreen extends InputAdapter implements Screen {
       batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
       batch.draw(keyboardType.getTexture(), 0, keyboardType.getRenderOffset());
     }
-    batch.setColor(c.r, c.g, c.b, 0.5f);
-    if (viewportManager.isPortrait()) {
-      batch.draw(joystickIcon, 0, 0);
-      batch.draw(keyboardIcon, viewportManager.getCurrentViewport().getWorldWidth() - 145, 0);
-      
-      if (Gdx.app.getType().equals(ApplicationType.Android)) {
-        // Mobile keyboard for debug purpose. Wouldn't normally make this available.
-        batch.setColor(c.r, c.g, c.b, 0.15f);
+    if (keyboardType.equals(KeyboardType.OFF)) {
+      // The keyboard and joystick icons are rendered only when an input type isn't showing.
+      batch.setColor(c.r, c.g, c.b, 0.5f);
+      if (viewportManager.isPortrait()) {
+        batch.draw(joystickIcon, 0, 0);
+        batch.draw(keyboardIcon, viewportManager.getCurrentViewport().getWorldWidth() - 145, 0);
+        
+        if (Gdx.app.getType().equals(ApplicationType.Android)) {
+          // Mobile keyboard for debug purpose. Wouldn't normally make this available.
+          batch.setColor(c.r, c.g, c.b, 0.15f);
+          batch.draw(keyboardIcon, 
+              viewportManager.getCurrentViewport().getWorldWidth() - viewportManager.getCurrentViewport().getWorldWidth()/2 - 70, 
+              0);
+        }
+      } else {
+        batch.draw(joystickIcon, 0, viewportManager.getCurrentViewport().getWorldHeight() - 140);
         batch.draw(keyboardIcon, 
-            viewportManager.getCurrentViewport().getWorldWidth() - viewportManager.getCurrentViewport().getWorldWidth()/2 - 70, 
-            0);
+            viewportManager.getCurrentViewport().getWorldWidth() - 150, 
+            viewportManager.getCurrentViewport().getWorldHeight() - 125);
       }
-    } else {
-      batch.draw(joystickIcon, 0, viewportManager.getCurrentViewport().getWorldHeight() - 140);
-      batch.draw(keyboardIcon, 
-          viewportManager.getCurrentViewport().getWorldWidth() - 150, 
-          viewportManager.getCurrentViewport().getWorldHeight() - 125);
     }
     batch.end();
   }
@@ -293,8 +319,27 @@ public class MachineScreen extends InputAdapter implements Screen {
    * @return whether the input was processed 
    */
   public boolean keyUp (int keycode) {
-    machine.getKeyboard().keyReleased(keycode);
-    machine.getJoystick().keyReleased(keycode);
+    if (keycode == Keys.BACK) {
+      if (keyboardType.equals(KeyboardType.OFF)) {
+        if (Gdx.app.getType().equals(ApplicationType.Android)) {
+          machine.setPaused(true);
+          confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
+            public void yes() {
+              Gdx.app.exit();
+            }
+            public void no() {
+              machine.setPaused(false);
+            }
+          });
+        }
+      } else {
+        // If a keyboard is being shown, then BACK will close this.
+        keyboardType = KeyboardType.OFF;
+      }
+    } else {
+      machine.getKeyboard().keyReleased(keycode);
+      machine.getJoystick().keyReleased(keycode);
+    }
     return true;
   }
   
@@ -347,6 +392,10 @@ public class MachineScreen extends InputAdapter implements Screen {
       // If the onscreen keyboard is being shown then if we receive a tap event, it won't be
       // on the virtual keyboard but must therefore be outside it. So we hide the keyboard.
       Gdx.input.setOnscreenKeyboardVisible(false);
+      keyboardType = KeyboardType.OFF;
+      
+    } else if (!keyboardType.equals(KeyboardType.OFF)) {
+      // If rendered keyboard is being shown, and the tap isn't within the keyboard, then we close the keyboard.
       keyboardType = KeyboardType.OFF;
       
     } else {

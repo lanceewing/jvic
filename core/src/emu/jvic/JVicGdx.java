@@ -1,6 +1,9 @@
 package emu.jvic;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+
+import emu.jvic.ui.ConfirmHandler;
 
 /**
  * The main entry point in to the cross-platform part of the JVic emulator. A multi-screen
@@ -16,10 +19,27 @@ public class JVicGdx extends Game {
    */
   private MachineScreen machineScreen;
   
+  /**
+   * Invoked by JVic whenever it would like the user to confirm an action.
+   */
+  private ConfirmHandler confirmHandler;
+  
+  /**
+   * Constructor for JVicGdx.
+   * 
+   * @param confirmHandler
+   */
+  public JVicGdx(ConfirmHandler confirmHandler) {
+    this.confirmHandler = confirmHandler;
+  }
+  
   @Override
   public void create () {
-    machineScreen = new MachineScreen();
+    machineScreen = new MachineScreen(confirmHandler);
     setScreen(machineScreen);
+    
+    // Stop the back key from immediately exiting the app.
+    Gdx.input.setCatchBackKey(true);
   }
   
   @Override

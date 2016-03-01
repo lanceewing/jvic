@@ -252,6 +252,15 @@ public class Machine {
   }
   
   /**
+   * Returns whether the Machine is paused or not.
+   * 
+   * @return true if the machine is paused; otherwise false.
+   */
+  public boolean isPaused() {
+    return paused;
+  }
+  
+  /**
    * Gets the MachineType of this Machine, i.e. either PAL or NTSC.
    * 
    * @return The MachineType of this Machine, i.e. either PAL or NTSC.
