@@ -18,9 +18,9 @@ import com.badlogic.gdx.utils.TimeUtils;
  */
 public class Keyboard {
 
-  public static final int SHIFT_LOCK = -3;
-  public static final int RUN_STOP   = -4;
-  public static final int RESTORE    = -5;
+  public static final int SHIFT_LOCK = 511;
+  public static final int RUN_STOP   = 510;
+  public static final int RESTORE    = 509;
 
   /**
    * Data used to convert Java keypresses into VIC 20 keypresses.
@@ -64,6 +64,7 @@ public class Keyboard {
     {Keys.X, 8, 4},
     {Keys.SHIFT_LEFT, 8, 2},
     {Keys.TAB, 8, 1},
+    {RUN_STOP, 8, 1},
     
     {Keys.F1, 16, 128},
     {Keys.SHIFT_RIGHT, 16, 64},
@@ -108,6 +109,35 @@ public class Keyboard {
    */
   private HashMap<Integer, int[]> keyConvHashMap;
 
+  
+  /**
+   * Holds the current state of the keyboard matrix and joystick switches.
+   */
+  private int keyMatrix[] = new int[513];
+  
+  /**
+   * Holds the last time that the key was pressed down, or 0 if it has since been released.
+   */
+  private long minKeyReleaseTimes[] = new long[512];
+  
+  /**
+   * Holds a queue of keycodes whose key release processing has been delayed. This is
+   * supported primarily for use with the Android virtual keyboard on some devices, 
+   * where the key pressed and release both get fired on release of the key, so have
+   * virtually no time between them.
+   */
+  private TreeMap<Long, Integer> delayedReleaseKeys = new TreeMap<Long, Integer>();
+  
+  /**
+   * Whether the SHIFT LOCK is currently on or not (this is a toggle).
+   */
+  private boolean shiftLockOn;
+  
+  /**
+   * Whether the RESTORE key is currently down or not.
+   */
+  private boolean restoreDown;
+  
   /**
    * Constructor for Keyboard.
    */
@@ -135,24 +165,6 @@ public class Keyboard {
   }
   
   /**
-   * Holds the current state of the keyboard matrix and joystick switches.
-   */
-  private int keyMatrix[] = new int[513];
-  
-  /**
-   * Holds the last time that the key was pressed down, or 0 if it has since been released.
-   */
-  private long minKeyReleaseTimes[] = new long[256];
-  
-  /**
-   * Holds a queue of keycodes whose key release processing has been delayed. This is
-   * supported primarily for use with the Android virtual keyboard on some devices, 
-   * where the key pressed and release both get fired on release of the key, so have
-   * virtually no time between them.
-   */
-  private TreeMap<Long, Integer> delayedReleaseKeys = new TreeMap<Long, Integer>();
-  
-  /**
    * Invoked when a key has been pressed.
    *
    * @param keycode The keycode of the key that has been pressed.
@@ -165,6 +177,23 @@ public class Keyboard {
     int keyDetails[] = (int[])keyConvHashMap.get(new Integer(keycode));
     if (keyDetails != null) {
       keyMatrix[keyDetails[1]] |= keyDetails[2];
+    } else {
+      // Special keycodes without direct mappings.
+      switch (keycode) {
+        case SHIFT_LOCK:
+          shiftLockOn = !shiftLockOn;
+          if (shiftLockOn) {
+            keyMatrix[8] |= 2;
+          } else {
+            keyMatrix[8] &= ~2;
+          }
+          break;
+        case RESTORE:
+          restoreDown = true;
+          break;
+        default:
+          break;
+      }
     }
   }
   
@@ -189,6 +218,16 @@ public class Keyboard {
       int keyDetails[] = (int[])keyConvHashMap.get(new Integer(keycode));
       if (keyDetails != null) {
         keyMatrix[keyDetails[1]] &= (~keyDetails[2]);
+      } else {
+        // Special keycodes without direct mappings.
+        if (keycode == RESTORE) {
+          restoreDown = true;
+        }
+      }
+      
+      // If SHIFT LOCK is on, we override the left shift key.
+      if ((keycode == Keys.SHIFT_LEFT) && shiftLockOn) {
+        keyMatrix[8] |= 2;
       }
     }
   }
