@@ -51,6 +51,8 @@ public class MachineScreen extends InputAdapter implements Screen {
   // UI components.
   private Texture joystickIcon;
   private Texture keyboardIcon;
+  private Texture joystickArrows;
+  private Texture joystickFire;
 
   private ViewportManager viewportManager;
   
@@ -85,6 +87,8 @@ public class MachineScreen extends InputAdapter implements Screen {
     
     keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
+    joystickArrows = new Texture("png/joystick_arrows.png");
+    joystickFire = new Texture("png/joystick_fire.png");
     
     viewportManager = new ViewportManager();
     
@@ -153,6 +157,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     }
     
     // TODO: For slower phones, might need to skip drawing some frames.
+    // TODO: Investigate whether the machine update can be moved in to a separate thread.
     
     if (render) {
       drawCount++;
@@ -223,7 +228,16 @@ public class MachineScreen extends InputAdapter implements Screen {
       batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
       batch.draw(keyboardType.getTexture(), 0, keyboardType.getRenderOffset());
     }
-    if (keyboardType.equals(KeyboardType.OFF)) {
+    else if (keyboardType.equals(KeyboardType.JOYSTICK)) {
+      if (viewportManager.isPortrait()) {
+        batch.draw(joystickArrows, 0, 0);
+        batch.draw(joystickFire, viewportManager.getCurrentViewport().getWorldWidth() - 135, 0);
+      } else {
+        batch.draw(joystickArrows, 0, 0, 200, 200);
+        batch.draw(joystickFire, viewportManager.getCurrentViewport().getWorldWidth() - 135, 0);
+      }
+    }
+    else if (keyboardType.equals(KeyboardType.OFF)) {
       // The keyboard and joystick icons are rendered only when an input type isn't showing.
       batch.setColor(c.r, c.g, c.b, 0.5f);
       if (viewportManager.isPortrait()) {
@@ -293,6 +307,8 @@ public class MachineScreen extends InputAdapter implements Screen {
     KeyboardType.dispose();
     keyboardIcon.dispose();
     joystickIcon.dispose();
+    joystickArrows.dispose();
+    joystickFire.dispose();
     screenPixmap.dispose();
     screenTexture.dispose();
     batch.dispose();
@@ -382,7 +398,11 @@ public class MachineScreen extends InputAdapter implements Screen {
     Vector2 touchXY = new Vector2(screenX, screenY);
     viewportManager.getCurrentViewport().unproject(touchXY);
     
-    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
+    if (keyboardType.equals(KeyboardType.JOYSTICK)) {
+
+      
+      
+    } else if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
       if (keycode != null) {
         machine.getKeyboard().keyReleased(keycode);
@@ -446,7 +466,7 @@ public class MachineScreen extends InputAdapter implements Screen {
       }
       
       if (joystickClicked) {
-        // TODO: Show/Hide joystick.
+        keyboardType = KeyboardType.JOYSTICK;
       }
     }
     
