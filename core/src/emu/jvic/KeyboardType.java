@@ -3,6 +3,7 @@ package emu.jvic;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 
+import emu.jvic.ui.ViewportManager;
 import static emu.jvic.io.Keyboard.*;
 
 /**
@@ -55,6 +56,10 @@ public enum KeyboardType {
   MOBILE_ON_SCREEN,
   OFF;
   
+  // Constants for the two sides of a keyboard..
+  public static final int LEFT = 0;
+  public static final int RIGHT = 1;
+  
   /**
    * The size of the keys in this KeyboardType.
    */
@@ -86,6 +91,11 @@ public enum KeyboardType {
   private int renderOffset;
   
   /**
+   * The number of sides that this keyboard has.
+   */
+  private int numOfSides;
+  
+  /**
    * Constructor for KeyboardType.
    * 
    * @param keyMap The position of each key within this KeyboardType.
@@ -96,8 +106,9 @@ public enum KeyboardType {
   KeyboardType(Integer[][][] keyMap, String[] keyboardImages, float opacity, int renderOffset) {
     this.keyMap = keyMap;
     this.keyboardImages = keyboardImages;
+    this.numOfSides = keyboardImages.length;
     this.textures = new Texture[keyboardImages.length];
-    for (int i=0; i<keyboardImages.length; i++) {
+    for (int i=0; i<numOfSides; i++) {
       this.textures[i] = new Texture(keyboardImages[i]);
     }
     this.keySize = (this.textures[0].getHeight() / this.keyMap[0].length);
@@ -121,7 +132,7 @@ public enum KeyboardType {
    * @return The keycode that is mapped to the given X and Y world coordinates, or null if there is not match.
    */
   public Integer getKeyCode(float x, float y) {
-    return getKeyCode(x, y, 0);
+    return getKeyCode(x, y, LEFT);
   }
   
   /**
@@ -179,7 +190,7 @@ public enum KeyboardType {
    */
   public boolean isInKeyboard(float x, float y) {
     // We only need to test the Y position since the keyboard image will always span the whole width.
-    return isInKeyboard(x, y, 0);
+    return isInKeyboard(x, y, LEFT);
   }
   
   /**
@@ -192,9 +203,25 @@ public enum KeyboardType {
    * @return true if the given X/Y position is within the keyboard image; otherwise false.
    */
   public boolean isInKeyboard(float x, float y, int side) {
-    // We only need to test the Y position since the keyboard image will always span the whole width.
-    // TODO: This needs to cater for the width of the keyboard now.
-    return  (isRendered() && (y < (getTextures()[side].getHeight() + renderOffset)) && (y > renderOffset));
+    if (isRendered()) {
+      boolean isInYBounds = (y < (getTextures()[side].getHeight() + renderOffset) && (y > renderOffset));
+      if (numOfSides == 1) {
+        // In this case, we only need to test the Y position since the keyboard image will span the whole width.
+        return isInYBounds;
+      } else {
+        // Must be two sides...
+        if (side == LEFT) {
+          // LEFT.
+          return (isInYBounds && (x < getTextures()[side].getWidth()));
+        } else {
+          // RIGHT.
+          return (isInYBounds && (x > (ViewportManager.getInstance().getWidth()  - getTextures()[side].getWidth())));
+        }
+      }
+    } else {
+      // isInKeyboard only applies to rendered keyboards.
+      return false;
+    }
   }
   
   /**
