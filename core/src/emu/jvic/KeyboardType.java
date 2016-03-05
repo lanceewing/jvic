@@ -52,7 +52,20 @@ public enum KeyboardType {
         1.0f,
         0
       ),
-  JOYSTICK,
+  JOYSTICK(
+        new Integer[][][] {{
+          { Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_9 },
+          { Keys.NUMPAD_4, null, Keys.NUMPAD_6 },
+          { Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_3 }
+        },
+        {
+          { Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0 }
+        }},
+        new String[] {"png/joystick_arrows.png", "png/joystick_fire.png"},
+        1.0f,
+        0
+      ),
   MOBILE_ON_SCREEN,
   OFF;
   
@@ -132,7 +145,11 @@ public enum KeyboardType {
    * @return The keycode that is mapped to the given X and Y world coordinates, or null if there is not match.
    */
   public Integer getKeyCode(float x, float y) {
-    return getKeyCode(x, y, LEFT);
+    if ((numOfSides == 1) || (x < getTexture(LEFT).getWidth())) {
+      return getKeyCode(x, y, LEFT);
+    } else {
+      return getKeyCode(x, y, RIGHT);
+    }
   }
   
   /**
@@ -168,9 +185,19 @@ public enum KeyboardType {
       case PORTRAIT_12x6:
         // First row of 12x6 layout is mapped by half key.
         if (keyRow == 0) x *= 2;
-        
+      
       case PORTRAIT_10x7:
         keyCode = keyMap[side][keyRow][(int)(x / keySize)];
+        break;
+      
+      case JOYSTICK:
+        if (side == RIGHT) {
+          x = x - (ViewportManager.getInstance().getWidth() - getTexture(RIGHT).getWidth());
+        }
+        int keyCol = (int)(x / keySize);
+        if (keyCol < keyMap[side][keyRow].length) {
+          keyCode = keyMap[side][keyRow][keyCol];
+        }
         break;
         
       default:
@@ -189,8 +216,11 @@ public enum KeyboardType {
    * @return true if the given X/Y position is within the keyboard image; otherwise false.
    */
   public boolean isInKeyboard(float x, float y) {
-    // We only need to test the Y position since the keyboard image will always span the whole width.
-    return isInKeyboard(x, y, LEFT);
+    if (numOfSides == 1) {
+      return isInKeyboard(x, y, LEFT);
+    } else {
+      return isInKeyboard(x, y, LEFT) || isInKeyboard(x, y, RIGHT);
+    }
   }
   
   /**

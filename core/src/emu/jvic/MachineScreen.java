@@ -51,8 +51,6 @@ public class MachineScreen extends InputAdapter implements Screen {
   // UI components.
   private Texture joystickIcon;
   private Texture keyboardIcon;
-  private Texture joystickArrows;
-  private Texture joystickFire;
 
   private ViewportManager viewportManager;
   
@@ -87,8 +85,6 @@ public class MachineScreen extends InputAdapter implements Screen {
     
     keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
-    joystickArrows = new Texture("png/joystick_arrows.png");
-    joystickFire = new Texture("png/joystick_fire.png");
     
     viewportManager = ViewportManager.getInstance();
     
@@ -224,18 +220,17 @@ public class MachineScreen extends InputAdapter implements Screen {
     batch.setProjectionMatrix(viewportManager.getCurrentCamera().combined);
     batch.enableBlending();
     batch.begin();
-    if (keyboardType.isRendered()) {
+    if (keyboardType.equals(KeyboardType.JOYSTICK)) {
+      if (viewportManager.isPortrait()) {
+        batch.draw(keyboardType.getTexture(KeyboardType.LEFT), 0, 0);
+        batch.draw(keyboardType.getTexture(KeyboardType.RIGHT), viewportManager.getWidth() - 135, 0);
+      } else {
+        batch.draw(keyboardType.getTexture(KeyboardType.LEFT), 0, 0, 201, 201);
+        batch.draw(keyboardType.getTexture(KeyboardType.RIGHT), viewportManager.getWidth() - 135, 0);
+      }
+    } else if (keyboardType.isRendered()) {
       batch.setColor(c.r, c.g, c.b, keyboardType.getOpacity());
       batch.draw(keyboardType.getTexture(), 0, keyboardType.getRenderOffset());
-    }
-    else if (keyboardType.equals(KeyboardType.JOYSTICK)) {
-      if (viewportManager.isPortrait()) {
-        batch.draw(joystickArrows, 0, 0);
-        batch.draw(joystickFire, viewportManager.getWidth() - 135, 0);
-      } else {
-        batch.draw(joystickArrows, 0, 0, 200, 200);
-        batch.draw(joystickFire, viewportManager.getWidth() - 135, 0);
-      }
     }
     else if (keyboardType.equals(KeyboardType.OFF)) {
       // The keyboard and joystick icons are rendered only when an input type isn't showing.
@@ -267,7 +262,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera.position.y = machine.getScreenHeight() - viewport.getWorldHeight()/2;
     camera.update();
     
-    if (keyboardType.isRendered()) {
+    if (keyboardType.isRendered() && !keyboardType.equals(KeyboardType.JOYSTICK)) {
       // Switch keyboard layout based on the orientation.
       keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
     }
@@ -303,8 +298,6 @@ public class MachineScreen extends InputAdapter implements Screen {
     KeyboardType.dispose();
     keyboardIcon.dispose();
     joystickIcon.dispose();
-    joystickArrows.dispose();
-    joystickFire.dispose();
     screenPixmap.dispose();
     screenTexture.dispose();
     batch.dispose();
@@ -317,7 +310,7 @@ public class MachineScreen extends InputAdapter implements Screen {
    * 
    * @return whether the input was processed 
    */
-  public boolean keyDown (int keycode) {
+  public boolean keyDown(int keycode) {
     machine.getKeyboard().keyPressed(keycode);
     machine.getJoystick().keyPressed(keycode);
     return true;
@@ -330,7 +323,7 @@ public class MachineScreen extends InputAdapter implements Screen {
    * 
    * @return whether the input was processed 
    */
-  public boolean keyUp (int keycode) {
+  public boolean keyUp(int keycode) {
     if (keycode == Keys.BACK) {
       if (keyboardType.equals(KeyboardType.OFF)) {
         if (Gdx.app.getType().equals(ApplicationType.Android)) {
@@ -365,7 +358,7 @@ public class MachineScreen extends InputAdapter implements Screen {
    * 
    * @return whether the input was processed 
    */
-  public boolean touchDown (int screenX, int screenY, int pointer, int button) {
+  public boolean touchDown(int screenX, int screenY, int pointer, int button) {
     // Convert the screen coordinates to world coordinates.
     Vector2 touchXY = viewportManager.unproject(screenX, screenY);
     
@@ -373,7 +366,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
       if (keycode != null) {
-        machine.getKeyboard().keyPressed(keycode);
+        keyDown(keycode);
       }
     }
     
@@ -388,28 +381,24 @@ public class MachineScreen extends InputAdapter implements Screen {
    * 
    * @return whether the input was processed 
    */
-  public boolean touchUp (int screenX, int screenY, int pointer, int button) {
+  public boolean touchUp(int screenX, int screenY, int pointer, int button) {
     // Convert the screen coordinates to world coordinates.
     Vector2 touchXY = viewportManager.unproject(screenX, screenY);
     
-    if (keyboardType.equals(KeyboardType.JOYSTICK)) {
-
-      
-      
-    } else if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
+    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
       if (keycode != null) {
-        machine.getKeyboard().keyReleased(keycode);
+        keyUp(keycode);
       }
-      
     } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
       // If the onscreen keyboard is being shown then if we receive a tap event, it won't be
       // on the virtual keyboard but must therefore be outside it. So we hide the keyboard.
       Gdx.input.setOnscreenKeyboardVisible(false);
       keyboardType = KeyboardType.OFF;
       
-    } else if (!keyboardType.equals(KeyboardType.OFF)) {
-      // If rendered keyboard is being shown, and the tap isn't within the keyboard, then we close the keyboard.
+    } else if (!keyboardType.equals(KeyboardType.OFF) && !keyboardType.equals(KeyboardType.JOYSTICK)) {
+      // If rendered keyboard is being shown, and the tap isn't within the keyboard, then we close the 
+      // keyboard, unless it is the JOYSTICK keyboard.
       keyboardType = KeyboardType.OFF;
       
     } else {
