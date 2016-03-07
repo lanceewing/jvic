@@ -23,6 +23,7 @@ public enum KeyboardType {
         }},
         new String[] {"png/keyboard_landscape.png"},
         0.5f,
+        0,
         0
       ),
   PORTRAIT_12x6(
@@ -36,6 +37,7 @@ public enum KeyboardType {
         }},
         new String[] {"png/keyboard_portrait_12x6.png"},
         1.0f,
+        0,
         0
       ),
   PORTRAIT_10x7(
@@ -50,6 +52,7 @@ public enum KeyboardType {
         }},
         new String[] {"png/keyboard_portrait_10x7.png"},
         1.0f,
+        0,
         0
       ),
   JOYSTICK(
@@ -64,7 +67,8 @@ public enum KeyboardType {
         }},
         new String[] {"png/joystick_arrows.png", "png/joystick_fire.png"},
         1.0f,
-        0
+        0,
+        100
       ),
   MOBILE_ON_SCREEN,
   OFF;
@@ -109,24 +113,37 @@ public enum KeyboardType {
   private int numOfSides;
   
   /**
+   * The Y value above which the keyboard will be closed.
+   */
+  private int closeHeight;
+  
+  /**
    * Constructor for KeyboardType.
    * 
    * @param keyMap The position of each key within this KeyboardType.
    * @param keyboardImages The path to the keyboard image file(s).
    * @param opacity The opacity of this KeyboardType.
    * @param renderOffset Offset from the bottom of the screen that the keyboard is rendered at.
+   * @param closeBuffer Buffer over the keyboard above which a tap or click will close the keyboard.
    */
-  KeyboardType(Integer[][][] keyMap, String[] keyboardImages, float opacity, int renderOffset) {
+  KeyboardType(Integer[][][] keyMap, String[] keyboardImages, float opacity, int renderOffset, int closeBuffer) {
     this.keyMap = keyMap;
     this.keyboardImages = keyboardImages;
     this.numOfSides = keyboardImages.length;
+    
+    int maxTextureHeight = 0;
     this.textures = new Texture[keyboardImages.length];
     for (int i=0; i<numOfSides; i++) {
       this.textures[i] = new Texture(keyboardImages[i]);
+      if (this.textures[i].getHeight() > maxTextureHeight) {
+        maxTextureHeight = this.textures[i].getHeight();
+      }
     }
+    
     this.keySize = (this.textures[0].getHeight() / this.keyMap[0].length);
     this.opacity = opacity;
     this.renderOffset = renderOffset;
+    this.closeHeight = maxTextureHeight + renderOffset + closeBuffer;
   }
 
   /**
@@ -302,6 +319,13 @@ public enum KeyboardType {
     return renderOffset;
   }
   
+  /**
+   * @return The height above which the keyboard will close.
+   */
+  public int getCloseHeight() {
+    return closeHeight;
+  }
+
   /**
    * Disposes of the libGDX Textures for all KeyboardTypes.
    */

@@ -197,10 +197,12 @@ public class MachineInputProcessor extends InputAdapter {
       Gdx.input.setOnscreenKeyboardVisible(false);
       keyboardType = KeyboardType.OFF;
       
-    } else if (!keyboardType.equals(KeyboardType.OFF) && !keyboardType.equals(KeyboardType.JOYSTICK)) {
-      // If rendered keyboard is being shown, and the tap isn't within the keyboard, then we close the 
-      // keyboard, unless it is the JOYSTICK keyboard.
-      keyboardType = KeyboardType.OFF;
+    } else if (!keyboardType.equals(KeyboardType.OFF)) {
+      // If rendered keyboard is being shown, and the tap isn't within the keyboard, but is 
+      // instead above the close height, then we close it.
+      if (touchXY.y > keyboardType.getCloseHeight()) {
+        keyboardType = KeyboardType.OFF;
+      }
       
     } else {
       // TODO: Need to handle the magic numbers in this block in a better way. 
