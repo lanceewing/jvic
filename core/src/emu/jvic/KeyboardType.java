@@ -57,13 +57,23 @@ public enum KeyboardType {
       ),
   JOYSTICK(
         new Integer[][][] {{
-          { Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_9 },
-          { Keys.NUMPAD_4, null, Keys.NUMPAD_6 },
-          { Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_3 }
+          { Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_9, Keys.NUMPAD_9, Keys.NUMPAD_9 },
+          { Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_9, Keys.NUMPAD_9, Keys.NUMPAD_9 },
+          { Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_8, Keys.NUMPAD_9, Keys.NUMPAD_9, Keys.NUMPAD_9 },
+          { Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_7, Keys.NUMPAD_8, Keys.NUMPAD_9, Keys.NUMPAD_6, Keys.NUMPAD_6, Keys.NUMPAD_6 },
+          { Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_4, null,          Keys.NUMPAD_6, Keys.NUMPAD_6, Keys.NUMPAD_6, Keys.NUMPAD_6 },
+          { Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_4, Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_3, Keys.NUMPAD_6, Keys.NUMPAD_6, Keys.NUMPAD_6 },
+          { Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_3, Keys.NUMPAD_3, Keys.NUMPAD_3 },
+          { Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_3, Keys.NUMPAD_3, Keys.NUMPAD_3 },
+          { Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_1, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_2, Keys.NUMPAD_3, Keys.NUMPAD_3, Keys.NUMPAD_3 }
         },
         {
-          { Keys.NUMPAD_0 },
-          { Keys.NUMPAD_0 }
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 },
+          { Keys.NUMPAD_0, Keys.NUMPAD_0, Keys.NUMPAD_0 }
         }},
         new String[] {"png/joystick_arrows.png", "png/joystick_fire.png"},
         1.0f,
