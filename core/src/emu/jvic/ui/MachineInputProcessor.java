@@ -39,13 +39,48 @@ public class MachineInputProcessor extends InputAdapter {
   private ViewportManager viewportManager;
   
   /**
+   * We only track up to a maximum number of simultaneous touch events.
+   */
+  private static final int MAX_SIMULTANEOUS_TOUCH_EVENTS = 5;
+  
+  /**
+   * Array of current touches indexed by touch pointer ID. This Map allows us to keep drag of
+   * active dragging. If a drag happens to start within a keyboard key and then leaves it
+   * before being released, we need to automatically fire a key up event for our virtual
+   * keyboard. Without handling this, drags can completely confuse the keyboard state. And
+   * the joystick logic relies on dragging, so this needs to work well.
+   */
+  private TouchInfo[] touches;
+  
+  /**
+   * Represents the touch info for a particular pointer ID.
+   */
+  class TouchInfo {
+    float startX;
+    float startY;
+    float lastX;
+    float lastY;
+    Integer lastKey;
+  }
+  
+  /**
    * Constructor for MachineInputProcessor.
+   * 
+   * @param machineScreen 
+   * @param confirmHandler 
    */
   public MachineInputProcessor(MachineScreen machineScreen, ConfirmHandler confirmHandler) {
     this.machineScreen = machineScreen;
     this.confirmHandler = confirmHandler;
     this.keyboardType = KeyboardType.OFF;
     this.viewportManager = ViewportManager.getInstance();
+    
+    // Initialise the touch info for max num of pointers (multi touch). We create these up 
+    // front and reuse them so as to avoid garbage collection.
+    this.touches = new TouchInfo[MAX_SIMULTANEOUS_TOUCH_EVENTS];
+    for (int i=0; i<MAX_SIMULTANEOUS_TOUCH_EVENTS; i++) {
+      touches[i] = new TouchInfo();
+    }
   }
   
   /** 
@@ -107,14 +142,26 @@ public class MachineInputProcessor extends InputAdapter {
     // Convert the screen coordinates to world coordinates.
     Vector2 touchXY = viewportManager.unproject(screenX, screenY);
     
+    // Update the touch info for this pointer.
+    TouchInfo touchInfo = null;
+    if (pointer < MAX_SIMULTANEOUS_TOUCH_EVENTS) {
+      touchInfo = touches[pointer];
+      touchInfo.startX = touchInfo.lastX = touchXY.x;
+      touchInfo.startY = touchInfo.lastY = touchXY.y;
+      touchInfo.lastKey = null;
+    }
+    
     // If the tap is within the keyboard...
     if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
       if (keycode != null) {
         keyDown(keycode);
       }
+      if (touchInfo != null) {
+        touchInfo.lastKey = keycode;
+      }
     }
-    Gdx.app.log("touchDown", "screenX: " + screenX + ", screenY: " + screenY);
+    
     return true;
   }
 
@@ -129,6 +176,15 @@ public class MachineInputProcessor extends InputAdapter {
   public boolean touchUp(int screenX, int screenY, int pointer, int button) {
     // Convert the screen coordinates to world coordinates.
     Vector2 touchXY = viewportManager.unproject(screenX, screenY);
+    
+    // Update the touch info for this pointer.
+    TouchInfo touchInfo = null;
+    if (pointer < MAX_SIMULTANEOUS_TOUCH_EVENTS) {
+      touchInfo = touches[pointer];
+      touchInfo.lastX = touchXY.x;
+      touchInfo.lastY = touchXY.y;
+      touchInfo.lastKey = null;
+    }
     
     if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
@@ -196,7 +252,48 @@ public class MachineInputProcessor extends InputAdapter {
         keyboardType = KeyboardType.JOYSTICK;
       }
     }
-    Gdx.app.log("touchUp", "screenX: " + screenX + ", screenY: " + screenY);
+    
+    return true;
+  }
+  
+  /** 
+   * Called when a finger or the mouse was dragged.
+   * 
+   * @param pointer the pointer for the event.
+   * 
+   * @return whether the input was processed 
+   */
+  public boolean touchDragged (int screenX, int screenY, int pointer) {
+    // Convert the screen coordinates to world coordinates.
+    Vector2 touchXY = viewportManager.unproject(screenX, screenY);
+    
+    // Update the touch info for this pointer.
+    TouchInfo touchInfo = null;
+    if (pointer < MAX_SIMULTANEOUS_TOUCH_EVENTS) {
+      touchInfo = touches[pointer];
+      
+      Integer lastKey = touchInfo.lastKey;
+      Integer newKey = null;
+      
+      if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
+        newKey = keyboardType.getKeyCode(touchXY.x, touchXY.y);   
+      }
+      
+      // If the drag has resulting in the position moving in to or out of a key, then
+      // we simulate the coresponding key events.
+      if ((lastKey != null) && ((newKey == null) || (newKey != lastKey))) {
+        keyUp(lastKey);
+      }
+      if ((newKey != null) && ((lastKey == null) || (lastKey != newKey))) {
+        keyDown(newKey);
+      }
+      
+      // Finally we update the new last position and last key for this pointer.
+      touchInfo.lastX = touchXY.x;
+      touchInfo.lastY = touchXY.y;
+      touchInfo.lastKey = newKey;
+    }
+    
     return true;
   }
   
