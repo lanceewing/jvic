@@ -2,10 +2,6 @@ package emu.jvic;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Input.Buttons;
-import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -14,14 +10,13 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import emu.jvic.ui.ConfirmHandler;
-import emu.jvic.ui.ConfirmResponseHandler;
+import emu.jvic.ui.MachineInputProcessor;
 import emu.jvic.ui.ViewportManager;
 
 /**
@@ -30,13 +25,18 @@ import emu.jvic.ui.ViewportManager;
  * 
  * @author Lance Ewing
  */
-public class MachineScreen extends InputAdapter implements Screen {
+public class MachineScreen implements Screen {
 
   /**
    * This represents the VIC 20 machine.
    */
   private Machine machine;
 
+  /**
+   * The InputProcessor for the MachineScreen. Handles the key and touch input.
+   */
+  private MachineInputProcessor machineInputProcessor;
+  
   /**
    * SpriteBatch shared by all rendered components.
    */
@@ -55,30 +55,16 @@ public class MachineScreen extends InputAdapter implements Screen {
   private ViewportManager viewportManager;
   
   /**
-   * Invoked by JVic whenever it would like the user to confirm an action.
-   */
-  private ConfirmHandler confirmHandler;
-  
-  /**
-   * The type of keyboard currently being displayed.
-   */
-  private KeyboardType keyboardType;
-  
-  /**
    * Constructor for MachineScreen.
    * 
    * @param confirmHandler
    */
   public MachineScreen(ConfirmHandler confirmHandler) {
-    this.confirmHandler = confirmHandler;
-    
     this.machine = new Machine();
     
     batch = new SpriteBatch();
     screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
     screenTexture = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-    
-    this.keyboardType = KeyboardType.OFF;
     
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
@@ -88,10 +74,11 @@ public class MachineScreen extends InputAdapter implements Screen {
     
     viewportManager = ViewportManager.getInstance();
     
-    // Register this MachineScreen instance as the input processor for keys, etc.
-    Gdx.input.setInputProcessor(this);
+    // Create and register an input processor for keys, etc.
+    machineInputProcessor = new MachineInputProcessor(this, confirmHandler);
+    Gdx.input.setInputProcessor(machineInputProcessor);
   }
-
+  
   private long lastLogTime;
   private long avgRenderTime;
   private long avgUpdateTime;
@@ -184,6 +171,9 @@ public class MachineScreen extends InputAdapter implements Screen {
   }
 
   private void draw() {
+    // Get the KeyboardType currently being used by the MachineScreenProcessor.
+    KeyboardType keyboardType = machineInputProcessor.getKeyboardType();
+    
     Gdx.gl.glClearColor(0, 0, 0, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     
@@ -262,11 +252,7 @@ public class MachineScreen extends InputAdapter implements Screen {
     camera.position.y = machine.getScreenHeight() - viewport.getWorldHeight()/2;
     camera.update();
     
-    if (keyboardType.isRendered() && !keyboardType.equals(KeyboardType.JOYSTICK)) {
-      // Switch keyboard layout based on the orientation.
-      keyboardType = (height > width? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-    }
-    
+    machineInputProcessor.resize(width, height);
     viewportManager.update(width, height);
   }
 
@@ -303,155 +289,12 @@ public class MachineScreen extends InputAdapter implements Screen {
     batch.dispose();
   }
   
-  /** 
-   * Called when a key was pressed
-   * 
-   * @param keycode one of the constants in {@link Input.Keys}
-   * 
-   * @return whether the input was processed 
+  /**
+   * Gets the Machine that this MachineScreen is running.
+   *  
+   * @return The Machine that this MachineScreen is running.
    */
-  public boolean keyDown(int keycode) {
-    machine.getKeyboard().keyPressed(keycode);
-    machine.getJoystick().keyPressed(keycode);
-    return true;
-  }
-  
-  /** 
-   * Called when a key was released
-   * 
-   * @param keycode one of the constants in {@link Input.Keys}
-   * 
-   * @return whether the input was processed 
-   */
-  public boolean keyUp(int keycode) {
-    if (keycode == Keys.BACK) {
-      if (keyboardType.equals(KeyboardType.OFF)) {
-        if (Gdx.app.getType().equals(ApplicationType.Android)) {
-          machine.setPaused(true);
-          confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
-            public void yes() {
-              Gdx.app.exit();
-            }
-            public void no() {
-              machine.setPaused(false);
-            }
-          });
-        }
-      } else {
-        // If a keyboard is being shown, then BACK will close this.
-        keyboardType = KeyboardType.OFF;
-      }
-    } else {
-      machine.getKeyboard().keyReleased(keycode);
-      machine.getJoystick().keyReleased(keycode);
-    }
-    return true;
-  }
-  
-  /** 
-   * Called when the screen was touched or a mouse button was pressed. The button parameter will be {@link Buttons#LEFT} on iOS.
-   * 
-   * @param screenX The x coordinate, origin is in the upper left corner
-   * @param screenY The y coordinate, origin is in the upper left corner
-   * @param pointer the pointer for the event.
-   * @param button the button
-   * 
-   * @return whether the input was processed 
-   */
-  public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-    // Convert the screen coordinates to world coordinates.
-    Vector2 touchXY = viewportManager.unproject(screenX, screenY);
-    
-    // If the tap is within the keyboard...
-    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
-      Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
-      if (keycode != null) {
-        keyDown(keycode);
-      }
-    }
-    
-    return true;
-  }
-
-  /** 
-   * Called when a finger was lifted or a mouse button was released. The button parameter will be {@link Buttons#LEFT} on iOS.
-   * 
-   * @param pointer the pointer for the event.
-   * @param button the button
-   * 
-   * @return whether the input was processed 
-   */
-  public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-    // Convert the screen coordinates to world coordinates.
-    Vector2 touchXY = viewportManager.unproject(screenX, screenY);
-    
-    if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
-      Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
-      if (keycode != null) {
-        keyUp(keycode);
-      }
-    } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
-      // If the onscreen keyboard is being shown then if we receive a tap event, it won't be
-      // on the virtual keyboard but must therefore be outside it. So we hide the keyboard.
-      Gdx.input.setOnscreenKeyboardVisible(false);
-      keyboardType = KeyboardType.OFF;
-      
-    } else if (!keyboardType.equals(KeyboardType.OFF) && !keyboardType.equals(KeyboardType.JOYSTICK)) {
-      // If rendered keyboard is being shown, and the tap isn't within the keyboard, then we close the 
-      // keyboard, unless it is the JOYSTICK keyboard.
-      keyboardType = KeyboardType.OFF;
-      
-    } else {
-      // TODO: Need to handle the magic numbers in this block in a better way. 
-      boolean keyboardClicked = false;
-      boolean joystickClicked = false;
-      
-      if (viewportManager.isPortrait()) {
-        // Portrait.
-        if (touchXY.y < 130) {
-          if (touchXY.x < 140) {
-            joystickClicked = true;
-            
-          } else if (touchXY.x > (viewportManager.getWidth() - 145)) {
-            keyboardClicked = true;
-            
-          } else if (Gdx.app.getType().equals(ApplicationType.Android)) {
-            // Mobile soft keyboard is only available in portrait mode (debug only)
-            int midWidth = (int)(viewportManager.getWidth() - viewportManager.getWidth()/2);
-            if ((touchXY.x > (midWidth - 70)) && 
-                (touchXY.y < (midWidth + 70))) {
-              Gdx.input.setOnscreenKeyboardVisible(true);
-              keyboardType = KeyboardType.MOBILE_ON_SCREEN;
-            }
-          }
-        }
-      } else {
-        // Landscape.
-        int screenTop = (int)viewportManager.getHeight();
-        if (touchXY.y > (screenTop - 140)) {
-          if (touchXY.x < 140) {
-            joystickClicked = true;
-            
-          } else if (touchXY.x > (viewportManager.getWidth() - 150)) {
-            keyboardClicked = true;
-          }
-        }
-      }
-      
-      if (keyboardClicked) {
-        if (keyboardType.equals(KeyboardType.OFF)) {
-          keyboardType = (viewportManager.isPortrait()? KeyboardType.PORTRAIT_10x7 : KeyboardType.LANDSCAPE);
-          viewportManager.update();
-        } else {
-          keyboardType = KeyboardType.OFF;
-        }
-      }
-      
-      if (joystickClicked) {
-        keyboardType = KeyboardType.JOYSTICK;
-      }
-    }
-    
-    return true;
+  public Machine getMachine() {
+    return machine;
   }
 }
