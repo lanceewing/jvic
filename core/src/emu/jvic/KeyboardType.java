@@ -191,9 +191,17 @@ public enum KeyboardType {
    */
   public Integer getKeyCode(float x, float y, int side) {
     Integer keyCode = null;
+    int keyRow = 0;
     
-    // Work out the row for this x/y position. This is common to all layouts.
-    int keyRow = (int)((textures[side].getHeight() - y + renderOffset) / keySize);
+    // If we're showing the mini version of the joystick, adjust the height here.
+    if (equals(JOYSTICK) && !ViewportManager.getInstance().isPortrait() && (side == LEFT)) {
+      // TODO: Make this a flag in the construction of a KeyboardType.
+      keyRow = (int)((textures[side].getHeight() - (y * 2) + renderOffset) / keySize);
+      
+    } else {
+      keyRow = (int)((textures[side].getHeight() - y + renderOffset) / keySize);
+    }
+
     if (keyRow > keyMap[side].length) keyRow = keyMap[side].length - 1;
     
     switch (this) {
@@ -218,6 +226,9 @@ public enum KeyboardType {
         break;
       
       case JOYSTICK:
+        if (!ViewportManager.getInstance().isPortrait() && (side == LEFT)) {
+          x = x * 2;
+        }
         if (side == RIGHT) {
           x = x - (ViewportManager.getInstance().getWidth() - getTexture(RIGHT).getWidth());
         }
@@ -261,7 +272,15 @@ public enum KeyboardType {
    */
   public boolean isInKeyboard(float x, float y, int side) {
     if (isRendered()) {
-      boolean isInYBounds = (y < (getTextures()[side].getHeight() + renderOffset) && (y > renderOffset));
+      int textureHeight = getTextures()[side].getHeight();
+      int textureWidth = getTextures()[side].getWidth();
+      
+      if (this.equals(JOYSTICK) && !ViewportManager.getInstance().isPortrait() && (side == LEFT)) {
+        textureHeight = textureHeight / 2;
+        textureWidth = textureWidth / 2;
+      }
+      
+      boolean isInYBounds = (y < (textureHeight + renderOffset) && (y > renderOffset));
       if (numOfSides == 1) {
         // In this case, we only need to test the Y position since the keyboard image will span the whole width.
         return isInYBounds;
@@ -269,10 +288,10 @@ public enum KeyboardType {
         // Must be two sides...
         if (side == LEFT) {
           // LEFT.
-          return (isInYBounds && (x < getTextures()[side].getWidth()));
+          return (isInYBounds && (x < textureWidth));
         } else {
           // RIGHT.
-          return (isInYBounds && (x > (ViewportManager.getInstance().getWidth()  - getTextures()[side].getWidth())));
+          return (isInYBounds && (x > (ViewportManager.getInstance().getWidth() - textureWidth)));
         }
       }
     } else {
