@@ -7,7 +7,7 @@ package emu.jvic;
  */
 public enum MachineType {
   
-  PAL(1108405, 284, 312, 208, 272, 32, 24, (1000 / 50)),
+  PAL(1108405, 284, 312, 208, 272, 32, 24, 50),
   NTSC(1022727, 260, 261, 204, 252, 0, 0, (1000 / 60));
   
   private int cyclesPerSecond;
@@ -17,6 +17,7 @@ public enum MachineType {
   private int visibleScreenHeight;
   private int horizontalOffset;
   private int verticalOffset;
+  private int framesPerSecond;
   private int frameDuration;
   
   /**
@@ -29,10 +30,10 @@ public enum MachineType {
    * @param visibleScreenHeight
    * @param horizontalOffset
    * @param verticalOffset
-   * @param frameDuration
+   * @param framesPerSecond
    */
   MachineType(int cyclesPerSecond, int totalScreenWidth, int totalScreenHeight, int visibleScreenWidth, int visibleScreenHeight, 
-      int horizontalOffset, int verticalOffset, int frameDuration) {
+      int horizontalOffset, int verticalOffset, int framesPerSecond) {
     this.cyclesPerSecond = cyclesPerSecond;
     this.totalScreenWidth = totalScreenWidth;
     this.totalScreenHeight = totalScreenHeight;
@@ -40,7 +41,8 @@ public enum MachineType {
     this.visibleScreenHeight = visibleScreenHeight;
     this.horizontalOffset = horizontalOffset;
     this.verticalOffset = verticalOffset;
-    this.frameDuration = frameDuration;
+    this.framesPerSecond = framesPerSecond;
+    this.frameDuration = 1000/framesPerSecond;
   }
   
   /**
@@ -90,6 +92,13 @@ public enum MachineType {
    */
   public int getVerticalOffset() {
     return verticalOffset;
+  }
+  
+  /**
+   * @return the framesPerSecond
+   */
+  public int getFramesPerSecond() {
+    return framesPerSecond;
   }
 
   /**

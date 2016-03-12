@@ -229,6 +229,10 @@ public class Machine {
     return vic.getFramePixels();
   }
   
+  public boolean isFrameReady() {
+    return vic.isFrameReady();
+  }
+  
   /**
    * Emulates a single machine cycle.
    * 

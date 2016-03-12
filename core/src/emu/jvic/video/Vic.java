@@ -373,7 +373,8 @@ public class Vic extends MemoryMappedChip {
     cellColour = 0;
     fetchToggle = FETCH_SCREEN_CODE;
     charMemoryCellDepthStart = charMemoryStart;
-    framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];  // + 4];
+    // TODO: Have a queue of ready framePixels arrays. Skip a frame if this grows to three in size??
+    framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
   }
   
   /**
@@ -583,7 +584,7 @@ public class Vic extends MemoryMappedChip {
    * @return true If a screen repaint is required due to the frame render having completed. 
    */
   public boolean emulateCycle() {
-    boolean frameRenderComplete = false;
+    //boolean frameRenderComplete = false;
     int charDataOffset = 0;
     int tempColour = 0;
     
@@ -784,7 +785,14 @@ public class Vic extends MemoryMappedChip {
     return frameRenderComplete;
   }
   
+  private boolean frameRenderComplete;
+
+  public boolean isFrameReady() {
+    return frameRenderComplete;
+  }
+  
   public int[] getFramePixels() {
+    frameRenderComplete = false;
     return framePixels;
   }
 }

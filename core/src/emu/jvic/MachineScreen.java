@@ -33,6 +33,11 @@ public class MachineScreen implements Screen {
   private Machine machine;
 
   /**
+   * The Thread that updates the machine at the expected rate.
+   */
+  private MachineRunnable machineRunnable;
+  
+  /**
    * The InputProcessor for the MachineScreen. Handles the key and touch input.
    */
   private MachineInputProcessor machineInputProcessor;
@@ -61,6 +66,7 @@ public class MachineScreen implements Screen {
    */
   public MachineScreen(ConfirmHandler confirmHandler) {
     this.machine = new Machine();
+    this.machineRunnable = new MachineRunnable(this.machine);
     
     batch = new SpriteBatch();
     screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
@@ -77,11 +83,13 @@ public class MachineScreen implements Screen {
     // Create and register an input processor for keys, etc.
     machineInputProcessor = new MachineInputProcessor(this, confirmHandler);
     Gdx.input.setInputProcessor(machineInputProcessor);
+    
+    Thread machineThread = new Thread(this.machineRunnable);
+    machineThread.start();
   }
   
   private long lastLogTime;
   private long avgRenderTime;
-  private long avgUpdateTime;
   private long avgDrawTime;
   private long renderCount;
   private long drawCount;
@@ -112,40 +120,31 @@ public class MachineScreen implements Screen {
   //  02-20 23:57:09.762: I/RenderTime(32375): avgUpdateTime: 7487957 avgDrawTime: 3180946 avgRenderTime: 10070630 ns renderCount: 8123 delta: 0.013127 fps: 62
   //  02-20 23:57:19.773: I/RenderTime(32375): avgUpdateTime: 7505270 avgDrawTime: 3182673 avgRenderTime: 10087244 ns renderCount: 8749 delta: 0.015861 fps: 64
   
+
   @Override
   public void render(float delta) {
     // Note: On some android phones, the render method is invoked over 8000 times a second.
     long renderStartTime = TimeUtils.nanoTime();
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
-    long updateEndTime = renderStartTime;
     
     // Update the machine's state, but only if the machine is not paused.
-    boolean render = false;
+    boolean draw = false;
     if (machine.isPaused()) {
       // When paused, we limit the draw frequency since there isn't anything to change.
-      render = ((fps < 30) || ((renderCount % (fps/30)) == 0));
+      draw = ((fps < 30) || ((renderCount % (fps/30)) == 0));
       
     } else {
-      // When not paused, the Machine tells us when to render.
-      render = machine.update(delta);
-    
-      updateEndTime = TimeUtils.nanoTime();
-      long updateDuration = updateEndTime - renderStartTime;
-      if (renderCount == 0) {
-        avgUpdateTime = updateDuration;
-      } else {
-        avgUpdateTime = ((avgUpdateTime * renderCount) + updateDuration) / (renderCount + 1);
-      }
+      draw = machine.isFrameReady();
     }
     
     // TODO: For slower phones, might need to skip drawing some frames.
     // TODO: Investigate whether the machine update can be moved in to a separate thread.
     
-    if (render) {
+    if (draw) {
       drawCount++;
       draw();
-      long drawDuration = TimeUtils.nanoTime() - updateEndTime;
+      long drawDuration = TimeUtils.nanoTime() - renderStartTime;
       if (renderCount == 0) {
         avgDrawTime = drawDuration;
       } else {
@@ -165,8 +164,8 @@ public class MachineScreen implements Screen {
     if ((lastLogTime == 0) || (renderStartTime - lastLogTime > 10000000000L)) {
       lastLogTime = renderStartTime;
       Gdx.app.log("RenderTime", String.format(
-          "[%d] avgUpdateTime: %d avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
-          drawCount, avgUpdateTime, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
+          "[%d] avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
+          drawCount, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
     }
   }
 
@@ -260,12 +259,14 @@ public class MachineScreen implements Screen {
   public void pause() {
     // On Android, this is also called when the "Home" button is pressed.
     machine.setPaused(true);
+    machineRunnable.pause();
   }
 
   @Override
   public void resume() {
     KeyboardType.init();
     machine.setPaused(false);
+    machineRunnable.resume();
   }
   
   @Override
@@ -287,6 +288,7 @@ public class MachineScreen implements Screen {
     screenPixmap.dispose();
     screenTexture.dispose();
     batch.dispose();
+    machineRunnable.stop();
   }
   
   /**
