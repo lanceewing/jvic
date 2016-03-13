@@ -59,6 +59,8 @@ public class MachineScreen implements Screen {
 
   private ViewportManager viewportManager;
   
+  private int[] currentFramePixels;
+  
   /**
    * Constructor for MachineScreen.
    * 
@@ -135,11 +137,15 @@ public class MachineScreen implements Screen {
       draw = ((fps < 30) || ((renderCount % (fps/30)) == 0));
       
     } else {
-      draw = machine.isFrameReady();
+      // Check if the Machine has a frame ready to be displayed.
+      int[] framePixels = machine.getFramePixels();
+      if (framePixels != null) {
+        currentFramePixels = framePixels;
+        draw = true;
+      }
     }
     
     // TODO: For slower phones, might need to skip drawing some frames.
-    // TODO: Investigate whether the machine update can be moved in to a separate thread.
     
     if (draw) {
       drawCount++;
@@ -176,14 +182,16 @@ public class MachineScreen implements Screen {
     Gdx.gl.glClearColor(0, 0, 0, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     
-    // This is probably not the most efficient way of getting the pixels to the GPU, but
-    // will suffice for this initial conversion of JVic. I'll spend more time profiling 
-    // other options in the future. It's possible that we could get the Vic class to 
-    // write directly in to the Pixmap ByteBuffer. This copy is done natively though, so
-    // is potentially not adding that much overhead. I'm also wondering whether an opengl
-    // shader can take care of some of the work, but need to research that further.
-    BufferUtils.copy(machine.getFramePixels(), 0, screenPixmap.getPixels(), 
-        machine.getMachineType().getTotalScreenWidth() * machine.getMachineType().getTotalScreenHeight());
+    if (currentFramePixels != null) {
+      // This is probably not the most efficient way of getting the pixels to the GPU, but
+      // will suffice for this initial conversion of JVic. I'll spend more time profiling 
+      // other options in the future. It's possible that we could get the Vic class to 
+      // write directly in to the Pixmap ByteBuffer. This copy is done natively though, so
+      // is potentially not adding that much overhead. I'm also wondering whether an opengl
+      // shader can take care of some of the work, but need to research that further.
+      BufferUtils.copy(currentFramePixels, 0, screenPixmap.getPixels(), 
+          machine.getMachineType().getTotalScreenWidth() * machine.getMachineType().getTotalScreenHeight());
+    }
 
     // Updates the screen Texture with the Pixmap frame data.
     screenTexture.draw(screenPixmap, 0, 0);

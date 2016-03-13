@@ -1,10 +1,7 @@
 package emu.jvic;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.WindowedMean;
 import com.badlogic.gdx.utils.TimeUtils;
-
-import emu.jvic.util.Sync;
 
 /**
  * Using this MachineRunnable with a Thread is an alternative to relying on the GDX
@@ -47,8 +44,6 @@ public class MachineRunnable implements Runnable {
    */
   private Machine machine;
   
-  private long lastFrameTime = System.nanoTime();
-  private float deltaTime = 0;
   private long frameStart = System.nanoTime();
   private int framesThisSecond = 0;
   private int framesLastSecond;
@@ -58,7 +53,7 @@ public class MachineRunnable implements Runnable {
   private boolean exit = false;
   private boolean paused = false;
   
-  private WindowedMean deltaTimeMean = new WindowedMean(5);
+  private long lastTime = System.nanoTime();
   
   /**
    * Constructor for MachineRunnable.
@@ -73,16 +68,16 @@ public class MachineRunnable implements Runnable {
    * Executes the Machine instance.
    */
   public void run () {
+    int nanosPerFrame = (1000000000 / machine.getMachineType().getFramesPerSecond());
+    boolean skipRender = false;
+    
     while (true) {
-      boolean resume = false;
-      
       if (paused) {
         synchronized (this) {
           try {
             while (paused) {
               wait();
             }
-            resume = true;
           } catch (InterruptedException e) {
             Gdx.app.log("MachineRunnable", e.getMessage(), e);
           }
@@ -92,22 +87,16 @@ public class MachineRunnable implements Runnable {
       if (exit) return;
 
       long time = TimeUtils.nanoTime();
-      deltaTime = (time - lastFrameTime) / 1000000000.0f;
-      lastFrameTime = time;
-
-      // After pause deltaTime can have somewhat huge value that destabilizes the mean, so let's cut it off
-      if (!resume) {
-        deltaTimeMean.addValue(deltaTime);
-      } else {
-        deltaTime = 0;
-      }
       
       // TODO: Input events should ideally be processed here, if we can figure out how to do it outside of the UI thread that is.
       
       long updateStartTime = TimeUtils.nanoTime();
       
       // Updates the Machine's state for the time that has passed.
-      machine.update(deltaTimeMean.getMean() == 0 ? deltaTime : deltaTimeMean.getMean());
+      machine.update(skipRender);
+      
+      // TODO: Experimental solution to skip VIC frames on slower devices.
+      //skipRender = !skipRender;
       
       long updateEndTime = TimeUtils.nanoTime();
       long updateDuration = updateEndTime - updateStartTime;
@@ -117,17 +106,21 @@ public class MachineRunnable implements Runnable {
         avgUpdateTime = ((avgUpdateTime * frameCount) + updateDuration) / (frameCount + 1);
       }
       
+      // TODO: Decide whether this Sync mechanism is any better than a simple yield approach as used below.
       // Utilises a highly accurate FPS sync take from LWJGL project.
-      Sync.sync(machine.getMachineType().getFramesPerSecond());
+      //Sync.sync(machine.getMachineType().getFramesPerSecond() * 2);
       
-      if (time - frameStart > 1000000000) {
+      // Throttle at expected FPS.
+      while (TimeUtils.nanoTime() - lastTime <= 0L) {
+          Thread.yield();
+      }
+      lastTime += nanosPerFrame;
+      
+      if (time - frameStart > 1000000000l) {
         framesLastSecond = framesThisSecond;
         framesThisSecond = 0;
         frameStart = time;
-        Gdx.app.log("MachineRunnable", 
-            "fps: " + framesLastSecond + 
-            ", delta (mean): " + (deltaTimeMean.getMean() == 0 ? deltaTime : deltaTimeMean.getMean()) + 
-            ", avgUpdateTime: " + avgUpdateTime);
+        Gdx.app.log("MachineRunnable", "fps: " + framesLastSecond + ", avgUpdateTime: " + avgUpdateTime);
       }
       framesThisSecond++;
     }

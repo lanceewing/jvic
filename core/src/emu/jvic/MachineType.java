@@ -19,6 +19,7 @@ public enum MachineType {
   private int verticalOffset;
   private int framesPerSecond;
   private int frameDuration;
+  private int cyclesPerFrame;
   
   /**
    * Constructor for MachineType.
@@ -43,6 +44,7 @@ public enum MachineType {
     this.verticalOffset = verticalOffset;
     this.framesPerSecond = framesPerSecond;
     this.frameDuration = 1000/framesPerSecond;
+    this.cyclesPerFrame = cyclesPerSecond/framesPerSecond;
   }
   
   /**
@@ -106,5 +108,12 @@ public enum MachineType {
    */
   public int getFrameDuration() {
     return frameDuration;
+  }
+
+  /**
+   * @return the cyclesPerFrame
+   */
+  public int getCyclesPerFrame() {
+    return cyclesPerFrame;
   }
 }

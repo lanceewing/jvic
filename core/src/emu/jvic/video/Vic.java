@@ -273,9 +273,31 @@ public class Vic extends MemoryMappedChip {
   private int masterVolume;
   
   /**
-   * Holds the pixel data for the TV frame screen.
+   * Represents the data for one VIC frame.
    */
-  private int framePixels[];
+  class Frame {
+    
+    /**
+     * Holds the pixel data for the TV frame screen.
+     */
+    int framePixels[];
+    
+    /**
+     * Says whether this frame is ready to be blitted to the GPU.
+     */
+    boolean ready;
+  }
+  
+  /**
+   * An array of two Frames, one being the one that the VIC is currently writing to,
+   * the other being the last one that was completed and ready to blit.
+   */
+  private Frame[] frames;
+  
+  /**
+   * The index of the active frame within the frames. This will toggle between 0 and 1.
+   */
+  private int activeFrame;
   
   /**
    * Constructor for VIC.
@@ -373,8 +395,15 @@ public class Vic extends MemoryMappedChip {
     cellColour = 0;
     fetchToggle = FETCH_SCREEN_CODE;
     charMemoryCellDepthStart = charMemoryStart;
+    
     // TODO: Have a queue of ready framePixels arrays. Skip a frame if this grows to three in size??
-    framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames = new Frame[2];
+    frames[0] = new Frame();
+    frames[0].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[0].ready = false;
+    frames[1] = new Frame();
+    frames[1].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[1].ready = false;
   }
   
   /**
@@ -572,6 +601,43 @@ public class Vic extends MemoryMappedChip {
   }
   
   /**
+   * Emulates a cycle where rendering is skipped. This is intended to be used by every cycle
+   * in a frame whose rendering is being skipped. All this method does is make sure that the
+   * vertical counter register is updated. Everything else is hidden from the CPU, so doesn't
+   * need to be updated for a skip frame.
+   * 
+   * @return true if the frame was completed by the cycle that was emulated.
+   */
+  public boolean emulateSkipCycle() {
+    boolean frameComplete = false;
+    
+    // Increment the horizontal counter.
+    horizontalCounter = horizontalCounter + 4;
+
+    // If end of line is reached, reset horiz counter and increment vert counter.
+    if (horizontalCounter >= machineType.getTotalScreenWidth()) {
+      horizontalCounter = 0;
+      verticalCounter++;
+
+      // If last line has been reached, reset all counters.
+      if (verticalCounter >= machineType.getTotalScreenHeight()) {
+        verticalCounter = 0;
+        frameComplete = true;
+      } 
+
+      // Update raster line in VIC registers.
+      mem[VIC_REG_4] = (verticalCounter >> 1);
+      if ((verticalCounter & 0x01) == 0) {
+        mem[VIC_REG_3] &= 0x7F;
+      } else {
+        mem[VIC_REG_3] |= 0x80;
+      }
+    }
+    
+    return frameComplete;
+  }
+  
+  /**
    * Emulates a single machine cycle. The VIC chip alternates its function
    * between fetching the screen code for a character from the video matrix and
    * fetching the bitmap of the character line from character memory on alternate
@@ -584,9 +650,12 @@ public class Vic extends MemoryMappedChip {
    * @return true If a screen repaint is required due to the frame render having completed. 
    */
   public boolean emulateCycle() {
-    //boolean frameRenderComplete = false;
+    boolean frameRenderComplete = false;
     int charDataOffset = 0;
     int tempColour = 0;
+    
+    // Get a local reference to the current Frame's pixel array.
+    int[] framePixels = frames[activeFrame].framePixels;
     
     // TODO: This needs to change so that it renders 4 pixels every cycle rather than 8 every 2 cycles.
     
@@ -752,7 +821,15 @@ public class Vic extends MemoryMappedChip {
         cellDepthCounter = 0;
         charMemoryCellDepthStart = charMemoryStart;
         
-        // Signal to the caller that the frame render has completed.
+        synchronized(frames) {
+          // Mark the current frame as complete.
+          frames[activeFrame].ready = true;
+          
+          // Toggle the active frame.
+          activeFrame = ((activeFrame + 1) % 2);
+          frames[activeFrame].ready = false;
+        }
+        
         frameRenderComplete = true;
         
       } else {
@@ -784,15 +861,21 @@ public class Vic extends MemoryMappedChip {
     
     return frameRenderComplete;
   }
-  
-  private boolean frameRenderComplete;
 
-  public boolean isFrameReady() {
-    return frameRenderComplete;
-  }
-  
+  /**
+   * 
+   * 
+   * @return
+   */
   public int[] getFramePixels() {
-    frameRenderComplete = false;
+    int[] framePixels = null;
+    synchronized (frames) {
+      Frame nonActiveFrame = frames[((activeFrame + 1) % 2)];
+      if (nonActiveFrame.ready) {
+        nonActiveFrame.ready = false;
+        framePixels = nonActiveFrame.framePixels;
+      }
+    }
     return framePixels;
   }
 }

@@ -158,24 +158,27 @@ public class Machine {
   }
 
   /**
-   * Updates the state of the machine based on the given elapsed time since the previous
-   * invocation of this method.
+   * Updates the state of the machine of the machine until a frame is complete
    * 
-   * @param delta The time in seconds since the last render.
-   * 
-   * @return true If a frame should be rendered; otherwise false.
+   * @param skipRender true if the VIC chip emulation should skip rendering.
    */
-  public boolean update(float delta) {
-    // Execute the number of cycles equivalent to the delta. 
-    int cyclesToExecute = (int)(machineType.getCyclesPerSecond() * delta);
-    
-    boolean render = false;
-    
-    for (int i=0; i<cyclesToExecute; i++) {
-      render |= emulateCycle();
+  public void update(boolean skipRender) {
+    boolean frameComplete = false;
+    if (skipRender) {
+      do {
+        frameComplete |= vic.emulateSkipCycle();
+        cpu.emulateCycle();
+        via1.emulateCycle();
+        via2.emulateCycle();
+      } while (!frameComplete);
+    } else {
+      do {
+        frameComplete |= vic.emulateCycle();
+        cpu.emulateCycle();
+        via1.emulateCycle();
+        via2.emulateCycle();
+      } while (!frameComplete);
     }
-    
-    return render;
   }
   
   /**
@@ -223,16 +226,12 @@ public class Machine {
   /**
    * Gets the pixels for the current frame from the VIC chip.
    * 
-   * @return The pixels for the current frame.
+   * @return The pixels for the current frame. Returns null if there isn't one that is ready.
    */
   public int[] getFramePixels() {
     return vic.getFramePixels();
   }
-  
-  public boolean isFrameReady() {
-    return vic.isFrameReady();
-  }
-  
+
   /**
    * Emulates a single machine cycle.
    * 
