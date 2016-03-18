@@ -3,7 +3,6 @@ package emu.jvic.io;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeMap;
 
 import com.badlogic.gdx.Input.Keys;
@@ -242,13 +241,9 @@ public class Keyboard {
     if (!delayedReleaseKeys.isEmpty()) {
       synchronized(delayedReleaseKeys) {
         List<Long> processedReleases = new ArrayList<Long>();
-        Set<Long> expiredReleaseTimes = delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet();
-        for (Long keyReleaseTime : expiredReleaseTimes) {
-          keyReleased(delayedReleaseKeys.get(keyReleaseTime));
-          processedReleases.add(keyReleaseTime);
-        }
+        processedReleases.addAll(delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet());
         for (Long keyReleaseTime : processedReleases) {
-          delayedReleaseKeys.remove(keyReleaseTime);
+          keyReleased(delayedReleaseKeys.remove(keyReleaseTime));
         }
       }
     }
