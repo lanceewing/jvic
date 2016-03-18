@@ -107,13 +107,13 @@ public class MachineInputProcessor extends InputAdapter {
     if (keycode == Keys.BACK) {
       if (keyboardType.equals(KeyboardType.OFF)) {
         if (Gdx.app.getType().equals(ApplicationType.Android)) {
-          machineScreen.getMachine().setPaused(true);
+          machineScreen.getMachineRunnable().pause();
           confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
             public void yes() {
               Gdx.app.exit();
             }
             public void no() {
-              machineScreen.getMachine().setPaused(false);
+              machineScreen.getMachineRunnable().resume();
             }
           });
         }

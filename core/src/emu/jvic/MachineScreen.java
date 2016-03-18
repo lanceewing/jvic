@@ -48,18 +48,18 @@ public class MachineScreen implements Screen {
   private SpriteBatch batch;
   
   // Components to support rendering of the VIC 20 screen.
-  private Texture screenTexture;
   private Pixmap screenPixmap;
   private Viewport viewport;
   private Camera camera;
+  private Texture[] screens;
+  private int drawScreen = 1;
+  private int updateScreen = 0;
   
   // UI components.
   private Texture joystickIcon;
   private Texture keyboardIcon;
 
   private ViewportManager viewportManager;
-  
-  private int[] currentFramePixels;
   
   /**
    * Constructor for MachineScreen.
@@ -72,7 +72,11 @@ public class MachineScreen implements Screen {
     
     batch = new SpriteBatch();
     screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
-    screenTexture = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+    
+    screens = new Texture[3];
+    screens[0] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+    screens[1] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+    screens[2] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
     
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
@@ -129,9 +133,8 @@ public class MachineScreen implements Screen {
     long renderStartTime = TimeUtils.nanoTime();
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
-    
-    // Update the machine's state, but only if the machine is not paused.
     boolean draw = false;
+    
     if (machine.isPaused()) {
       // When paused, we limit the draw frequency since there isn't anything to change.
       draw = ((fps < 30) || ((renderCount % (fps/30)) == 0));
@@ -140,12 +143,16 @@ public class MachineScreen implements Screen {
       // Check if the Machine has a frame ready to be displayed.
       int[] framePixels = machine.getFramePixels();
       if (framePixels != null) {
-        currentFramePixels = framePixels;
-        draw = true;
+        // If it does then update the Texture on the GPU.
+        BufferUtils.copy(framePixels, 0, screenPixmap.getPixels(), 
+            machine.getMachineType().getTotalScreenWidth() * machine.getMachineType().getTotalScreenHeight());
+        screens[updateScreen].draw(screenPixmap, 0, 0);
+        updateScreen = (updateScreen + 1) % 3;
+        drawScreen = (drawScreen + 1) % 3;
       }
+      
+      draw = true;
     }
-    
-    // TODO: For slower phones, might need to skip drawing some frames.
     
     if (draw) {
       drawCount++;
@@ -182,20 +189,6 @@ public class MachineScreen implements Screen {
     Gdx.gl.glClearColor(0, 0, 0, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     
-    if (currentFramePixels != null) {
-      // This is probably not the most efficient way of getting the pixels to the GPU, but
-      // will suffice for this initial conversion of JVic. I'll spend more time profiling 
-      // other options in the future. It's possible that we could get the Vic class to 
-      // write directly in to the Pixmap ByteBuffer. This copy is done natively though, so
-      // is potentially not adding that much overhead. I'm also wondering whether an opengl
-      // shader can take care of some of the work, but need to research that further.
-      BufferUtils.copy(currentFramePixels, 0, screenPixmap.getPixels(), 
-          machine.getMachineType().getTotalScreenWidth() * machine.getMachineType().getTotalScreenHeight());
-    }
-
-    // Updates the screen Texture with the Pixmap frame data.
-    screenTexture.draw(screenPixmap, 0, 0);
-    
     // Render the VIC screen.
     camera.update();
     batch.setProjectionMatrix(camera.combined);
@@ -203,7 +196,7 @@ public class MachineScreen implements Screen {
     batch.begin();
     Color c = batch.getColor();
     batch.setColor(c.r, c.g, c.b, 1f);
-    batch.draw(screenTexture, 
+    batch.draw(screens[drawScreen], 
         0, 0,
         machine.getScreenWidth(), machine.getScreenHeight(), 
         machine.getScreenLeft(), machine.getScreenTop(), 
@@ -266,14 +259,12 @@ public class MachineScreen implements Screen {
   @Override
   public void pause() {
     // On Android, this is also called when the "Home" button is pressed.
-    machine.setPaused(true);
     machineRunnable.pause();
   }
 
   @Override
   public void resume() {
     KeyboardType.init();
-    machine.setPaused(false);
     machineRunnable.resume();
   }
   
@@ -294,9 +285,11 @@ public class MachineScreen implements Screen {
     keyboardIcon.dispose();
     joystickIcon.dispose();
     screenPixmap.dispose();
-    screenTexture.dispose();
     batch.dispose();
     machineRunnable.stop();
+    screens[0].dispose();
+    screens[1].dispose();
+    screens[2].dispose();
   }
   
   /**
@@ -306,5 +299,14 @@ public class MachineScreen implements Screen {
    */
   public Machine getMachine() {
     return machine;
+  }
+  
+  /**
+   * Gets the MachineRunnable that is running the Machine.
+   * 
+   * @return The MachineRunnable that is running the Machine.
+   */
+  public MachineRunnable getMachineRunnable() {
+    return machineRunnable;
   }
 }

@@ -211,7 +211,9 @@ public class Keyboard {
       // Key hasn't been down long enough (possibly due to it being an Android virtual 
       // keyboard or something similar that doesn't reflect the actual time the key 
       // is down), so let's add this keycode to the delayed release list.
-      delayedReleaseKeys.put(minKeyReleaseTime, keycode);
+      synchronized(delayedReleaseKeys) {
+        delayedReleaseKeys.put(minKeyReleaseTime, keycode);
+      }
       
     } else {
       // Otherwise we process the release by updating the key matrix that the VIC polls.
@@ -238,14 +240,16 @@ public class Keyboard {
    */
   public void checkDelayedReleaseKeys() {
     if (!delayedReleaseKeys.isEmpty()) {
-      List<Long> processedReleases = new ArrayList<Long>();
-      Set<Long> expiredReleaseTimes = delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet();
-      for (Long keyReleaseTime : expiredReleaseTimes) {
-        keyReleased(delayedReleaseKeys.get(keyReleaseTime));
-        processedReleases.add(keyReleaseTime);
-      }
-      for (Long keyReleaseTime : processedReleases) {
-        delayedReleaseKeys.remove(keyReleaseTime);
+      synchronized(delayedReleaseKeys) {
+        List<Long> processedReleases = new ArrayList<Long>();
+        Set<Long> expiredReleaseTimes = delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet();
+        for (Long keyReleaseTime : expiredReleaseTimes) {
+          keyReleased(delayedReleaseKeys.get(keyReleaseTime));
+          processedReleases.add(keyReleaseTime);
+        }
+        for (Long keyReleaseTime : processedReleases) {
+          delayedReleaseKeys.remove(keyReleaseTime);
+        }
       }
     }
   }

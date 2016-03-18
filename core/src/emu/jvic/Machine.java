@@ -53,13 +53,13 @@ public class Machine {
     //init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
     //init("carts/8k/dragon.crt", "CART", MachineType.PAL);
     //init("carts/8k/atlantis.crt", "CART", MachineType.NTSC);
-    //init("carts/8k/terragua.crt", "CART", MachineType.PAL);
+    init("carts/8k/terragua.crt", "CART", MachineType.PAL);
     //init("tapes/16k/BONGO.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/PERILS.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/SKRAMBLE.PRG", "PRG", MachineType.PAL);
     //init("tapes/screentest.prg", "PRG", MachineType.PAL);
     
-    init();
+    //init();
   }
   
   /**

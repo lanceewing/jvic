@@ -308,6 +308,14 @@ public class Vic extends MemoryMappedChip {
   public Vic(MachineType machineType, Snapshot snapshot) {
     this.machineType = machineType;
     
+    frames = new Frame[2];
+    frames[0] = new Frame();
+    frames[0].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[0].ready = false;
+    frames[1] = new Frame();
+    frames[1].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[1].ready = false;
+    
     reset();
     
     if (snapshot != null) {
@@ -395,15 +403,6 @@ public class Vic extends MemoryMappedChip {
     cellColour = 0;
     fetchToggle = FETCH_SCREEN_CODE;
     charMemoryCellDepthStart = charMemoryStart;
-    
-    // TODO: Have a queue of ready framePixels arrays. Skip a frame if this grows to three in size??
-    frames = new Frame[2];
-    frames[0] = new Frame();
-    frames[0].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-    frames[0].ready = false;
-    frames[1] = new Frame();
-    frames[1].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-    frames[1].ready = false;
   }
   
   /**
@@ -636,7 +635,7 @@ public class Vic extends MemoryMappedChip {
     
     return frameComplete;
   }
-  
+
   /**
    * Emulates a single machine cycle. The VIC chip alternates its function
    * between fetching the screen code for a character from the video matrix and
@@ -863,9 +862,9 @@ public class Vic extends MemoryMappedChip {
   }
 
   /**
+   * Gets the pixels for the current frame from the VIC chip.
    * 
-   * 
-   * @return
+   * @return The pixels for the current frame. Returns null if there isn't one that is ready.
    */
   public int[] getFramePixels() {
     int[] framePixels = null;

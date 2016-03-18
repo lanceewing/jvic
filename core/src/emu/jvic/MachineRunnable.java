@@ -81,6 +81,7 @@ public class MachineRunnable implements Runnable {
           } catch (InterruptedException e) {
             Gdx.app.log("MachineRunnable", e.getMessage(), e);
           }
+          lastTime = System.nanoTime();
         }
       }
 
@@ -131,6 +132,7 @@ public class MachineRunnable implements Runnable {
    */
   public void pause() {
     paused = true;
+    machine.setPaused(true);
   }
   
   /**
@@ -139,6 +141,7 @@ public class MachineRunnable implements Runnable {
   public void resume() {
     synchronized (this) {
       paused = false;
+      machine.setPaused(false);
       this.notifyAll();
     }
   }
