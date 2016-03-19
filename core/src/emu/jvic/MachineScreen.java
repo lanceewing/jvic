@@ -71,12 +71,12 @@ public class MachineScreen implements Screen {
     this.machineRunnable = new MachineRunnable(this.machine);
     
     batch = new SpriteBatch();
-    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGBA8888);
+    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGB565);
     
     screens = new Texture[3];
-    screens[0] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-    screens[1] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-    screens[2] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+    screens[0] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[1] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[2] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
     
     camera = new OrthographicCamera();
     viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
@@ -100,33 +100,6 @@ public class MachineScreen implements Screen {
   private long renderCount;
   private long drawCount;
   
-  // Linux:
-  //  RenderTime: avgUpdateTime: 1981313 avgDrawTime: 416109 avgRenderTime: 2346450 ns renderCount: 601 delta: 0.016525 fps: 60
-  //  RenderTime: avgUpdateTime: 1919198 avgDrawTime: 377756 avgRenderTime: 2239919 ns renderCount: 1201 delta: 0.016679 fps: 60
-  //  RenderTime: avgUpdateTime: 2091536 avgDrawTime: 406210 avgRenderTime: 2435471 ns renderCount: 1801 delta: 0.016684 fps: 60
-  //  RenderTime: avgUpdateTime: 2197919 avgDrawTime: 418328 avgRenderTime: 2552785 ns renderCount: 2401 delta: 0.016760 fps: 60
-  //  RenderTime: avgUpdateTime: 2081874 avgDrawTime: 395140 avgRenderTime: 2413089 ns renderCount: 3000 delta: 0.016661 fps: 60
-  //  RenderTime: avgUpdateTime: 1954413 avgDrawTime: 368573 avgRenderTime: 2259497 ns renderCount: 3600 delta: 0.016667 fps: 60
-  //  RenderTime: avgUpdateTime: 1899786 avgDrawTime: 351931 avgRenderTime: 2189077 ns renderCount: 4200 delta: 0.016406 fps: 60
-  //  RenderTime: avgUpdateTime: 1978363 avgDrawTime: 356863 avgRenderTime: 2273328 ns renderCount: 4800 delta: 0.016696 fps: 60
-  
-  // Android - Oneplus One
-  //  02-20 23:55:09.825: I/RenderTime(32375): avgUpdateTime: 5430502 avgDrawTime: 3003958 avgRenderTime: 8100821 ns renderCount: 630 delta: 0.015177 fps: 61
-  //  02-20 23:55:19.827: I/RenderTime(32375): avgUpdateTime: 6449893 avgDrawTime: 3034441 avgRenderTime: 9028275 ns renderCount: 1251 delta: 0.015992 fps: 63
-  //  02-20 23:55:29.837: I/RenderTime(32375): avgUpdateTime: 7045818 avgDrawTime: 2974562 avgRenderTime: 9518082 ns renderCount: 1874 delta: 0.015699 fps: 64
-  //  02-20 23:55:39.876: I/RenderTime(32375): avgUpdateTime: 7227487 avgDrawTime: 3034167 avgRenderTime: 9736194 ns renderCount: 2498 delta: 0.018163 fps: 63
-  //  02-20 23:55:49.879: I/RenderTime(32375): avgUpdateTime: 7347156 avgDrawTime: 3057218 avgRenderTime: 9861786 ns renderCount: 3125 delta: 0.015083 fps: 63
-  //  02-20 23:55:59.888: I/RenderTime(32375): avgUpdateTime: 7367018 avgDrawTime: 3105098 avgRenderTime: 9917184 ns renderCount: 3752 delta: 0.015854 fps: 64
-  //  02-20 23:56:09.903: I/RenderTime(32375): avgUpdateTime: 7301162 avgDrawTime: 3132884 avgRenderTime: 9868789 ns renderCount: 4378 delta: 0.015967 fps: 65
-  //  02-20 23:56:19.775: I/RenderTime(32375): avgUpdateTime: 7331545 avgDrawTime: 3147967 avgRenderTime: 9905072 ns renderCount: 5005 delta: 0.017148 fps: 64
-  //  02-20 23:56:29.772: I/RenderTime(32375): avgUpdateTime: 7313469 avgDrawTime: 3159467 avgRenderTime: 9890995 ns renderCount: 5633 delta: 0.013460 fps: 64
-  //  02-20 23:56:39.790: I/RenderTime(32375): avgUpdateTime: 7360768 avgDrawTime: 3178611 avgRenderTime: 9951423 ns renderCount: 6258 delta: 0.020102 fps: 63
-  //  02-20 23:56:49.784: I/RenderTime(32375): avgUpdateTime: 7360072 avgDrawTime: 3206466 avgRenderTime: 9973250 ns renderCount: 6887 delta: 0.016099 fps: 63
-  //  02-20 23:56:59.795: I/RenderTime(32375): avgUpdateTime: 7427312 avgDrawTime: 3191925 avgRenderTime: 10023032 ns renderCount: 7504 delta: 0.015853 fps: 63
-  //  02-20 23:57:09.762: I/RenderTime(32375): avgUpdateTime: 7487957 avgDrawTime: 3180946 avgRenderTime: 10070630 ns renderCount: 8123 delta: 0.013127 fps: 62
-  //  02-20 23:57:19.773: I/RenderTime(32375): avgUpdateTime: 7505270 avgDrawTime: 3182673 avgRenderTime: 10087244 ns renderCount: 8749 delta: 0.015861 fps: 64
-  
-
   @Override
   public void render(float delta) {
     // Note: On some android phones, the render method is invoked over 8000 times a second.
@@ -141,7 +114,7 @@ public class MachineScreen implements Screen {
       
     } else {
       // Check if the Machine has a frame ready to be displayed.
-      int[] framePixels = machine.getFramePixels();
+      short[] framePixels = machine.getFramePixels();
       if (framePixels != null) {
         // If it does then update the Texture on the GPU.
         BufferUtils.copy(framePixels, 0, screenPixmap.getPixels(), 

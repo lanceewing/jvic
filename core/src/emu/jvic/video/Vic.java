@@ -46,10 +46,7 @@ public class Vic extends MemoryMappedChip {
   private static final int VIC_REG_14 = 0x900E;
   private static final int VIC_REG_15 = 0x900F;
 
-  /**
-   * RGB values for the VIC's 16 colours.
-   */
-  private final static int vicColours[] = {
+  private final static int palRGBA8888Colours[] = {
     0xFF000000,            // BLACK
     0xFFFFFFFF,            // WHITE
     0xFF211FB6,            // RED
@@ -67,6 +64,27 @@ public class Vic extends MemoryMappedChip {
     0xFFFF9082,            // LIGHT BLUE
     0xFF85DEE5             // LIGHT YELLOW
   };
+  
+  private final static short palRGB565Colours[] = {
+    (short)0x0000,         // BLACK
+    (short)0xFFFF,         // WHITE
+    (short)0xB0E4,         // RED
+    (short)0x4F9F,         // CYAN
+    (short)0xB1FF,         // PURPLE
+    (short)0x4706,         // GREEN
+    (short)0x19BF,         // BLUE
+    (short)0xDEA3,         // YELLOW
+    (short)0xCAA0,         // ORANGE
+    (short)0xED8E,         // LIGHT ORANGE
+    (short)0xE492,         // PINK
+    (short)0x9FBF,         // LIGHT CYAN
+    (short)0xE4FF,         // LIGHT PURPLE
+    (short)0x8F32,         // LIGHT GREEN
+    (short)0x849F,         // LIGHT BLUE
+    (short)0xE6F0          // LIGHT YELLOW
+  };
+  
+  private final static short vicColours[] = palRGB565Colours;
   
   /**
    * A lookup table for determining the start of video memory.
@@ -101,7 +119,7 @@ public class Vic extends MemoryMappedChip {
   /**
    * Last fetched cell colour.
    */
-  private int cellColour;
+  private short cellColour;
 
   /**
    * Index of the cell colour into the colours array.
@@ -210,7 +228,7 @@ public class Vic extends MemoryMappedChip {
   /**
    * The current background colour.
    */
-  private int backgroundColour;
+  private short backgroundColour;
 
   /**
    * The index of the current background colour into the colours array.
@@ -220,12 +238,12 @@ public class Vic extends MemoryMappedChip {
   /**
    * The current border colour.
    */
-  private int borderColour;
+  private short borderColour;
 
   /**
    * The current auxiliary colour;
    */
-  private int auxiliaryColour;
+  private short auxiliaryColour;
 
   /**
    * Whether the characters are reversed at present or not.
@@ -235,7 +253,7 @@ public class Vic extends MemoryMappedChip {
   /**
    * Holds the current colour values of each of the multi-colour colours.
    */
-  private int multiColourTable[] = new int[4];
+  private short multiColourTable[] = new short[4];
 
   /**
    * The left hand side of th text screen.
@@ -280,7 +298,7 @@ public class Vic extends MemoryMappedChip {
     /**
      * Holds the pixel data for the TV frame screen.
      */
-    int framePixels[];
+    short framePixels[];
     
     /**
      * Says whether this frame is ready to be blitted to the GPU.
@@ -310,10 +328,10 @@ public class Vic extends MemoryMappedChip {
     
     frames = new Frame[2];
     frames[0] = new Frame();
-    frames[0].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[0].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
     frames[0].ready = false;
     frames[1] = new Frame();
-    frames[1].framePixels = new int[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
+    frames[1].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
     frames[1].ready = false;
     
     reset();
@@ -651,10 +669,10 @@ public class Vic extends MemoryMappedChip {
   public boolean emulateCycle() {
     boolean frameRenderComplete = false;
     int charDataOffset = 0;
-    int tempColour = 0;
+    short tempColour = 0;
     
     // Get a local reference to the current Frame's pixel array.
-    int[] framePixels = frames[activeFrame].framePixels;
+    short[] framePixels = frames[activeFrame].framePixels;
     
     // TODO: This needs to change so that it renders 4 pixels every cycle rather than 8 every 2 cycles.
     
@@ -866,8 +884,8 @@ public class Vic extends MemoryMappedChip {
    * 
    * @return The pixels for the current frame. Returns null if there isn't one that is ready.
    */
-  public int[] getFramePixels() {
-    int[] framePixels = null;
+  public short[] getFramePixels() {
+    short[] framePixels = null;
     synchronized (frames) {
       Frame nonActiveFrame = frames[((activeFrame + 1) % 2)];
       if (nonActiveFrame.ready) {

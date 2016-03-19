@@ -50,10 +50,10 @@ public class Machine {
     //init("snaps/pcv/ROCKMAN.PCV", "PCV", MachineType.PAL);
     //init("carts/8k/demonata.crt", "CART", MachineType.PAL);
     //init("carts/8k/gorf.crt", "CART", MachineType.NTSC);
-    //init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
+    init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
     //init("carts/8k/dragon.crt", "CART", MachineType.PAL);
     //init("carts/8k/atlantis.crt", "CART", MachineType.NTSC);
-    init("carts/8k/terragua.crt", "CART", MachineType.PAL);
+    //init("carts/8k/terragua.crt", "CART", MachineType.PAL);
     //init("tapes/16k/BONGO.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/PERILS.PRG", "PRG", MachineType.PAL);
     //init("tapes/16k/SKRAMBLE.PRG", "PRG", MachineType.PAL);
@@ -228,7 +228,7 @@ public class Machine {
    * 
    * @return The pixels for the current frame. Returns null if there isn't one that is ready.
    */
-  public int[] getFramePixels() {
+  public short[] getFramePixels() {
     return vic.getFramePixels();
   }
 
