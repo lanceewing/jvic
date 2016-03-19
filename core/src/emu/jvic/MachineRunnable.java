@@ -107,10 +107,6 @@ public class MachineRunnable implements Runnable {
         avgUpdateTime = ((avgUpdateTime * frameCount) + updateDuration) / (frameCount + 1);
       }
       
-      // TODO: Decide whether this Sync mechanism is any better than a simple yield approach as used below.
-      // Utilises a highly accurate FPS sync take from LWJGL project.
-      //Sync.sync(machine.getMachineType().getFramesPerSecond() * 2);
-      
       // Throttle at expected FPS.
       while (TimeUtils.nanoTime() - lastTime <= 0L) {
           Thread.yield();

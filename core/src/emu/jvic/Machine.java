@@ -50,7 +50,7 @@ public class Machine {
     //init("snaps/pcv/ROCKMAN.PCV", "PCV", MachineType.PAL);
     //init("carts/8k/demonata.crt", "CART", MachineType.PAL);
     //init("carts/8k/gorf.crt", "CART", MachineType.NTSC);
-    init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
+    //init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
     //init("carts/8k/dragon.crt", "CART", MachineType.PAL);
     //init("carts/8k/atlantis.crt", "CART", MachineType.NTSC);
     //init("carts/8k/terragua.crt", "CART", MachineType.PAL);
@@ -59,7 +59,7 @@ public class Machine {
     //init("tapes/16k/SKRAMBLE.PRG", "PRG", MachineType.PAL);
     //init("tapes/screentest.prg", "PRG", MachineType.PAL);
     
-    //init();
+    init();
   }
   
   /**
