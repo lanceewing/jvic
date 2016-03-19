@@ -50,22 +50,22 @@ public class Vic extends MemoryMappedChip {
    * RGB values for the VIC's 16 colours.
    */
   private final static int vicColours[] = {
-    0xFF000000,     // BLACK
-    0xFFFFFFFF,     // WHITE
-    0xFF1529AE,     // RED
-    0xFFF3E467,     // CYAN
-    0xFFEA2EAA,     // PURPLE
-    0xFF1BDC66,     // GREEN
-    0xFFF52C45,     // BLUE
-    0xFF2FF7E2,     // YELLOW
-    0xFF0067BF,     // ORANGE
-    0xFF29CDEE,     // LIGHT ORANGE
-    0xFF8091FF,     // PINK
-    0xFFFFFF9D,     // LIGHT CYAN
-    0xFFFF8BFD,     // LIGHT PURPLE
-    0xFF64FFA8,     // LIGHT GREEN
-    0xFF9E88FF,     // LIGHT BLUE
-    0xFF69FFFF      // LIGHT YELLOW
+    0xFF000000,            // BLACK
+    0xFFFFFFFF,            // WHITE
+    0xFF211FB6,            // RED
+    0xFFFFF04D,            // CYAN
+    0xFFFF3FB4,            // PURPLE
+    0xFF37E244,            // GREEN
+    0xFFFF341A,            // BLUE
+    0xFF1BD7DC,            // YELLOW
+    0xFF0054CA,            // ORANGE
+    0xFF72B0E9,            // LIGHT ORANGE
+    0xFF9392E7,            // PINK
+    0xFFFDF79A,            // LIGHT CYAN
+    0xFFE09FFF,            // LIGHT PURPLE
+    0xFF93E48F,            // LIGHT GREEN
+    0xFFFF9082,            // LIGHT BLUE
+    0xFF85DEE5             // LIGHT YELLOW
   };
   
   /**
