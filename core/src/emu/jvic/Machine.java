@@ -31,7 +31,7 @@ public class Machine {
   private Keyboard keyboard;
   private Joystick joystick;
 
-  private boolean paused;
+  private boolean paused = true;
   
   private MachineType machineType;
   

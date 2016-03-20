@@ -27,6 +27,8 @@ import emu.jvic.ui.ViewportManager;
  */
 public class MachineScreen implements Screen {
 
+  // TODO: Is the constructor the right place to create the disposable objects? 
+  
   /**
    * This represents the VIC 20 machine.
    */
@@ -88,7 +90,6 @@ public class MachineScreen implements Screen {
     
     // Create and register an input processor for keys, etc.
     machineInputProcessor = new MachineInputProcessor(this, confirmHandler);
-    Gdx.input.setInputProcessor(machineInputProcessor);
     
     Thread machineThread = new Thread(this.machineRunnable);
     machineThread.start();
@@ -244,6 +245,8 @@ public class MachineScreen implements Screen {
   @Override
   public void show() {
     KeyboardType.init();
+    Gdx.input.setInputProcessor(machineInputProcessor);
+    machineRunnable.resume();
   }
   
   @Override

@@ -51,7 +51,7 @@ public class MachineRunnable implements Runnable {
   private long frameCount;
   
   private boolean exit = false;
-  private boolean paused = false;
+  private boolean paused = true;
   
   private long lastTime = System.nanoTime();
   

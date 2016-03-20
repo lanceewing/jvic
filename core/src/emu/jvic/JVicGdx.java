@@ -15,9 +15,14 @@ import emu.jvic.ui.ConfirmHandler;
 public class JVicGdx extends Game {
   
   /**
-   * This is the main screen of the JVic emulator.
+   * This is the screen that is used to show the running emulation.
    */
   private MachineScreen machineScreen;
+  
+  /**
+   * This is the screen that shows the boot options and programs to load.
+   */
+  private HomeScreen homeScreen;
   
   /**
    * Invoked by JVic whenever it would like the user to confirm an action.
@@ -36,7 +41,8 @@ public class JVicGdx extends Game {
   @Override
   public void create () {
     machineScreen = new MachineScreen(confirmHandler);
-    setScreen(machineScreen);
+    homeScreen = new HomeScreen(confirmHandler);
+    setScreen(homeScreen);
     
     // Stop the back key from immediately exiting the app.
     Gdx.input.setCatchBackKey(true);
@@ -50,5 +56,6 @@ public class JVicGdx extends Game {
     // adds more screens, this may be managed in a different way. Note that the
     // super dispose does not call dispose on the screen.
     machineScreen.dispose();
+    homeScreen.dispose();
   }
 }
