@@ -55,7 +55,7 @@ public class HomeScreen implements Screen  {
     container.setFillParent(true);
 
     PagedScrollPane scroll = new PagedScrollPane();
-    scroll.setFlingTime(0.1f);
+    scroll.setFlingTime(0.01f);
     scroll.setPageSpacing(25);
     int c = 1;
     for (int l = 0; l < 10; l++) {

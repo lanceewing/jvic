@@ -1,6 +1,7 @@
 package emu.jvic.ui;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.WindowedMean;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -12,26 +13,28 @@ public class PagedScrollPane extends ScrollPane {
 
   private boolean wasPanDragFling = false;
 
-  private float pageSpacing;
-
+  private float lastScrollX = 0;
+  
+  private WindowedMean scrollXDeltaMean = new WindowedMean(5);
+  
   private Table content;
 
-  public PagedScrollPane () {
+  public PagedScrollPane() {
     super(null);
     setup();
   }
 
-  public PagedScrollPane (Skin skin) {
+  public PagedScrollPane(Skin skin) {
     super(null, skin);
     setup();
   }
 
-  public PagedScrollPane (Skin skin, String styleName) {
+  public PagedScrollPane(Skin skin, String styleName) {
     super(null, skin, styleName);
     setup();
   }
 
-  public PagedScrollPane (Actor widget, ScrollPaneStyle style) {
+  public PagedScrollPane(Actor widget, ScrollPaneStyle style) {
     super(null, style);
     setup();
   }
@@ -42,31 +45,35 @@ public class PagedScrollPane extends ScrollPane {
     super.setWidget(content);   
   }
 
-  public void addPages (Actor... pages) {
+  public void addPages(Actor... pages) {
     for (Actor page : pages) {
       content.add(page).expandY().fillY();
     }
   }
 
-  public void addPage (Actor page) {
+  public void addPage(Actor page) {
     content.add(page).expandY().fillY();
   }
 
   @Override
-  public void act (float delta) {
+  public void act(float delta) {
     super.act(delta);
     if (wasPanDragFling && !isPanning() && !isDragging() && !isFlinging()) {
       wasPanDragFling = false;
       scrollToPage();
+      scrollXDeltaMean.clear();
+      
     } else {
       if (isPanning() || isDragging() || isFlinging()) {
         wasPanDragFling = true;
+        scrollXDeltaMean.addValue(getScrollX() - lastScrollX);
+        lastScrollX = getScrollX();
       }
     }
   }
   
   @Override
-  public void setWidth (float width) {
+  public void setWidth(float width) {
     super.setWidth(width);
     if (content != null) {
       for (Cell cell : content.getCells()) {
@@ -76,7 +83,7 @@ public class PagedScrollPane extends ScrollPane {
     }
   }
 
-  public void setPageSpacing (float pageSpacing) {
+  public void setPageSpacing(float pageSpacing) {
     if (content != null) {
       content.defaults().space(pageSpacing);
       for (Cell cell : content.getCells()) {
@@ -86,7 +93,7 @@ public class PagedScrollPane extends ScrollPane {
     }
   }
 
-  private void scrollToPage () {
+  private void scrollToPage() {
     final float width = getWidth();
     final float scrollX = getScrollX();
     final float maxX = getMaxX();
@@ -96,16 +103,32 @@ public class PagedScrollPane extends ScrollPane {
     Array<Actor> pages = content.getChildren();
     float pageX = 0;
     float pageWidth = 0;
-    if (pages.size > 0) {
-      for (Actor a : pages) {
-        pageX = a.getX();
-        pageWidth = a.getWidth();
+          
+    float scrollXDir = scrollXDeltaMean.getMean();
+    if (scrollXDir == 0) {
+      scrollXDir = scrollXDeltaMean.getLatest();
+    }
+    
+    for (Actor a : pages) {
+      pageX = a.getX();
+      pageWidth = a.getWidth();
+      if (scrollXDir > 0) {
+        if (scrollX < (pageX + pageWidth * 0.1)) {
+          break;
+        }
+      } else if (scrollXDir < 0) {
+        if (scrollX < (pageX + pageWidth * 0.9)) {
+          break;
+        }
+      } else {
         if (scrollX < (pageX + pageWidth * 0.5)) {
           break;
         }
       }
-      setScrollX(MathUtils.clamp(pageX - (width - pageWidth) / 2, 0, maxX));
     }
+    
+    float newScrollX = MathUtils.clamp(pageX - (width - pageWidth) / 2, 0, maxX);
+    setScrollX(newScrollX);
+    this.lastScrollX = newScrollX;
   }
-
 }
