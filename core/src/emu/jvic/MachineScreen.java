@@ -30,6 +30,11 @@ public class MachineScreen implements Screen {
   // TODO: Is the constructor the right place to create the disposable objects? 
   
   /**
+   * The Game object for JVicGdx. Allows us to easily change screens.
+   */
+  private JVicGdx jvic;
+  
+  /**
    * This represents the VIC 20 machine.
    */
   private Machine machine;
@@ -66,9 +71,12 @@ public class MachineScreen implements Screen {
   /**
    * Constructor for MachineScreen.
    * 
+   * @param jvic The JVicGdx instance.
    * @param confirmHandler
    */
-  public MachineScreen(ConfirmHandler confirmHandler) {
+  public MachineScreen(JVicGdx jvic, ConfirmHandler confirmHandler) {
+    this.jvic = jvic;
+    
     this.machine = new Machine();
     this.machineRunnable = new MachineRunnable(this.machine);
     
@@ -284,5 +292,12 @@ public class MachineScreen implements Screen {
    */
   public MachineRunnable getMachineRunnable() {
     return machineRunnable;
+  }
+  
+  /**
+   * Returns user to the Home screen.
+   */
+  public void exit() {
+    jvic.setScreen(jvic.getHomeScreen());
   }
 }

@@ -110,7 +110,7 @@ public class MachineInputProcessor extends InputAdapter {
           machineScreen.getMachineRunnable().pause();
           confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
             public void yes() {
-              Gdx.app.exit();
+              machineScreen.exit();
             }
             public void no() {
               machineScreen.getMachineRunnable().resume();

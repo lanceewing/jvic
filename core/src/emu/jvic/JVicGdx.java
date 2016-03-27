@@ -40,12 +40,30 @@ public class JVicGdx extends Game {
   
   @Override
   public void create () {
-    machineScreen = new MachineScreen(confirmHandler);
-    homeScreen = new HomeScreen(confirmHandler);
+    machineScreen = new MachineScreen(this, confirmHandler);
+    homeScreen = new HomeScreen(this, confirmHandler);
     setScreen(homeScreen);
     
     // Stop the back key from immediately exiting the app.
     Gdx.input.setCatchBackKey(true);
+  }
+  
+  /**
+   * Gets the MachineScreen.
+   * 
+   * @return The MachineScreen.
+   */
+  public MachineScreen getMachineScreen() {
+    return machineScreen;
+  }
+  
+  /**
+   * Gets the HomeScreen.
+   * 
+   * @return the HomeScreen.
+   */
+  public HomeScreen getHomeScreen() {
+    return homeScreen;
   }
   
   @Override

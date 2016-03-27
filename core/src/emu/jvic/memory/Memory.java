@@ -32,6 +32,9 @@ public class Memory {
   public static final int EXP_32K = (BLK_1 | BLK_2 | BLK_3 | BLK_5);
   public static final int EXP_35K = (RAM_1 | RAM_2 | RAM_3 | BLK_1 | BLK_2 | BLK_3 | BLK_5);
   
+  // This constant represents a RAM configuration that will be automatically deduced from the program that is loaded.
+  public static final int EXP_AUTO = 0xFF;
+  
   /**
    * Holds the machines memory.
    */
