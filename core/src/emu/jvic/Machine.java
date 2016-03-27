@@ -48,23 +48,16 @@ public class Machine {
    * Constructor for Machine.
    */
   public Machine() {
-    init();
-  }
-  
-  /**
-   * Initialises the machine. It will boot in to BASIC in unexpanded mode.
-   */
-  public void init() {
-    init(RamType.RAM_UNEXPANDED);
   }
   
   /**
    * Initialises the machine. It will boot in to BASIC with the given RAM configuration.
    * 
    * @param ramType The RAM configuration to use.
+   * @param machineType The type of VIC 2- machine, i.e. PAL or NTSC.
    */
-  public void init(RamType ramType) {
-    init(null, null, MachineType.PAL, ramType);
+  public void init(RamType ramType, MachineType machineType) {
+    init(null, null, machineType, ramType);
   }
   
   /**
@@ -88,7 +81,8 @@ public class Machine {
       try {
         programData = Gdx.files.internal(programFile).readBytes();
         
-        if ("PRG".equals(programType) && (programData != null) && (programData.length > 2)) {
+        if ("PRG".equals(programType) && (programData != null) && (programData.length > 2) && (ramType.equals(RamType.RAM_AUTO))) {
+          // If the RAM type is configured to auto detect, and its a PRG file, then we use the start address to determine RAM requirements.
           int startAddress = (programData[1] << 8) + programData[0];
           
           if (startAddress == 0x1201) {
@@ -104,6 +98,9 @@ public class Machine {
         } else if ("PCV".equals(programType)) {
           // Decode PCVIC snapshot data. PCVIC is an old DOS VIC 20 emulator.
           snapshot = new PcvSnapshot(programData);
+        } else if ("CART". equals(programType) && (ramType.equals(RamType.RAM_AUTO))) {
+          // For cartridges, we always go with unexpanded for auto detection.
+          ramType = RamType.RAM_UNEXPANDED;
         }
       } catch (Exception e) {
         // Continue with default behaviour, which is to boot in to BASIC.
@@ -126,7 +123,7 @@ public class Machine {
     
     // Now we create the memory, which will include mapping the VIC chip,
     // the VIA chips, and the creation of RAM chips and ROM chips.
-    memory = new Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), snapshot);
+    memory = new Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, snapshot);
     
     // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
     screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;

@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import emu.jvic.config.AppConfigItem;
 import emu.jvic.ui.ConfirmHandler;
 import emu.jvic.ui.MachineInputProcessor;
 import emu.jvic.ui.ViewportManager;
@@ -27,8 +28,6 @@ import emu.jvic.ui.ViewportManager;
  */
 public class MachineScreen implements Screen {
 
-  // TODO: Is the constructor the right place to create the disposable objects? 
-  
   /**
    * The Game object for JVicGdx. Allows us to easily change screens.
    */
@@ -77,19 +76,11 @@ public class MachineScreen implements Screen {
   public MachineScreen(JVicGdx jvic, ConfirmHandler confirmHandler) {
     this.jvic = jvic;
     
+    // Create the Machine, at this point not configured with a MachineType.
     this.machine = new Machine();
     this.machineRunnable = new MachineRunnable(this.machine);
     
     batch = new SpriteBatch();
-    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGB565);
-    
-    screens = new Texture[3];
-    screens[0] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
-    screens[1] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
-    screens[2] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
-    
-    camera = new OrthographicCamera();
-    viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
     
     keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
@@ -99,8 +90,36 @@ public class MachineScreen implements Screen {
     // Create and register an input processor for keys, etc.
     machineInputProcessor = new MachineInputProcessor(this, confirmHandler);
     
+    // Start up the MachineRunnable Thread. It will initially be paused, awaiting machine configuration.
     Thread machineThread = new Thread(this.machineRunnable);
     machineThread.start();
+  }
+  
+  /**
+   * Initialises the Machine with the given AppConfigItem. This will represent an app that was
+   * selected on the HomeScreen. As part of this initialisation, it creates the Pixmap, screen
+   * Textures, Camera and Viewport required to render the VIC 20 screen at the size needed for
+   * the MachineType being emulatoed.
+   * 
+   * @param appConfigItem The configuration for the app that was selected on the HomeScreen.
+   */
+  public void initMachine(AppConfigItem appConfigItem) {
+    if (appConfigItem.getFileType().equals("")) {
+      // If there is no file type, there is no file to load and we simply boot in to BASIC.
+      machine.init(appConfigItem.getRam(), appConfigItem.getMachineType());
+    } else {
+      // Otherwise there is a file to load.
+      machine.init(appConfigItem.getFilePath(), appConfigItem.getFileType(), appConfigItem.getMachineType(), appConfigItem.getRam());
+    }
+    
+    // Create the libGDX screen resources used by the VIC 20 screen to the size required by the MachineType.
+    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGB565);
+    screens = new Texture[3];
+    screens[0] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[1] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[2] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    camera = new OrthographicCamera();
+    viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
   }
   
   private long lastLogTime;
@@ -111,11 +130,14 @@ public class MachineScreen implements Screen {
   
   @Override
   public void render(float delta) {
-    // Note: On some android phones, the render method is invoked over 8000 times a second.
     long renderStartTime = TimeUtils.nanoTime();
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
     boolean draw = false;
+    
+    // This is to be absolutely safe. We shouldn't have shown this screen if it hasn't yet
+    // been initialised with an AppConfigItem that would have configured the camera, etc.
+    if (camera == null) return;
     
     if (machine.isPaused()) {
       // When paused, we limit the draw frequency since there isn't anything to change.
@@ -252,6 +274,9 @@ public class MachineScreen implements Screen {
   
   @Override
   public void show() {
+    // Note that this screen should not be shown unless the Machine has been initialised by calling
+    // the initMachine method of MachineScreen. This will create the necessary PixMap and Textures 
+    // required for the MachineType.
     KeyboardType.init();
     Gdx.input.setInputProcessor(machineInputProcessor);
     machineRunnable.resume();
@@ -268,12 +293,28 @@ public class MachineScreen implements Screen {
     KeyboardType.dispose();
     keyboardIcon.dispose();
     joystickIcon.dispose();
-    screenPixmap.dispose();
     batch.dispose();
     machineRunnable.stop();
-    screens[0].dispose();
-    screens[1].dispose();
-    screens[2].dispose();
+    disposeScreens();
+  }
+  
+  /**
+   * Disposes the libGDX screen resources that are recreated for each new AppConfigItem.
+   */
+  public void disposeScreens() {
+    Gdx.app.log("MachineScreen", "Disposing screens");
+    if (screenPixmap != null) {
+      screenPixmap.dispose();
+      screenPixmap = null;
+    }
+    if (screens != null) {
+      screens[0].dispose();
+      screens[1].dispose();
+      screens[2].dispose();
+      screens = null;
+    }
+    viewport = null;
+    camera = null;
   }
   
   /**
@@ -298,6 +339,10 @@ public class MachineScreen implements Screen {
    * Returns user to the Home screen.
    */
   public void exit() {
+    // When we go back to the home screen, we free up any resources that were created specifically 
+    // to the screen size of the MachineType that was specified by the AppConfigItem.
+    disposeScreens();
+
     jvic.setScreen(jvic.getHomeScreen());
   }
 }

@@ -33,6 +33,13 @@
       "ram": "RAM_16K"
     },
     {
+      "name": "Apple Panic",
+      "filePath": "carts/16k/applepan.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Atlantis",
       "filePath": "carts/8k/atlantis.crt",
       "fileType": "CART",
@@ -43,6 +50,20 @@
       "name": "Bongo",
       "filePath": "tapes/16k/BONGO.PRG",
       "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Buck Rogers",
+      "filePath": "carts/16k/buck_rog.crt",
+      "fileType": "CART",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Defender",
+      "filePath": "carts/16k/defender.crt",
+      "fileType": "CART",
       "iconPath": "",      
       "machineType": "PAL"
     },
@@ -75,10 +96,47 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Loderunner",
+      "filePath": "carts/16k/loderunn.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Master Type",
+      "filePath": "carts/16k/masterty.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Moon Patrol",
+      "filePath": "carts/16k/moonpatr.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Outworld",
+      "filePath": "carts/16k/outworld.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED",
+      "status": "BROKEN"
+    },
+    {
       "name": "Perils of Willy",
       "displayName": "Perils of\nWilly",
       "filePath": "tapes/16k/PERILS.PRG",
       "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Pharoah's Curse",
+      "filePath": "carts/16k/pharoahc.crt",
+      "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
     },
@@ -93,6 +151,14 @@
       "name": "Skramble",
       "filePath": "tapes/16k/SKRAMBLE.PRG",
       "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Spiders of Mars",
+       "displayName": "Spiders\nof Mars",
+      "filePath": "carts/16k/spiderso.crt",
+      "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
     },

@@ -8,7 +8,7 @@ package emu.jvic;
 public enum MachineType {
   
   PAL(1108405, 284, 312, 208, 272, 32, 24, 50),
-  NTSC(1022727, 260, 261, 204, 252, 0, 0, (1000 / 60));
+  NTSC(1022727, 260, 261, 204, 252, 6, 10, 60);
   
   private int cyclesPerSecond;
   private int totalScreenWidth;

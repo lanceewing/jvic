@@ -43,17 +43,9 @@ public class MachineRunnable implements Runnable {
    * The Machine that this Runnable will be running.
    */
   private Machine machine;
-  
-  private long frameStart = System.nanoTime();
-  private int framesThisSecond = 0;
-  private int framesLastSecond;
-  private long avgUpdateTime;
-  private long frameCount;
-  
+
   private boolean exit = false;
   private boolean paused = true;
-  
-  private long lastTime = System.nanoTime();
   
   /**
    * Constructor for MachineRunnable.
@@ -68,7 +60,14 @@ public class MachineRunnable implements Runnable {
    * Executes the Machine instance.
    */
   public void run () {
-    int nanosPerFrame = (1000000000 / machine.getMachineType().getFramesPerSecond());
+    int nanosPerFrame = (1000000000 / 50);
+    long frameStart = TimeUtils.nanoTime();
+    int framesThisSecond = 0;
+    int framesLastSecond = 0;
+    long avgUpdateTime = 0;
+    long frameCount = 0;
+    long lastTime = TimeUtils.nanoTime();
+    
     boolean skipRender = false;
     
     while (true) {
@@ -81,7 +80,14 @@ public class MachineRunnable implements Runnable {
           } catch (InterruptedException e) {
             Gdx.app.log("MachineRunnable", e.getMessage(), e);
           }
-          lastTime = System.nanoTime();
+          
+          // Machine type may have changed while we were paused, and an unknown amount of
+          // time will have passed. So reset all timing and counts.
+          nanosPerFrame = (1000000000 / machine.getMachineType().getFramesPerSecond());
+          lastTime = frameStart = TimeUtils.nanoTime();
+          framesThisSecond = framesLastSecond = 0;
+          avgUpdateTime = 0;
+          frameCount = 0;
         }
       }
 
@@ -122,7 +128,7 @@ public class MachineRunnable implements Runnable {
       framesThisSecond++;
     }
   }
-
+  
   /**
    * Pauses the MachineRunnable.
    */

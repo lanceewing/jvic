@@ -2,6 +2,7 @@ package emu.jvic.memory;
 
 import com.badlogic.gdx.Gdx;
 
+import emu.jvic.MachineType;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Via;
 import emu.jvic.snap.Snapshot;
@@ -41,6 +42,11 @@ public class Memory {
   private int ramExpansion;
   
   /**
+   * The type of VIC 20 machine that is being emulated, i.e. PAL or NTSC.
+   */
+  private MachineType machineType;
+  
+  /**
    * Constructor for Memory.
    * 
    * @param cpu The CPU that will access this Memory.
@@ -48,9 +54,10 @@ public class Memory {
    * @param via1 The VIA#1 chip to map to memory.
    * @param via2 The VIA#2 chip to map to memory.
    * @param ramExpansion The amount of RAM expansion.
+   * @param machineType The type of VIC 20 machine that is being emulated, i.e. PAL or NTSC.
    * @param snapshot Optional snapshot of the machine state to start with.
    */
-  public Memory(Cpu6502 cpu, Vic vic, Via via1, Via via2, int ramExpansion, Snapshot snapshot) {
+  public Memory(Cpu6502 cpu, Vic vic, Via via1, Via via2, int ramExpansion, MachineType machineType, Snapshot snapshot) {
     if (snapshot != null) {
       this.mem = snapshot.getMemoryArray();
       this.ramExpansion = snapshot.getRamExpansion();
@@ -59,6 +66,7 @@ public class Memory {
       this.ramExpansion = ramExpansion;
     }
     this.memoryMap = new MemoryMappedChip[65536];
+    this.machineType = machineType;
     initVicMemory(vic, via1, via2);
     cpu.setMemory(this);
   }
@@ -173,7 +181,11 @@ public class Memory {
     mapChipToMemory((ramExpansion & BLK_5) != 0? new RamChip() : new UnconnectedMemory(), 0xA000, 0xBFFF);
     
     mapChipToMemory(new RomChip(), 0xC000, 0xDFFF, Gdx.files.internal("roms/basic.rom").readBytes());
-    mapChipToMemory(new RomChip(), 0xE000, 0xFFFF, Gdx.files.internal("roms/kernel.pal").readBytes());
+    if (machineType.equals(MachineType.PAL)) { 
+      mapChipToMemory(new RomChip(), 0xE000, 0xFFFF, Gdx.files.internal("roms/kernel.pal").readBytes());
+    } else { 
+      mapChipToMemory(new RomChip(), 0xE000, 0xFFFF, Gdx.files.internal("roms/kernel.ntsc").readBytes());
+    }
   }
   
   /**

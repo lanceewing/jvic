@@ -183,7 +183,7 @@ public class HomeScreen implements Screen  {
   }
   
   /**
-   * Handle clicking an app button.
+   * Handle clicking an app button. This will start the Machine and run the selected app.
    */
   public ClickListener appClickListener = new ClickListener() {
     @Override
@@ -192,13 +192,9 @@ public class HomeScreen implements Screen  {
       if ((appName != null) && (!appName.equals(""))) {
         AppConfigItem appConfigItem = appConfigMap.get(appName);
         if (appConfigItem != null) {
-          Machine machine = jvic.getMachineScreen().getMachine();
-          if (appConfigItem.getFileType().equals("")) {
-            machine.init(appConfigItem.getRam());
-          } else {
-            machine.init(appConfigItem.getFilePath(), appConfigItem.getFileType(), appConfigItem.getMachineType(), appConfigItem.getRam());
-          }
-          jvic.setScreen(jvic.getMachineScreen());
+          MachineScreen machineScreen = jvic.getMachineScreen();
+          machineScreen.initMachine(appConfigItem);
+          jvic.setScreen(machineScreen);
         }
       }
     }
