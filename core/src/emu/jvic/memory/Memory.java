@@ -23,18 +23,6 @@ public class Memory {
   public static final int BLK_3 = 0x20;
   public static final int BLK_5 = 0x40;
   
-  // These are the constants for the supported RAM configurations.
-  public static final int EXP_UNEXPANDED = 0;
-  public static final int EXP_3K = (RAM_1 | RAM_2 | RAM_3);
-  public static final int EXP_8K = (BLK_1);
-  public static final int EXP_16K = (BLK_1 | BLK_2);
-  public static final int EXP_24K = (BLK_1 | BLK_2 | BLK_3);
-  public static final int EXP_32K = (BLK_1 | BLK_2 | BLK_3 | BLK_5);
-  public static final int EXP_35K = (RAM_1 | RAM_2 | RAM_3 | BLK_1 | BLK_2 | BLK_3 | BLK_5);
-  
-  // This constant represents a RAM configuration that will be automatically deduced from the program that is loaded.
-  public static final int EXP_AUTO = 0xFF;
-  
   /**
    * Holds the machines memory.
    */

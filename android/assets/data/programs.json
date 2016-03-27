@@ -6,7 +6,7 @@
       "fileType": "",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": 0
+      "ram": "RAM_UNEXPANDED"
     },
     {
       "name": "BASIC 3K",
@@ -14,7 +14,7 @@
       "fileType": "",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": 7
+      "ram": "RAM_3K"
     },
     {
       "name": "BASIC 8K",
@@ -22,7 +22,7 @@
       "fileType": "",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": 56
+      "ram": "RAM_8K"
     },
     {
       "name": "BASIC 16K",
@@ -30,55 +30,49 @@
       "fileType": "",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": 56
+      "ram": "RAM_16K"
     },
     {
       "name": "Atlantis",
       "filePath": "carts/8k/atlantis.crt",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "NTSC",
-      "ram": 255
+      "machineType": "NTSC"
     },
     {
       "name": "Bongo",
       "filePath": "tapes/16k/BONGO.PRG",
       "fileType": "PRG",
       "iconPath": "",      
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Demon Attack",
       "filePath": "carts/8k/demonata.crt",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Dragon Fire",
       "filePath": "carts/8k/dragon.crt",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Galactic Abductor",
       "filePath": "tapes/16k/GALABDCT.PRG",
       "fileType": "PRG",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Gorf",
       "filePath": "carts/8k/gorf.crt",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "NTSC",
-      "ram": 255
+      "machineType": "NTSC"
     },
     {
       "name": "Perils of Willy",
@@ -86,32 +80,28 @@
       "filePath": "tapes/16k/PERILS.PRG",
       "fileType": "PRG",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Rockman",
       "filePath": "snaps/pcv/ROCKMAN.PCV",
       "fileType": "PCV",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Skramble",
       "filePath": "tapes/16k/SKRAMBLE.PRG",
       "fileType": "PRG",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     },
     {
       "name": "Terraguard",
       "filePath": "carts/8k/terragua.crt",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "PAL",
-      "ram": 255
+      "machineType": "PAL"
     }
   ]
 }

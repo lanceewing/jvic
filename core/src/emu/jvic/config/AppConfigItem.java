@@ -1,7 +1,7 @@
 package emu.jvic.config;
 
 import emu.jvic.MachineType;
-import emu.jvic.memory.Memory;
+import emu.jvic.memory.RamType;
 
 public class AppConfigItem {
 
@@ -17,7 +17,7 @@ public class AppConfigItem {
   
   private MachineType machineType;
   
-  private int ram = Memory.EXP_AUTO;
+  private RamType ram = RamType.RAM_AUTO;
 
   /**
    * Constructor for AppConfigItem.
@@ -117,16 +117,16 @@ public class AppConfigItem {
   }
 
   /**
-   * @return the ram
+   * @return The RamType.
    */
-  public int getRam() {
+  public RamType getRam() {
     return ram;
   }
 
   /**
-   * @param ram the ram to set
+   * @param ram The RamType to set.
    */
-  public void setRam(int ram) {
+  public void setRam(RamType ram) {
     this.ram = ram;
   }
 }

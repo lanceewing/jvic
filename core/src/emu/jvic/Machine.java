@@ -9,6 +9,7 @@ import emu.jvic.io.Via;
 import emu.jvic.io.Via1;
 import emu.jvic.io.Via2;
 import emu.jvic.memory.Memory;
+import emu.jvic.memory.RamType;
 import emu.jvic.snap.PcvSnapshot;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.video.Vic;
@@ -47,26 +48,23 @@ public class Machine {
    * Constructor for Machine.
    */
   public Machine() {
-    //init("snaps/pcv/ROCKMAN.PCV", "PCV", MachineType.PAL);
-    //init("carts/8k/demonata.crt", "CART", MachineType.PAL);
-    //init("carts/8k/gorf.crt", "CART", MachineType.NTSC);
-    //init("tapes/16k/GALABDCT.PRG", "PRG", MachineType.PAL);
-    //init("carts/8k/dragon.crt", "CART", MachineType.PAL);
-    //init("carts/8k/atlantis.crt", "CART", MachineType.NTSC);
-    //init("carts/8k/terragua.crt", "CART", MachineType.PAL);
-    //init("tapes/16k/BONGO.PRG", "PRG", MachineType.PAL);
-    //init("tapes/16k/PERILS.PRG", "PRG", MachineType.PAL);
-    //init("tapes/16k/SKRAMBLE.PRG", "PRG", MachineType.PAL);
-    //init("tapes/screentest.prg", "PRG", MachineType.PAL);
-    
     init();
   }
   
   /**
-   * Initialises the machine. It will boot in to BASIC.
+   * Initialises the machine. It will boot in to BASIC in unexpanded mode.
    */
   public void init() {
-    init(null, null, MachineType.PAL);
+    init(RamType.RAM_UNEXPANDED);
+  }
+  
+  /**
+   * Initialises the machine. It will boot in to BASIC with the given RAM configuration.
+   * 
+   * @param ramType The RAM configuration to use.
+   */
+  public void init(RamType ramType) {
+    init(null, null, MachineType.PAL, ramType);
   }
   
   /**
@@ -75,12 +73,12 @@ public class Machine {
    * @param programFile The internal path to the program file to automatically load and run.
    * @param programType The type of program data, e.g. CART, PRG, V20, PCV, VICE, S20, etc.
    * @param machineType The type of VIC 20 machine, i.e. PAL or NTSC.
+   * @param ramType The RAM configuration to use.
    * 
    */
-  public void init(String programFile, String programType, MachineType machineType) {
+  public void init(String programFile, String programType, MachineType machineType, RamType ramType) {
     byte[] programData = null;
     Snapshot snapshot = null;
-    int ramExpansion = 0;
     
     this.machineType = machineType;
     
@@ -95,13 +93,13 @@ public class Machine {
           
           if (startAddress == 0x1201) {
             // 8K, 16K, or 24K. We'll give it the full 24K to cover all bases.
-            ramExpansion = Memory.EXP_24K;
+            ramType = RamType.RAM_24K;
           } else if (startAddress == 0x0401) {
             // 3K expansion.
-            ramExpansion = Memory.EXP_3K;
+            ramType = RamType.RAM_3K;
           } else if (startAddress == 0x1001) {
             // Unexpanded start address.
-            ramExpansion = Memory.EXP_UNEXPANDED;
+            ramType = RamType.RAM_UNEXPANDED;
           }
         } else if ("PCV".equals(programType)) {
           // Decode PCVIC snapshot data. PCVIC is an old DOS VIC 20 emulator.
@@ -128,7 +126,7 @@ public class Machine {
     
     // Now we create the memory, which will include mapping the VIC chip,
     // the VIA chips, and the creation of RAM chips and ROM chips.
-    memory = new Memory(cpu, vic, via1, via2, ramExpansion, snapshot);
+    memory = new Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), snapshot);
     
     // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
     screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;

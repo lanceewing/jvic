@@ -193,7 +193,11 @@ public class HomeScreen implements Screen  {
         AppConfigItem appConfigItem = appConfigMap.get(appName);
         if (appConfigItem != null) {
           Machine machine = jvic.getMachineScreen().getMachine();
-          machine.init(appConfigItem.getFilePath(), appConfigItem.getFileType(), appConfigItem.getMachineType());
+          if (appConfigItem.getFileType().equals("")) {
+            machine.init(appConfigItem.getRam());
+          } else {
+            machine.init(appConfigItem.getFilePath(), appConfigItem.getFileType(), appConfigItem.getMachineType(), appConfigItem.getRam());
+          }
           jvic.setScreen(jvic.getMachineScreen());
         }
       }
