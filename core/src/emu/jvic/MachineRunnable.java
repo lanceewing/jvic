@@ -81,13 +81,15 @@ public class MachineRunnable implements Runnable {
             Gdx.app.log("MachineRunnable", e.getMessage(), e);
           }
           
-          // Machine type may have changed while we were paused, and an unknown amount of
-          // time will have passed. So reset all timing and counts.
-          nanosPerFrame = (1000000000 / machine.getMachineType().getFramesPerSecond());
-          lastTime = frameStart = TimeUtils.nanoTime();
-          framesThisSecond = framesLastSecond = 0;
-          avgUpdateTime = 0;
-          frameCount = 0;
+          if (!exit) {
+            // Machine type may have changed while we were paused, and an unknown amount of
+            // time will have passed. So reset all timing and counts.
+            nanosPerFrame = (1000000000 / machine.getMachineType().getFramesPerSecond());
+            lastTime = frameStart = TimeUtils.nanoTime();
+            framesThisSecond = framesLastSecond = 0;
+            avgUpdateTime = 0;
+            frameCount = 0;
+          }
         }
       }
 
