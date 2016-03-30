@@ -1,5 +1,6 @@
 package emu.jvic;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,10 +13,12 @@ import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -51,6 +54,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
   private Table container;
   private ViewportManager viewportManager;
   private Map<String, AppConfigItem> appConfigMap;
+  private Map<String, Texture> buttonTextureMap;
   
   /**
    * Invoked by JVic whenever it would like the user to confirm an action.
@@ -80,6 +84,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
     Json json = new Json();
     AppConfig appConfig = json.fromJson(AppConfig.class, Gdx.files.internal("data/programs.json"));
     appConfigMap = new HashMap<String, AppConfigItem>();
+    buttonTextureMap = new HashMap<String, Texture>();
     
     skin = new Skin(Gdx.files.internal("data/uiskin.json"));
     skin.add("top", skin.newDrawable("default-round", Color.RED), Drawable.class);
@@ -95,8 +100,8 @@ public class HomeScreen extends InputAdapter implements Screen  {
     scroll.setPageSpacing(25);
     
     int pageItemCount = 0;
-    Table currentPage = new Table().pad(50);
-    currentPage.defaults().pad(55, 40, 55, 40);
+    Table currentPage = new Table().pad(50, 10, 50, 10);
+    currentPage.defaults().pad(55, 50, 55, 50);
     
     for (AppConfigItem appConfigItem : appConfig.getApps()) {
       appConfigMap.put(appConfigItem.getName(), appConfigItem);
@@ -105,8 +110,8 @@ public class HomeScreen extends InputAdapter implements Screen  {
       if (pageItemCount == 20) {
         scroll.addPage(currentPage);
         pageItemCount = 0;
-        currentPage = new Table().pad(50);
-        currentPage.defaults().pad(55, 40, 55, 40);
+        currentPage = new Table().pad(50, 10, 50, 10);
+        currentPage.defaults().pad(55, 50, 55, 50);
       }
       
       // Every 4 apps, add a new row to the current page.
@@ -177,6 +182,10 @@ public class HomeScreen extends InputAdapter implements Screen  {
   public void dispose() {
     stage.dispose();
     skin.dispose();
+    
+    for (Texture texture: buttonTextureMap.values()) {
+      texture.dispose();
+    }
   }
 
   /** 
@@ -216,8 +225,26 @@ public class HomeScreen extends InputAdapter implements Screen  {
     ButtonStyle style = button.getStyle();
     style.up =  style.down = null;
     
-    // TODO: Load the app icon image at this point.
-    button.add(new Image(skin.getDrawable("top"))).expand().fill();
+    // An app button can contain an optional icon.
+    Image icon = null;
+    if ((appConfigItem.getIconPath() != null) && (!appConfigItem.getIconPath().equals(""))) {
+      Texture iconTexture = buttonTextureMap.get(appConfigItem.getIconPath());
+      if (iconTexture == null) {
+        iconTexture = new Texture(appConfigItem.getIconPath());
+        buttonTextureMap.put(appConfigItem.getIconPath(), iconTexture);
+        icon = new Image(iconTexture);
+        icon.setAlign(Align.center);
+      }
+    }
+    
+    if (icon != null) {
+      Container<Image> iconContainer = new Container<Image>();
+      iconContainer.setActor(icon);
+      iconContainer.align(Align.center);
+      button.stack(new Image(skin.getDrawable("top")), iconContainer).width(165).height(140);
+    } else {
+      button.add(new Image(skin.getDrawable("top"))).width(165).height(140);
+    }
     button.row();
     
     Label label = new Label(appConfigItem.getDisplayName(), skin);
