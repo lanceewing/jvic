@@ -4,7 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -23,6 +28,7 @@ import com.badlogic.gdx.utils.Json;
 import emu.jvic.config.AppConfig;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.ui.ConfirmHandler;
+import emu.jvic.ui.ConfirmResponseHandler;
 import emu.jvic.ui.PagedScrollPane;
 import emu.jvic.ui.ViewportManager;
 
@@ -33,7 +39,7 @@ import emu.jvic.ui.ViewportManager;
  * 
  * @author Lance Ewing
  */
-public class HomeScreen implements Screen  {
+public class HomeScreen extends InputAdapter implements Screen  {
 
   /**
    * The Game object for JVicGdx. Allows us to easily change screens.
@@ -47,6 +53,17 @@ public class HomeScreen implements Screen  {
   private Map<String, AppConfigItem> appConfigMap;
   
   /**
+   * Invoked by JVic whenever it would like the user to confirm an action.
+   */
+  private ConfirmHandler confirmHandler;
+  
+  /**
+   * The InputProcessor for the Home screen. This is an InputMultiplexor, which includes 
+   * both the Stage and the HomeScreen.
+   */
+  private InputMultiplexer inputProcessor;
+  
+  /**
    * Constructor for HomeScreen.
    * 
    * @param jvic The JVicGdx instance.
@@ -54,6 +71,7 @@ public class HomeScreen implements Screen  {
    */
   public HomeScreen(JVicGdx jvic, ConfirmHandler confirmHandler) {
     this.jvic = jvic;
+    this.confirmHandler = confirmHandler;
     
     viewportManager = ViewportManager.getInstance();
     
@@ -115,11 +133,16 @@ public class HomeScreen implements Screen  {
     }
 
     container.add(scroll).expand().fill();
+    
+    // The stage handles most of the input, but we need to handle the BACK button separately.
+    inputProcessor = new InputMultiplexer();
+    inputProcessor.addProcessor(stage);
+    inputProcessor.addProcessor(this);
   }
   
   @Override
   public void show() {
-    Gdx.input.setInputProcessor(stage);
+    Gdx.input.setInputProcessor(inputProcessor);
   }
 
   @Override
@@ -156,6 +179,31 @@ public class HomeScreen implements Screen  {
     skin.dispose();
   }
 
+  /** 
+   * Called when a key was released
+   * 
+   * @param keycode one of the constants in {@link Input.Keys}
+   * 
+   * @return whether the input was processed 
+   */
+  public boolean keyUp(int keycode) {
+    if (keycode == Keys.BACK) {
+      if (Gdx.app.getType().equals(ApplicationType.Android)) {
+        confirmHandler.confirm("Do you really want to exit?", new ConfirmResponseHandler() {
+          public void yes() {
+            // Pressing BACK from the home screen will leave JVic.
+            Gdx.app.exit();
+          }
+          public void no() {
+            // Ignore. We're staying on the Home screen.
+          }
+        });
+        return true;
+      }
+    }
+    return false;
+  }
+  
   /**
    * Creates a button to represent the given AppConfigItem.
    * 
