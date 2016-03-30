@@ -1,5 +1,8 @@
 package emu.jvic;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -53,13 +56,20 @@ public class MachineScreen implements Screen {
    */
   private SpriteBatch batch;
   
-  // Components to support rendering of the VIC 20 screen.
+  // Currently in use components to support rendering of the VIC 20 screen. The objects 
+  // that these references point to will change depending on the MachineType.
   private Pixmap screenPixmap;
   private Viewport viewport;
   private Camera camera;
   private Texture[] screens;
   private int drawScreen = 1;
   private int updateScreen = 0;
+  
+  // Screen resources for each MachineType.
+  private Map<MachineType, Pixmap> machineTypePixmaps;
+  private Map<MachineType, Camera> machineTypeCameras;
+  private Map<MachineType, Viewport> machineTypeViewports;
+  private Map<MachineType, Texture[]> machineTypeTextures;
   
   // UI components.
   private Texture joystickIcon;
@@ -81,6 +91,14 @@ public class MachineScreen implements Screen {
     this.machineRunnable = new MachineRunnable(this.machine);
     
     batch = new SpriteBatch();
+    
+    machineTypePixmaps = new HashMap<MachineType, Pixmap>();
+    machineTypeTextures = new HashMap<MachineType, Texture[]>();
+    machineTypeViewports = new HashMap<MachineType, Viewport>();
+    machineTypeCameras = new HashMap<MachineType, Camera>();
+    
+    createScreenResourcesForMachineType(MachineType.PAL);
+    createScreenResourcesForMachineType(MachineType.NTSC);
     
     keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
@@ -112,14 +130,35 @@ public class MachineScreen implements Screen {
       machine.init(appConfigItem.getFilePath(), appConfigItem.getFileType(), appConfigItem.getMachineType(), appConfigItem.getRam());
     }
     
+    // Switch libGDX screen resources used by the VIC 20 screen to the size required by the MachineType.
+    screenPixmap = machineTypePixmaps.get(appConfigItem.getMachineType());
+    screens = machineTypeTextures.get(appConfigItem.getMachineType());
+    camera = machineTypeCameras.get(appConfigItem.getMachineType());
+    viewport = machineTypeViewports.get(appConfigItem.getMachineType());
+    
+    drawScreen = 1;
+    updateScreen = 0;
+  }
+  
+  /**
+   * Creates the libGDX screen resources required for the given MachineType.
+   * 
+   * @param machineType The MachineType to create the screen resources for.
+   */
+  private void createScreenResourcesForMachineType(MachineType machineType) {
     // Create the libGDX screen resources used by the VIC 20 screen to the size required by the MachineType.
-    screenPixmap = new Pixmap(machine.getMachineType().getTotalScreenWidth(), machine.getMachineType().getTotalScreenHeight(), Pixmap.Format.RGB565);
-    screens = new Texture[3];
+    Pixmap screenPixmap = new Pixmap(machineType.getTotalScreenWidth(), machineType.getTotalScreenHeight(), Pixmap.Format.RGB565);
+    Texture[] screens = new Texture[3];
     screens[0] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
     screens[1] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
     screens[2] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
-    camera = new OrthographicCamera();
-    viewport = new ExtendViewport(machine.getScreenWidth(), machine.getScreenHeight(), camera);
+    Camera camera = new OrthographicCamera();
+    Viewport viewport = new ExtendViewport((machineType.getVisibleScreenHeight() / 3) * 4, machineType.getVisibleScreenHeight(), camera);
+    
+    machineTypePixmaps.put(machineType, screenPixmap);
+    machineTypeTextures.put(machineType, screens);
+    machineTypeCameras.put(machineType, camera);
+    machineTypeViewports.put(machineType, viewport);
   }
   
   private long lastLogTime;
@@ -134,10 +173,6 @@ public class MachineScreen implements Screen {
     long fps = Gdx.graphics.getFramesPerSecond();
     long maxFrameDuration = (long)(1000000000L * (fps == 0? 0.016667f : delta));
     boolean draw = false;
-    
-    // This is to be absolutely safe. We shouldn't have shown this screen if it hasn't yet
-    // been initialised with an AppConfigItem that would have configured the camera, etc.
-    if (camera == null) return;
     
     if (machine.isPaused()) {
       // When paused, we limit the draw frequency since there isn't anything to change.
@@ -299,22 +334,18 @@ public class MachineScreen implements Screen {
   }
   
   /**
-   * Disposes the libGDX screen resources that are recreated for each new AppConfigItem.
+   * Disposes the libGDX screen resources for each MachineType.
    */
-  public void disposeScreens() {
+  private void disposeScreens() {
     Gdx.app.log("MachineScreen", "Disposing screens");
-    if (screenPixmap != null) {
-      screenPixmap.dispose();
-      screenPixmap = null;
+    for (Pixmap pixmap : machineTypePixmaps.values()) {
+      pixmap.dispose();
     }
-    if (screens != null) {
+    for (Texture[] screens : machineTypeTextures.values()) {
       screens[0].dispose();
       screens[1].dispose();
       screens[2].dispose();
-      screens = null;
     }
-    viewport = null;
-    camera = null;
   }
   
   /**
@@ -339,10 +370,6 @@ public class MachineScreen implements Screen {
    * Returns user to the Home screen.
    */
   public void exit() {
-    // When we go back to the home screen, we free up any resources that were created specifically 
-    // to the screen size of the MachineType that was specified by the AppConfigItem.
-    disposeScreens();
-
     jvic.setScreen(jvic.getHomeScreen());
   }
 }
