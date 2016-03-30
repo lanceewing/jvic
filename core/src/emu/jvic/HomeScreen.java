@@ -189,7 +189,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
   public boolean keyUp(int keycode) {
     if (keycode == Keys.BACK) {
       if (Gdx.app.getType().equals(ApplicationType.Android)) {
-        confirmHandler.confirm("Do you really want to exit?", new ConfirmResponseHandler() {
+        confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
           public void yes() {
             // Pressing BACK from the home screen will leave JVic.
             Gdx.app.exit();

@@ -108,7 +108,7 @@ public class MachineInputProcessor extends InputAdapter {
       if (keyboardType.equals(KeyboardType.OFF)) {
         if (Gdx.app.getType().equals(ApplicationType.Android)) {
           machineScreen.getMachineRunnable().pause();
-          confirmHandler.confirm("Do you really want to Exit?", new ConfirmResponseHandler() {
+          confirmHandler.confirm("Return to Home screen?", new ConfirmResponseHandler() {
             public void yes() {
               machineScreen.exit();
             }
