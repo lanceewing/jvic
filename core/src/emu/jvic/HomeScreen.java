@@ -1,6 +1,5 @@
 package emu.jvic;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,8 +87,6 @@ public class HomeScreen extends InputAdapter implements Screen  {
     
     skin = new Skin(Gdx.files.internal("data/uiskin.json"));
     skin.add("top", skin.newDrawable("default-round", Color.RED), Drawable.class);
-    skin.add("star-filled", skin.newDrawable("white", Color.YELLOW), Drawable.class); 
-    skin.add("star-unfilled", skin.newDrawable("white", Color.GRAY), Drawable.class);
     
     container = new Table();
     stage.addActor(container);
@@ -101,7 +98,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
     
     int pageItemCount = 0;
     Table currentPage = new Table().pad(50, 10, 50, 10);
-    currentPage.defaults().pad(55, 50, 55, 50);
+    currentPage.defaults().pad(0, 50, 0, 50);
     
     for (AppConfigItem appConfigItem : appConfig.getApps()) {
       appConfigMap.put(appConfigItem.getName(), appConfigItem);
@@ -111,7 +108,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
         scroll.addPage(currentPage);
         pageItemCount = 0;
         currentPage = new Table().pad(50, 10, 50, 10);
-        currentPage.defaults().pad(55, 50, 55, 50);
+        currentPage.defaults().pad(0, 50, 0, 50);
       }
       
       // Every 4 apps, add a new row to the current page.
@@ -159,8 +156,10 @@ public class HomeScreen extends InputAdapter implements Screen  {
 
   @Override
   public void resize(int width, int height) {
-    stage.getViewport().update(width, height, false);
+    //stage.getViewport().update(width, height, false);
+    // TODO: Have one Stage for landscape and one for portrait, with different number of app buttons in each row.
     viewportManager.update(width, height);
+    stage.setViewport(viewportManager.getCurrentViewport());
   }
 
   @Override
@@ -241,9 +240,9 @@ public class HomeScreen extends InputAdapter implements Screen  {
       Container<Image> iconContainer = new Container<Image>();
       iconContainer.setActor(icon);
       iconContainer.align(Align.center);
-      button.stack(new Image(skin.getDrawable("top")), iconContainer).width(165).height(140);
+      button.stack(new Image(skin.getDrawable("top")), iconContainer).width(165).height(125);
     } else {
-      button.add(new Image(skin.getDrawable("top"))).width(165).height(140);
+      button.add(new Image(skin.getDrawable("top"))).width(165).height(125);
     }
     button.row();
     
