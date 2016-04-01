@@ -114,6 +114,24 @@ public class ViewportManager {
   }
   
   /**
+   * Gets the Viewport used for the portrait orientation.
+   * 
+   * @return The Viewport used for the portrait orientation.
+   */
+  public Viewport getPortraitViewport() {
+    return portraitViewport;
+  }
+  
+  /**
+   * Gets the Viewport used for the landscape orientation.
+   * 
+   * @return The Viewport used for the landscape orientation.
+   */
+  public Viewport getLandscapeViewport() {
+    return landscapeViewport;
+  }
+  
+  /**
    * Gets the width of the current Viewport.
    * 
    * @return The width of the current Viewport.

@@ -93,6 +93,13 @@ public class PagedScrollPane extends ScrollPane {
     }
   }
 
+  public void reset() {
+    this.scrollXDeltaMean.clear();
+    this.lastScrollX = 0;
+    this.wasPanDragFling = false;
+    setScrollX(0);
+  }
+  
   private void scrollToPage() {
     final float width = getWidth();
     final float scrollX = getScrollX();

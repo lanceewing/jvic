@@ -26,6 +26,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import emu.jvic.config.AppConfig;
 import emu.jvic.config.AppConfigItem;
@@ -49,8 +50,8 @@ public class HomeScreen extends InputAdapter implements Screen  {
   private JVicGdx jvic;
   
   private Skin skin;
-  private Stage stage;
-  private Table container;
+  private Stage portraitStage;
+  private Stage landscapeStage;
   private ViewportManager viewportManager;
   private Map<String, AppConfigItem> appConfigMap;
   private Map<String, Texture> buttonTextureMap;
@@ -76,19 +77,32 @@ public class HomeScreen extends InputAdapter implements Screen  {
     this.jvic = jvic;
     this.confirmHandler = confirmHandler;
     
-    viewportManager = ViewportManager.getInstance();
-    
-    stage = new Stage(viewportManager.getCurrentViewport());
-    
+    // Load the app meta data.
     Json json = new Json();
     AppConfig appConfig = json.fromJson(AppConfig.class, Gdx.files.internal("data/programs.json"));
     appConfigMap = new HashMap<String, AppConfigItem>();
-    buttonTextureMap = new HashMap<String, Texture>();
+    for (AppConfigItem appConfigItem : appConfig.getApps()) {
+      appConfigMap.put(appConfigItem.getName(), appConfigItem);
+    }
     
+    buttonTextureMap = new HashMap<String, Texture>();
     skin = new Skin(Gdx.files.internal("data/uiskin.json"));
     skin.add("top", skin.newDrawable("default-round", Color.RED), Drawable.class);
     
-    container = new Table();
+    viewportManager = ViewportManager.getInstance();
+    portraitStage = createStage(viewportManager.getPortraitViewport(), appConfig, 4, 5);
+    landscapeStage = createStage(viewportManager.getLandscapeViewport(), appConfig, 7, 3);
+    
+    // The stage handles most of the input, but we need to handle the BACK button separately.
+    inputProcessor = new InputMultiplexer();
+    inputProcessor.addProcessor(portraitStage);
+    inputProcessor.addProcessor(this);
+  }
+  
+  private Stage createStage(Viewport viewport, AppConfig appConfig, int columns, int rows) {
+    Stage stage = new Stage(viewport);
+    
+    Table container = new Table();
     stage.addActor(container);
     container.setFillParent(true);
 
@@ -96,23 +110,22 @@ public class HomeScreen extends InputAdapter implements Screen  {
     scroll.setFlingTime(0.01f);
     scroll.setPageSpacing(25);
     
+    int itemsPerPage = columns * rows;
     int pageItemCount = 0;
     Table currentPage = new Table().pad(50, 10, 50, 10);
     currentPage.defaults().pad(0, 50, 0, 50);
     
     for (AppConfigItem appConfigItem : appConfig.getApps()) {
-      appConfigMap.put(appConfigItem.getName(), appConfigItem);
-      
-      // Every 20 apps, add a new page.
-      if (pageItemCount == 20) {
+      // Every itemsPerPage apps, add a new page.
+      if (pageItemCount == itemsPerPage) {
         scroll.addPage(currentPage);
         pageItemCount = 0;
         currentPage = new Table().pad(50, 10, 50, 10);
         currentPage.defaults().pad(0, 50, 0, 50);
       }
       
-      // Every 4 apps, add a new row to the current page.
-      if ((pageItemCount % 4) == 0) {
+      // Every number of columns apps, add a new row to the current page.
+      if ((pageItemCount % columns) == 0) {
         currentPage.row();
       }
       
@@ -122,11 +135,10 @@ public class HomeScreen extends InputAdapter implements Screen  {
     }
     
     // Add the last page of apps.
-    if (pageItemCount <= 20) {
+    if (pageItemCount <= itemsPerPage) {
       AppConfigItem appConfigItem = new AppConfigItem();
-      appConfigMap.put("", appConfigItem);
-      for (int i=pageItemCount; i<20; i++) {
-        if ((i % 4) == 0) {
+      for (int i=pageItemCount; i<itemsPerPage; i++) {
+        if ((i % columns) == 0) {
           currentPage.row();
         }
         currentPage.add(buildAppButton(appConfigItem)).expand().fill();
@@ -136,10 +148,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
 
     container.add(scroll).expand().fill();
     
-    // The stage handles most of the input, but we need to handle the BACK button separately.
-    inputProcessor = new InputMultiplexer();
-    inputProcessor.addProcessor(stage);
-    inputProcessor.addProcessor(this);
+    return stage;
   }
   
   @Override
@@ -150,16 +159,29 @@ public class HomeScreen extends InputAdapter implements Screen  {
   @Override
   public void render(float delta) {
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-    stage.act(delta);
-    stage.draw();
+    if (viewportManager.isPortrait()) {
+      portraitStage.act(delta);
+      portraitStage.draw();
+    } else {
+      landscapeStage.act(delta);
+      landscapeStage.draw();
+    }
   }
 
   @Override
   public void resize(int width, int height) {
-    //stage.getViewport().update(width, height, false);
-    // TODO: Have one Stage for landscape and one for portrait, with different number of app buttons in each row.
     viewportManager.update(width, height);
-    stage.setViewport(viewportManager.getCurrentViewport());
+    if (viewportManager.isPortrait()) {
+      inputProcessor.removeProcessor(landscapeStage);
+      inputProcessor.addProcessor(portraitStage);
+      PagedScrollPane scrollPane = ((PagedScrollPane)(((Table)(landscapeStage.getActors().get(0))).getCells().get(0)).getActor());
+      scrollPane.reset();
+    } else {
+      inputProcessor.removeProcessor(portraitStage);
+      inputProcessor.addProcessor(landscapeStage);
+      PagedScrollPane scrollPane = ((PagedScrollPane)(((Table)(landscapeStage.getActors().get(0))).getCells().get(0)).getActor());
+      scrollPane.reset();
+    }
   }
 
   @Override
@@ -179,7 +201,8 @@ public class HomeScreen extends InputAdapter implements Screen  {
 
   @Override
   public void dispose() {
-    stage.dispose();
+    portraitStage.dispose();
+    landscapeStage.dispose();
     skin.dispose();
     
     for (Texture texture: buttonTextureMap.values()) {
