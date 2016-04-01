@@ -65,7 +65,8 @@ public class HomeScreen extends InputAdapter implements Screen  {
    * The InputProcessor for the Home screen. This is an InputMultiplexor, which includes 
    * both the Stage and the HomeScreen.
    */
-  private InputMultiplexer inputProcessor;
+  private InputMultiplexer portraitInputProcessor;
+  private InputMultiplexer landscapeInputProcessor;
   
   /**
    * Constructor for HomeScreen.
@@ -94,9 +95,12 @@ public class HomeScreen extends InputAdapter implements Screen  {
     landscapeStage = createStage(viewportManager.getLandscapeViewport(), appConfig, 7, 3);
     
     // The stage handles most of the input, but we need to handle the BACK button separately.
-    inputProcessor = new InputMultiplexer();
-    inputProcessor.addProcessor(portraitStage);
-    inputProcessor.addProcessor(this);
+    portraitInputProcessor = new InputMultiplexer();
+    portraitInputProcessor.addProcessor(portraitStage);
+    portraitInputProcessor.addProcessor(this);
+    landscapeInputProcessor = new InputMultiplexer();
+    landscapeInputProcessor.addProcessor(landscapeStage);
+    landscapeInputProcessor.addProcessor(this);
   }
   
   private Stage createStage(Viewport viewport, AppConfig appConfig, int columns, int rows) {
@@ -153,7 +157,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
   
   @Override
   public void show() {
-    Gdx.input.setInputProcessor(inputProcessor);
+    Gdx.input.setInputProcessor(portraitInputProcessor);
   }
 
   @Override
@@ -172,15 +176,9 @@ public class HomeScreen extends InputAdapter implements Screen  {
   public void resize(int width, int height) {
     viewportManager.update(width, height);
     if (viewportManager.isPortrait()) {
-      inputProcessor.removeProcessor(landscapeStage);
-      inputProcessor.addProcessor(portraitStage);
-      PagedScrollPane scrollPane = ((PagedScrollPane)(((Table)(landscapeStage.getActors().get(0))).getCells().get(0)).getActor());
-      scrollPane.reset();
+      Gdx.input.setInputProcessor(portraitInputProcessor);
     } else {
-      inputProcessor.removeProcessor(portraitStage);
-      inputProcessor.addProcessor(landscapeStage);
-      PagedScrollPane scrollPane = ((PagedScrollPane)(((Table)(landscapeStage.getActors().get(0))).getCells().get(0)).getActor());
-      scrollPane.reset();
+      Gdx.input.setInputProcessor(landscapeInputProcessor);
     }
   }
 
