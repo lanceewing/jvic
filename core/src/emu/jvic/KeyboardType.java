@@ -202,7 +202,7 @@ public enum KeyboardType {
       keyRow = (int)((textures[side].getHeight() - y + renderOffset) / keySize);
     }
 
-    if (keyRow > keyMap[side].length) keyRow = keyMap[side].length - 1;
+    if (keyRow >= keyMap[side].length) keyRow = keyMap[side].length - 1;
     
     switch (this) {
       case LANDSCAPE:
