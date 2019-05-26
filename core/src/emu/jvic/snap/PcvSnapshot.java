@@ -1,6 +1,7 @@
 package emu.jvic.snap;
 
 import emu.jvic.memory.Memory;
+import emu.jvic.memory.Vic20Memory;
 
 /**
  * This class represents a PCVIC snapshot file. PCVIC was one of the early VIC 20
@@ -216,11 +217,11 @@ public class PcvSnapshot extends Snapshot {
     // expansion.
     int memoryConfig = ((int)pcvData[pcvDataIndex++] & 0xFF);
     ramExpansion = 0;
-    if ((memoryConfig & 0x01) > 0) ramExpansion |= (Memory.RAM_1 | Memory.RAM_2 | Memory.RAM_3);
-    if ((memoryConfig & 0x02) > 0) ramExpansion |= Memory.BLK_1;
-    if ((memoryConfig & 0x04) > 0) ramExpansion |= Memory.BLK_2;
-    if ((memoryConfig & 0x08) > 0) ramExpansion |= Memory.BLK_3;
-    if ((memoryConfig & 0x20) > 0) ramExpansion |= Memory.BLK_5;
+    if ((memoryConfig & 0x01) > 0) ramExpansion |= (Vic20Memory.RAM_1 | Vic20Memory.RAM_2 | Vic20Memory.RAM_3);
+    if ((memoryConfig & 0x02) > 0) ramExpansion |= Vic20Memory.BLK_1;
+    if ((memoryConfig & 0x04) > 0) ramExpansion |= Vic20Memory.BLK_2;
+    if ((memoryConfig & 0x08) > 0) ramExpansion |= Vic20Memory.BLK_3;
+    if ((memoryConfig & 0x20) > 0) ramExpansion |= Vic20Memory.BLK_5;
     
     // PC register
     programCounter = ((int)pcvData[pcvDataIndex++] & 0xFF) + (((int)pcvData[pcvDataIndex++] & 0xFF) << 8);

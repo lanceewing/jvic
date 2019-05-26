@@ -10,6 +10,7 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
+import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.video.Vic;
@@ -22,7 +23,7 @@ import emu.jvic.video.Vic;
 public class Machine {
 
   // Machine components.
-  private Memory memory;
+  private Vic20Memory memory;
   private Vic vic;
   private Via6522 via1;
   private Via6522 via2;
@@ -123,7 +124,7 @@ public class Machine {
     
     // Now we create the memory, which will include mapping the VIC chip,
     // the VIA chips, and the creation of RAM chips and ROM chips.
-    memory = new Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, snapshot);
+    memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, snapshot);
     
     // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
     screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;

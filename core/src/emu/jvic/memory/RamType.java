@@ -1,6 +1,6 @@
 package emu.jvic.memory;
 
-import static emu.jvic.memory.Memory.*;
+import static emu.jvic.memory.Vic20Memory.*;
 
 /**
  * Enum representing the supported RAM configuration types.
