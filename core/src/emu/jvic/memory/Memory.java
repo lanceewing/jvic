@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 
 import emu.jvic.MachineType;
 import emu.jvic.cpu.Cpu6502;
-import emu.jvic.io.Via;
+import emu.jvic.io.Via6522;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.video.Vic;
 
@@ -57,7 +57,7 @@ public class Memory {
    * @param machineType The type of VIC 20 machine that is being emulated, i.e. PAL or NTSC.
    * @param snapshot Optional snapshot of the machine state to start with.
    */
-  public Memory(Cpu6502 cpu, Vic vic, Via via1, Via via2, int ramExpansion, MachineType machineType, Snapshot snapshot) {
+  public Memory(Cpu6502 cpu, Vic vic, Via6522 via1, Via6522 via2, int ramExpansion, MachineType machineType, Snapshot snapshot) {
     if (snapshot != null) {
       this.mem = snapshot.getMemoryArray();
       this.ramExpansion = snapshot.getRamExpansion();
@@ -78,7 +78,7 @@ public class Memory {
    * @param via1 The VIA #1 chip to map to memory. 
    * @param via2 The VIA #2 chip to map to memory.
    */
-  private void initVicMemory(Vic vic, Via via1, Via via2) {
+  private void initVicMemory(Vic vic, Via6522 via1, Via6522 via2) {
     // This 1K of RAM is always present.
     mapChipToMemory(new RamChip(), 0x0000, 0x03FF);
     
@@ -316,6 +316,15 @@ public class Memory {
   }
 
   /**
+   * Gets the array of memory mapped devices. 
+   * 
+   * @return The array of memory mapped devices.
+   */
+  public MemoryMappedChip[] getMemoryMap() {
+    return memoryMap;
+  }
+  
+  /**
    * Reads the value of the given VIC 20 memory address.
    * 
    * @param address The address to read the byte from.
@@ -334,5 +343,15 @@ public class Memory {
    */
   public void writeMemory(int address, int value) {
     memoryMap[address].writeMemory(address, value);
+  }
+  /**
+   * Forces a write to a memory address, even if it is ROM. This is used mainly
+   * for setting emulation traps.
+   * 
+   * @param address The address to write the value to.
+   * @param value The value to write to the given address.
+   */
+  public void forceWrite(int address, int value) {
+    mem[address] = value;
   }
 }

@@ -7,7 +7,9 @@ package emu.jvic;
  */
 public enum MachineType {
   
-  PAL(1108405, 284, 312, 208, 272, 32, 24, 50),
+  PAL(1108405, 284, 312, 208, 272, 56, 34, 50),
+  
+  //PAL(1108405, 284, 312, 208, 272, 56, 34, 50),
   NTSC(1022727, 260, 261, 204, 252, 6, 10, 60);
   
   private int cyclesPerSecond;
@@ -20,6 +22,7 @@ public enum MachineType {
   private int framesPerSecond;
   private int frameDuration;
   private int cyclesPerFrame;
+  private int cyclesPerLine;
   
   /**
    * Constructor for MachineType.
@@ -45,6 +48,21 @@ public enum MachineType {
     this.framesPerSecond = framesPerSecond;
     this.frameDuration = 1000/framesPerSecond;
     this.cyclesPerFrame = cyclesPerSecond/framesPerSecond;
+    this.cyclesPerLine = totalScreenWidth / 4;
+  }
+  
+  /**
+   * @return the cyclesPerLine
+   */
+  public int getCyclesPerLine() {
+    return cyclesPerLine;
+  }
+
+  /**
+   * @return The last line.
+   */
+  public int getLastLine() {
+    return totalScreenHeight - 1;
   }
   
   /**

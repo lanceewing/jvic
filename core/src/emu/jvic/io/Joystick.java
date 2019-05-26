@@ -23,7 +23,13 @@ public class Joystick {
       {Keys.NUMPAD_6, 0x80},        // Right
       {Keys.NUMPAD_7, 0x14},        // NW
       {Keys.NUMPAD_8, 0x04},        // Up
-      {Keys.NUMPAD_9, 0x84}         // NE
+      {Keys.NUMPAD_9, 0x84},        // NE
+      
+      {Keys.INSERT,   0x20},        // Fire button
+      {Keys.DOWN,     0x08},        // Down
+      {Keys.LEFT,     0x10},        // Left
+      {Keys.RIGHT,    0x80},        // Right
+      {Keys.UP,       0x04},        // Up
   };
   
   /**

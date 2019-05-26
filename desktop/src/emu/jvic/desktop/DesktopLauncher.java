@@ -1,5 +1,8 @@
 package emu.jvic.desktop;
 
+import javax.swing.JOptionPane;
+
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 
@@ -12,11 +15,23 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.width = 540;
 		config.height = 960;
+		config.title = "JVic  v0.1";
 		new LwjglApplication(new JVicGdx(new ConfirmHandler() {
 
       @Override
-      public void confirm(String message, ConfirmResponseHandler confirmResponseHandler) {
-        // TODO: Implement confirmation dialog for desktop version.
+      public void confirm(final String message, final ConfirmResponseHandler responseHandler) {
+        Gdx.app.postRunnable(new Runnable() {
+          
+          @Override
+          public void run() {
+            int output = JOptionPane.showConfirmDialog(null, "Please confirm", message, JOptionPane.YES_NO_OPTION);
+            if (output != 0) {
+              responseHandler.no();
+            } else {
+              responseHandler.yes();
+            }
+          }
+        });
       }
 		  
 		}), config);

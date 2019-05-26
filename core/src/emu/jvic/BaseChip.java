@@ -21,6 +21,13 @@ public abstract class BaseChip {
   protected int mem[];
 
   /**
+   * Holds an array of references to instances of MemoryMappedChip where each
+   * instance determines the behaviour of reading or writing to the given memory
+   * address.
+   */
+  protected MemoryMappedChip memoryMap[];
+  
+  /**
    * Sets a reference to the VIC 20 memory map. 
    *  
    * @param memory The VIC 20 memory map.
@@ -28,5 +35,6 @@ public abstract class BaseChip {
   public void setMemory(Memory memory) {
     this.memory = memory;
     this.mem = memory.getMemoryArray();
+    this.memoryMap = memory.getMemoryMap();
   }
 }

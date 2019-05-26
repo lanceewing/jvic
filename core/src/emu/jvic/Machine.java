@@ -8,6 +8,7 @@ import emu.jvic.io.Keyboard;
 import emu.jvic.io.Via;
 import emu.jvic.io.Via1;
 import emu.jvic.io.Via2;
+import emu.jvic.io.Via6522;
 import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
 import emu.jvic.snap.PcvSnapshot;
@@ -24,8 +25,8 @@ public class Machine {
   // Machine components.
   private Memory memory;
   private Vic vic;
-  private Via via1;
-  private Via via2;
+  private Via6522 via1;
+  private Via6522 via2;
   private Cpu6502 cpu;
   
   // Peripherals.
@@ -156,8 +157,9 @@ public class Machine {
    * Updates the state of the machine of the machine until a frame is complete
    * 
    * @param skipRender true if the VIC chip emulation should skip rendering.
+   * @param warpSpeed true If the machine is running at warp speed.
    */
-  public void update(boolean skipRender) {
+  public void update(boolean skipRender, boolean warpSpeed) {
     boolean frameComplete = false;
     if (skipRender) {
       do {
@@ -168,7 +170,7 @@ public class Machine {
       } while (!frameComplete);
     } else {
       do {
-        frameComplete |= vic.emulateCycle();
+        frameComplete |= vic.emulateCycle(!warpSpeed);//vic.emulateCycleNew(!warpSpeed);  // vic.emulateCycle(!warpSpeed);
         cpu.emulateCycle();
         via1.emulateCycle();
         via2.emulateCycle();
@@ -233,7 +235,7 @@ public class Machine {
    * @return true If the VIC chip has indicated that a frame should be rendered.
    */
   public boolean emulateCycle() {
-    boolean render = vic.emulateCycle();
+    boolean render = vic.emulateCycle(true);
     cpu.emulateCycle();
     via1.emulateCycle();
     via2.emulateCycle();
@@ -283,5 +285,15 @@ public class Machine {
    */
   public Joystick getJoystick() {
     return joystick;
+  }
+  
+
+  /**
+   * Gets the Cpu6502 of this Machine.
+   * 
+   * @return The Cpu6502 of this Machine.
+   */
+  public Cpu6502 getCpu() {
+    return cpu;
   }
 }

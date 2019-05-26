@@ -9,7 +9,7 @@ import emu.jvic.snap.Snapshot;
  *  
  * @author Lance Ewing
  */
-public class Via1 extends Via {
+public class Via1 extends Via6522 {
 
   /**
    * The CPU that the VIC 20 is using. This is where VIA 1 IRQ signals will be sent.
@@ -56,15 +56,18 @@ public class Via1 extends Via {
     updatePortAPins();
     
     // Timer 1
-    timer1CounterLow = snapshot.getMemoryArray()[0x9114];
-    timer1CounterHigh = snapshot.getMemoryArray()[0x9115];
-    timer1LatchLow = snapshot.getMemoryArray()[0x9116];
-    timer1LatchHigh = snapshot.getMemoryArray()[0x9117];
+    int timer1CounterLow = snapshot.getMemoryArray()[0x9114];
+    int timer1CounterHigh = snapshot.getMemoryArray()[0x9115];
+    int timer1LatchLow = snapshot.getMemoryArray()[0x9116];
+    int timer1LatchHigh = snapshot.getMemoryArray()[0x9117];
+    timer1Counter = ((timer1CounterHigh << 8) + timer1CounterLow);
+    timer1Latch = ((timer1LatchHigh << 8) + timer1LatchLow);
     
     // Timer 2
-    timer2LatchLow = snapshot.getVia1Timer2LatchLow();
-    timer2CounterLow = snapshot.getVia1Timer2CounterLow();
-    timer2CounterHigh = snapshot.getMemoryArray()[0x9119];
+    timer2Latch = snapshot.getVia1Timer2LatchLow();
+    int timer2CounterLow = snapshot.getVia1Timer2CounterLow();
+    int timer2CounterHigh = snapshot.getMemoryArray()[0x9119];
+    timer2Counter = ((timer2CounterHigh << 8) + timer2CounterLow);
     
     // Shift Register
     shiftRegister = snapshot.getMemoryArray()[0x911A];
@@ -89,7 +92,7 @@ public class Via1 extends Via {
    *
    * @return the current values of the Port A pins.
    */
-  protected int getPortAPins() {
+  public int getPortAPins() {
     return (joystick.getJoystickState() | (super.getPortAPins() & 0xC3));
   }
   

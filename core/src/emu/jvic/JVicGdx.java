@@ -2,6 +2,7 @@ package emu.jvic;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 
 import emu.jvic.ui.ConfirmHandler;
 
@@ -30,6 +31,16 @@ public class JVicGdx extends Game {
   private ConfirmHandler confirmHandler;
   
   /**
+   * JOric's saved preferences.
+   */
+  private Preferences preferences;
+  
+  /**
+   * JOric's application screenshot storage.
+   */
+  private Preferences screenshotStore;
+  
+  /**
    * Constructor for JVicGdx.
    * 
    * @param confirmHandler
@@ -40,6 +51,9 @@ public class JVicGdx extends Game {
   
   @Override
   public void create () {
+    preferences = Gdx.app.getPreferences("jvic.preferences");
+    screenshotStore = Gdx.app.getPreferences("jvic_screens.store");
+    
     machineScreen = new MachineScreen(this, confirmHandler);
     homeScreen = new HomeScreen(this, confirmHandler);
     setScreen(homeScreen);
@@ -66,6 +80,24 @@ public class JVicGdx extends Game {
     return homeScreen;
   }
   
+  /**
+   * Gets the Preferences for JOric.
+   * 
+   * @return The Preferences for JOric.
+   */
+  public Preferences getPreferences() {
+    return preferences;
+  }
+  
+  /**
+   * Gets the screenshot store for JOric. 
+   * 
+   * @return The screenshot store for JOric.
+   */
+  public Preferences getScreenshotStore() {
+    return screenshotStore;
+  }
+  
   @Override
   public void dispose () {
     super.dispose();
@@ -75,5 +107,9 @@ public class JVicGdx extends Game {
     // super dispose does not call dispose on the screen.
     machineScreen.dispose();
     homeScreen.dispose();
+    
+    // Save the preferences when the emulator is closed.
+    preferences.flush();
+    screenshotStore.flush();
   }
 }

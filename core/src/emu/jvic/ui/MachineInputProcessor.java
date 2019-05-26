@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 
 import emu.jvic.KeyboardType;
 import emu.jvic.MachineScreen;
+import emu.jvic.cpu.Cpu6502;
 
 /**
  * InputProcessor for the MachineScreen.
@@ -106,21 +107,33 @@ public class MachineInputProcessor extends InputAdapter {
   public boolean keyUp(int keycode) {
     if (keycode == Keys.BACK) {
       if (keyboardType.equals(KeyboardType.OFF)) {
-        if (Gdx.app.getType().equals(ApplicationType.Android)) {
-          machineScreen.getMachineRunnable().pause();
-          confirmHandler.confirm("Return to Home screen?", new ConfirmResponseHandler() {
-            public void yes() {
-              machineScreen.exit();
-            }
-            public void no() {
-              machineScreen.getMachineRunnable().resume();
-            }
-          });
-        }
+        machineScreen.getMachineRunnable().pause();
+        confirmHandler.confirm("Return to Home screen?", new ConfirmResponseHandler() {
+          public void yes() {
+            machineScreen.exit();
+          }
+          public void no() {
+            machineScreen.getMachineRunnable().resume();
+          }
+        });
       } else {
         // If a keyboard is being shown, then BACK will close this.
         keyboardType = KeyboardType.OFF;
       }
+    } else if (keycode == Keys.F3) {
+      // NMI
+      machineScreen.getMachine().getCpu().setInterrupt(Cpu6502.S_NMI);
+      
+    } else if (keycode == Keys.F10) {
+      machineScreen.saveScreenshot();
+      
+    } else if (keycode == Keys.F5) { 
+      machineScreen.toggleShowFPS();
+      
+    } else if (keycode == Keys.F6) { 
+      // Toggle warp speed.
+      machineScreen.getMachineRunnable().toggleWarpSpeed();
+      
     } else {
       machineScreen.getMachine().getKeyboard().keyReleased(keycode);
       machineScreen.getMachine().getJoystick().keyReleased(keycode);
@@ -186,11 +199,30 @@ public class MachineInputProcessor extends InputAdapter {
       touchInfo.lastKey = null;
     }
     
+    float screenHeight = (viewportManager.getHeight() - (viewportManager.getWidth()  / 4) * 3);
+    
     if (keyboardType.isInKeyboard(touchXY.x, touchXY.y)) {
       Integer keycode = keyboardType.getKeyCode(touchXY.x, touchXY.y);
       if (keycode != null) {
         keyUp(keycode);
       }
+    } else if (viewportManager.isPortrait() && (touchXY.y > (screenHeight - 140)) && (touchXY.y < screenHeight) && (touchXY.x < 140)) {
+      // Warp speed icon.
+      machineScreen.getMachineRunnable().toggleWarpSpeed();
+      
+    } else if (viewportManager.isPortrait() && (touchXY.y > (screenHeight - 140)) && (touchXY.y < screenHeight) && (touchXY.x > (viewportManager.getWidth() - 145))) {
+      // Snapshot.
+      machineScreen.getMachineRunnable().pause();
+      confirmHandler.confirm("Take screenshot?", new ConfirmResponseHandler() {
+        public void yes() {
+          machineScreen.saveScreenshot();
+          machineScreen.getMachineRunnable().resume();
+        }
+        public void no() {
+          machineScreen.getMachineRunnable().resume();
+        }
+      });
+      
     } else if (keyboardType.equals(KeyboardType.MOBILE_ON_SCREEN)) {
       // If the onscreen keyboard is being shown then if we receive a tap event, it won't be
       // on the virtual keyboard but must therefore be outside it. So we hide the keyboard.
@@ -205,9 +237,9 @@ public class MachineInputProcessor extends InputAdapter {
       }
       
     } else {
-      // TODO: Need to handle the magic numbers in this block in a better way. 
       boolean keyboardClicked = false;
       boolean joystickClicked = false;
+      boolean backArrowClicked = false;
       
       if (viewportManager.isPortrait()) {
         // Portrait.
@@ -216,15 +248,23 @@ public class MachineInputProcessor extends InputAdapter {
             joystickClicked = true;
             
           } else if (touchXY.x > (viewportManager.getWidth() - 145)) {
-            keyboardClicked = true;
-            
-          } else if (Gdx.app.getType().equals(ApplicationType.Android)) {
+            // If not Android, then right area is Back button.
+            if (Gdx.app.getType().equals(ApplicationType.Android)) {
+              keyboardClicked = true;
+            } else {
+              backArrowClicked = true;
+            }
+          } else {
             // Mobile soft keyboard is only available in portrait mode (debug only)
             int midWidth = (int)(viewportManager.getWidth() - viewportManager.getWidth()/2);
             if ((touchXY.x > (midWidth - 70)) && 
                 (touchXY.y < (midWidth + 70))) {
-              Gdx.input.setOnscreenKeyboardVisible(true);
-              keyboardType = KeyboardType.MOBILE_ON_SCREEN;
+              if (Gdx.app.getType().equals(ApplicationType.Android)) {
+                Gdx.input.setOnscreenKeyboardVisible(true);
+                keyboardType = KeyboardType.MOBILE_ON_SCREEN;
+              } else {
+                keyboardClicked = true;
+              }
             }
           }
         }
@@ -237,6 +277,10 @@ public class MachineInputProcessor extends InputAdapter {
             
           } else if (touchXY.x > (viewportManager.getWidth() - 150)) {
             keyboardClicked = true;
+          }
+        } else if (touchXY.y < 140) {
+          if (touchXY.x > (viewportManager.getWidth() - 150)) {
+            backArrowClicked = true;
           }
         }
       }
@@ -252,6 +296,10 @@ public class MachineInputProcessor extends InputAdapter {
       
       if (joystickClicked) {
         keyboardType = KeyboardType.JOYSTICK;
+      }
+      
+      if (backArrowClicked) {
+        keyUp(Keys.BACK);
       }
     }
     

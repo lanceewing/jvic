@@ -33,6 +33,14 @@
       "ram": "RAM_16K"
     },
     {
+      "name": "Pu239 - 9teensplit",
+      "displayName": "Pu239\n9teensplit",
+      "filePath": "tapes/Pu239 - 9teensplit.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
       "name": "Amok",
       "filePath": "carts/8k/amok.crt",
       "fileType": "CART",
@@ -47,11 +55,33 @@
       "machineType": "NTSC"
     },
     {
+      "name": "AR98-1",
+      "filePath": "tapes/VIC20-AR89-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Ate Bit Miami Vic",
+      "displayName": "Ate Bit\nMiami Vic",
+      "filePath": "tapes/atebit-miami_vic.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
       "name": "Atlantis",
       "filePath": "carts/8k/atlantis.crt",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "NTSC"
+    },
+    {
+      "name": "Bad Scene Poetry",
+      "filePath": "tapes/bad_scene_poetry.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
     },
     {
       "name": "Bongo",
@@ -68,11 +98,25 @@
       "machineType": "PAL"
     },
     {
+      "name": "Cncd Cheat Split",
+      "filePath": "tapes/Cncd - Cheat Split.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
       "name": "Curse of the Werewolf",
       "displayName": "Curse of the\nWerewolf",
       "filePath": "snaps/pcv/WEREWOLF.PCV",
       "fileType": "PCV",
       "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Datapop",
+      "filePath": "tapes/tlr_-_datapop_vic20.prg",
+      "fileType": "PRG",
+      "iconPath": "",
       "machineType": "PAL"
     },
     {
@@ -93,6 +137,20 @@
       "name": "Dragon Fire",
       "filePath": "carts/8k/dragon.crt",
       "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Dunno",
+      "filePath": "tapes/dsr_dunno_4k_revision_2018.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Frozen Time",
+      "filePath": "tapes/frozen.prg",
+      "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
@@ -121,6 +179,27 @@
       "name": "Grid Runner",
       "filePath": "carts/8k/gridrunn.crt",
       "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Happy Hour",
+      "filePath": "tapes/happyhour.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Impossiblator 3",
+      "filePath": "tapes/impo3.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },      
+    {
+      "name": "Lipstick Traces",
+      "filePath": "tapes/lipstick_traces.prg",
+      "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
@@ -167,6 +246,13 @@
       "machineType": "PAL"
     },
     {
+      "name": "Nano Watt",
+      "filePath": "tapes/nw.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    }, 
+    {
       "name": "Omega Race",
       "filePath": "carts/8k/omegarac.crt",
       "fileType": "CART",
@@ -181,6 +267,13 @@
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED",
       "status": "BROKEN"
+    },
+    {
+      "name": "Over Sing",
+      "filePath": "tapes/over_sing.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
     },
     {
       "name": "Perils of Willy",
@@ -219,6 +312,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Purple Planet Yo",
+      "filePath": "tapes/proxima_ppy.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Rockman",
       "filePath": "snaps/pcv/ROCKMAN.PCV",
       "fileType": "PCV",
@@ -236,6 +337,13 @@
       "name": "Slap Dab",
       "filePath": "snaps/pcv/SLAPDAB.PCV",
       "fileType": "PCV",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Sonar Sweep'r",
+      "filePath": "tapes/sonar sweep'r.prg",
+      "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
@@ -261,6 +369,49 @@
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
-    }
+    },
+    {
+      "name": "Tres Monos",
+      "filePath": "tapes/3m.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Test 36864",
+      "filePath": "tapes/test36864.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Vector Test",
+      "filePath": "tapes/vector.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Viznut Test",
+      "filePath": "tapes/viznut_test.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Warning",
+      "filePath": "tapes/pwp-warning.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },    
+    {
+      "name": "Robotic Warrior",
+      "filePath": "tapes/warrior.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },    
   ]
 }

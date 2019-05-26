@@ -10,7 +10,7 @@ import emu.jvic.snap.Snapshot;
  * 
  * @author Lance Ewing
  */
-public class Via2 extends Via {
+public class Via2 extends Via6522 {
 
   /**
    * The CPU that the VIC 20 is using. This is where VIA 2 IRQ signals will be sent.
@@ -64,15 +64,18 @@ public class Via2 extends Via {
     updatePortAPins();
     
     // Timer 1
-    timer1CounterLow = snapshot.getMemoryArray()[0x9124];
-    timer1CounterHigh = snapshot.getMemoryArray()[0x9125];
-    timer1LatchLow = snapshot.getMemoryArray()[0x9126];
-    timer1LatchHigh = snapshot.getMemoryArray()[0x9127];
+    int timer1CounterLow = snapshot.getMemoryArray()[0x9124];
+    int timer1CounterHigh = snapshot.getMemoryArray()[0x9125];
+    int timer1LatchLow = snapshot.getMemoryArray()[0x9126];
+    int timer1LatchHigh = snapshot.getMemoryArray()[0x9127];
+    timer1Counter = ((timer1CounterHigh << 8) + timer1CounterLow);
+    timer1Latch = ((timer1LatchHigh << 8) + timer1LatchLow);
     
     // Timer 2
-    timer2LatchLow = snapshot.getVia2Timer2LatchLow();
-    timer2CounterLow = snapshot.getVia2Timer2CounterLow();
-    timer2CounterHigh = snapshot.getMemoryArray()[0x9129];
+    timer2Latch = snapshot.getVia1Timer2LatchLow();
+    int timer2CounterLow = snapshot.getVia1Timer2CounterLow();
+    int timer2CounterHigh = snapshot.getMemoryArray()[0x9129];
+    timer2Counter = ((timer2CounterHigh << 8) + timer2CounterLow);
     
     // Shift Register
     shiftRegister = snapshot.getMemoryArray()[0x912A];
@@ -97,7 +100,7 @@ public class Via2 extends Via {
    *
    * @return the current values of the Port A pins.
    */
-  protected int getPortAPins() {
+  public int getPortAPins() {
     return keyboard.scanKeyboardRow(~super.getPortBPins());
   }
   
@@ -106,7 +109,7 @@ public class Via2 extends Via {
    *
    * @return the current values of the Port B pins.
    */
-  protected int getPortBPins() {
+  public int getPortBPins() {
     // The bottom 7 bits are for the keyboard column scan.
     int value = (keyboard.scanKeyboardColumn(~super.getPortAPins()) & 0x7F);
     

@@ -1,5 +1,9 @@
 package emu.jvic.video;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.AudioDevice;
+import com.badlogic.gdx.utils.GdxRuntimeException;
+
 import emu.jvic.MachineType;
 import emu.jvic.memory.MemoryMappedChip;
 import emu.jvic.snap.Snapshot;
@@ -11,12 +15,7 @@ import emu.jvic.snap.Snapshot;
  */
 public class Vic extends MemoryMappedChip {
   
-  /**
-   * This is the memory location that the VIC chip reads from when outside the
-   * video matrix (technically speaking it reads from 0x3814, but for speed
-   * reasons, the VIC chip memory mapping is not emulated exactly).
-   */
-  private static final int DEFAULT_FETCH_ADDRESS = 0x1814;
+  private static final int SAMPLE_RATE = 22050;
 
   /**
    * Constant for fetch toggle to indicate that screen code should be fetched.
@@ -110,12 +109,15 @@ public class Vic extends MemoryMappedChip {
   private MachineType machineType;
   
   /**
-   * Last byte fetched by the VIC chip. This could be the cell index or cell bitmap.
-   * 
-   * TODO: It should have a separate variable for the char bitmap, since that is how it is done at the silicon level.
+   * Last character data fetched by the VIC chip.
    */
-  private int cellData;
+  private int charData;
 
+  /**
+   * Last cell index fetched by the VIC chip.
+   */
+  private int cellIndex;
+  
   /**
    * Last fetched cell colour.
    */
@@ -125,7 +127,7 @@ public class Vic extends MemoryMappedChip {
    * Index of the cell colour into the colours array.
    */
   private int cellColourIndex;
-
+  
   /**
    * Current start of video memory.
    */
@@ -201,7 +203,7 @@ public class Vic extends MemoryMappedChip {
   /**
    * The current character size.
    */
-  private int characterSize;
+  private int characterSize = 8;
 
   /**
    * The number of bits to shift a cell index left by to get the true index into
@@ -317,6 +319,20 @@ public class Vic extends MemoryMappedChip {
    */
   private int activeFrame;
   
+  private int cyclesPerSample;
+  private short[] sampleBuffer;
+  private int sampleBufferOffset = 0;
+  private int cyclesToNextSample;
+  private AudioDevice audioDevice;
+  private boolean soundPaused;
+  
+  private int soundClockDividerCounter;
+  private int[] voiceClockDividerTriggers;
+  private int[] voiceCounters;
+  private int[] voiceShiftRegisters;
+  
+  private int noiseLFSR = 0xFFFF;
+
   /**
    * Constructor for VIC.
    * 
@@ -324,7 +340,9 @@ public class Vic extends MemoryMappedChip {
    * @param snapshot Optional snapshot of the machine state to start with.
    */
   public Vic(MachineType machineType, Snapshot snapshot) {
-    this.machineType = machineType;
+    this.machineType = machineType;    
+    
+    this.cyclesPerSample = (machineType.getCyclesPerSecond() / SAMPLE_RATE);
     
     frames = new Frame[2];
     frames[0] = new Frame();
@@ -339,6 +357,22 @@ public class Vic extends MemoryMappedChip {
     if (snapshot != null) {
       loadSnapshot(snapshot);
     }
+    
+    int audioBufferSize = ((((SAMPLE_RATE/ 20) * 2) / 10) * 10);
+    sampleBuffer = new short[audioBufferSize / 10];
+    sampleBufferOffset = 0;
+    
+    try {
+      audioDevice = Gdx.audio.newAudioDevice(SAMPLE_RATE, true);
+    } catch (GdxRuntimeException e) {
+      audioDevice = null;
+    }
+    
+    cyclesToNextSample = cyclesPerSample;
+    
+    voiceCounters = new int[4];
+    voiceShiftRegisters = new int[4];
+    voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 } ;
   }
 
   /**
@@ -390,7 +424,7 @@ public class Vic extends MemoryMappedChip {
     value = mem[VIC_REG_14];
     auxiliaryColour = vicColours[(value & 0xF0) >> 4];
     multiColourTable[3] = auxiliaryColour;
-    masterVolume = (15 - (value & 0x0F));
+    masterVolume = value & 0x0F;
     
     value = mem[VIC_REG_15];
     borderColour = vicColours[value & 0x07];
@@ -417,7 +451,7 @@ public class Vic extends MemoryMappedChip {
     cellDepthCounter = 0;
     videoMatrixCounter = 0;
     rowStart = 0;
-    cellData = 0;
+    charData = 0;
     cellColour = 0;
     fetchToggle = FETCH_SCREEN_CODE;
     charMemoryCellDepthStart = charMemoryStart;
@@ -502,7 +536,7 @@ public class Vic extends MemoryMappedChip {
         break;
   
       default:
-        value = cellData & 0xFF;
+        value = charData & 0xFF;
     }
 
     return value;
@@ -522,7 +556,7 @@ public class Vic extends MemoryMappedChip {
       case VIC_REG_0: // $9000 Left margin, or horizontal origin (4 pixel granularity)
         mem[address] = value;
         horizontalScreenOrigin = (value & 0x7F);
-        textScreenLeft = (horizontalScreenOrigin << 2); // + 32;// - 32 + RIGHT_ADD;
+        textScreenLeft = (horizontalScreenOrigin << 2) + 24;   // TODO: 6 cycles between matching left edge and start of text window rendering.
         textScreenRight = textScreenLeft + textScreenWidth;
         break;
   
@@ -602,7 +636,7 @@ public class Vic extends MemoryMappedChip {
         mem[address] = value;
         auxiliaryColour = vicColours[(value & 0xF0) >> 4];
         multiColourTable[3] = auxiliaryColour;
-        masterVolume = (15 - (value & 0x0F));
+        masterVolume = value & 0x0F;
         break;
   
       case VIC_REG_15: // $900F Screen and Border Colours, Reverse Video
@@ -654,189 +688,187 @@ public class Vic extends MemoryMappedChip {
     return frameComplete;
   }
 
+  private boolean matrixLine;
+  private boolean inMatrix;
+  private boolean vblank;
+  private boolean hblank;
+  private boolean hccLast;  
+  private boolean vccLast;
+  private boolean sxCompare;
+  private boolean syCompare;
+  private boolean inMatrixY;
+  private boolean busAvailable;
+  private boolean vmcAndHccEnabled;
+  private boolean addressOutEnabled;
+  
+  private int borderOffDelay;
+  
+  private boolean hiresMode;
+  
+  private boolean debug = false;
+  
   /**
-   * Emulates a single machine cycle. The VIC chip alternates its function
-   * between fetching the screen code for a character from the video matrix and
-   * fetching the bitmap of the character line from character memory on alternate
-   * cycles. Four pixels are output every cycle. Note that the VIC starts fetching
-   * the data for character it needs to render during the 2 cycles prior to the dots
-   * being sent to the TV. So the border column immediately preceding the left 
-   * edge of the video matrix area is when it is fetching the data required for 
-   * the first column of the video matrix area.
+   * This method is an attempt to translate my 6561 die shot reversing schematics into Java code.
    * 
-   * @return true If a screen repaint is required due to the frame render having completed. 
+   * These are the hard wired parameters:
+   * 
+   * - PAL horizontal counter counts from 0 to 70 (i.e. 71 cycles). NTSC from 0 to 64 (i.e. 65 cycles).
+   * - PAL vertical counter counts from 0 to 311 (i.e. 312 lines). NTSC from 0 to 260 (i.e. 261 lines).
+   * - Line 0 is last visible line, at bottom of CRT. Line 1 is first blanking line. Line 9 is last blanking line.
+   * - Line 10 is first visible line, at the top of CRT.
    */
-  public boolean emulateCycle() {
+  public boolean emulateCycleNew(boolean doSound) {
+    short[] framePixels = frames[activeFrame].framePixels;
     boolean frameRenderComplete = false;
     int charDataOffset = 0;
     short tempColour = 0;
     
-    // Get a local reference to the current Frame's pixel array.
-    short[] framePixels = frames[activeFrame].framePixels;
+    boolean newLine = false;
+    boolean firstLine = false;
     
-    // TODO: This needs to change so that it renders 4 pixels every cycle rather than 8 every 2 cycles.
-    
-    // Some points to consider:
-    //
-    // (1)
-    //
-    // "Changes to $900f and $900e colors appear 1 hires pixel late with respect to char 
-    //  (or half char) boundaries and changes to the reverse mode bit appear 3 hires pixels 
-    //  late. This "anomaly" appears on both my 6561-101 and 6561E VICs."
-    //
-    // (2)
-    //
-    // BUS DATA                     DISPLAY 
-    // 
-    // VIC fetch (screen data *)    ... 
-    // CPU cycle                    ... 
-    // VIC fetch (character data)   ... 
-    // CPU cycle                    pixel-columns 1/2 of character 
-    // ...                          pixel-columns 3/4 of character 
-    // ...                          pixel-columns 5/6 of character 
-    // ...                          pixel-columns 7/8 of character 
-    // 
-    // *) includes colour RAM data
-    //
-    // Y=1   start of vblank
-    // Y=10    end of vblank
-    // Y=4   start of vsync
-    // Y=7     end of vsync
-    // Y=311  last line of (even?) frame
-    // Y=312 and INT and not INT  last line of (odd?) frame
-    //
-    // so interlace mode does nothing in effect: 311 is enabled on
-    // every frame, 312 is never enabled.
-    
+    //if (inMatrix) debug = true;
 
-    // TODO: Verify that this is correct, for both PAL and NTSC. It almost certainly isn't.
-    if (verticalCounter > 9) {
+    if (!vblank && !hblank) {
       
-    // Check that we are inside the text screen.
-    if ((verticalCounter >= textScreenTop) && (verticalCounter < textScreenBottom) && (horizontalCounter >= textScreenLeft) && (horizontalCounter < textScreenRight)) {
+      if ((borderOffDelay & 1) == 1) {
+        
+        // Border is currently off, so render video matrix pixels. 
+        if (hiresMode) {
+          if (reverse == 0) {
+            // Normal hi-res graphics.
+            framePixels[pixelCounter++] = ((charData & 0x80) == 0 ? backgroundColour : cellColour);
+            framePixels[pixelCounter++] = ((charData & 0x40) == 0 ? backgroundColour : cellColour);
+            framePixels[pixelCounter++] = ((charData & 0x20) == 0 ? backgroundColour : cellColour);
+            framePixels[pixelCounter++] = ((charData & 0x10) == 0 ? backgroundColour : cellColour);
+          } else {
+            // Reverse hi-res graphics.
+            framePixels[pixelCounter++] = ((charData & 0x80) == 0 ? cellColour : backgroundColour);
+            framePixels[pixelCounter++] = ((charData & 0x40) == 0 ? cellColour : backgroundColour);
+            framePixels[pixelCounter++] = ((charData & 0x20) == 0 ? cellColour : backgroundColour);
+            framePixels[pixelCounter++] = ((charData & 0x10) == 0 ? cellColour : backgroundColour);
+          }
+        } else {
+          // Multicolour graphics.
+          multiColourTable[2] = cellColour;
+          tempColour = multiColourTable[(charData >> 6) & 0x03];
+          framePixels[pixelCounter++] = tempColour;
+          framePixels[pixelCounter++] = tempColour;
+          tempColour = multiColourTable[(charData >> 4) & 0x03];
+          framePixels[pixelCounter++] = tempColour;
+          framePixels[pixelCounter++] = tempColour;
+        }
 
+        // Shift char data to account for the 4 pixels written out.
+        charData = (charData << 4) & 0xF0;
+        
+        //if (!addressOutEnabled) {
+        //  framePixels[pixelCounter - 4] = vicColours[2];
+        //}
+        
+      } else {
+        // Output four border pixels.
+        framePixels[pixelCounter++] = borderColour;  //(addressOutEnabled? 0 : borderColour);
+        framePixels[pixelCounter++] = borderColour;
+        framePixels[pixelCounter++] = borderColour;
+        framePixels[pixelCounter++] = borderColour;
+      }
+
+    } else {
+      // No pixels rendered during blanking.
+      pixelCounter += 4;   // TODO: Adjust the size of the pixel map / visual screen so we don't have to do this.
+    }       
+      
+    if (addressOutEnabled) {
+      
       // Determine whether we are fetching screen code or char data.
       if (fetchToggle == FETCH_SCREEN_CODE) {
         
         // Calculate address within video memory and fetch cell index.
-        cellData = mem[videoMemoryStart + videoMatrixCounter];
+        cellIndex = mem[videoMemoryStart + ((videoMatrixCounter - 0) >> 1)];
 
         // Due to the way the colour memory is wired up, the above fetch of the cell index
         // also happens to automatically fetch the foreground colour from the Colour Matrix
         // via the top 4 lines of the data bus (DB8-DB11), which are wired directly from 
         // colour RAM in to the VIC chip.
-        cellColourIndex = mem[colourMemoryStart + videoMatrixCounter];
-        cellColour = vicColours[cellColourIndex];
-
-        // Increment the video matrix counter.
-        videoMatrixCounter++;
-
-        // Toggle fetch toggle.
+        cellColourIndex = mem[colourMemoryStart + ((videoMatrixCounter - 0) >> 1)];
+        
+        // TODO: Shouldn't need to have this, but for some reason HCC stops incrementing while addressOutEnabled is still true.
+        // TODO: I have a suspicion that the interpretation of HCC0 is reversed, even on my die shot diagram. Might be HCC0 that comes out rather than HCC0'
         fetchToggle = FETCH_CHAR_DATA;
         
-        return frameRenderComplete;
-        
       } else {
-        // Calculate offset of data.
-        charDataOffset = charMemoryCellDepthStart + (cellData << characterSizeShift);
+        // Calculate offset of character data.
+        //charDataOffset = charMemoryCellDepthStart + (cellIndex << characterSizeShift);
+        charDataOffset = charMemoryStart + cellDepthCounter + (cellIndex << characterSizeShift);
 
         // Adjust offset for memory wrap around.
         if ((charMemoryStart < 8192) && (charDataOffset >= 8192)) {
           charDataOffset += 24576;
         }
 
-        // Fetch cell data.
-        cellData = mem[charDataOffset];
-
-        // Plot pixels.
-        if ((cellColourIndex & 0x08) == 0) {
-          if (reverse == 0) {
-            // Normal graphics.
-            framePixels[pixelCounter++] = ((cellData & 0x80) == 0 ? backgroundColour : cellColour);
-            framePixels[pixelCounter++] = ((cellData & 0x40) == 0 ? backgroundColour : cellColour);
-            framePixels[pixelCounter++] = ((cellData & 0x20) == 0 ? backgroundColour : cellColour);
-            framePixels[pixelCounter++] = ((cellData & 0x10) == 0 ? backgroundColour : cellColour);
-
-            horizontalCounter = horizontalCounter + 4;
-
-            if (horizontalCounter < machineType.getTotalScreenWidth()) {
-              framePixels[pixelCounter++] = ((cellData & 0x08) == 0 ? backgroundColour : cellColour);
-              framePixels[pixelCounter++] = ((cellData & 0x04) == 0 ? backgroundColour : cellColour);
-              framePixels[pixelCounter++] = ((cellData & 0x02) == 0 ? backgroundColour : cellColour);
-              framePixels[pixelCounter++] = ((cellData & 0x01) == 0 ? backgroundColour : cellColour);
-            }
-          } else {
-            // Reverse graphics.
-            framePixels[pixelCounter++] = ((cellData & 0x80) == 0 ? cellColour : backgroundColour);
-            framePixels[pixelCounter++] = ((cellData & 0x40) == 0 ? cellColour : backgroundColour);
-            framePixels[pixelCounter++] = ((cellData & 0x20) == 0 ? cellColour : backgroundColour);
-            framePixels[pixelCounter++] = ((cellData & 0x10) == 0 ? cellColour : backgroundColour);
-
-            horizontalCounter = horizontalCounter + 4;
-
-            if (horizontalCounter < machineType.getTotalScreenWidth()) {
-              framePixels[pixelCounter++] = ((cellData & 0x08) == 0 ? cellColour : backgroundColour);
-              framePixels[pixelCounter++] = ((cellData & 0x04) == 0 ? cellColour : backgroundColour);
-              framePixels[pixelCounter++] = ((cellData & 0x02) == 0 ? cellColour : backgroundColour);
-              framePixels[pixelCounter++] = ((cellData & 0x01) == 0 ? cellColour : backgroundColour);
-            }
-          }
-        } else {
-          // Multicolour graphics.
-          multiColourTable[2] = cellColour;
-          tempColour = multiColourTable[(cellData >> 6) & 0x03];
-          framePixels[pixelCounter++] = tempColour;
-          framePixels[pixelCounter++] = tempColour;
-          tempColour = multiColourTable[(cellData >> 4) & 0x03];
-          framePixels[pixelCounter++] = tempColour;
-          framePixels[pixelCounter++] = tempColour;
-
-          horizontalCounter = horizontalCounter + 4;
-
-          if (horizontalCounter < machineType.getTotalScreenWidth()) {
-            tempColour = multiColourTable[(cellData >> 2) & 0x03];
-            framePixels[pixelCounter++] = tempColour;
-            framePixels[pixelCounter++] = tempColour;
-            tempColour = multiColourTable[cellData & 0x03];
-            framePixels[pixelCounter++] = tempColour;
-            framePixels[pixelCounter++] = tempColour;
-          }
-        }
-
-        // Toggle fetch toggle.
-        fetchToggle = FETCH_SCREEN_CODE;
+        //System.out.println(
+        //    String.format("charDataOffset: %d, charMemoryStart: %d, cellDepthCounter: %d, cellIndex: %d, characterSizeShift: %d", 
+        //    charDataOffset, charMemoryStart, cellDepthCounter, cellIndex, characterSizeShift));
+        
+        // Fetch character data.
+        charData = mem[charDataOffset];
+        
+        // Decode colour.
+        cellColour = vicColours[cellColourIndex & 0x0F];   // TODO: Not sure why we have to mask this.
+        
+        // Decode mode (hires vs multi-colour).
+        hiresMode = ((cellColourIndex & 0x08) == 0);
       }
-    } else {
-      cellData = mem[DEFAULT_FETCH_ADDRESS];
-
-      // Output four border pixels.
-      framePixels[pixelCounter++] = borderColour;
-      framePixels[pixelCounter++] = borderColour;
-      framePixels[pixelCounter++] = borderColour;
-      framePixels[pixelCounter++] = borderColour;
     }
+  
     
-    } else {
-      // Vertical blanking is in progress. Not pixels are output during this time.
-    }
-
-    // Increment the horizontal counter.
-    horizontalCounter = horizontalCounter + 4;
-
-    // If end of line is reached, reset horiz counter and increment vert
-    // counter.
-    if (horizontalCounter >= machineType.getTotalScreenWidth()) {
+//    if (inMatrix) {
+//      //framePixels[pixelCounter - 1] = vicColours[7];
+//    } else if (vmcAndHccEnabled) {
+//      framePixels[pixelCounter - 4] = vicColours[8];
+//    }
+//    
+//    if (hccLast) {
+//      framePixels[pixelCounter - 4] = vicColours[11];
+//    }
+//    
+//    
+//    if (fetchToggle == 0  && (verticalCounter % 4 == 0)) {
+//      framePixels[pixelCounter - 4] = vicColours[13];
+//    }
+//    
+//    if (fetchToggle == 1  && (verticalCounter % 4 == 0)) {
+//      framePixels[pixelCounter - 4] = vicColours[0];
+//    }
+    
+    
+    // Notes from silicon die:
+    // 1. HCC increments on F2.
+    // 2. So hcc_last is true on F2 and will have immediate effect on in_matrix state.
+    // 3. VMC and HCC increment disabled on F1 following hcc_last.
+    // 4. HC increments on F2.
+    // 5. VC increments on F2.
+    
+    // Increment horizontal counter.
+    horizontalCounter++; 
+    
+    if (horizontalCounter == machineType.getCyclesPerLine()) {
+      // Reset horizontal counter.
       horizontalCounter = 0;
-      verticalCounter++;
-
-      // If last line has been reached, reset all counters.
-      if (verticalCounter >= machineType.getTotalScreenHeight()) {
+      newLine = true;
+      
+      // Horizontal blanking starts at the beginning of a new line.
+      hblank = true;
+      
+      // Increment vertical counter at start of new line.
+      verticalCounter ++;
+      if (verticalCounter == machineType.getTotalScreenHeight()) {
         verticalCounter = 0;
+        firstLine = true;
+        
+      } else if (verticalCounter == 1) {
+        vblank = true;
         pixelCounter = 0;
-        videoMatrixCounter = 0;
-        rowStart = 0;
-        cellDepthCounter = 0;
-        charMemoryCellDepthStart = charMemoryStart;
         
         synchronized(frames) {
           // Mark the current frame as complete.
@@ -849,7 +881,348 @@ public class Vic extends MemoryMappedChip {
         
         frameRenderComplete = true;
         
+      } else if (verticalCounter == 10) {
+        vblank = false;
+        
+      } else if (verticalCounter == 4) {
+        // VSYNC sets video matrix latch all to ones (at the silicon level, all to ones, but it stores
+        // the inverse value, so is effectively all to ones). Next increment puts VMC to zero.
+        rowStart = 0xFFF;
+        
+        videoMatrixCounter = 0xFFF;  // TODO: Shouldn't need to do this here.
+      }
+      
+      // Update raster line in VIC registers.
+      mem[VIC_REG_4] = (verticalCounter >> 1);
+      if ((verticalCounter & 0x01) == 0) {
+        mem[VIC_REG_3] &= 0x7F;
       } else {
+        mem[VIC_REG_3] |= 0x80;
+      }
+      
+    } else if (horizontalCounter == 12) {
+      // Horizontal blanking ends after first 12 cycles of a new line.
+      hblank = false;
+    }
+    
+    // Address Out Enabled state changes one cycle after VMC and HCC are enabled/disabled.
+    addressOutEnabled = vmcAndHccEnabled;    
+    
+    // VMC And HCC are enabled if we're still in the text window (video matrix) and last 
+    // cycle bus wasn't available. This means that as soon as inMatrix is false, VMC and HCC
+    // are disabled.
+    vmcAndHccEnabled = !busAvailable && inMatrix;
+    
+    // There is a 3 cycle delay between VMC and HCC being enabled/disabled and border being affected.
+    borderOffDelay = ((borderOffDelay >> 1) | (vmcAndHccEnabled? 8 : 0)); 
+    
+    // Bus available state is inverse of whatever inMatrix was in the previous cycle.
+    busAvailable = !inMatrix;
+    
+    // Determine whether we are in the text window (video matrix) area.
+    if (syCompare) {
+      inMatrixY = true;
+    }
+    if (firstLine || vccLast) {
+      inMatrixY = false;
+      matrixLine = false;
+      vccLast = false;
+    }
+    if (inMatrixY && sxCompare) {
+      inMatrix = true;
+      matrixLine = true;
+    }
+    if (newLine || hccLast) {
+      inMatrix = false;
+      hccLast = false;
+    }
+    
+    // Screen origin (text window top left corner) to horiz/vert counter comparators. This
+    // is deliberately calculated after the inMatrix calculation due to a one cycle delay.
+    sxCompare = (horizontalScreenOrigin == horizontalCounter);
+    
+    // SY comparison ignores vertical counter bit 0. Only from bit 1 and above.
+    syCompare = (verticalScreenOrigin == (verticalCounter >> 1));
+    
+    if (newLine) {
+      // New line reloads horizontal cell counter from control register.
+      horizontalCellCounter = (((numOfColumns ^ 0x7F) << 1) & 0xFE) + 2;  // TODO: This seems wrong. Why add 2?
+
+      // First line reloads the vertical cell counter from control register.
+      if (firstLine) {
+        verticalCellCounter = ((numOfRows ^ 0x3F) & 0x3F);
+      }
+      
+      // New line increments cell depth counter (CDC) if this is a matrix line.
+      if (matrixLine) {
+        cellDepthCounter++;
+        
+        // If we've already reached the character size, then reset CDC.
+        if (cellDepthCounter == characterSize) {
+          cellDepthCounter = 0;
+          
+          // CDC reset triggers Vertical Cell Counter increment if not first line.
+          if (!firstLine) {
+            // Increment VCC (down counter implemented as an up counter).
+            verticalCellCounter++;
+            vccLast = (verticalCellCounter == 0x3F);
+          }
+        }
+      }
+
+      if (cellDepthCounter == 0) {
+        // If CDC was reset, store the current video matrix counter value.
+        rowStart = videoMatrixCounter;
+      } else {
+        // Otherwise load the previously stored video matrix counter value.
+        videoMatrixCounter = rowStart;
+      }
+      
+    } else  {
+      if (vmcAndHccEnabled) {
+        // Increment HCC (down counter implemented as an up counter).
+        horizontalCellCounter = ((horizontalCellCounter + 1) & 0xFF);
+        hccLast = (horizontalCellCounter == 0xFF);
+
+        // When HCC0 is LOW, it is fetching from the video matrix memory, and when HCC0 is HIGH, it is fetching from the character memory.
+        // TODO: Suspect that fetchToggle is currently being reversed in logic. Check die shot.
+        fetchToggle = (horizontalCellCounter & 0x01);
+        
+        // Increment video matrix counter. 12-bit counter.
+        videoMatrixCounter = ((videoMatrixCounter + 1) & 0xFFF);
+      }
+    }
+    
+    if (debug) {
+      System.out.println(
+          String.format(
+              "pxc: %d, syc: %s, sxc: %s, ncols: %d, ml: %s, im: %s, imy: %s, vc: %d, hc: %d, hcc: %d, vcc: %d, vmc: %d, " + 
+              "charDataOffset: %d, charMemoryStart: %d, cdc: %d, cellIndex: %d, characterSizeShift: %d, " + 
+              "colourMemoryStart: %d",
+          pixelCounter,
+          (syCompare? "y" : "n"), (sxCompare? "y" : "n"), numOfColumns,
+          (matrixLine? "y" : "n"), (inMatrix? "y" : "n"), (inMatrixY? "y" : "n"),
+          verticalCounter, horizontalCounter, horizontalCellCounter, verticalCellCounter, videoMatrixCounter, charDataOffset, charMemoryStart, cellDepthCounter, 
+          cellIndex, characterSizeShift, colourMemoryStart));
+    }
+    
+    // 5-bit counter in the 6561, but only bottom 4 bits are used. Other bit might have been used for 6562/3.
+    soundClockDividerCounter = ((soundClockDividerCounter + 1) & 0xF);
+    
+    for (int i=0; i<4; i++) {
+      if ((voiceClockDividerTriggers[i] & soundClockDividerCounter) == 0) {
+        voiceCounters[i] = (voiceCounters[i] + 1) & 0x7F;
+        if (voiceCounters[i] == 0) {
+          // Reload the voice counter from the control register.
+          voiceCounters[i] = (mem[VIC_REG_10 + i] & 0x7F);
+          
+          if (i == 3) {
+            // For Noise voice, we perform a shift of the LFSR whenever the counter is reloaded, and
+            // only shift the main voice shift register if LFSR bit 0 is 1.
+            if ((noiseLFSR & 0x0001) > 0) {
+              voiceShiftRegisters[i] = (
+                  ((voiceShiftRegisters[i] & 0x7F) << 1) | 
+                  ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
+            }
+            
+            // The LFSR taps are bits 3, 12, 14 and 15.
+            int bit3  = (noiseLFSR >> 3) & 1;
+            int bit12 = (noiseLFSR >> 12) & 1;
+            int bit14 = (noiseLFSR >> 14) & 1;
+            int bit15 = (noiseLFSR >> 15) & 1;
+            int feedback = (((bit3 ^ bit12) ^ (bit14 ^ bit15)) ^ 1);
+            noiseLFSR = ((noiseLFSR << 1) | ((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0xFFFF);
+
+          } else {
+            // For the three other voices, we shift the voice shift register whenever the counter is reloaded.
+            voiceShiftRegisters[i] = (
+                ((voiceShiftRegisters[i] & 0x7F) << 1) | 
+                ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
+          }
+        }
+      }
+    }
+    
+    // If enough cycles have elapsed since the last sample, then output another.
+    if (--cyclesToNextSample <= 0) {
+      if (doSound) writeSample();
+      cyclesToNextSample += cyclesPerSample;
+    }
+    
+    return frameRenderComplete;
+  }
+  
+  
+  /**
+   * Emulates a single machine cycle. The VIC chip alternates its function
+   * between fetching the screen code for a character from the video matrix and
+   * fetching the bitmap of the character line from character memory on alternate
+   * cycles. Four pixels are output every cycle. Note that the VIC starts fetching
+   * the data for character it needs to render during the 2 cycles prior to the dots
+   * being sent to the TV. So the border column immediately preceding the left 
+   * edge of the video matrix area is when it is fetching the data required for 
+   * the first column of the video matrix area.
+   * 
+   * @return true If a screen repaint is required due to the frame render having completed. 
+   */
+  public boolean emulateCycle(boolean doSound) {
+    boolean frameRenderComplete = false;
+    int charDataOffset = 0;
+    short tempColour = 0;
+    
+    // Get a local reference to the current Frame's pixel array.
+    short[] framePixels = frames[activeFrame].framePixels;
+
+    if (!vblank && !hblank) {
+      
+      // Check that we are inside the text screen.
+      if ((verticalCounter >= textScreenTop) && (verticalCounter < textScreenBottom) && (horizontalCounter >= textScreenLeft) && (horizontalCounter < textScreenRight)) {
+  
+        // Determine whether we are fetching screen code or char data.
+        if (fetchToggle == FETCH_SCREEN_CODE) {
+          
+          // Calculate address within video memory and fetch cell index.
+          cellIndex = mem[videoMemoryStart + videoMatrixCounter];
+  
+          // Due to the way the colour memory is wired up, the above fetch of the cell index
+          // also happens to automatically fetch the foreground colour from the Colour Matrix
+          // via the top 4 lines of the data bus (DB8-DB11), which are wired directly from 
+          // colour RAM in to the VIC chip.
+          cellColourIndex = mem[colourMemoryStart + videoMatrixCounter];
+  
+          // Increment the video matrix counter.
+          videoMatrixCounter++;
+  
+          // Toggle fetch toggle.
+          fetchToggle = FETCH_CHAR_DATA;
+          
+          return frameRenderComplete;
+          
+        } else {
+          // Calculate offset of data.
+          charDataOffset = charMemoryCellDepthStart + (cellIndex << characterSizeShift);
+  
+          // Adjust offset for memory wrap around.
+          if ((charMemoryStart < 8192) && (charDataOffset >= 8192)) {
+            charDataOffset += 24576;
+          }
+  
+          // Fetch cell data.
+          charData = mem[charDataOffset];
+          
+          // Decode colour.
+          cellColour = vicColours[cellColourIndex & 0x0F];   // TODO: Not sure why we have to mask this.
+          
+          // Plot pixels.
+          if ((cellColourIndex & 0x08) == 0) {
+            if (reverse == 0) {
+              // Normal graphics.
+              framePixels[pixelCounter++] = ((charData & 0x80) == 0 ? backgroundColour : cellColour);
+              framePixels[pixelCounter++] = ((charData & 0x40) == 0 ? backgroundColour : cellColour);
+              framePixels[pixelCounter++] = ((charData & 0x20) == 0 ? backgroundColour : cellColour);
+              framePixels[pixelCounter++] = ((charData & 0x10) == 0 ? backgroundColour : cellColour);
+  
+              horizontalCounter = horizontalCounter + 4;
+  
+              if (horizontalCounter < machineType.getTotalScreenWidth()) {
+                framePixels[pixelCounter++] = ((charData & 0x08) == 0 ? backgroundColour : cellColour);
+                framePixels[pixelCounter++] = ((charData & 0x04) == 0 ? backgroundColour : cellColour);
+                framePixels[pixelCounter++] = ((charData & 0x02) == 0 ? backgroundColour : cellColour);
+                framePixels[pixelCounter++] = ((charData & 0x01) == 0 ? backgroundColour : cellColour);
+              }
+            } else {
+              // Reverse graphics.
+              framePixels[pixelCounter++] = ((charData & 0x80) == 0 ? cellColour : backgroundColour);
+              framePixels[pixelCounter++] = ((charData & 0x40) == 0 ? cellColour : backgroundColour);
+              framePixels[pixelCounter++] = ((charData & 0x20) == 0 ? cellColour : backgroundColour);
+              framePixels[pixelCounter++] = ((charData & 0x10) == 0 ? cellColour : backgroundColour);
+  
+              horizontalCounter = horizontalCounter + 4;
+  
+              if (horizontalCounter < machineType.getTotalScreenWidth()) {
+                framePixels[pixelCounter++] = ((charData & 0x08) == 0 ? cellColour : backgroundColour);
+                framePixels[pixelCounter++] = ((charData & 0x04) == 0 ? cellColour : backgroundColour);
+                framePixels[pixelCounter++] = ((charData & 0x02) == 0 ? cellColour : backgroundColour);
+                framePixels[pixelCounter++] = ((charData & 0x01) == 0 ? cellColour : backgroundColour);
+              }
+            }
+          } else {
+            // Multicolour graphics.
+            multiColourTable[2] = cellColour;
+            tempColour = multiColourTable[(charData >> 6) & 0x03];
+            framePixels[pixelCounter++] = tempColour;
+            framePixels[pixelCounter++] = tempColour;
+            tempColour = multiColourTable[(charData >> 4) & 0x03];
+            framePixels[pixelCounter++] = tempColour;
+            framePixels[pixelCounter++] = tempColour;
+  
+            horizontalCounter = horizontalCounter + 4;
+  
+            if (horizontalCounter < machineType.getTotalScreenWidth()) {
+              tempColour = multiColourTable[(charData >> 2) & 0x03];
+              framePixels[pixelCounter++] = tempColour;
+              framePixels[pixelCounter++] = tempColour;
+              tempColour = multiColourTable[charData & 0x03];
+              framePixels[pixelCounter++] = tempColour;
+              framePixels[pixelCounter++] = tempColour;
+            }
+          }
+  
+          // Toggle fetch toggle.
+          fetchToggle = FETCH_SCREEN_CODE;
+        }
+      } else {
+        // Output four border pixels.
+        framePixels[pixelCounter++] = borderColour;
+        framePixels[pixelCounter++] = borderColour;
+        framePixels[pixelCounter++] = borderColour;
+        framePixels[pixelCounter++] = borderColour;
+      }
+    
+    } else {
+      // No pixels rendered during blanking.
+      pixelCounter += 4;
+    }
+
+    // Increment the horizontal counter.
+    horizontalCounter = horizontalCounter + 4;
+    
+    // If end of line is reached, reset horiz counter and increment vert
+    // counter.
+    if (horizontalCounter >= machineType.getTotalScreenWidth()) {
+      horizontalCounter = 0;
+      verticalCounter++;
+      hblank = true;
+
+      // If last line has been reached, reset all counters.
+      if (verticalCounter >= machineType.getTotalScreenHeight()) {
+        verticalCounter = 0;
+        videoMatrixCounter = 0;
+        rowStart = 0;
+        cellDepthCounter = 0;
+        charMemoryCellDepthStart = charMemoryStart;
+        
+      } else {
+        if (verticalCounter == 1) {
+          // Vertical blank starts on Line 1, not Line 0.
+          vblank = true;
+          pixelCounter = 0;
+          
+          synchronized(frames) {
+            // Mark the current frame as complete.
+            frames[activeFrame].ready = true;
+            
+            // Toggle the active frame.
+            activeFrame = ((activeFrame + 1) % 2);
+            frames[activeFrame].ready = false;
+          }
+          
+          frameRenderComplete = true;
+          
+        } else if (verticalCounter == 10) {
+          vblank = false;
+        }
+        
         if (videoMatrixCounter > 0) {
           cellDepthCounter++;
 
@@ -874,11 +1247,85 @@ public class Vic extends MemoryMappedChip {
       } else {
         mem[VIC_REG_3] |= 0x80;
       }
+      
+    } else if (horizontalCounter >= 48) {  // 12 cycles of horizontal blanking
+      hblank = false;
+    }
+    
+    // 5-bit counter in the 6561, but only bottom 4 bits are used. Other bit might have been used for 6562/3.
+    soundClockDividerCounter = ((soundClockDividerCounter + 1) & 0xF);
+    
+    for (int i=0; i<4; i++) {
+      if ((voiceClockDividerTriggers[i] & soundClockDividerCounter) == 0) {
+        voiceCounters[i] = (voiceCounters[i] + 1) & 0x7F;
+        if (voiceCounters[i] == 0) {
+          // Reload the voice counter from the control register.
+          voiceCounters[i] = (mem[VIC_REG_10 + i] & 0x7F);
+          
+          if (i == 3) {
+            // For Noise voice, we perform a shift of the LFSR whenever the counter is reloaded, and
+            // only shift the main voice shift register if LFSR bit 0 is 1.
+            if ((noiseLFSR & 0x0001) > 0) {
+              voiceShiftRegisters[i] = (
+                  ((voiceShiftRegisters[i] & 0x7F) << 1) | 
+                  ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
+            }
+            
+            // The LFSR taps are bits 3, 12, 14 and 15.
+            int bit3  = (noiseLFSR >> 3) & 1;
+            int bit12 = (noiseLFSR >> 12) & 1;
+            int bit14 = (noiseLFSR >> 14) & 1;
+            int bit15 = (noiseLFSR >> 15) & 1;
+            int feedback = (((bit3 ^ bit12) ^ (bit14 ^ bit15)) ^ 1);
+            noiseLFSR = ((noiseLFSR << 1) | ((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0xFFFF);
+
+          } else {
+            // For the three other voices, we shift the voice shift register whenever the counter is reloaded.
+            voiceShiftRegisters[i] = (
+                ((voiceShiftRegisters[i] & 0x7F) << 1) | 
+                ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
+          }
+        }
+      }
+    }
+    
+    // If enough cycles have elapsed since the last sample, then output another.
+    if (--cyclesToNextSample <= 0) {
+      if (doSound) writeSample();
+      cyclesToNextSample += cyclesPerSample;
     }
     
     return frameRenderComplete;
   }
+  
+  /**
+   * Writes a single sample to the sample buffer. If the buffer is full after writing the
+   * sample, then the whole buffer is written out.
+   */
+  public void writeSample() {
+    short sample = 0;
+    
+    for (int i=0; i<4; i++) {
+      if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
+        // Voice enabled. First bit of SR goes out.
+        //sample += ((voiceShiftRegisters[i] & 0x01) * 2500);  // TODO: Try shifting to multiply by 2048
+        sample += ((voiceShiftRegisters[i] & 0x01) << 11);
+      }      
+    }
+    
+    sampleBuffer[sampleBufferOffset + 0] = (short)(((sample >> 2) * masterVolume) & 0x7FFF);   // TODO: Try shifting.
 
+    // If the sample buffer is full, write it out to the audio line.
+    if ((sampleBufferOffset += 1) == sampleBuffer.length) {
+      try {
+        if (!soundPaused) audioDevice.writeSamples(sampleBuffer, 0, sampleBuffer.length);
+      } catch (Throwable e) {
+        // An Exception or Error can occur here if the app is closing, so we catch and ignore.
+      }
+      sampleBufferOffset = 0;
+    }
+  }
+  
   /**
    * Gets the pixels for the current frame from the VIC chip.
    * 

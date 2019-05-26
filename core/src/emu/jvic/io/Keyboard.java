@@ -41,9 +41,9 @@ public class Keyboard {
     {Keys.Y, 2, 8},
     {Keys.R, 2, 4},
     {Keys.W, 2, 2},
-    {Keys.LEFT, 2, 1},
+    {Keys.PAGE_DOWN, 2, 1},  // TODO: What about ````
     
-    {Keys.RIGHT, 4, 128},
+    {Keys.CONTROL_RIGHT, 4, 128},
     {Keys.SEMICOLON, 4, 64},
     {Keys.L, 4, 32},
     {Keys.J, 4, 16},
@@ -55,7 +55,7 @@ public class Keyboard {
     // Special Ctrl key mapping for Android Hacker's Keyboard.
     {113, 4, 1},
     
-    {Keys.DOWN, 8, 128},
+    {Keys.ALT_RIGHT, 8, 128},
     {Keys.SLASH, 8, 64},
     {Keys.COMMA, 8, 32},
     {Keys.N, 8, 16},
@@ -84,7 +84,7 @@ public class Keyboard {
     {Keys.ALT_LEFT, 32, 1},
     
     {Keys.F5, 64, 128},
-    {Keys.UP, 64, 64},
+    {Keys.PAGE_UP, 64, 64},
     {Keys.AT, 64, 32},
     {Keys.O, 64, 16},
     {Keys.U, 64, 8},

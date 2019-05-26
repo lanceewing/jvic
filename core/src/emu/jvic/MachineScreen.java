@@ -1,5 +1,7 @@
 package emu.jvic;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,8 +13,14 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.PixmapIO.PNG;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
+import com.badlogic.gdx.utils.Base64Coder;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -74,8 +82,27 @@ public class MachineScreen implements Screen {
   // UI components.
   private Texture joystickIcon;
   private Texture keyboardIcon;
+  private Texture backIcon;
+  private Texture warpSpeedIcon;
+  private Texture cameraIcon;
 
   private ViewportManager viewportManager;
+  
+  // Touchpad
+  private Stage portraitStage;
+  private Stage landscapeStage;
+  private Touchpad portraitTouchpad;
+  private Touchpad landscapeTouchpad;
+  
+  // FPS text font
+  private BitmapFont font;
+  
+  private boolean showFPS;
+  
+  /**
+   * Details about the application currently running.
+   */
+  private AppConfigItem appConfigItem;
   
   /**
    * Constructor for MachineScreen.
@@ -102,11 +129,20 @@ public class MachineScreen implements Screen {
     
     keyboardIcon = new Texture("png/keyboard_icon.png");
     joystickIcon = new Texture("png/joystick_icon.png");
+    backIcon = new Texture("png/back_arrow.png");
+    warpSpeedIcon = new Texture("png/warp_speed_icon.png");
+    cameraIcon = new Texture("png/camera_icon.png");
     
     viewportManager = ViewportManager.getInstance();
     
     // Create and register an input processor for keys, etc.
     machineInputProcessor = new MachineInputProcessor(this, confirmHandler);
+    
+    // FPS font
+    font = new BitmapFont(Gdx.files.internal("data/default.fnt"), false);
+    font.setFixedWidthGlyphs(".  *");  // Note: The * and . are ignored, first and last. Only the space is fixed width.
+    font.setColor(new Color(0x808080FF));
+    font.getData().setScale(2f, 2f);
     
     // Start up the MachineRunnable Thread. It will initially be paused, awaiting machine configuration.
     Thread machineThread = new Thread(this.machineRunnable);
@@ -122,6 +158,8 @@ public class MachineScreen implements Screen {
    * @param appConfigItem The configuration for the app that was selected on the HomeScreen.
    */
   public void initMachine(AppConfigItem appConfigItem) {
+    this.appConfigItem = appConfigItem;
+    
     if (appConfigItem.getFileType().equals("")) {
       // If there is no file type, there is no file to load and we simply boot in to BASIC.
       machine.init(appConfigItem.getRam(), appConfigItem.getMachineType());
@@ -266,19 +304,82 @@ public class MachineScreen implements Screen {
       batch.setColor(c.r, c.g, c.b, 0.5f);
       if (viewportManager.isPortrait()) {
         batch.draw(joystickIcon, 0, 0);
-        batch.draw(keyboardIcon, viewportManager.getWidth() - 145, 0);
-        
         if (Gdx.app.getType().equals(ApplicationType.Android)) {
+          // Main Oric keyboard on the right.
+          batch.draw(keyboardIcon, viewportManager.getWidth() - 145, 0);
           // Mobile keyboard for debug purpose. Wouldn't normally make this available.
           batch.setColor(c.r, c.g, c.b, 0.15f);
           batch.draw(keyboardIcon, viewportManager.getWidth() - viewportManager.getWidth()/2 - 70, 0);
+          
+        } else {
+          // Desktop puts keyboard button in the middle.
+          batch.draw(keyboardIcon, viewportManager.getWidth() - viewportManager.getWidth()/2 - 70, 0);
+          // and the back button on the right.
+          batch.draw(backIcon, viewportManager.getWidth() - 145, 0);
         }
+        
       } else {
         batch.draw(joystickIcon, 0, viewportManager.getHeight() - 140);
         batch.draw(keyboardIcon, viewportManager.getWidth() - 150, viewportManager.getHeight() - 125);
+        batch.draw(backIcon, viewportManager.getWidth() - 150, 0);
       }
     }
+    float screenHeight = (viewportManager.getHeight() - (viewportManager.getWidth()  / 4) * 3);
+    if (machineRunnable.isWarpSpeed()) {
+      batch.setColor(0.5f, 1.0f, 0.5f, 1.0f);
+    } else {
+      batch.setColor(c.r, c.g, c.b, 0.5f);
+    }
+    batch.draw(warpSpeedIcon, 0, screenHeight - 128);
+    batch.setColor(c.r, c.g, c.b, 0.5f);
+    batch.draw(cameraIcon, viewportManager.getWidth() - 145, screenHeight - 128);
+    if (showFPS) {
+      font.draw(batch, String.format("%4dFPS", machineRunnable.getFramesLastSecond()), 
+          viewportManager.getWidth() - viewportManager.getWidth()/2 - 90, screenHeight - 48);
+    }
     batch.end();
+  }
+  
+  /**
+   * Toggles the display of the FPS.
+   */
+  public void toggleShowFPS() {
+    showFPS = !showFPS;
+  }
+  
+  /**
+   * Saves a screenshot of the machine's current screen contents.
+   */
+  public void saveScreenshot() {
+    String friendlyAppName = appConfigItem != null? appConfigItem.getName().replaceAll("[ ,\n/\\:;*?\"<>|!]",  "_") : "shot";
+    if (Gdx.app.getType().equals(ApplicationType.Desktop)) {
+      try {
+        StringBuilder filePath = new StringBuilder("jvic_screens/");
+        filePath.append(friendlyAppName);
+        filePath.append("_");
+        filePath.append(System.currentTimeMillis());
+        filePath.append(".png");
+        PixmapIO.writePNG(Gdx.files.external(filePath.toString()), screenPixmap);
+      } catch (Exception e) {
+        // Ignore.
+      }
+    }
+    if (appConfigItem != null) {
+      try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PNG writer = new PNG((int)(screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
+        try {
+          writer.setFlipY(false);
+          writer.write(out, screenPixmap);
+        } finally {
+          writer.dispose();
+        }
+        jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
+        jvic.getScreenshotStore().flush();
+      } catch (IOException ex) {
+        // Ignore.
+      }
+    }
   }
   
   @Override
@@ -328,6 +429,9 @@ public class MachineScreen implements Screen {
     KeyboardType.dispose();
     keyboardIcon.dispose();
     joystickIcon.dispose();
+    backIcon.dispose();
+    warpSpeedIcon.dispose();
+    cameraIcon.dispose();
     batch.dispose();
     machineRunnable.stop();
     disposeScreens();
