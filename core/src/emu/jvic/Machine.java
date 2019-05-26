@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
-import emu.jvic.io.Via;
 import emu.jvic.io.Via1;
 import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
