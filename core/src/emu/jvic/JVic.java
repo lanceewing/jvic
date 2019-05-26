@@ -13,7 +13,7 @@ import emu.jvic.ui.ConfirmHandler;
  * 
  * @author Lance Ewing
  */
-public class JVicGdx extends Game {
+public class JVic extends Game {
   
   /**
    * This is the screen that is used to show the running emulation.
@@ -45,7 +45,7 @@ public class JVicGdx extends Game {
    * 
    * @param confirmHandler
    */
-  public JVicGdx(ConfirmHandler confirmHandler) {
+  public JVic(ConfirmHandler confirmHandler) {
     this.confirmHandler = confirmHandler;
   }
   

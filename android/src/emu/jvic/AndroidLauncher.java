@@ -7,7 +7,7 @@ import android.os.Bundle;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 
-import emu.jvic.JVicGdx;
+import emu.jvic.JVic;
 import emu.jvic.ui.ConfirmHandler;
 import emu.jvic.ui.ConfirmResponseHandler;
 
@@ -17,7 +17,7 @@ public class AndroidLauncher extends AndroidApplication implements ConfirmHandle
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
-		initialize(new JVicGdx(this), config);
+		initialize(new JVic(this), config);
 	}
 
   @Override

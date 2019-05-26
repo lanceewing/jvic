@@ -47,7 +47,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
   /**
    * The Game object for JVicGdx. Allows us to easily change screens.
    */
-  private JVicGdx jvic;
+  private JVic jvic;
   
   private Skin skin;
   private Stage portraitStage;
@@ -74,7 +74,7 @@ public class HomeScreen extends InputAdapter implements Screen  {
    * @param jvic The JVicGdx instance.
    * @param confirmHandler
    */
-  public HomeScreen(JVicGdx jvic, ConfirmHandler confirmHandler) {
+  public HomeScreen(JVic jvic, ConfirmHandler confirmHandler) {
     this.jvic = jvic;
     this.confirmHandler = confirmHandler;
     

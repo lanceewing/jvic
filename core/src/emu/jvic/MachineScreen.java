@@ -42,7 +42,7 @@ public class MachineScreen implements Screen {
   /**
    * The Game object for JVicGdx. Allows us to easily change screens.
    */
-  private JVicGdx jvic;
+  private JVic jvic;
   
   /**
    * This represents the VIC 20 machine.
@@ -110,7 +110,7 @@ public class MachineScreen implements Screen {
    * @param jvic The JVicGdx instance.
    * @param confirmHandler
    */
-  public MachineScreen(JVicGdx jvic, ConfirmHandler confirmHandler) {
+  public MachineScreen(JVic jvic, ConfirmHandler confirmHandler) {
     this.jvic = jvic;
     
     // Create the Machine, at this point not configured with a MachineType.
