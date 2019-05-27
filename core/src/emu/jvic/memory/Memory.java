@@ -1,14 +1,16 @@
 package emu.jvic.memory;
 
+import java.util.ArrayList;
+
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.snap.Snapshot;
 
 /**
- * This class emulators the memory of a 6502 machine.
+ * This class emulates the memory of a 6502 machine.
  * 
  * @author Lance Ewing
  */
-public abstract class Memory {
+public class Memory {
   
   /**
    * Holds the machines memory.
@@ -46,7 +48,19 @@ public abstract class Memory {
    * @param endAddress The end of the address range.
    */
   protected void mapChipToMemory(MemoryMappedChip chip, int startAddress, int endAddress) {
-    mapChipToMemory(chip, startAddress, endAddress, null);
+    mapChipToMemory(chip, startAddress, endAddress, 0x0000);
+  }
+  
+  /**
+   * Maps the given chip instance at the given address range.
+   * 
+   * @param chip The chip to map at the given address range.
+   * @param startAddress The start of the address range.
+   * @param endAddress The end of the address range.
+   * @param mirrorMask Mask that determines how the chip is mirrored into other parts of memory.
+   */
+  protected void mapChipToMemory(MemoryMappedChip chip, int startAddress, int endAddress, int mirrorMask) {
+    mapChipToMemory(chip, startAddress, endAddress, mirrorMask, null);
   }
   
   /**
@@ -57,24 +71,61 @@ public abstract class Memory {
    * @param chip The chip to map at the given address range.
    * @param startAddress The start of the address range.
    * @param endAddress The end of the address range.
+   * @param mirrorMask Mask that determines how the chip is mirrored into other parts of memory.
    * @param state byte array containing initial state (can be null).
    */
   protected void mapChipToMemory(MemoryMappedChip chip, int startAddress, int endAddress, byte[] state) {
+    mapChipToMemory(chip, startAddress, endAddress, 0x0000, state);
+  }
+  
+  /**
+   * Maps the given chip instance at the given address range, optionally loading the
+   * given initial state data into that address range. This state data is intended to be
+   * used for things such as ROM images (e.g. char, kernel, basic).
+   * 
+   * @param chip The chip to map at the given address range.
+   * @param startAddress The start of the address range.
+   * @param endAddress The end of the address range.
+   * @param mirrorMask Mask that determines how the chip is mirrored into other parts of memory.
+   * @param state byte array containing initial state (can be null).
+   */
+  protected void mapChipToMemory(MemoryMappedChip chip, int startAddress, int endAddress, int mirrorMask, byte[] state) {
     int statePos = 0;
     
-    // Load the initial state into memory if provided.
-    if (state != null) {
-      for (int i=startAddress; i<=endAddress; i++) {
-        mem[i] = (state[statePos++] & 0xFF);
-      }
-    }
-    
     // Configure the chip into the memory map between the given start and end addresses.
-    for (int i = startAddress; i <= endAddress; i++) {
-      memoryMap[i] = chip;
+    ArrayList<Integer> mirrorBases = buildMirrorBases(mirrorMask);
+    for (int mirrorBase : mirrorBases) {
+      statePos = 0;
+      for (int i = startAddress; i <= endAddress; i++) {
+        memoryMap[mirrorBase + i] = chip;
+        if (state != null) {
+          // Load the initial state into memory if provided. Only works for ROM.
+          mem[mirrorBase + i] = (state[statePos++] & 0xFF);
+        }
+      }
     }
 
     chip.setMemory(this);
+  }
+  
+  /**
+   * Builds a List of mirror base addresses for the given mirror mask.
+   * 
+   * @param mirrorMask
+   * 
+   * @return
+   */
+  private ArrayList<Integer> buildMirrorBases(int mirrorMask) {
+    ArrayList<Integer> mirrorBases = new ArrayList<Integer>();
+    mirrorBases.add(0x0000);
+    
+    for (int address=0; address<=0xFFFF; address++) {
+      if ((address & mirrorMask) > 0) {
+        mirrorBases.add(address);
+      }
+    }
+    
+    return mirrorBases;
   }
   
   /**
@@ -124,5 +175,20 @@ public abstract class Memory {
    */
   public void forceWrite(int address, int value) {
     mem[address] = value;
+  }
+  
+  /**
+   * Converts a byte array into an int array.
+   * 
+   * @param data The byte array to convert.
+   * 
+   * @return The int array.
+   */
+  protected int[] convertByteArrayToIntArray(byte[] data) {
+    int[] convertedData = new int[data.length];
+    for (int i=0; i<data.length; i++) {
+      convertedData[i] = ((int)data[i]) & 0xFF;
+    }
+    return convertedData;
   }
 }
