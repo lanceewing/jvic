@@ -121,7 +121,7 @@ public class Via2 extends Via6522 {
   
   /**
    * Notifies the 6502 of the change in the state of the IRQ pin. In this case 
-   * it is the 6502's NMI pin that this 6522 IRQ is connected to.
+   * it is the 6502's IRQ pin that this 6522 IRQ is connected to.
    * 
    * @param The current state of this VIA chip's IRQ pin (1 or 0).
    */
