@@ -1,7 +1,5 @@
 package emu.jvic.io.disk;
 
-import com.badlogic.gdx.Gdx;
-
 /**
  * This class represents a GCE encoded 1541 disk image.
  * 
@@ -55,7 +53,7 @@ public class GcrDiskImage {
   };
 	
   // GCR_SECTOR_SIZE => 354
-  private final int GCR_SECTOR_SIZE = 1 + 10 + 9 + 1 + 325 + 8;
+  public final static int GCR_SECTOR_SIZE = 1 + 10 + 9 + 1 + 325 + 8;
 	
   // GCR conversion table - used for converting ordinary byte to 10-bits (or 4 bits to 5)
   private final int[] GCR = new int[] {
@@ -80,7 +78,6 @@ public class GcrDiskImage {
 	
   private int numOfTracks;           // Number of tracks on the disk.
   private int[] rawImage;            // The raw disk image file loaded into memory
-  private String diskImageName;
   private int diskID1;
   private int diskID2;
   private Sector[][] allTracks;
@@ -88,19 +85,11 @@ public class GcrDiskImage {
   /**
    * Constructor for GcrDiskImage.
    * 
-   * @param diskImageName The name of a .d64 disk image to load, or null if rawImage is not null.
-   * @param rawImage The raw unencoded .d64 disk image data to use (if diskImageName is null).
+   * @param rawImage The raw unencoded .d64 disk image data to use.
    */
-  public GcrDiskImage(String diskImageName, byte[] rawImage) {
-    // Read in the full disk image data if it wasn't provided.
-    if (rawImage == null) {
-      rawImage = Gdx.files.internal("disks/" + diskImageName).readBytes();
-    }
-	
+  public GcrDiskImage(byte[] rawImage) {
     this.rawImage = convertByteArrayToIntArray(rawImage);
-	  
     this.numOfTracks = 35;   // TODO: 40 track images.
-    this.diskImageName = diskImageName;
     
     // Load all tracks. This is the raw data that is not GCR encoded. A d64
     // disk image has already been decoded.
@@ -267,6 +256,21 @@ public class GcrDiskImage {
       bits = bits - 8;
     }
     return cSum;
+  }
+  
+  public Sector getSector(int track, int sector) {
+	  return this.allTracks[track][sector];
+  }
+  
+  /**
+   * Gets the number of sectors in the given track.
+   * 
+   * @param track The track to get the number of sectors in.
+   * 
+   * @return The number of sectors in the given track.
+   */
+  public int getSectorCount(int track) {
+	return TRACK_OFFSETS[track][0];
   }
   
   /**

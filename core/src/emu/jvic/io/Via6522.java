@@ -748,6 +748,28 @@ public class Via6522 extends MemoryMappedChip {
       pb7DelayedPulseStart = false;
     }
     
+    // Check for CA1 transition.
+    int ca1 = getCa1();
+    if (ca1 != this.ca1) {
+      if (ca1ControlMode == ca1) {
+        // CA1 active edge has occurred.
+        interruptFlagRegister |= CA1_SET;
+        updateIFRTopBit();
+      }
+      this.ca1 = ca1;
+    }
+    
+    // Check for CB1 transition.
+    int cb1 = getCb1();
+    if (cb1 != this.cb1) {
+      if (cb1ControlMode == cb1) {
+        // CB1 active edge has occurred.
+        interruptFlagRegister |= CB1_SET;
+        updateIFRTopBit();
+      }
+      this.cb1 = cb1;
+    }
+    
     // Clear the flag that says we had a SR write this cycle.
     shiftRegisterWrite = false;
   }
@@ -820,6 +842,23 @@ public class Via6522 extends MemoryMappedChip {
     int outputPins = (outputRegisterB & dataDirectionRegisterB);
     
     this.portBPins = inputPins | outputPins;
+  }
+
+  /**
+   * @return dataDirectionRegisterA.
+   */
+  public int getDataDirectionRegisterA() {
+    return dataDirectionRegisterA;
+  }
+
+  // Template method for subclasses to provide new CA1 input. If not used, then never changes.
+  public int getCa1() {
+	return ca1;
+  }
+  
+  // Template method for subclasses to provide new CB1 input. IF not used, then never changes.
+  public int getCb1() {
+    return cb1;
   }
   
   /**

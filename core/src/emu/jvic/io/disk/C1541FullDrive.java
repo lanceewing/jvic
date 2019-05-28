@@ -21,6 +21,42 @@ public class C1541FullDrive {
   private Via6522 via2;
   private Cpu6502 cpu;
   
+  private GcrDiskImage disk;
+  
+  private boolean ledOn;
+  private boolean motorOn;
+  
+  private int currentTrack;            // Currently selected track
+  private Sector currentSector;        // Pointers to the current sector in the disk image being used by an active read or write operation
+  private int currentSectorOffset;     // Current offset into the above sector
+  private int currentTrackSize = 21;
+  
+  private boolean diskChanged = true;
+  private boolean writeProtected = true;
+
+  private int headOutBeyond = 0;
+  private int bytesWritten = 0;
+  private int currentByte = 0;
+
+  private boolean diskModeWrite = false;
+
+  private boolean lastSync = false;
+  
+  private boolean byteReady = false;
+  
+  private long nextAutoforward;
+  
+  private int serialPort;
+  
+  private int track = 1;
+  private int hTrack = 2;
+  private int sector = 0;
+  
+  /**
+   * Number of cycles since this 1541 Drive started emulating.
+   */
+  private long cycles;
+  
   /**
    * Constructor for Drive1541.
    */
@@ -32,17 +68,58 @@ public class C1541FullDrive {
   }
   
   /**
+   * Acts as if a new disk has been inserted, using the given diskData byte array
+   * for the raw .d64 disk image.
    * 
+   * @param diskData The draw .d64 disk image data to insert.
+   */
+  public void insertDisk(byte[] diskData) {
+    disk = new GcrDiskImage(diskData);
+	  
+    // TODO: Reset some of the state.
+  }
+  
+  /**
+   * Emulates a single cycle of the 1541 disk drive.
    */
   public void emulateCycle() {
+	boolean setOverflowEnable = (via2.getCa2() == 1);
+	
+	diskModeWrite = (via2.getCb2() == 1);
+	  
+    // "Set Overflow" patch. Always fake 'byte ready' for fast read!
+    if (byteReady && setOverflowEnable) {
+      // Set overflow and clear byte ready!
+      cpu.setOverflowFlag(true);
+      byteReady = false;
+    }
     
     cpu.emulateCycle();
+    
+    autoForward(cycles);
+    
     via1.emulateCycle();
     via2.emulateCycle();
     
+    // TODO: additional disk drive state updates.
+    
+    // TODO: 
+    //byteReadyOverflow = (via2_pcr & 2) == 2;   // TODO: Appears to be SOE: Set Overflow Enable
+    //diskModeWrite = (via2_pcr & 0x20) != 0x20;
+    
+    // Increment total cycle count.
+    cycles++;
   }
   
-  
+  /**
+   * Creates the memory of the 1541 disk drive.
+   * 
+   * @param cpu The 6502 CPU that runs the 1541 disk drive unit.
+   * @param via1 The first 6522 VIA that handles the serial communication with the serial port.
+   * @param via2 The second 6522 VIA that handles the CPU R/W and motor control logic.
+   * 
+   * @return The created Memory.
+   */
   private Memory createMemory(final Cpu6502 cpu, final Via6522 via1, final Via6522 via2) {
     return new Memory(cpu, null) {{
       // UB2 is a 2048 x 8 bit RAM. UB2 resides at memory locations $0000-$07FF. This memory is
@@ -109,6 +186,145 @@ public class C1541FullDrive {
     }};
   }
   
+  private void writeByte(int data) {
+	currentByte = data;
+  }
+
+  private void finishWrite() {
+	if (bytesWritten > 0)  {  /* TODO: convert current sector to raw data */ }
+	bytesWritten = 0;
+  }
+  
+  // TODO: Rename to updateSerialPort
+  public void updateIECLines() {
+	//    int data = ~via1PB & via1CB;
+	//    iecLines = (data << 6) & ((~data ^ cia2.iecLines) << 3) & 0x80
+	//	    | (data << 3) & 0x40;
+  }
+  
+  /**
+   * 
+   * @param cycles
+   */
+  private void autoForward(long cycles) {
+    if (motorOn) {
+      if (nextAutoforward < cycles) {
+        if (nextAutoforward == 0) {
+          nextAutoforward = cycles + 32;
+        } else {
+          // 30 seems to work (3 x 8 is fastest, 6x8 slowest)
+          nextAutoforward += 30;
+          forward();
+        }
+      }
+    } else {
+      nextAutoforward = cycles + 10000;
+    }
+  }
+
+  /**
+   * 
+   * @return
+   */
+  private int sync() {
+    // Sync byte on first sector position!
+    if (currentSectorOffset == -1) return 0x80;
+    if (this.currentSector.read(currentSectorOffset) == 0xff) {
+      return 0;
+    }
+    return 0x80;
+  }
+  
+  /**
+   * Rotate head forward to read next byte!
+   */
+  private void forward() {
+    if (diskModeWrite && (via2.getDataDirectionRegisterA() == 0xff) &&
+        (currentByte != -1) && (currentSectorOffset >= 0)) {
+      bytesWritten++;
+      // Should this be written a byte "backwards"??
+      currentSector.write(currentSectorOffset, currentByte);
+    }
+    currentSectorOffset++;
+    if (currentSectorOffset == GcrDiskImage.GCR_SECTOR_SIZE) {
+      finishWrite();
+      currentSectorOffset = -1;
+      // Some extra cycles when switching sector?!!
+      nextAutoforward += 1000;
+      sector = (sector + 1) % currentTrackSize;
+      readGCRSector(track, sector);
+    }
+
+    // IF not sync now or last time...
+    if (diskModeWrite || sync() != 0 || !lastSync) {
+      // Only trigger byte ready when not at sync bytes!
+      byteReady = true;
+    }
+    lastSync = sync() == 0;
+  }
+
+  /**
+   * 
+   */
+  private void headOut() {
+    if (hTrack > 2) {
+      hTrack--;
+    } else {
+      headOutBeyond++;
+    }
+
+    updateHTrack();
+  }
+
+  /**
+   * 
+   */
+  private void headIn() {
+    if (hTrack < 70)  hTrack++;
+
+    updateHTrack();
+  }
+
+  /**
+   * 
+   */
+  private void updateHTrack() {
+    if (track != hTrack >> 1) {
+      // Takes some time before ready for next...
+      nextAutoforward = cycles + 100000;
+
+      finishWrite();
+      track = hTrack >> 1;
+      sector = 0;
+
+      currentSectorOffset = -1;
+      currentTrackSize = disk.getSectorCount(track);
+
+      readGCRSector(track, sector);
+    }
+  }
+  
+  /**
+   * 
+   * @param track
+   * @param sector
+   */
+  private void readGCRSector(int track, int sector) {
+	currentTrack = track;
+	currentSector = this.disk.getSector(track, sector);
+  }
+  
+  /**
+   * Reads a single byte from the current disk position.
+   * 
+   * @return
+   */
+  private int readByteFromDisk() {
+    if (currentSectorOffset == -1) return 0;
+    // TODO: Check when this needs to increment position.
+    return currentSector.read(currentSectorOffset);
+  }
+  
   /**
    * Creates the Via6522 that handles the Serial Communication.
    * 
@@ -124,26 +340,29 @@ public class C1541FullDrive {
       public int getPortBPins() {
         int value = 0;
         
+        // TODO: Integrate with serialPort
+        //(via1PB & 0x1a
+        //        | ((iecLines & cia2.iecLines) >> 7) & 0x01    // DATA
+        //        | ((iecLines & cia2.iecLines) >> 4) & 0x04    // CLK
+        //        | (cia2.iecLines << 3) & 0x80) ^ 0x85;        // ATN
+        
         // PB0: Data IN
         // PB1: Data OUT
         // PB2: Clk IN
         // PB3: Clk OUT
-        // PB4: Atn ACK
-        // PB5: Switch to GND (device address)
-        // PB6: Switch to GND
+        // PB4: Atn ACK (out)
+        // PB5: Switch to GND (device address) (in)
+        // PB6: Switch to GND (in)
         // PB7: Atn IN
         
         return value;
       }
       
-      /**
-       * @return the ca1
-       */
+      
       public int getCa1() {
-        // CA1: Atn IN
+        // CA1 also gets the ATN IN. This will trigger an interrupt on active edge.
         return ca1;
       }
-      
       
       /**
        * Notifies the 6502 of the change in the state of the IRQ pin. In this case 
@@ -159,21 +378,6 @@ public class C1541FullDrive {
         }
       }
     };
-  }
-  
-  private int currentTrack;            // Currently selected track
-  private Sector currentSector;        // Pointers to the current sector in the disk image being used by an active read or write operation
-  private int currentSectorOffset;     // Current offset into the above sector
-  
-  /**
-   * Reads a single byte from the current disk position.
-   * 
-   * @return
-   */
-  private int readByteFromDisk() {
-    if (currentSectorOffset == -1) return 0;
-    // TODO: Check when this needs to increment position.
-    return currentSector.read(currentSectorOffset);
   }
   
   /**
@@ -213,12 +417,15 @@ public class C1541FullDrive {
         // PB6: DS1 (out)
         // PB7: Sync (in)
         
+        // TODO: Implement
+    	// (via2PB & 0x6f) | sync() | writeProtect();
+    	  
         return 0;
       }
       
-      // TODO: Byte Ready is connected to CA1, and to 6502 Set Overflow pin, which Cpu6502 doesn't currently emulate.
+      // TODO: Byte Ready is connected to CA1. Strictly speaking, this would set CA1 interrupt (if interrupt is enabled)
       
-      // TODO: CA2 is SOE
+      // TODO: CA2 is SOE: Set Overflow Enable
       
       /**
        * Notifies the 6502 of the change in the state of the IRQ pin. In this case 

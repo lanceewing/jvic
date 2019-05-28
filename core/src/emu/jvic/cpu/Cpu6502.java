@@ -1160,9 +1160,18 @@ public class Cpu6502 extends BaseChip {
     }
   }
 
-  // TODO: Decide whether to keep this long term. Its here mainly for timing debugging at present.
+  // Total number of cycles emulated since the machine began.
   private long totalCycles;
   
+  /**
+   * Gets total number of cycles emulated since the machine began.
+   * 
+   * @return total number of cycles emulated since the machine began.
+   */
+  public long getTotalCycles() {
+	return totalCycles;
+  }
+
   /**
    * Steps through a single instruction. Used mainly for unit tests and debugging CPU.
    */
