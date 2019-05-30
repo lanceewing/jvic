@@ -3,6 +3,7 @@ package emu.jvic.io.disk;
 import com.badlogic.gdx.Gdx;
 
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io.SerialBus;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.disk.GcrDiskImage.Sector;
 import emu.jvic.memory.Memory;
@@ -23,48 +24,68 @@ public class C1541FullDrive {
   
   private GcrDiskImage disk;
   
+  // This is mainly for debugging purposes. No strict need to emulate an LED.
   private boolean ledOn;
+  
   private boolean motorOn;
   
-  private int currentTrack;            // Currently selected track
+  private int currentTrack = 1;        // Currently selected track
   private Sector currentSector;        // Pointers to the current sector in the disk image being used by an active read or write operation
   private int currentSectorOffset;     // Current offset into the above sector
   private int currentTrackSize = 21;
   
-  private boolean diskChanged = true;
-  private boolean writeProtected = true;
+  /** 
+   * The drive's stepper motor can stop at 84 different locations (tracks) on a disk. However, the 
+   * read/write head on the drive is too wide to use each one separately, so every other track is 
+   * skipped for a total of 42 theoretical tracks. The common terminology for the step in between 
+   * each track is a "half-track" and a specific track would be referred to as (for example) "35.5" 
+   * instead of the actual track (which would be 71). Commodore limited use to only the first 35 
+   * tracks in their standard DOS, but commercial software isn't limited by this.
+   */
+  private int currentHalfTrack = 2;
 
-  private int headOutBeyond = 0;
   private int bytesWritten = 0;
   private int currentByte = 0;
 
+  // CPU Switches to write mode by ANDing the contents of the 6522's peripheral control
+  // register (PCR) with $1F, ORing the result with $C0, and storing the final
+  // result back in the PCR (i.e. CB2 Manual output LOW mode)
+  //
+  //  Once all the data bytes have been written, CPU switches to read mode by ORing
+  // the contents of the 6522's peripheral control register (PCR) with $E0 and
+  // storing the result back in the PCR. (i.e. CB2 Manual output HIGH mode)
   private boolean diskModeWrite = false;
 
   private boolean lastSync = false;
   
   private boolean byteReady = false;
   
-  private long nextAutoforward;
-  
-  private int serialPort;
-  
-  private int track = 1;
-  private int hTrack = 2;
-  private int sector = 0;
+  /**
+   * The cycle count at which we will move the head forward one byte.
+   */
+  private long nextMoveForward;
   
   /**
    * Number of cycles since this 1541 Drive started emulating.
    */
-  private long cycles;
+  private long totalElapsedCycles;
   
   /**
-   * Constructor for Drive1541.
+   * The SerialBus that the 1541 disk drive is connected to.
    */
-  public C1541FullDrive() {
+  private SerialBus serialBus;
+  
+  /**
+   * Constructor for C1541FullDrive.
+   * 
+   * @param serialBus The SerialBus that the 1541 disk drive is connected to.
+   */
+  public C1541FullDrive(SerialBus serialBus) {
     cpu = new Cpu6502(null);
     via1 = createVia1();
     via2 = createVia2();
     createMemory(cpu, via1, via2);
+    this.serialBus = serialBus;
   }
   
   /**
@@ -76,39 +97,37 @@ public class C1541FullDrive {
   public void insertDisk(byte[] diskData) {
     disk = new GcrDiskImage(diskData);
 	  
-    // TODO: Reset some of the state.
+    currentTrack = 1;
+    currentHalfTrack = 2;
+    currentSectorOffset = -1;
+    currentTrackSize = disk.getSectorCount(currentTrack);
+    currentSector = disk.getSector(currentTrack, 0);
   }
   
   /**
    * Emulates a single cycle of the 1541 disk drive.
    */
   public void emulateCycle() {
-	boolean setOverflowEnable = (via2.getCa2() == 1);
-	
-	diskModeWrite = (via2.getCb2() == 1);
-	  
-    // "Set Overflow" patch. Always fake 'byte ready' for fast read!
-    if (byteReady && setOverflowEnable) {
-      // Set overflow and clear byte ready!
+    // CB2 of VIA#2 is used in Manual output mode and determines disk R/W mode (0 = W, 1 = R)
+    diskModeWrite = (via2.getCb2() == 0);
+    if (!diskModeWrite) currentByte = -1;
+    
+    // "Set Overflow" patch. Always fake a 'byte ready' for fast read.
+    if (byteReady && (via2.getCa2() == 1)) {  // VIA2 CA2 is Set Overflow Enable (SEO)
       cpu.setOverflowFlag(true);
       byteReady = false;
     }
     
     cpu.emulateCycle();
     
-    autoForward(cycles);
+    // Check if head should move forward one byte.
+    checkForMoveForward();
     
     via1.emulateCycle();
     via2.emulateCycle();
     
-    // TODO: additional disk drive state updates.
-    
-    // TODO: 
-    //byteReadyOverflow = (via2_pcr & 2) == 2;   // TODO: Appears to be SOE: Set Overflow Enable
-    //diskModeWrite = (via2_pcr & 0x20) != 0x20;
-    
     // Increment total cycle count.
-    cycles++;
+    totalElapsedCycles++;
   }
   
   /**
@@ -138,6 +157,8 @@ public class C1541FullDrive {
       // of P2 and P4 after being exclusively "ored" by UD3 and inverted by UB1. UC3 is selected by UC7 pin 7 going
       // "low" when the proper address is output from the processor. UC3 resides at memory locations $1C00-$1C0F. 
       mapChipToMemory(via1, 0x1800, 0x180F, 0x63F0);
+      
+      // TODO: ATNA connect to data line pin 5 is not emulated yet.
       
       // Microprocessor R/W and Motor Control Logic
       // UC2 is a VIA also. During a write operation the microprocessor passes the data to be recorded to Port A of UC2.
@@ -185,143 +206,127 @@ public class C1541FullDrive {
       // goes "low" indicating a sync bit has been read. 
     }};
   }
-  
-  private void writeByte(int data) {
-	currentByte = data;
-  }
 
-  private void finishWrite() {
-	if (bytesWritten > 0)  {  /* TODO: convert current sector to raw data */ }
-	bytesWritten = 0;
-  }
-  
-  // TODO: Rename to updateSerialPort
-  public void updateIECLines() {
-	//    int data = ~via1PB & via1CB;
-	//    iecLines = (data << 6) & ((~data ^ cia2.iecLines) << 3) & 0x80
-	//	    | (data << 3) & 0x40;
+  /**
+   * Flushes out any written data, if any. When bytes are written, only the GCR data is
+   * updated. It is only when we change sector that these updates are decoded back to 
+   * the raw data and updated in the .d64 disk image.
+   */
+  private void flushWrites() {
+    if (bytesWritten > 0)  {  
+      // TODO: Flush out written bytes, i.e. convert sector to raw unencoded data and set into disk image.
+    }
+    bytesWritten = 0;
   }
   
   /**
-   * 
-   * @param cycles
+   * Manages the movement of the head to the next byte of data, by using the 
+   * total number of elapsed cycles and a set "next" cycle count at which we will 
+   * move forward again.
    */
-  private void autoForward(long cycles) {
+  private void checkForMoveForward() {
     if (motorOn) {
-      if (nextAutoforward < cycles) {
-        if (nextAutoforward == 0) {
-          nextAutoforward = cycles + 32;
+      if (nextMoveForward < totalElapsedCycles) {
+        if (nextMoveForward == 0) {
+          nextMoveForward = totalElapsedCycles + 32;
         } else {
           // 30 seems to work (3 x 8 is fastest, 6x8 slowest)
-          nextAutoforward += 30;
-          forward();
+          nextMoveForward += 30;
+          moveForwardOneByte();
         }
       }
     } else {
-      nextAutoforward = cycles + 10000;
+      nextMoveForward = totalElapsedCycles + 10000;
     }
-  }
-
-  /**
-   * 
-   * @return
-   */
-  private int sync() {
-    // Sync byte on first sector position!
-    if (currentSectorOffset == -1) return 0x80;
-    if (this.currentSector.read(currentSectorOffset) == 0xff) {
-      return 0;
-    }
-    return 0x80;
   }
   
   /**
-   * Rotate head forward to read next byte!
+   * Returns true if the current sector position is at a sync mark and we're reading.
+   * 
+   * @return true if the current sector position is at a sync mark and we're reading.
    */
-  private void forward() {
+  private boolean atSyncMark() {
+    // Sync only applicable in read mode. Mode is included in the SYNC NAND gate inputs.
+    return (!diskModeWrite && (currentSectorOffset >= 0) && (currentSector.read(currentSectorOffset) == 0xff));
+  }
+  
+  /**
+   * Rotate head forward to read next byte.
+   */
+  private void moveForwardOneByte() {
+    // If we're in write mode, and a byte has been written, then update GCR sector buffer.
     if (diskModeWrite && (via2.getDataDirectionRegisterA() == 0xff) &&
         (currentByte != -1) && (currentSectorOffset >= 0)) {
       bytesWritten++;
       // Should this be written a byte "backwards"??
       currentSector.write(currentSectorOffset, currentByte);
     }
+    
+    // Move forward one byte.
     currentSectorOffset++;
+    
+    // Check if reached end of current sector.
     if (currentSectorOffset == GcrDiskImage.GCR_SECTOR_SIZE) {
-      finishWrite();
+      // If we wrote bytes out in this sector, then flush them.
+      flushWrites();
+      // Read in the next sector.
       currentSectorOffset = -1;
-      // Some extra cycles when switching sector?!!
-      nextAutoforward += 1000;
-      sector = (sector + 1) % currentTrackSize;
-      readGCRSector(track, sector);
+      currentSector = disk.getSector(currentTrack, (currentSector.sectorNum + 1) % currentTrackSize);
+      // Some extra cycles when switching sector.
+      nextMoveForward += 1000;
     }
 
-    // IF not sync now or last time...
-    if (diskModeWrite || sync() != 0 || !lastSync) {
-      // Only trigger byte ready when not at sync bytes!
+    // If not sync now or last time...
+    if (diskModeWrite || !atSyncMark() || !lastSync) {
+      // Only trigger byte ready when not at sync bytes.
       byteReady = true;
     }
-    lastSync = sync() == 0;
+    
+    // TODO: Note sure why we need to check the last byte. Check this carefully.
+    lastSync = atSyncMark();
   }
 
   /**
-   * 
+   * Moves the head out one half track.
    */
-  private void headOut() {
-    if (hTrack > 2) {
-      hTrack--;
-    } else {
-      headOutBeyond++;
-    }
-
-    updateHTrack();
+  private void moveHeadOut() {
+    if (currentHalfTrack > 2) currentHalfTrack--;
+    updateCurrentTrack();
   }
 
   /**
-   * 
+   * Moves the head in one half track.
    */
-  private void headIn() {
-    if (hTrack < 70)  hTrack++;
-
-    updateHTrack();
-  }
-
-  /**
-   * 
-   */
-  private void updateHTrack() {
-    if (track != hTrack >> 1) {
-      // Takes some time before ready for next...
-      nextAutoforward = cycles + 100000;
-
-      finishWrite();
-      track = hTrack >> 1;
-      sector = 0;
-
-      currentSectorOffset = -1;
-      currentTrackSize = disk.getSectorCount(track);
-
-      readGCRSector(track, sector);
-    }
+  private void moveHeadIn() {
+    // TODO: This only handles 35 track disks.
+    if (currentHalfTrack < 70) currentHalfTrack++;
+    updateCurrentTrack();
   }
   
   /**
-   * 
-   * @param track
-   * @param sector
+   * Updates the current track based on half track value.
    */
-  private void readGCRSector(int track, int sector) {
-	currentTrack = track;
-	currentSector = this.disk.getSector(track, sector);
+  private void updateCurrentTrack() {
+    if (currentTrack != (currentHalfTrack >> 1)) {
+      // Takes some time before ready for next...
+      nextMoveForward = totalElapsedCycles + 100000;
+
+      flushWrites();
+      
+      currentTrack = (currentHalfTrack >> 1);
+      currentSectorOffset = -1;
+      currentTrackSize = disk.getSectorCount(currentTrack);
+      currentSector = disk.getSector(currentTrack, 0);
+    }
   }
   
   /**
    * Reads a single byte from the current disk position.
    * 
-   * @return
+   * @return The byte read from disk.
    */
   private int readByteFromDisk() {
     if (currentSectorOffset == -1) return 0;
-    // TODO: Check when this needs to increment position.
     return currentSector.read(currentSectorOffset);
   }
   
@@ -332,20 +337,13 @@ public class C1541FullDrive {
    */
   public Via6522 createVia1() {
     return new Via6522(false) {
+      
       /**
        * Returns the current values of the Port B pins.
        *
        * @return the current values of the Port B pins.
        */
       public int getPortBPins() {
-        int value = 0;
-        
-        // TODO: Integrate with serialPort
-        //(via1PB & 0x1a
-        //        | ((iecLines & cia2.iecLines) >> 7) & 0x01    // DATA
-        //        | ((iecLines & cia2.iecLines) >> 4) & 0x04    // CLK
-        //        | (cia2.iecLines << 3) & 0x80) ^ 0x85;        // ATN
-        
         // PB0: Data IN
         // PB1: Data OUT
         // PB2: Clk IN
@@ -355,13 +353,41 @@ public class C1541FullDrive {
         // PB6: Switch to GND (in)
         // PB7: Atn IN
         
+        // Work out current read state of the serial bus.
+        int value = ((super.getPortBPins() & 0x1A) |
+             (serialBus.getAtn()? 0x80 : 0x00) | 
+             (serialBus.getData()? 0x01 : 0x00) | 
+             (serialBus.getClock()? 0x04 : 0x00));
+        
         return value;
       }
       
+      /**
+       * Invoked whenever the ORB or DDRB register of the VIA is written to.
+       */
+      protected void updatePortBPins() {
+        // Refresh the state of Port B pins based on ORB, DDRB, and current port B pin state.
+        super.updatePortBPins();
+        
+        // Now used refreshed portBPins to update serial bus.
+        if ((portBPins & 0x08) == 0x08) {
+          serialBus.pullDownClock(this);
+        } else {
+          serialBus.releaseClock(this);
+        }
+        if ((portBPins & 0x02) == 0x02) {
+          serialBus.pullDownData(this);
+        } else {
+          serialBus.releaseData(this);
+        }
+        // Note: 1541 shouldn't touch ATN, so nothing to do for ATN.
+      }
       
+      /**
+       * CA1 of this VIA is connected to the ATN line of the serial bus.
+       */
       public int getCa1() {
-        // CA1 also gets the ATN IN. This will trigger an interrupt on active edge.
-        return ca1;
+        return (serialBus.getAtn()? 1 : 0);
       }
       
       /**
@@ -394,11 +420,7 @@ public class C1541FullDrive {
        * @return the current values of the Port A pins.
        */
       public int getPortAPins() {
-        
-        // Read byte from disk.
-        
-        // Goes to PLA parallel port. 
-        
+        // Read byte from disk. In the real machine, goes to PLA parallel port .
         return readByteFromDisk();
       }
       
@@ -408,24 +430,73 @@ public class C1541FullDrive {
        * @return the current values of the Port B pins.
        */
       public int getPortBPins() {
+        // Only Sync and Write Protect are inputs.
+        // PB4: Write Protect (in)
+        // PB7: Sync (in) - LOW means it is at sync mark.
+        
+        // NOTE: The Sync mark is a special identifying mark that is used to know where to begin
+        // reading or writing bits. It is a string of at least 10 1s in a row. The GCR code is 
+        // designed such that the actual data will produce no more than 8 1s in a row, making the
+        // sync mark distinctive. The DOS actually writes 5 0xFF bytes for a sync mark, and 
+        // they're aligned
+        
+        // TODO: Write protection logic. Seems low on the priority list at the moment.
+        
+        int value = ((super.getPortBPins() & 0x6F) | (atSyncMark()? 0x00 : 0x80));
+    	  
+        return value;
+      }
+      
+      /**
+       * Invoked whenever the ORA or DDRA register of the VIA is written to.
+       */
+      protected void updatePortAPins() {
+        super.updatePortAPins();
+        // Set disk write byte to current Port A pins state.
+        currentByte = portAPins;
+      }
+      
+      /**
+       * Invoked whenever the ORB or DDRB register of the VIA is written to.
+       */
+      protected void updatePortBPins() {
+        // Six output pins. Only 4 are of interest to us.
         // PB0: Step 1 (out)
         // PB1: Step 0 (out)
         // PB2: Motor (out)
         // PB3: Activity LED (out)
-        // PB4: Write Protect (in)
-        // PB5: DS0 (out)
-        // PB6: DS1 (out)
-        // PB7: Sync (in)
+        // PB5: DS0 (out) - Not emulated.
+        // PB6: DS1 (out) - Not emulated.
+
+        int oldPortBPins = portBPins;
         
-        // TODO: Implement
-    	// (via2PB & 0x6f) | sync() | writeProtect();
-    	  
-        return 0;
+        // Refresh the state of Port B pins based on ORB, DDRB, and current port B pin state.
+        super.updatePortBPins();
+        
+        ledOn = ((portBPins & 0x08) != 0);
+        motorOn = ((portBPins & 0x04) != 0);
+
+        // If step motor value changed...
+        if (((oldPortBPins ^ portBPins) & 0x3) != 0) {
+          // ...check if it is out or in.
+          if ((oldPortBPins & 0x3) == ((portBPins + 1) & 0x3)) {
+            // Moving out one half track.
+            moveHeadOut();
+          } else if ((oldPortBPins & 0x3) == ((portBPins - 1) & 0x3)) {
+            // Moving in one half track.
+            moveHeadIn();
+          }
+        }
       }
       
-      // TODO: Byte Ready is connected to CA1. Strictly speaking, this would set CA1 interrupt (if interrupt is enabled)
-      
-      // TODO: CA2 is SOE: Set Overflow Enable
+      /**
+       * CA1 of this VIA is connected to the Byte Ready. Apparently 1541 doesn't make use of 
+       * this though. Emulate it anyway.
+       */
+      public int getCa1() {
+        // Byte Ready is active LOW. CA2 (SEO) enables Byte Ready.
+        return ((byteReady && (getCa2() == 1))? 0 : 1);
+      }
       
       /**
        * Notifies the 6502 of the change in the state of the IRQ pin. In this case 

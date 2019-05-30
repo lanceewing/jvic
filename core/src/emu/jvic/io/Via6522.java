@@ -700,7 +700,7 @@ public class Via6522 extends MemoryMappedChip {
       }
       
       // We shift out/in when the shift clock has gone LOW.
-      // TODO: It seems to make sense to shift when shiftClock is LOW, but it breaks rendering of Protector.
+      // TODO: It seems to make sense to shift when shiftClock is LOW, but it breaks rendering of Protector in my JOric emulator.
       // if ((shiftClock == 0) && (shiftClock != prevShiftClock)) {
       if (shiftClock != prevShiftClock) {
         // Shift OUT the top bit if required.
@@ -853,7 +853,7 @@ public class Via6522 extends MemoryMappedChip {
 
   // Template method for subclasses to provide new CA1 input. If not used, then never changes.
   public int getCa1() {
-	return ca1;
+    return ca1;
   }
   
   // Template method for subclasses to provide new CB1 input. IF not used, then never changes.
