@@ -18,21 +18,47 @@ import emu.jvic.memory.UnconnectedMemory;
  */
 public class C1541FullDrive {
 
-  private Via6522 via1;
-  private Via6522 via2;
+  /**
+   * The 6502 CPU that executes the DOS ROM code, controlling everything in the 1541.
+   */
   private Cpu6502 cpu;
   
+  /**
+   * The 6522 VIA that handles the serial communication over the IEC serial bus.
+   */
+  private Via6522 via1;
+  
+  /**
+   * The 6522 VIA that handles the microprocessor R/W and motor control logic.
+   */
+  private Via6522 via2;
+  
+  /**
+   * Holds all of the data of the currently loaded .d64 disk image.
+   */
   private GcrDiskImage disk;
   
-  // This is mainly for debugging purposes. No strict need to emulate an LED.
-  private boolean ledOn;
+  /**
+   * The track that the drive head is currently positioned over.
+   */
+  private int currentTrack;
   
-  private boolean motorOn;
+  /**
+   * Points to the current sector in the disk image that is being used by an active
+   * read or write operation
+   */
+  private Sector currentSector;
   
-  private int currentTrack = 1;        // Currently selected track
-  private Sector currentSector;        // Pointers to the current sector in the disk image being used by an active read or write operation
-  private int currentSectorOffset;     // Current offset into the above sector
-  private int currentTrackSize = 21;
+  /**
+   * The current offset into the current sector in bytes.
+   */
+  private int currentSectorOffset;
+  
+  /**
+   * The size of the current track in sectors. The number of sectors in a track are variable
+   * depending on how far towards the centre of the disk the track is.
+   */
+  private int currentTrackSize;
   
   /** 
    * The drive's stepper motor can stop at 84 different locations (tracks) on a disk. However, the 
@@ -42,26 +68,41 @@ public class C1541FullDrive {
    * instead of the actual track (which would be 71). Commodore limited use to only the first 35 
    * tracks in their standard DOS, but commercial software isn't limited by this.
    */
-  private int currentHalfTrack = 2;
-
-  private int bytesWritten = 0;
-  private int currentByte = 0;
-
-  // CPU Switches to write mode by ANDing the contents of the 6522's peripheral control
-  // register (PCR) with $1F, ORing the result with $C0, and storing the final
-  // result back in the PCR (i.e. CB2 Manual output LOW mode)
-  //
-  //  Once all the data bytes have been written, CPU switches to read mode by ORing
-  // the contents of the 6522's peripheral control register (PCR) with $E0 and
-  // storing the result back in the PCR. (i.e. CB2 Manual output HIGH mode)
-  private boolean diskModeWrite = false;
-
-  private boolean lastSync = false;
-  
-  private boolean byteReady = false;
+  private int currentHalfTrack;
   
   /**
-   * The cycle count at which we will move the head forward one byte.
+   * The current disk mode: true means Writing, false means Reading.. The CPU sets this by manually 
+   * controlling the VIA2 CB2 pin.
+   */
+  private boolean diskModeWrite;
+
+  /**
+   * Whether the last read byte was a sync mark or not.
+   */
+  private boolean lastSync;
+  
+  /**
+   * The number of bytes written to the current sector.
+   */
+  private int bytesWritten;
+  
+  /**
+   * The value of the byte current being written to the current sector.
+   */
+  private int currentByte;
+  
+  /**
+   * Indicates whether there is a byte ready or not for the CPU.
+   */
+  private boolean byteReady;
+  
+  /**
+   * Whether the drive motor is on or not.
+   */
+  private boolean motorOn;
+  
+  /**
+   * The cycle count at which we will next move the head forward one byte.
    */
   private long nextMoveForward;
   
@@ -97,6 +138,7 @@ public class C1541FullDrive {
   public void insertDisk(byte[] diskData) {
     disk = new GcrDiskImage(diskData);
 	  
+    // There is no track 0. Tracks start at 1, sectors at 0.
     currentTrack = 1;
     currentHalfTrack = 2;
     currentSectorOffset = -1;
@@ -143,40 +185,26 @@ public class C1541FullDrive {
     return new Memory(cpu, null) {{
       // UB2 is a 2048 x 8 bit RAM. UB2 resides at memory locations $0000-$07FF. This memory is
       // used for processor stack operations, general processor housekeeping, use program storage,
-      // and 4 temporary buffer areas. UC5, UC6 and UC7 decode the addresses output from the
-      // processor when selecting RAM.
+      // and 4 temporary buffer areas.
       RamChip ram = new RamChip();
       mapChipToMemory(ram, 0x0000, 0x07FF, 0x6000);
       
-      // The Serial Interface
-      // UC3 is a 6522 Versatile Interface Adapter (VIA). Two parallel ports, handshake control, programmable timers,
-      // and interrupt control are standard features of the VIA. Port B signals (PB0-PB7) control the serial interface
+      // UC3 is a 6522 Versatile Interface Adapter (VIA). Port B signals (PB0-PB7) control the serial interface
       // driver ICs (UB1 and UA1). CLK and DATA signals are bidirectional signals connected to pins 4 and 5 of P2 and
       // P3. ANT (Attention) is an input on pin 3 of P2 and P3 that is sensed at PB7 and CA1 of UC3 after being inverted
       // by UA1. ATNA (Attention Acknowledge) is an output from PB4 of UC3 which is sensed on the data line pin 5
-      // of P2 and P4 after being exclusively "ored" by UD3 and inverted by UB1. UC3 is selected by UC7 pin 7 going
-      // "low" when the proper address is output from the processor. UC3 resides at memory locations $1C00-$1C0F. 
+      // of P2 and P4 after being exclusively "ORed" by UD3 and inverted by UB1. UC3 resides at memory locations $1800-$180F. 
       mapChipToMemory(via1, 0x1800, 0x180F, 0x63F0);
       
       // TODO: ATNA connect to data line pin 5 is not emulated yet.
       
-      // Microprocessor R/W and Motor Control Logic
       // UC2 is a VIA also. During a write operation the microprocessor passes the data to be recorded to Port A of UC2.
-      // The data is then loaded into the PLA parallel port (YB0-YB7). The PLA contains a shift register which converts
-      // the parallel data into serial data. The PLA generates signals on pins 2, 3, 4, and 40 which control the write
-      // amplifier circuits on D-IN input on pin 24 of the PLA. The PLA shift register converts serial data into parallel
-      // data that is latched at the parallel port (YB0-YB7). The register converts serial data into parallel data that is
-      // latched at the parallel port (YB0-YB7). The microprocessor reads the parallel data that is latched at the parallel
-      // port (YB0-YB7). The microprocessor reads the parallel PLA output by reading Port A of UC2 when BYTE
-      // READY on pin 39 goes "low."
-      // The stepper motor is controlled by two outputs on port B of UC2 (STP0, and STP1). A binary
-      // four count is developed from these two lines, driving the four phases of the stepper motor.
-      // The PLA converts STP0 and STP1 into four outputs that represent one of the four states in the
-      // count (Y0,Y1,Y2,Y3). The Spindle motor is controlled by the output MTR of UC2. The PLA
-      // inverts this signal. It is then passed to the motor speed control pcb.
-      // UC2 pin 14 is an input that monitors the state of the write protect sensor, and pin 13 is an
-      // output that controls the activity light (RED LED). UC7 decodes the addresses output from the
-      // processor when selecting UC2. UC2 resides at memory locations $1800-$180F. 
+      // The data is then loaded into the PLA parallel port (YB0-YB7). The microprocessor reads the parallel data that 
+      // is latched at the parallel port (YB0-YB7). The microprocessor reads the parallel PLA output by reading Port A 
+      // of UC2 when BYTE READY on pin 39 goes "low."
+      // The stepper motor is controlled by two outputs on port B of UC2 (STP0, and STP1). The Spindle motor is 
+      // controlled by the output MTR of UC2. UC2 pin 14 is an input that monitors the state of the write protect sensor, 
+      // and pin 13 is an output that controls the activity light (RED LED). UC2 resides at memory locations $1C00-$1C0F. 
       mapChipToMemory(via2, 0x1C00, 0x1C0F, 0x63F0);
       
       // UB3 and UB4 are 8192 x 8 bit ROMS that store the Disk Operating System (DOS). UB3 resides at memory
@@ -192,18 +220,6 @@ public class C1541FullDrive {
           memoryMap[address] = unconnectedMemory;
         }
       }
-      
-      // Read/Write Control Logic
-      // During a write operation, UD3 converts parallel data into serial data. The output on pin 9 is input to 'NAND' gate
-      // UF5 pin 4. UF5 outputs the serial data on pin 6 at the clock rate determined by input signal on pin 5. The output
-      // clocks the D flip flop UF6. The outputs of UF6, Q and _Q, drive the write amplifiers.
-      // During a read operation, data from the read amplifiers is applied to the CLR input of counter
-      // UF4. The outputs, C and D, are shaped by the 'NOR' gate UE5. UE5 outputs the serial data on
-      // pin 1, then it is converted to parallel data by UD2. The output of UD2 is latched by UC3. The
-      // serial bits are counted by UE4, when 8 bits have been counted, UF3 pin 12 goes "low", UC1
-      // pin 10 goes "high", and UF3 pin 8 goes "low" indicating a byte is ready to be read by the
-      // processor. UC2 monitors the parallel output of UD2, when all 8 bits are "1", the output pin 9
-      // goes "low" indicating a sync bit has been read. 
     }};
   }
 
@@ -409,7 +425,7 @@ public class C1541FullDrive {
   /**
    * Creates the instance of Via6522 that handles the Microprocessor R/W and Motor Control Logic.
    * 
-   * @return
+   * @return The created instance of Via6522 that handles the Microprocessor R/W and Motor Control Logic.
    */
   public Via6522 createVia2() {
     return new Via6522(false) {
@@ -460,7 +476,7 @@ public class C1541FullDrive {
        * Invoked whenever the ORB or DDRB register of the VIA is written to.
        */
       protected void updatePortBPins() {
-        // Six output pins. Only 4 are of interest to us.
+        // Six output pins. Only 3 are of interest to us.
         // PB0: Step 1 (out)
         // PB1: Step 0 (out)
         // PB2: Motor (out)
@@ -473,7 +489,6 @@ public class C1541FullDrive {
         // Refresh the state of Port B pins based on ORB, DDRB, and current port B pin state.
         super.updatePortBPins();
         
-        ledOn = ((portBPins & 0x08) != 0);
         motorOn = ((portBPins & 0x04) != 0);
 
         // If step motor value changed...
