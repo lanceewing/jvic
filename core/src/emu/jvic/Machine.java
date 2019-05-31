@@ -176,6 +176,7 @@ public class Machine {
         cpu.emulateCycle();
         via1.emulateCycle();
         via2.emulateCycle();
+        c1541Drive.emulateCycle();
       } while (!frameComplete);
     } else {
       do {
@@ -183,6 +184,7 @@ public class Machine {
         cpu.emulateCycle();
         via1.emulateCycle();
         via2.emulateCycle();
+        c1541Drive.emulateCycle();
       } while (!frameComplete);
     }
   }
