@@ -16,7 +16,7 @@ import emu.jvic.memory.UnconnectedMemory;
  * 
  * @author Lance Ewing
  */
-public class C1541FullDrive {
+public class C1541Drive {
 
   /**
    * The 6502 CPU that executes the DOS ROM code, controlling everything in the 1541.
@@ -117,11 +117,11 @@ public class C1541FullDrive {
   private SerialBus serialBus;
   
   /**
-   * Constructor for C1541FullDrive.
+   * Constructor for C1541Drive.
    * 
    * @param serialBus The SerialBus that the 1541 disk drive is connected to.
    */
-  public C1541FullDrive(SerialBus serialBus) {
+  public C1541Drive(SerialBus serialBus) {
     cpu = new Cpu6502(null);
     via1 = createVia1();
     via2 = createVia2();
