@@ -22,16 +22,23 @@ public class Via1 extends Via6522 {
   private Joystick joystick;
   
   /**
+   * The SerialBus that VIA 1 is connected to for Data IN, Clock IN and Atn OUT.
+   */
+  private SerialBus serialBus;
+  
+  /**
    * Constructor for Via1.
    * 
    * @param cpu6502 The CPU that the VIC 20 is using. This is where VIA 2 IRQ signals will be sent.
    * @param joystick The Joystick from which the Via gets the current joystick state from.
+   * @param serialBus The SerialBus that VIA 1 is connected to for Data IN, Clock IN and Atn OUT.
    * @param snapshot Optional snapshot of the machine state to start with.
    */
-  public Via1(Cpu6502 cpu6502, Joystick joystick, Snapshot snapshot) {
+  public Via1(Cpu6502 cpu6502, Joystick joystick, SerialBus serialBus, Snapshot snapshot) {
     super(false);
     this.cpu6502 = cpu6502;
     this.joystick = joystick;
+    this.serialBus = serialBus;
     if (snapshot != null) {
       loadSnapshot(snapshot);
     }
