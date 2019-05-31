@@ -127,6 +127,7 @@ public class C1541Drive {
     via2 = createVia2();
     createMemory(cpu, via1, via2);
     this.serialBus = serialBus;
+    cpu.reset();
   }
   
   /**
