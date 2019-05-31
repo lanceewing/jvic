@@ -117,10 +117,9 @@ public class Memory {
    */
   private ArrayList<Integer> buildMirrorBases(int mirrorMask) {
     ArrayList<Integer> mirrorBases = new ArrayList<Integer>();
-    mirrorBases.add(0x0000);
     
     for (int address=0; address<=0xFFFF; address++) {
-      if ((address & mirrorMask) > 0) {
+      if ((address & mirrorMask) == address) {
         mirrorBases.add(address);
       }
     }
