@@ -125,7 +125,7 @@ public class Via1 extends Via6522 {
     super.updatePortAPins();
     
     // Now used refreshed portAPins to update serial bus. PA7 is ATN OUT.
-    if ((portBPins & 0x80) == 0x80) {
+    if ((portAPins & 0x80) == 0x80) {
       serialBus.pullDownAtn(this);
     } else {
       serialBus.releaseAtn(this);
