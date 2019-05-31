@@ -142,8 +142,8 @@ public class GcrDiskImage {
     
     // Read disk ID bytes from BAM sector.
     Sector bam = allTracks[18][0];
-    this.diskID1 = bam.read(162);
-    this.diskID2 = bam.read(163);
+    this.diskID1 = bam.rawData[162];
+    this.diskID2 = bam.rawData[163];
     
     // Encode all tracks (uses disk ID bytes). We need to GCR encoded it so that 
     // the DOS gets the encoded data when it reads the sectors.
@@ -163,7 +163,7 @@ public class GcrDiskImage {
     int numOfSectors = TRACK_OFFSETS[track][0];
     int absoluteSector = TRACK_OFFSETS[track][1];
     int trackStart = TRACK_OFFSETS[track][2];
-    Sector[] sectors = new Sector[numOfSectors + 1];
+    Sector[] sectors = new Sector[numOfSectors];
   
     for (int sectorNum=0; sectorNum<numOfSectors; sectorNum++) {
       Sector sector = new Sector();

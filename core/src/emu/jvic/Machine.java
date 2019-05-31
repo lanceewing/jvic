@@ -148,7 +148,7 @@ public class Machine {
       } else if ("PCV".equals(programType)) {
         // Nothing to do. Snapshot was already loaded.
       } else if ("DISK".equals(programType)) { 
-    	// TODO: Activate the C1541Disk implementation
+        c1541Drive.insertDisk(programData);
     	  
       } else {
         // Default resource type is CART.
