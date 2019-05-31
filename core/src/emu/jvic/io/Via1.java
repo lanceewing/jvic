@@ -100,7 +100,36 @@ public class Via1 extends Via6522 {
    * @return the current values of the Port A pins.
    */
   public int getPortAPins() {
-    return (joystick.getJoystickState() | (super.getPortAPins() & 0xC3));
+    // PA0: Serial Clock IN
+    // PA1: Serial Data IN
+    // PA2: Joystick UP
+    // PA3: Joystick DOWN
+    // PA4: Joystick LEFT
+    // PA5: Joystick FIRE
+    // PA6: Tape Sense
+    // PA7: Serial Atn OUT
+    
+    int value = ((super.getPortAPins() & 0xC0) |
+        (joystick.getJoystickState()) |
+        (serialBus.getData()? 0x02 : 0x00) | 
+        (serialBus.getClock()? 0x01 : 0x00));
+    
+    return value;
+  }
+  
+  /**
+   * Invoked whenever the ORA or DDRA register of the VIA is written to.
+   */
+  protected void updatePortAPins() {
+    // Refresh the state of Port A pins based on ORA, DDRA, and current port A pin state.
+    super.updatePortAPins();
+    
+    // Now used refreshed portAPins to update serial bus. PA7 is ATN OUT.
+    if ((portBPins & 0x80) == 0x80) {
+      serialBus.pullDownAtn(this);
+    } else {
+      serialBus.releaseAtn(this);
+    }
   }
   
   /**

@@ -127,6 +127,22 @@ public class Via2 extends Via6522 {
   }
   
   /**
+   * Update the external connections to the VIA 2 control lines.
+   */
+  protected void updateControlLines() {
+    if (ca2 == 1) {
+      serialBus.pullDownClock(this);
+    } else {
+      serialBus.releaseClock(this);
+    }
+    if (cb2 == 1) {
+      serialBus.pullDownData(this);
+    } else {
+      serialBus.releaseData(this);
+    }
+  }
+  
+  /**
    * Notifies the 6502 of the change in the state of the IRQ pin. In this case 
    * it is the 6502's IRQ pin that this 6522 IRQ is connected to.
    * 

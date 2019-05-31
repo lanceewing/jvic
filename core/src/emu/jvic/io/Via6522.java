@@ -378,6 +378,7 @@ public class Via6522 extends MemoryMappedChip {
         cb2ControlMode = ((value & 0xE0) >> 5);
         if (cb2ControlMode == OUTPUT_MODE_MANUAL_LOW) cb2 = 0;
         if (cb2ControlMode == OUTPUT_MODE_MANUAL_HIGH) cb2 = 1;
+        updateControlLines();
         break;
   
       case VIA_REG_13: // Interrupt Flag Register
@@ -788,6 +789,14 @@ public class Via6522 extends MemoryMappedChip {
    */
   protected void updatePortBPins() {
     setPortBPins(portBPins);
+  }
+  
+  /**
+   * Updates the state of the external connections to the control lines. Usually invoked
+   * after the 6522 has done something that may have changed a control line state.
+   */
+  protected void updateControlLines() {
+    // Template method for external connections.
   }
   
   /**
