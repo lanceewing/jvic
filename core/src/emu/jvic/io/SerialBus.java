@@ -1,6 +1,5 @@
 package emu.jvic.io;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 /**

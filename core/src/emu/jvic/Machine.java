@@ -10,7 +10,6 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
-import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
