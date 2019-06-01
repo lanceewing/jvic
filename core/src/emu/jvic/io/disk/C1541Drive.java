@@ -353,7 +353,7 @@ public class C1541Drive {
    * @return
    */
   public Via6522 createVia1() {
-    return new Via6522(false) {
+    return new Via6522(true) {
       
       /**
        * Returns the current values of the Port B pins.
@@ -365,8 +365,8 @@ public class C1541Drive {
         // PB1: Data OUT
         // PB2: Clk IN
         // PB3: Clk OUT
-        // PB4: Atn ACK (out)
-        // PB5: Switch to GND (device address) (in)
+        // PB4: Atn ACK (out)  
+        // PB5: Switch to GND (in) (device address: 00 = 8; 01 = 9; 10 = 10; 11 = 11. Default: 00, 8) (in)
         // PB6: Switch to GND (in)
         // PB7: Atn IN
         
@@ -387,24 +387,50 @@ public class C1541Drive {
         super.updatePortBPins();
         
         // Now used refreshed portBPins to update serial bus.
+        updateSerialLines();
+      }
+      
+      /**
+       * Updates the state of the Clock and Data lines based on Port B pins, ATN IN, and ATN ACK.
+       */
+      public void updateSerialLines() {
+        // Only clock out from Port B affects clock line.
         if ((portBPins & 0x08) == 0x08) {
           serialBus.pullDownClock(this);
         } else {
           serialBus.releaseClock(this);
         }
+        
+        boolean atnAck = ((portBPins & 0x10) == 0x10);
+        
+        // Data line can be pulled down by both Data OUT pin and also Oopen Collector XNOR of ATN ACK and ATN IN.
         if ((portBPins & 0x02) == 0x02) {
           serialBus.pullDownData(this);
+          
+        } else if (atnAck && !serialBus.getAtn()) {
+          // If ATNA is HIGH, and ATN IN is LOW, then pull down Data line (XOR with Open Collector inverter after).
+          serialBus.pullDownData(this);
+          
+        } else if (!atnAck && serialBus.getAtn()) {
+          // If ATNA is LOW, and ATN IN is HIGH, the pull down Data line (XOR with Open Collector inverter after).
+          serialBus.pullDownData(this);
+          
         } else {
+          // Otherwise there is nothing pulling Data low, so we release.
           serialBus.releaseData(this);
         }
-        // Note: 1541 shouldn't touch ATN, so nothing to do for ATN.
       }
       
       /**
        * CA1 of this VIA is connected to the ATN line of the serial bus.
        */
       public int getCa1() {
-        return (serialBus.getAtn()? 1 : 0);
+        int atnIn = (serialBus.getAtn()? 1 : 0);
+        if (atnIn != ca1) {
+          // CA1 stored the last ATN IN value, and now it has changed. Data line may need to be updated (for auto ACK)
+          updateSerialLines();
+        }
+        return atnIn;
       }
       
       /**
@@ -429,7 +455,7 @@ public class C1541Drive {
    * @return The created instance of Via6522 that handles the Microprocessor R/W and Motor Control Logic.
    */
   public Via6522 createVia2() {
-    return new Via6522(false) {
+    return new Via6522(true) {
 
       /**
        * Returns the current values of the Port A pins.
