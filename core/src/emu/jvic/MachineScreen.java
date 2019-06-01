@@ -253,9 +253,9 @@ public class MachineScreen implements Screen {
     
     if ((lastLogTime == 0) || (renderStartTime - lastLogTime > 10000000000L)) {
       lastLogTime = renderStartTime;
-      Gdx.app.log("RenderTime", String.format(
-          "[%d] avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
-          drawCount, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
+      //Gdx.app.log("RenderTime", String.format(
+      //    "[%d] avgDrawTime: %d avgRenderTime: %d maxFrameDuration: %d delta: %f fps: %d", 
+      //    drawCount, avgDrawTime, avgRenderTime, maxFrameDuration, delta, Gdx.graphics.getFramesPerSecond()));
     }
   }
 
@@ -441,7 +441,6 @@ public class MachineScreen implements Screen {
    * Disposes the libGDX screen resources for each MachineType.
    */
   private void disposeScreens() {
-    Gdx.app.log("MachineScreen", "Disposing screens");
     for (Pixmap pixmap : machineTypePixmaps.values()) {
       pixmap.dispose();
     }
