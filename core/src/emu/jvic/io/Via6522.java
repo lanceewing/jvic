@@ -756,6 +756,10 @@ public class Via6522 extends MemoryMappedChip {
         // CA1 active edge has occurred.
         interruptFlagRegister |= CA1_SET;
         updateIFRTopBit();
+        if (portALatchMode == 1) {
+          // Port A latching enabled, so latch current port A pins.
+          inputRegisterA = getPortAPins();
+        }
       }
       this.ca1 = ca1;
     }
@@ -767,6 +771,10 @@ public class Via6522 extends MemoryMappedChip {
         // CB1 active edge has occurred.
         interruptFlagRegister |= CB1_SET;
         updateIFRTopBit();
+        if (portBLatchMode == 1) {
+          // Port B latching enabled, so latch current port B pins.
+          inputRegisterB = getPortBPins();
+        }
       }
       this.cb1 = cb1;
     }
