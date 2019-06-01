@@ -61,7 +61,7 @@ public class Joystick {
    * @return The current joystick state.
    */
   public int getJoystickState() {
-    return ((~joystickState) & 0xFF);
+    return ((~joystickState) & 0x3C);
   }
   
   /**
