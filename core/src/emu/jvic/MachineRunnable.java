@@ -130,7 +130,7 @@ public class MachineRunnable implements Runnable {
         framesLastSecond = framesThisSecond;
         framesThisSecond = 0;
         frameStart = time;
-        Gdx.app.log("MachineRunnable", "fps: " + framesLastSecond + ", avgUpdateTime: " + avgUpdateTime);
+        //Gdx.app.log("MachineRunnable", "fps: " + framesLastSecond + ", avgUpdateTime: " + avgUpdateTime);
       }
       framesThisSecond++;
     }
