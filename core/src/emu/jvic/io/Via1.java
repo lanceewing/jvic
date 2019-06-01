@@ -109,10 +109,12 @@ public class Via1 extends Via6522 {
     // PA6: Tape Sense
     // PA7: Serial Atn OUT
     
+    // NOTE: The 1541 and VIC 20 differ in how the serial lines map to their VIA port bits. In the
+    // 1541, there is an inverter between the IN and the VIA, bit in the VIC 20, there isn't.
     int value = ((super.getPortAPins() & 0xC0) |
-        (joystick.getJoystickState()) |
-        (serialBus.getData()? 0x02 : 0x00) | 
-        (serialBus.getClock()? 0x01 : 0x00));
+        (joystick.getJoystickState() & 0x3C) |
+        (serialBus.getData()? 0x00 : 0x02) | 
+        (serialBus.getClock()? 0x00 : 0x01));
     
     return value;
   }
