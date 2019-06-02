@@ -9,7 +9,9 @@ import java.util.HashSet;
  * down to ground to indicate that the signal is TRUE (they use an open collector inverter
  * to do this), but if the signal should be FALSE, then they let the line float. If no
  * device is pulling a line down, then all devices interpret that as a FALSE value for 
- * that line (they have internal pull ups that then get inverted to become a LOW signal).
+ * that line (they have internal pull ups, and then some devices, like the 1541, then 
+ * invert it to become a LOW signal, but others don't have an inverter and instead read 
+ * the pulled up HIGH; I guess its whatever they preferred when designing).
  * 
  *  -A line will become "true" (PULLED DOWN, or 0V) if one or more devices signal true;
  *  -A line will become "false" (RELEASED, or 5V) only if all devices signal false. 
@@ -52,40 +54,22 @@ public class SerialBus {
   private HashSet<Object> clockPullDowns;
   
   
-  // DEBUG FEATURES
+  // ------------------------------- DEBUG FEATURES --------------------------------
   
-  // History of each of the serial bus lines.
-  String dataList = "0";
-  String clockList = "0";
-  String atnList = "0";
+  // History of each of the serial bus lines, in the wavedrom.com format, where 0 is
+  // LOW, 1 is HIGH, and . means same as last one.
+  private String dataList = "0";
+  private String clockList = "0";
+  private String atnList = "0";
   
-  boolean lastAtn;
-  boolean lastData;
-  boolean lastClock;
+  private boolean lastAtn;
+  private boolean lastData;
+  private boolean lastClock;
   
-  int cyclesWithNoChanges;
-  
+  // If true, then the record() method with store the history of any changes in the lines.
   public boolean debug = false;
   
-  public void record() {
-    if (debug) {
-      boolean newAtn = getAtn();
-      boolean newData = getData();
-      boolean newClock = getClock();
-      
-      boolean noChanges = ((lastAtn == newAtn) && (lastData == newData) && (lastClock == newClock));
-      
-      if (!noChanges) {
-        atnList += ((lastAtn == newAtn)? "." : (newAtn? "1" : "0"));
-        dataList += ((lastData == newData)? "." : (newData? "1" : "0"));
-        clockList += ((lastClock == newClock)? "." : (newClock? "1" : "0"));
-      }
-      
-      lastAtn = newAtn;
-      lastData = newData;
-      lastClock = newClock;
-    }
-  }
+  //---------------------------- END OF DEBUG FEATURES -----------------------------
   
   /**
    * Constructor for SerialBus.
@@ -154,5 +138,30 @@ public class SerialBus {
    */
   public boolean getClock() {
     return (clockPullDowns.size() > 0);
+  }
+  
+  /**
+   * If debug is true, then calling this method each cycle will store the history of
+   * any changes to the serial lines in the wavedrom.com format. This is useful for 
+   * debugging visually what is happening on the serial bus.
+   */
+  public void record() {
+    if (debug) {
+      boolean newAtn = getAtn();
+      boolean newData = getData();
+      boolean newClock = getClock();
+      
+      boolean noChanges = ((lastAtn == newAtn) && (lastData == newData) && (lastClock == newClock));
+      
+      if (!noChanges) {
+        atnList += ((lastAtn == newAtn)? "." : (newAtn? "1" : "0"));
+        dataList += ((lastData == newData)? "." : (newData? "1" : "0"));
+        clockList += ((lastClock == newClock)? "." : (newClock? "1" : "0"));
+      }
+      
+      lastAtn = newAtn;
+      lastData = newData;
+      lastClock = newClock;
+    }
   }
 }
