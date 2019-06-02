@@ -151,29 +151,38 @@ public class C1541Drive {
   }
   
   /**
+   * Acts as if the disk has been ejected.
+   */
+  public void ejectDisk() {
+    disk = null;
+  }
+  
+  /**
    * Emulates a single cycle of the 1541 disk drive.
    */
   public void emulateCycle() {
-    // CB2 of VIA#2 is used in Manual output mode and determines disk R/W mode (0 = W, 1 = R)
-    diskModeWrite = (via2.getCb2() == 0);
-    if (!diskModeWrite) currentByte = -1;
-    
-    // "Set Overflow" patch. Always fake a 'byte ready' for fast read.
-    if (byteReady && (via2.getCa2() == 1)) {  // VIA2 CA2 is Set Overflow Enable (SEO)
-      cpu.setOverflowFlag(true);
-      byteReady = false;
+    if (disk != null) {
+      // CB2 of VIA#2 is used in Manual output mode and determines disk R/W mode (0 = W, 1 = R)
+      diskModeWrite = (via2.getCb2() == 0);
+      if (!diskModeWrite) currentByte = -1;
+      
+      // "Set Overflow" patch. Always fake a 'byte ready' for fast read.
+      if (byteReady && (via2.getCa2() == 1)) {  // VIA2 CA2 is Set Overflow Enable (SEO)
+        cpu.setOverflowFlag(true);
+        byteReady = false;
+      }
+      
+      cpu.emulateCycle();
+      
+      // Check if head should move forward one byte.
+      checkForMoveForward();
+      
+      via1.emulateCycle();
+      via2.emulateCycle();
+      
+      // Increment total cycle count.
+      totalElapsedCycles++;
     }
-    
-    cpu.emulateCycle();
-    
-    // Check if head should move forward one byte.
-    checkForMoveForward();
-    
-    via1.emulateCycle();
-    via2.emulateCycle();
-    
-    // Increment total cycle count.
-    totalElapsedCycles++;
   }
   
   /**
