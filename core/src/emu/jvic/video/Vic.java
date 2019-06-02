@@ -814,7 +814,7 @@ public class Vic extends MemoryMappedChip {
         charData = mem[charDataOffset];
         
         // Decode colour.
-        cellColour = vicColours[cellColourIndex & 0x0F];   // TODO: Not sure why we have to mask this.
+        cellColour = vicColours[cellColourIndex & 0x07];
         
         // Decode mode (hires vs multi-colour).
         hiresMode = ((cellColourIndex & 0x08) == 0);
@@ -1111,7 +1111,7 @@ public class Vic extends MemoryMappedChip {
           charData = mem[charDataOffset];
           
           // Decode colour.
-          cellColour = vicColours[cellColourIndex & 0x0F];   // TODO: Not sure why we have to mask this.
+          cellColour = vicColours[cellColourIndex & 0x07];
           
           // Plot pixels.
           if ((cellColourIndex & 0x08) == 0) {
