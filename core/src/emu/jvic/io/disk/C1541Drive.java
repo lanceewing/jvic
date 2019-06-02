@@ -12,7 +12,10 @@ import emu.jvic.memory.RomChip;
 import emu.jvic.memory.UnconnectedMemory;
 
 /**
- * Emulates the Commodore 1541 disk drive. This is a whole machine in and of itself.
+ * Emulates the Commodore 1541 disk drive. This is a whole machine in and of itself. It
+ * has a 6502 CPU, two 6522 VIAs, a 16 K ROM, and 2K of RAM. One VIA handles the Serial
+ * Comms with the connected serial bus. The other VIA handles the disk drive motor and
+ * head movement and CPU requests to read and write data to the disk.
  * 
  * @author Lance Ewing
  */
@@ -71,7 +74,7 @@ public class C1541Drive {
   private int currentHalfTrack;
   
   /**
-   * The current disk mode: true means Writing, false means Reading.. The CPU sets this by manually 
+   * The current disk mode: true means Writing, false means Reading. The CPU sets this by manually 
    * controlling the VIA2 CB2 pin.
    */
   private boolean diskModeWrite;
@@ -196,8 +199,6 @@ public class C1541Drive {
       // by UA1. ATNA (Attention Acknowledge) is an output from PB4 of UC3 which is sensed on the data line pin 5
       // of P2 and P4 after being exclusively "ORed" by UD3 and inverted by UB1. UC3 resides at memory locations $1800-$180F. 
       mapChipToMemory(via1, 0x1800, 0x180F, 0x63F0);
-      
-      // TODO: ATNA connect to data line pin 5 is not emulated yet.
       
       // UC2 is a VIA also. During a write operation the microprocessor passes the data to be recorded to Port A of UC2.
       // The data is then loaded into the PLA parallel port (YB0-YB7). The microprocessor reads the parallel data that 
@@ -350,7 +351,7 @@ public class C1541Drive {
   /**
    * Creates the Via6522 that handles the Serial Communication.
    * 
-   * @return
+   * @return The Via6522 that handles the Serial Communication.
    */
   public Via6522 createVia1() {
     return new Via6522(true) {
@@ -386,7 +387,7 @@ public class C1541Drive {
         // Refresh the state of Port B pins based on ORB, DDRB, and current port B pin state.
         super.updatePortBPins();
         
-        // Now used refreshed portBPins to update serial bus.
+        // Now use refreshed portBPins to update serial bus.
         updateSerialLines();
       }
       
@@ -403,7 +404,7 @@ public class C1541Drive {
         
         boolean atnAck = ((portBPins & 0x10) == 0x10);
         
-        // Data line can be pulled down by both Data OUT pin and also Oopen Collector XNOR of ATN ACK and ATN IN.
+        // Data line can be pulled down by both Data OUT pin and also Open Collector XNOR of ATN ACK and ATN IN.
         if ((portBPins & 0x02) == 0x02) {
           serialBus.pullDownData(this);
           
