@@ -188,8 +188,11 @@ public class MachineScreen implements Screen {
     Pixmap screenPixmap = new Pixmap(machineType.getTotalScreenWidth(), machineType.getTotalScreenHeight(), Pixmap.Format.RGB565);
     Texture[] screens = new Texture[3];
     screens[0] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[0].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
     screens[1] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[1].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
     screens[2] = new Texture(screenPixmap, Pixmap.Format.RGB565, false);
+    screens[2].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
     Camera camera = new OrthographicCamera();
     Viewport viewport = new ExtendViewport((machineType.getVisibleScreenHeight() / 3) * 4, machineType.getVisibleScreenHeight(), camera);
     
