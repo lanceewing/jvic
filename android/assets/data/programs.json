@@ -98,6 +98,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Cheese & Onion",
+      "filePath": "disks/cheese and onion.d64",
+      "fileType": "DISK",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Cncd Cheat Split",
       "filePath": "tapes/Cncd - Cheat Split.prg",
       "fileType": "PRG",
@@ -146,6 +154,14 @@
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
+    },
+    {
+      "name": "Eight Dollar Math",
+      "filePath": "disks/eight_dollar_math.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
     },
     {
       "name": "Frozen Time",
@@ -225,6 +241,14 @@
       "machineType": "NTSC"
     },
     {
+      "name": "MG Raster",
+      "filePath": "disks/mg_raster.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_8K",
+    },
+    {
       "name": "Monster Maze",
       "filePath": "carts/8k/monsterm.crt",
       "fileType": "CART",
@@ -298,6 +322,13 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Pitfall",
+      "filePath": "tapes/pitfall.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
       "name": "Predator",
       "filePath": "carts/8k/predator.crt",
       "fileType": "CART",
@@ -318,6 +349,13 @@
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Robotic Liberation",
+      "filePath": "tapes/rl-16k.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
     },
     {
       "name": "Rockman",
@@ -364,6 +402,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Tenebra Macabre",
+      "filePath": "disks/TenebraMacabreVIC20.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Terraguard",
       "filePath": "carts/8k/terragua.crt",
       "fileType": "CART",
@@ -391,6 +437,14 @@
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
+    },
+    {
+      "name": "Veni Vidi Vic!",
+      "filePath": "disks/veni vidi vic! PAL.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
     },
     {
       "name": "Viznut Test",
