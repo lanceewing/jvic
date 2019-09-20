@@ -115,6 +115,9 @@ public class Cpu6502 extends BaseChip {
   private static final int ROR_A = 59;
   private static final int NMI   = 60;
   private static final int IRQ   = 61;
+  private static final int SLO   = 62;
+  private static final int SAX   = 63;
+  private static final int ANC   = 64;
   
   // Instruction constant for emulation trap routine.
   private static final int TRAP  = 0x100;
@@ -186,24 +189,27 @@ public class Cpu6502 extends BaseChip {
    * the action to take for a particular cycle. T0 is always the fetch.
    */
   private static int INSTRUCTION_DECODE_MATRIX[][] = {
+    // 00 (0)
     {BRK, FETCH_INC_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST}, // BRK
     {ORA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ORA - (Indirect, X)
-    {}, // -
-    {}, // -
-    {}, // -
+    {}, // - KIL
+    {SLO, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_ADL, STORE_DATA_ADL}, // SLO* - (Indirect, X)
+    {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP* - Zero Page
     {ORA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // ORA - Zero Page
     {ASL, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ASL - Zero Page
-    {}, // -
+    {SLO, FETCH_ADL_PC, FETCH_DATA_ADL,  EXECUTE_MID_ADL, STORE_DATA_ADL}, // SLO* - Zero Page
 
+    // 08 (8)
     {PHP, EXECUTE_DIS, STORE_DATA_SP}, // PHP
-    {ORA, FETCH_DATA_PC, EXECUTE_LAST},                          // ORA - Immediate
-    {ASL_A, EXECUTE_DIS},                                          // ASL - Accumulator
-    {}, // -
-    {}, // -
+    {ORA, FETCH_DATA_PC, EXECUTE_LAST},                             // ORA - Immediate
+    {ASL_A, EXECUTE_DIS},                                           // ASL - Accumulator
+    {ANC, FETCH_DATA_PC, EXECUTE_LAST},                             // ANC* - Immediate
+    {NOP, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // NOP - Absolute
     {ORA, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // ORA - Absolute
     {ASL, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ASL - Absolute
-    {}, // -
+    {SLO, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SLO* - Absolute
 
+    // 10 (16)
     {BPL, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BPL
     {ORA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - (Indirect), Y
     {}, // -
@@ -213,6 +219,7 @@ public class Cpu6502 extends BaseChip {
     {ASL, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ASL - Zero Page, X
     {}, // -
 
+    // 18 (24)
     {CLC, EXECUTE_DIS}, // CLC
     {ORA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - Absolute, Y
     {}, // -
@@ -222,7 +229,7 @@ public class Cpu6502 extends BaseChip {
     {ASL, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ASL - Absolute, X
     {}, // -
 
-
+    // 20 (32)
     {JSR, FETCH_ADL_PC, FETCH_DIS_SP, STORE_PCH_SP, STORE_PCL_SP, FETCH_ADH_PC, EXECUTE_LAST}, // JSR
     {AND, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // AND - (Indirect, X)
     {}, // -
@@ -232,6 +239,7 @@ public class Cpu6502 extends BaseChip {
     {ROL, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ROL - Zero Page
     {}, // -
 
+    // 28 (40)
     {PLP, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_DATA_SP, EXECUTE_LAST}, // PLP
     {AND, FETCH_DATA_PC, EXECUTE_LAST}, // AND - Immediate
     {ROL_A, EXECUTE_DIS}, // ROL - Accumulator
@@ -241,6 +249,7 @@ public class Cpu6502 extends BaseChip {
     {ROL, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ROL - Absolute
     {}, // -
 
+    // 30 (48)
     {BMI, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BMI
     {AND, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // AND - (Indirect), Y
     {}, // -
@@ -250,6 +259,7 @@ public class Cpu6502 extends BaseChip {
     {ROL, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ROL - Zero Page, X
     {}, // -
 
+    // 38 (56)
     {SEC, EXECUTE_DIS}, // SEC
     {AND, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // AND - Absolute, Y
     {}, // -
@@ -259,7 +269,7 @@ public class Cpu6502 extends BaseChip {
     {ROL, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ROL - Absolute, X
     {}, // -
 
-
+    // 40 (64)
     {RTI, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_P_SP, FETCH_PCL_SP, FETCH_PCH_SP, EXECUTE_LAST}, // RTI
     {EOR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // EOR - (Indirect, X)
     {}, // -
@@ -269,6 +279,7 @@ public class Cpu6502 extends BaseChip {
     {LSR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // LSR - Zero Page
     {}, // -
 
+    // 48 (72)
     {PHA, EXECUTE_DIS, STORE_DATA_SP}, // PHA
     {EOR, FETCH_DATA_PC, EXECUTE_LAST}, // EOR - Immediate
     {LSR_A, EXECUTE_DIS}, // LSR - Accumulator
@@ -278,6 +289,7 @@ public class Cpu6502 extends BaseChip {
     {LSR, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // LSR - Absolute
     {}, // -
 
+    // 50 (80)
     {BVC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVC
     {EOR, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - (Indirect), Y
     {}, // -
@@ -287,6 +299,7 @@ public class Cpu6502 extends BaseChip {
     {LSR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // LSR - Zero Page, X
     {}, // -
 
+    // 58 (88)
     {CLI, EXECUTE_DIS}, // CLI
     {EOR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - Absolute, Y
     {}, // -
@@ -296,7 +309,7 @@ public class Cpu6502 extends BaseChip {
     {LSR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // LSR - Absolute, X
     {}, // -
 
-
+    // 60 (96)
     {RTS, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_PCL_SP, FETCH_PCH_SP, FETCH_DATA_PC}, // RTS
     {ADC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ADC - (Indirect, X)
     {}, // -
@@ -306,6 +319,7 @@ public class Cpu6502 extends BaseChip {
     {ROR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ROR - Zero Page
     {}, // -
 
+    // 68 (104)
     {PLA, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_DATA_SP, EXECUTE_LAST}, // PLA
     {ADC, FETCH_DATA_PC, EXECUTE_LAST}, // ADC - Immediate
     {ROR_A, EXECUTE_DIS}, // ROR - Accumulator
@@ -315,6 +329,7 @@ public class Cpu6502 extends BaseChip {
     {ROR, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ROR - Absolute
     {}, // -
 
+    // 70 (112)
     {BVS, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVS
     {ADC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - (Indirect), Y
     {}, // -
@@ -324,6 +339,7 @@ public class Cpu6502 extends BaseChip {
     {ROR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ROR - Zero Page, X
     {}, // -
 
+    // 78 (120)
     {SEI, EXECUTE_DIS}, // SEI
     {ADC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - Absolute, Y
     {}, // -
@@ -333,7 +349,7 @@ public class Cpu6502 extends BaseChip {
     {ROR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ROR - Absolute, X
     {}, // -
 
-
+    // 80 (128)
     {}, // -
     {STA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, EXECUTE_STORE_EA}, // STA - (Indirect, X)
     {}, // -
@@ -343,6 +359,7 @@ public class Cpu6502 extends BaseChip {
     {STX, FETCH_ADL_PC, EXECUTE_STORE_ADL}, // STX - Zero Page
     {}, // -
 
+    // 88 (136)
     {DEY, EXECUTE_DIS}, // DEY
     {}, // -
     {TXA, EXECUTE_DIS}, // TXA Implied
@@ -350,8 +367,9 @@ public class Cpu6502 extends BaseChip {
     {STY, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STY - Absolute
     {STA, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STA - Absolute
     {STX, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STX - Absolute
-    {}, // -
+    {SAX, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // SAX* - Absolute
 
+    // 90 (144)
     {BCC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BCC
     {STA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - (Indirect), Y
     {}, // -
@@ -361,6 +379,7 @@ public class Cpu6502 extends BaseChip {
     {STX, FETCH_BAL_PC, FETCH_DIS_BAL_Y, EXECUTE_STORE_BAL}, // STX - Zero Page, Y
     {}, // -
 
+    // 98 (152)
     {TYA, EXECUTE_DIS}, // TYA
     {STA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - Absolute, Y
     {TXS, EXECUTE_DIS}, // TXS
@@ -370,7 +389,7 @@ public class Cpu6502 extends BaseChip {
     {}, // -
     {}, // -
 
-
+    // A0 (160)
     {LDY, FETCH_DATA_PC, EXECUTE_LAST}, // LDY - Immediate
     {LDA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // LDA - (Indirect, X)
     {LDX, FETCH_DATA_PC, EXECUTE_LAST}, // LDX - Immediate
@@ -380,6 +399,7 @@ public class Cpu6502 extends BaseChip {
     {LDX, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // LDX - Zero Page
     {}, // -
 
+    // A8 (168)
     {TAY, EXECUTE_DIS}, // TAY
     {LDA, FETCH_DATA_PC, EXECUTE_LAST}, // LDA - Immediate
     {TAX, EXECUTE_DIS}, // TAX
@@ -488,14 +508,14 @@ public class Cpu6502 extends BaseChip {
    * The execution steps for an IRQ.
    */
   private static final int IRQ_STEPS[] = {
-    IRQ, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST
+    IRQ, FETCH_DIS_PC, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST
   };
 
   /**
    * The execution steps for a NMI.
    */
   private static final int NMI_STEPS[] = {
-    NMI, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFA, FETCH_ADH_FFFB, EXECUTE_LAST
+    NMI, FETCH_DIS_PC, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFA, FETCH_ADH_FFFB, EXECUTE_LAST
   };
 
   /**
@@ -507,6 +527,13 @@ public class Cpu6502 extends BaseChip {
    * The current state of the interrupt pins.
    */
   private int interruptStatus;
+  
+  /**
+   * Tells the 6502 to delay the check for a pending interrupt by one cycle. This 
+   * emulates an undocumented feature where taken branches that do not cross a page
+   * boundary will delay a pending interrupt by one cycle.
+   */
+  private boolean delayInterruptOneCycle;
 
   /**
    * Index register X.
@@ -1140,6 +1167,28 @@ public class Cpu6502 extends BaseChip {
         // the external hardware device to reset it.
         break;
 
+      case SLO:
+        // Shift left one bit in memory, then OR accumulator with memory.
+        carryFlag = ((inputDataLatch & 0x80) != 0);
+        dataBusBuffer = ((inputDataLatch << 1) & 0xFF);
+        accumulator = accumulator | dataBusBuffer;
+        setNZ(accumulator);
+        break;
+        
+      case SAX:
+        // ANDs the contents of the A and X registers (without changing the 
+        // contents of either register) and stores the result in memory.
+        // AXS does not affect any flags in the processor status register.
+        dataBusBuffer = (accumulator & indexRegisterX);
+        break;
+        
+      case ANC:
+        // AND byte with accumulator. If result is negative then carry is set.
+        accumulator = accumulator & inputDataLatch;
+        setNZ(accumulator);
+        carryFlag = negativeResultFlag;
+        break;
+        
       case TRAP:
         // A Trap pretends to be 6502 subroutine, allowing the emulator to hook non-standard features into the emulation.
         Trap trap = traps.get(programCounter - 1);
@@ -1217,6 +1266,9 @@ public class Cpu6502 extends BaseChip {
             // Destination address within same page, so skip next instruction step.
             programCounter = branchAddress;
             currentInstructionStep++;
+          } else {
+            // Crossing page boundary, which means that delayed interrupt doesn't apply.
+            delayInterruptOneCycle = false;
           }
           break;
 
@@ -1234,6 +1286,13 @@ public class Cpu6502 extends BaseChip {
           // Skip next two instruction steps if branch is not taken.
           if (!branchFlag) {
             currentInstructionStep += 2;
+          } else {
+            // Delay pending interrupt by one cycle if branch is taken. Happens only when not 
+            // crossing page boundary (see BRANCH_DIS_NEXT for its reversal of this on such 
+            // boundary crossing). Note that this is an undocumented feature, but has been 
+            // discovered independently by different people in BBC, Atari, Commodrore, etc. 
+            // communities at different times over the years.
+            delayInterruptOneCycle = true;
           }
           break;
 
@@ -1247,7 +1306,7 @@ public class Cpu6502 extends BaseChip {
           executeInstruction();
           // Fetch next op code.
           currentInstructionStep = 0;
-          if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag)) {
+          if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
             if (debug) {
               displayCurrentInstruction();
             }
@@ -1255,6 +1314,7 @@ public class Cpu6502 extends BaseChip {
             instructionRegister = memoryMap[programCounter].readMemory(programCounter);
             programCounter++;
             instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+            delayInterruptOneCycle = false;
           }
           else {
             // An interrupt occurred.
@@ -1589,7 +1649,7 @@ public class Cpu6502 extends BaseChip {
       // Set up next instruction.
       currentInstructionStep = 1;
 
-      if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag)) {
+      if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
         if (debug) {
           displayCurrentInstruction();
         }
@@ -1597,6 +1657,7 @@ public class Cpu6502 extends BaseChip {
         instructionRegister = memoryMap[programCounter].readMemory(programCounter);
         programCounter++;
         instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+        delayInterruptOneCycle = false;
       }
       else {
         // An interrupt occurred.
@@ -1604,6 +1665,10 @@ public class Cpu6502 extends BaseChip {
       }
 
       numOfInstructionSteps = instructionSteps.length;
+    }
+    
+    if (instructionSteps.length == 0) {
+      System.out.println(String.format("Unknown instruction: %d (%02X)", instructionRegister, instructionRegister));
     }
   }
   
