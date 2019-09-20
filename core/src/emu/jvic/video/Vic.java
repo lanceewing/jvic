@@ -332,6 +332,7 @@ public class Vic extends MemoryMappedChip {
   private int[] voiceShiftRegisters;
   
   private int noiseLFSR = 0xFFFF;
+  private int lastNoiseLFSR0 = 0x1; 
 
   /**
    * Constructor for VIC.
@@ -1018,8 +1019,9 @@ public class Vic extends MemoryMappedChip {
           
           if (i == 3) {
             // For Noise voice, we perform a shift of the LFSR whenever the counter is reloaded, and
-            // only shift the main voice shift register if LFSR bit 0 is 1.
-            if ((noiseLFSR & 0x0001) > 0) {
+            // only shift the main voice shift register when LFSR bit 0 changes from LOW to HIGH, i.e.
+            // on the positive edge.
+            if ((lastNoiseLFSR0 == 0) && (noiseLFSR & 0x0001) > 0) {
               voiceShiftRegisters[i] = (
                   ((voiceShiftRegisters[i] & 0x7F) << 1) | 
                   ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
@@ -1031,7 +1033,8 @@ public class Vic extends MemoryMappedChip {
             int bit14 = (noiseLFSR >> 14) & 1;
             int bit15 = (noiseLFSR >> 15) & 1;
             int feedback = (((bit3 ^ bit12) ^ (bit14 ^ bit15)) ^ 1);
-            noiseLFSR = ((noiseLFSR << 1) | ((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0xFFFF);
+            lastNoiseLFSR0 = (noiseLFSR & 0x1);
+            noiseLFSR = (((noiseLFSR << 1) | (((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0x1)) & 0xFFFF);
 
           } else {
             // For the three other voices, we shift the voice shift register whenever the counter is reloaded.
@@ -1264,8 +1267,9 @@ public class Vic extends MemoryMappedChip {
           
           if (i == 3) {
             // For Noise voice, we perform a shift of the LFSR whenever the counter is reloaded, and
-            // only shift the main voice shift register if LFSR bit 0 is 1.
-            if ((noiseLFSR & 0x0001) > 0) {
+            // only shift the main voice shift register when LFSR bit 0 changes from LOW to HIGH, i.e.
+            // on the positive edge.
+            if ((lastNoiseLFSR0 == 0) && (noiseLFSR & 0x0001) > 0) {
               voiceShiftRegisters[i] = (
                   ((voiceShiftRegisters[i] & 0x7F) << 1) | 
                   ((mem[VIC_REG_10 + i] & 0x80) > 0? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1) : 0));
@@ -1277,7 +1281,8 @@ public class Vic extends MemoryMappedChip {
             int bit14 = (noiseLFSR >> 14) & 1;
             int bit15 = (noiseLFSR >> 15) & 1;
             int feedback = (((bit3 ^ bit12) ^ (bit14 ^ bit15)) ^ 1);
-            noiseLFSR = ((noiseLFSR << 1) | ((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0xFFFF);
+            lastNoiseLFSR0 = (noiseLFSR & 0x1);
+            noiseLFSR = (((noiseLFSR << 1) | (((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0x1)) & 0xFFFF);
 
           } else {
             // For the three other voices, we shift the voice shift register whenever the counter is reloaded.
