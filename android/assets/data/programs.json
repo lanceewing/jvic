@@ -178,6 +178,22 @@
       "machineType": "PAL"
     },
     {
+      "name": "Going Lowres",
+      "filePath": "disks/tRSi_-_VIC20_-_Going-Lowres.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_16K",
+    },
+    {
+      "name": "Gnork",
+      "filePath": "disks/dsr_gnork_revision2018_oldschool_vic20.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_16K",
+    },
+    {
       "name": "Gold Fever",
       "filePath": "carts/8k/goldfeve.crt",
       "fileType": "CART",
@@ -207,11 +223,20 @@
     },
     {
       "name": "Impossiblator 3",
-      "filePath": "tapes/impo3.prg",
-      "fileType": "PRG",
+      "filePath": "disks/impo3.d64",
+      "fileType": "DISK",
       "iconPath": "",
-      "machineType": "PAL"
-    },      
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },     
+    {
+      "name": "Large Unified Theory",
+      "filePath": "disks/pwp-lut.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
     {
       "name": "Lipstick Traces",
       "filePath": "tapes/lipstick_traces.prg",
@@ -275,7 +300,23 @@
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
-    }, 
+    },
+    {
+      "name": "Next Level",
+      "filePath": "disks/tnl.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Orb MegaDemo",
+      "filePath": "disks/OMD_Delux.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
     {
       "name": "Omega Race",
       "filePath": "carts/8k/omegarac.crt",
@@ -445,6 +486,14 @@
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_8K"
+    },
+    {
+      "name": "Vici Iterum MM",
+      "filePath": "disks/Pu239 - Vimm.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
     },
     {
       "name": "Viznut Test",
