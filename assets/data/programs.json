@@ -486,6 +486,13 @@
       "machineType": "PAL",
     },
     {
+      "name": "Reverse Mode Test",
+      "filePath": "tapes/vic20bar-reverse.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+    },
+    {
       "name": "Robotic Liberation",
       "filePath": "tapes/rl-16k.prg",
       "fileType": "PRG",
