@@ -1,0 +1,720 @@
+{
+  "apps": [
+    {
+      "name": "BASIC",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "icons/basic2.png",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "BASIC NTSC",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "icons/basic2.png",
+      "machineType": "NTSC",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "BASIC 3K",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_3K"
+    },
+    {
+      "name": "BASIC 8K",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
+    },
+    {
+      "name": "BASIC 16K",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
+      "name": "BASIC 24K",
+      "filePath": "",
+      "fileType": "",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
+    },
+    {
+      "name": "Pu239 - 9teensplit",
+      "displayName": "Pu239\n9teensplit",
+      "filePath": "tapes/Pu239 - 9teensplit.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Amok",
+      "filePath": "carts/8k/amok.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Apple Panic",
+      "filePath": "carts/16k/applepan.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "AR98-1",
+      "filePath": "tapes/VIC20-AR89-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Ate Bit Miami Vic",
+      "displayName": "Ate Bit\nMiami Vic",
+      "filePath": "tapes/atebit-miami_vic.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Atlantis",
+      "filePath": "carts/8k/atlantis.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Bad Scene Poetry",
+      "filePath": "tapes/bad_scene_poetry.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Bongo",
+      "filePath": "tapes/16k/BONGO.PRG",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Buck Rogers",
+      "filePath": "carts/16k/buck_rog.crt",
+      "fileType": "CART",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Char Flow",
+      "filePath": "tapes/charflow.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Cheese & Onion",
+      "filePath": "disks/vic20_cheese_and_onion_32k.d64",
+      "fileType": "DISK",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Colour Bars",
+      "filePath": "tapes/vic20colorbars.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Colour Mix",
+      "filePath": "tapes/vic20mix.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Colour Test",
+      "filePath": "tapes/colourtest.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Cncd Cheat Split",
+      "filePath": "tapes/Cncd - Cheat Split.prg",
+      "fileType": "PRG",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Curse of the Werewolf",
+      "displayName": "Curse of the\nWerewolf",
+      "filePath": "snaps/pcv/WEREWOLF.PCV",
+      "fileType": "PCV",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Datapop",
+      "filePath": "tapes/tlr_-_datapop_vic20.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Defender",
+      "filePath": "carts/16k/defender.crt",
+      "fileType": "CART",
+      "iconPath": "",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Demon Attack",
+      "filePath": "carts/8k/demonata.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Dragon Fire",
+      "filePath": "carts/8k/dragon.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "DSR Revicion",
+      "filePath": "disks/DSR_Revicion_VIC20_oldschool_demo_PAL.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
+    },
+    {
+      "name": "Dunno",
+      "filePath": "tapes/dsr_dunno_4k_revision_2018.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Eight Dollar Math",
+      "filePath": "disks/eight_dollar_math.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "FLInale PAL",
+      "filePath": "disks/flinale-pal.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Frozen Time",
+      "filePath": "tapes/frozen.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Galactic Abductor",
+      "filePath": "tapes/16k/GALABDCT.PRG",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Going Lowres",
+      "filePath": "disks/tRSi_-_VIC20_-_Going-Lowres.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_16K",
+    },
+    {
+      "name": "Gnork",
+      "filePath": "disks/dsr_gnork_revision2018_oldschool_vic20.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_16K",
+    },
+    {
+      "name": "Gold Fever",
+      "filePath": "carts/8k/goldfeve.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Gorf",
+      "filePath": "carts/8k/gorf.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Grid Runner",
+      "filePath": "carts/8k/gridrunn.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Happy Hour",
+      "filePath": "tapes/happyhour.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Impossiblator 2",
+      "filePath": "disks/impo2.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Impossiblator 3",
+      "filePath": "disks/impo3.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Jalapeno",
+      "filePath": "disks/jalapeno.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K",
+    },
+    {
+      "name": "Large Unified Theory",
+      "filePath": "disks/pwp-lut.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Lipstick Traces",
+      "filePath": "tapes/lipstick_traces.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Loderunner",
+      "filePath": "carts/16k/loderunn.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Master Type",
+      "filePath": "carts/16k/masterty.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Maze",
+      "filePath": "carts/8k/maze.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "MG Raster",
+      "filePath": "disks/mg_raster.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_8K",
+    },
+    {
+      "name": "Monster Maze",
+      "filePath": "carts/8k/monsterm.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Moon Patrol",
+      "filePath": "carts/16k/moonpatr.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Mutant Herd",
+      "filePath": "carts/8k/mutanthe.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Nano Watt",
+      "filePath": "tapes/nw.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Next Level",
+      "filePath": "disks/tnl.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Orb MegaDemo",
+      "filePath": "disks/OMD_Delux.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Omega Race",
+      "filePath": "carts/8k/omegarac.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Outworld",
+      "filePath": "carts/16k/outworld.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED",
+      "status": "BROKEN"
+    },
+    {
+      "name": "Over Sing",
+      "filePath": "tapes/over_sing.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Perils of Willy",
+      "displayName": "Perils of\nWilly",
+      "filePath": "tapes/16k/PERILS.PRG",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Pharoah's Curse",
+      "filePath": "carts/16k/pharoahc.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Pipes",
+      "filePath": "carts/8k/pipes.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Pitfall",
+      "filePath": "tapes/pitfall.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Predator",
+      "filePath": "carts/8k/predator.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Psycho Shopper",
+      "filePath": "tapes/16k/PSYCHO.PRG",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Purple Planet Yo",
+      "filePath": "tapes/proxima_ppy.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Raster Stable EX4",
+      "filePath": "tapes/ex4.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+    },
+    {
+      "name": "Raster Stable EX6",
+      "filePath": "tapes/ex6.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+    },
+    {
+      "name": "Robotic Liberation",
+      "filePath": "tapes/rl-16k.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Rockman",
+      "filePath": "snaps/pcv/ROCKMAN.PCV",
+      "fileType": "PCV",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Skramble",
+      "filePath": "tapes/16k/SKRAMBLE.PRG",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Slap Dab",
+      "filePath": "snaps/pcv/SLAPDAB.PCV",
+      "fileType": "PCV",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Sonar Sweep'r",
+      "filePath": "tapes/sonar sweep'r.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Spiders of Mars",
+      "displayName": "Spiders\nof Mars",
+      "filePath": "carts/16k/spiderso.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Sword of Hrakel",
+      "displayName": "Sword of\nHrakel",
+      "filePath": "snaps/pcv/HRAKEL.PCV",
+      "fileType": "PCV",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Tenebra Macabre",
+      "filePath": "disks/TenebraMacabreVIC20.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Terraguard",
+      "filePath": "carts/8k/terragua.crt",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Tokra Test Case",
+      "filePath": "tapes/testcase.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Tres Monos",
+      "filePath": "tapes/3m.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Test Back",
+      "filePath": "tapes/testback.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36864",
+      "filePath": "tapes/test36864.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36865-1",
+      "filePath": "tapes/test36865-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36865-2",
+      "filePath": "tapes/test36865-2.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36865-3",
+      "filePath": "tapes/test36865-3.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36866-1",
+      "filePath": "tapes/test36866-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36866-2",
+      "filePath": "tapes/test36866-2.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+        {
+      "name": "Test 36867-1",
+      "filePath": "tapes/test36867-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test 36867-2",
+      "filePath": "tapes/test36867-2.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test Charheight 1",
+      "filePath": "tapes/testcharheigh-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test Charheight 2",
+      "filePath": "tapes/testcharheigh-2.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test Memfetch 1",
+      "filePath": "tapes/testmemfetch-1.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Test Memfetch 2",
+      "filePath": "tapes/testmemfetch-2.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Tiger",
+      "filePath": "disks/tiger.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Vector Test",
+      "filePath": "tapes/vector.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Veni Vidi Vic!",
+      "filePath": "disks/veni vidi vic! PAL.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
+    },
+    {
+      "name": "Vici Iterum MM",
+      "filePath": "disks/Pu239 - Vimm.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
+    },
+    {
+      "name": "VIC Test",
+      "filePath": "disks/victest.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Viznut Test",
+      "filePath": "tapes/viznut_test.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Warning",
+      "filePath": "tapes/pwp-warning.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },    
+    {
+      "name": "Robotic Warrior",
+      "filePath": "tapes/warrior.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },    
+  ]
+}

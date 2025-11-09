@@ -5,6 +5,17 @@ canvas {
 
 body {
     background-color: #222222;
+    margin: 0px;
+}
+
+p {
+    text-align: center;
+    color: #eeeeee;
+}
+
+a {
+    text-align: center;
+    color: #bbbbff;
 }
 
 .superdev {
