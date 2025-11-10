@@ -988,8 +988,8 @@ public class Vic extends MemoryMappedChip {
                 if ((verticalCounter == 0) || (verticalCounter > PAL_VBLANK_END)) {
                     // Is the visible part of the line ending now and horizontal blanking starting?
                     if (horizontalCounter == PAL_HBLANK_START) {
-                        // Horizontal blanking doesn't start until 2 pixels in. What exactly those
-                        // two pixels are depends on the fetch state.
+                        // Horizontal blanking doesn't start until 3.66 pixels in. What exactly those
+                        // 3.66 pixels are depends on the fetch state.
                         switch (fetchState) {
                             case FETCH_OUTSIDE_MATRIX:
                                 if ((verticalCounter >> 1) == screen_origin_y) {
@@ -1034,29 +1034,55 @@ public class Vic extends MemoryMappedChip {
                                 multiColourTable[1] = border_colour_index;
                                 multiColourTable[3] = auxiliary_colour_index;
         
-                                // First 3 wholes pixels are from end of current character.
+                                // First 3 whole pixels are from end of current character.
                                 pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel6]]);
                                 pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel7]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
                                 
-                                // Update operating hires state and char data immediately prior to
-                                // shifting out new character pixel.
-                                hiresMode = ((colourData & 0x08) == 0);
-                                charData = charDataLatch;
-                              
-                                // We only next 1st pixel in this case. Hblanking about to start.
-                                if (hiresMode) {
-                                    if (non_reverse_mode != 0) {
+                                // We only need to calculate 8th & 1st pixel in this scenario. Hblanking is about to start.
+                                if (non_reverse_mode != 0) {
+                                    // New non-reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 2 : 0);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same non-reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
                                         pixel1 = ((charData & 0x80) > 0? 2 : 0);
                                     } else {
-                                        pixel1 = ((charData & 0x80) > 0? 0 : 2);
+                                        pixel1 = ((charData >> 6) & 0x03);
                                     }
                                 } else {
-                                    // Multicolour graphics.
-                                    pixel1 = ((charData >> 6) & 0x03);
+                                    // New reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 0 : 2);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
+                                        pixel1 = ((charData & 0x80) > 0? 0 : 2);
+                                    } else {
+                                        pixel1 = ((charData >> 6) & 0x03);
+                                    }
                                 }
-                              
-                                // Look up foreground colour before outputting first pixel.
+                                
+                                // The 3rd pixel is from the previous character with new reverse mode applied (see above).
+                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
+                                
+                                // Look up foreground colour before outputting first pixel of new character.
                                 multiColourTable[2] = (colourData & 0x07);
                                 
                                 // The 4th pixel is partial before horiz blanking kicks in.
@@ -1135,28 +1161,33 @@ public class Vic extends MemoryMappedChip {
                                     if (horizontalCounter > PAL_HBLANK_END) {
                                         pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
                                         pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
                                     }
         
+                                    // Pixels 4-7 calculations are less complex, since the hires mode,
+                                    // reverse mode and char data stay the same four all four pixels.
                                     if (hiresMode) {
                                         if (non_reverse_mode != 0) {
+                                            pixel4 = ((charData & 0x10) > 0? 2 : 0);
                                             pixel5 = ((charData & 0x08) > 0? 2 : 0);
                                             pixel6 = ((charData & 0x04) > 0? 2 : 0);
                                             pixel7 = ((charData & 0x02) > 0? 2 : 0);
-                                            pixel8 = ((charData & 0x01) > 0? 2 : 0);
                                         } else {
+                                            pixel4 = ((charData & 0x10) > 0? 0 : 2);
                                             pixel5 = ((charData & 0x08) > 0? 0 : 2);
                                             pixel6 = ((charData & 0x04) > 0? 0 : 2);
                                             pixel7 = ((charData & 0x02) > 0? 0 : 2);
-                                            pixel8 = ((charData & 0x01) > 0? 0 : 2);
                                         }
                                     } else {
                                         // Multicolour graphics.
+                                        pixel4 = ((charData >> 4) & 0x03);
                                         pixel5 = pixel6 = ((charData >> 2) & 0x03);
-                                        pixel7 = pixel8 = (charData & 0x03);
+                                        pixel7 = (charData & 0x03);
                                     }
                                     
-                                    // Pixel 5 has to be output after the pixel var calculations above.
+                                    // Pixels 4 & 5 have to be output after the pixel var calculations above, not before.
+                                    if (horizontalCounter > PAL_HBLANK_END) {
+                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
+                                    }
                                     pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
 
                                     // Rotate pixels so that the other 3 remaining char pixels are output
@@ -1225,33 +1256,61 @@ public class Vic extends MemoryMappedChip {
                                     // to the switch delay in hblank turning off.
                                     pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel6]]);
                                     pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel7]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
                                 }
         
-                                // Update operating hires state and char data immediately prior to
-                                // shifting out new character. Note that when we first enter this state,
-                                // these variables are primed to initially output border pixels while
-                                // the process of fetching the first real character is taking place,
-                                // which happens over the first two cycles.
-                                hiresMode = ((colourData & 0x08) == 0);
-                                charData = charDataLatch;
-        
-                                if (hiresMode) {
-                                    if (non_reverse_mode != 0) {
+                                // Note that when we first enter this state, these variables are primed
+                                // to initially output border pixels while the process of fetching the 
+                                // first real character is taking place, which happens over the first two 
+                                // cycles.
+
+                                if (non_reverse_mode != 0) {
+                                    // New non-reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 2 : 0);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same non-reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
                                         pixel1 = ((charData & 0x80) > 0? 2 : 0);
                                         pixel2 = ((charData & 0x40) > 0? 2 : 0);
                                         pixel3 = ((charData & 0x20) > 0? 2 : 0);
-                                        pixel4 = ((charData & 0x10) > 0? 2 : 0);
                                     } else {
+                                        pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                        pixel3 = ((charData >> 4) & 0x03);
+                                    }
+                                } else {
+                                    // New reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 0 : 2);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
                                         pixel1 = ((charData & 0x80) > 0? 0 : 2);
                                         pixel2 = ((charData & 0x40) > 0? 0 : 2);
                                         pixel3 = ((charData & 0x20) > 0? 0 : 2);
-                                        pixel4 = ((charData & 0x10) > 0? 0 : 2);
+                                    } else {
+                                        pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                        pixel3 = ((charData >> 4) & 0x03);
                                     }
-                                } else {
-                                    // Multicolour graphics.
-                                    pixel1 = pixel2 = ((charData >> 6) & 0x03);
-                                    pixel3 = pixel4 = ((charData >> 4) & 0x03);
+                                }
+                                
+                                if (horizontalCounter > PAL_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
                                 }
         
                                 // Look up foreground colour before outputting first pixel.
@@ -1309,7 +1368,6 @@ public class Vic extends MemoryMappedChip {
                                     if (horizontalCounter > PAL_HBLANK_END) {
                                         pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
                                         pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
                                     }
                                 }
         
@@ -1329,23 +1387,27 @@ public class Vic extends MemoryMappedChip {
                                 // Determine next character pixels.
                                 if (hiresMode) {
                                     if (non_reverse_mode != 0) {
+                                        pixel4 = ((charData & 0x10) > 0? 2 : 0);
                                         pixel5 = ((charData & 0x08) > 0? 2 : 0);
                                         pixel6 = ((charData & 0x04) > 0? 2 : 0);
                                         pixel7 = ((charData & 0x02) > 0? 2 : 0);
-                                        pixel8 = ((charData & 0x01) > 0? 2 : 0);
                                     } else {
+                                        pixel4 = ((charData & 0x10) > 0? 0 : 2);
                                         pixel5 = ((charData & 0x08) > 0? 0 : 2);
                                         pixel6 = ((charData & 0x04) > 0? 0 : 2);
                                         pixel7 = ((charData & 0x02) > 0? 0 : 2);
-                                        pixel8 = ((charData & 0x01) > 0? 0 : 2);
                                     }
                                 } else {
                                     // Multicolour graphics.
+                                    pixel4 = ((charData >> 4) & 0x03);
                                     pixel5 = pixel6 = ((charData >> 2) & 0x03);
-                                    pixel7 = pixel8 = (charData & 0x03);
+                                    pixel7 = (charData & 0x03);
                                 }
                                 
                                 if (horizontalCounter >= PAL_HBLANK_END) {
+                                    if (horizontalCounter > PAL_HBLANK_END) {
+                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
+                                    }
                                     pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
                                 }
         
