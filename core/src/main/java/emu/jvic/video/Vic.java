@@ -2358,7 +2358,6 @@ public class Vic extends MemoryMappedChip {
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel2]]);
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel3]]);
-                                    
                                 }
                                 
                                 // Calculate offset of data.
@@ -2394,6 +2393,7 @@ public class Vic extends MemoryMappedChip {
                                     pixel7 = (charData & 0x03);
                                 }
                                 
+                                // Pixels 4 & 5 have to be output after the pixel var calculations above.
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel4]]);
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
