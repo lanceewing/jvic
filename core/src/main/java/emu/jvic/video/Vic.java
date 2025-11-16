@@ -83,8 +83,8 @@ public class Vic extends MemoryMappedChip {
     private static final int PAL_LAST_LINE = 311;
 
     // Constants related to video timing for NTSC.
-    private static final int NTSC_HBLANK_END = 8;
-    private static final int NTSC_HBLANK_START = 58;
+    private static final int NTSC_HBLANK_END = 9;
+    private static final int NTSC_HBLANK_START = 59;
     private static final int NTSC_LINE_END = 64;
     private static final int NTSC_VBLANK_START = 1;
     private static final int NTSC_VSYNC_START = 4;
@@ -643,13 +643,11 @@ public class Vic extends MemoryMappedChip {
                 // TODO: 67860 out of bounds error for Apple Panic. NTSC.
                 // TODO: Also Atlantis is NTSC.
                 frames[activeFrame].framePixels[pixelCounter++] = (short) pixel;
-                // System.out.print("" + this.horizontalCounter + "|");
             } else {
                 int count = (pixel >> 16);
                 for (int i = 0; i < count; i++) {
                     frames[activeFrame].framePixels[pixelCounter++] = 0;
                 }
-                // System.out.println();
             }
         }
     }
@@ -1589,13 +1587,13 @@ public class Vic extends MemoryMappedChip {
         boolean frameRenderComplete = false;
 
         // Expressions to access different parts of control registers.
-        short border_colour_index = (short) (mem[VIC_REG_15] & 0x07);
-        short background_colour_index = (short) (mem[VIC_REG_15] >> 4);
-        short auxiliary_colour_index = (short) (mem[VIC_REG_14] >> 4);
+        int border_colour_index = (mem[VIC_REG_15] & 0x07);
+        int background_colour_index = (mem[VIC_REG_15] >> 4);
+        int auxiliary_colour_index = (mem[VIC_REG_14] >> 4);
         int non_reverse_mode = (mem[VIC_REG_15] & 0x08);
         int interlaced_mode = (mem[VIC_REG_0] & 0x80);
-        int screen_origin_x = (mem[VIC_REG_0] & 0x7F);
-        int screen_origin_y = (mem[VIC_REG_1] << 1);
+        int screen_origin_x = ((mem[VIC_REG_0] & 0x7F));
+        int screen_origin_y = (mem[VIC_REG_1]);
         int num_of_columns = (mem[VIC_REG_2] & 0x7F);
         int num_of_rows = ((mem[VIC_REG_3] & 0x7E) >> 1);
         int double_height_mode = (mem[VIC_REG_3] & 0x01);
@@ -2042,7 +2040,6 @@ public class Vic extends MemoryMappedChip {
                 // And then reset HC.
                 prevHorizontalCounter = horizontalCounter;
                 horizontalCounter = 0;
-                pixelCounter = 0;
                 break;
     
             // HC=29 is when the 6560 increments the vertical counter (VC). The 1/2 line counter also
@@ -2325,11 +2322,6 @@ public class Vic extends MemoryMappedChip {
                                 break;
         
                             case FETCH_CHAR_DATA:
-                                
-                                // Adjust offset for memory wrap around.
-                                if ((char_mem_start < 8192) && (charDataOffset >= 8192)) {
-                                    charDataOffset += 24576;
-                                }
                                 
                                 // Look up very latest background, border and auxiliary colour values.
                                 multiColourTable[0] = background_colour_index;
