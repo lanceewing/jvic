@@ -168,69 +168,46 @@ public class Machine {
     /**
      * Updates the state of the machine of the machine until a frame is complete
      * 
-     * @param skipRender true if the VIC chip emulation should skip rendering.
      * @param warpSpeed  true If the machine is running at warp speed.
      */
-    public void update(boolean skipRender, boolean warpSpeed) {
+    public void update(boolean warpSpeed) {
         if (machineType.isNTSC()) {
-            updateNTSC(skipRender, warpSpeed);
+            updateNTSC(warpSpeed);
         } else {
-            updatePAL(skipRender, warpSpeed);
+            updatePAL(warpSpeed);
         }
     }
 
     /**
      * Updates the state of the machine of the machine until a frame is complete
      * 
-     * @param skipRender true if the VIC chip emulation should skip rendering.
      * @param warpSpeed  true If the machine is running at warp speed.
      */
-    public void updatePAL(boolean skipRender, boolean warpSpeed) {
+    public void updatePAL(boolean warpSpeed) {
         boolean frameComplete = false;
-        if (skipRender) {
-            do {
-                frameComplete |= vic.emulateSkipCycle();
-                cpu.emulateCycle();
-                via1.emulateCycle();
-                via2.emulateCycle();
-                c1541Drive.emulateCycle();
-            } while (!frameComplete);
-        } else {
-            do {
-                frameComplete |= vic.emulateCyclePal(!warpSpeed);
-                cpu.emulateCycle();
-                via1.emulateCycle();
-                via2.emulateCycle();
-                c1541Drive.emulateCycle();
-            } while (!frameComplete);
-        }
+        do {
+            frameComplete |= vic.emulateCyclePal(!warpSpeed);
+            cpu.emulateCycle();
+            via1.emulateCycle();
+            via2.emulateCycle();
+            c1541Drive.emulateCycle();
+        } while (!frameComplete);
     }
 
     /**
      * Updates the state of the machine of the machine until a frame is complete
      * 
-     * @param skipRender true if the VIC chip emulation should skip rendering.
      * @param warpSpeed  true If the machine is running at warp speed.
      */
-    public void updateNTSC(boolean skipRender, boolean warpSpeed) {
+    public void updateNTSC(boolean warpSpeed) {
         boolean frameComplete = false;
-        if (skipRender) {
-            do {
-                frameComplete |= vic.emulateSkipCycle();
-                cpu.emulateCycle();
-                via1.emulateCycle();
-                via2.emulateCycle();
-                c1541Drive.emulateCycle();
-            } while (!frameComplete);
-        } else {
-            do {
-                frameComplete |= vic.emulateCycleNtsc(!warpSpeed);
-                cpu.emulateCycle();
-                via1.emulateCycle();
-                via2.emulateCycle();
-                c1541Drive.emulateCycle();
-            } while (!frameComplete);
-        }
+        do {
+            frameComplete |= vic.emulateCycleNtsc(!warpSpeed);
+            cpu.emulateCycle();
+            via1.emulateCycle();
+            via2.emulateCycle();
+            c1541Drive.emulateCycle();
+        } while (!frameComplete);
     }
 
     /**
