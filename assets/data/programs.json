@@ -114,6 +114,15 @@
       "machineType": "PAL"
     },
     {
+      "name": "Capture the Flag",
+      "displayName": "Capture\nthe Flag",
+      "filePath": "disks/capture-flag-ntsc-bk5.d64",
+      "fileType": "DISK",
+      "iconPath": "",      
+      "machineType": "NTSC",
+      "ram": "RAM_32K"
+    },
+    {
       "name": "Char Flow",
       "filePath": "tapes/charflow.prg",
       "fileType": "PRG",
@@ -302,6 +311,24 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
+      "name": "Interlaced Test 7A",
+      "displayName": "Interlaced\nTest 7A",
+      "filePath": "tapes/test7a.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "NTSC",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Interlaced Test 8A",
+      "displayName": "Interlaced\nTest 8A",
+      "filePath": "tapes/test8a.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "NTSC",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Jalapeno",
       "filePath": "disks/jalapeno.d64",
       "fileType": "DISK",
@@ -486,11 +513,27 @@
       "machineType": "PAL",
     },
     {
+      "name": "Retina Color",
+      "filePath": "disks/retina color.d64",
+      "fileType": "DISK",
+      "iconPath": "",
+      "machineType": "NTSC",
+      "ram": "RAM_32K"
+    },
+    {
       "name": "Reverse Mode Test",
       "filePath": "tapes/vic20bar-reverse.prg",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL",
+    },
+    {
+      "name": "Reverse Mode Test NTSC",
+      "displayName": "Reverse Mode\nTest NTSC",
+      "filePath": "tapes/vic20bar-reverse_ntsc.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "NTSC",
     },
     {
       "name": "Robotic Liberation",
