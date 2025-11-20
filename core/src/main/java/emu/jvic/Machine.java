@@ -132,7 +132,7 @@ public class Machine {
         keyboard = new Keyboard();
         joystick = new Joystick();
         serialBus = new SerialBus();
-        c1541Drive = new C1541Drive(serialBus);
+        c1541Drive = new C1541Drive(serialBus, dos1541Rom);
 
         // Create two instances of the VIA chip; one for VIA1 and one for VIA2.
         via1 = new Via1(cpu, joystick, serialBus, snapshot);
