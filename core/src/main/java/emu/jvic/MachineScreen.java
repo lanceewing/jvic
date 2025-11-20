@@ -149,6 +149,10 @@ public class MachineScreen implements Screen {
         // TODO: I think this needs to be replaced by the JVicRunner.
         //this.machineRunnable = new MachineRunnable(this.machine);
 
+        // We default to PAL prior to a program being selected. It doesn't really matter
+        // what the default is.
+        this.machineType = MachineType.PAL;
+        
         jvicRunner.init(this, machineType.getTotalScreenWidth(), machineType.getTotalScreenHeight());
         
         batch = new SpriteBatch();

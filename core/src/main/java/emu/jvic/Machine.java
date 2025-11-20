@@ -137,12 +137,15 @@ public class Machine {
         // Create two instances of the VIA chip; one for VIA1 and one for VIA2.
         via1 = new Via1(cpu, joystick, serialBus, snapshot);
         via2 = new Via2(cpu, keyboard, joystick, serialBus, snapshot);
-
+        
         // Now we create the memory, which will include mapping the VIC chip,
         // the VIA chips, and the creation of RAM chips and ROM chips.
         memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, 
                 basicRom, kernalRom, charRom, snapshot);
 
+        // Initialise the sound generator.
+        soundGenerator.init(memory.getMemoryArray(), machineType);
+        
         // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
         screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
         screenHeight = machineType.getVisibleScreenHeight();

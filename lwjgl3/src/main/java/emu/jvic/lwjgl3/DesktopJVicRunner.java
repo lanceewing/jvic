@@ -58,7 +58,7 @@ public class DesktopJVicRunner extends JVicRunner {
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
         
         // Load the ROM files.
-        byte[] basicRom = Gdx.files.internal("roms/basic11b.rom").readBytes();
+        byte[] basicRom = Gdx.files.internal("roms/basic.rom").readBytes();
         byte[] dos1541Rom = Gdx.files.internal("roms/dos1541.rom").readBytes();
         byte[] charRom = Gdx.files.internal("roms/char.rom").readBytes();
         byte[] kernalRom = (machineType.equals(MachineType.NTSC)?
