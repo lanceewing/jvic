@@ -1,7 +1,5 @@
 package emu.jvic;
 
-import com.badlogic.gdx.Gdx;
-
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
@@ -14,6 +12,8 @@ import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.sound.SoundGenerator;
+import emu.jvic.sound.libgdx.GdxSoundGenerator;
 import emu.jvic.video.Vic;
 
 /**
@@ -36,6 +36,11 @@ public class Machine {
     private SerialBus serialBus;
     private C1541Drive c1541Drive;
 
+    // Platform specific component.
+    private KeyboardMatrix keyboardMatrix;
+    private PixelData pixelData;
+    private SoundGenerator soundGenerator;
+    
     private boolean paused = true;
 
     private MachineType machineType;
@@ -47,51 +52,54 @@ public class Machine {
     private int screenBottom;
     private int screenWidth;
     private int screenHeight;
-
+    
     /**
      * Constructor for Machine.
-     */
-    public Machine() {
-    }
-
-    /**
-     * Initialises the machine. It will boot in to BASIC with the given RAM
-     * configuration.
      * 
-     * @param ramType     The RAM configuration to use.
-     * @param machineType The type of VIC 2- machine, i.e. PAL or NTSC.
+     * @param soundGenerator 
+     * @param keyboardMatrix 
+     * @param pixelData 
      */
-    public void init(RamType ramType, MachineType machineType) {
-        init(null, null, machineType, ramType);
+    public Machine(SoundGenerator soundGenerator, KeyboardMatrix keyboardMatrix, PixelData pixelData) {
+        if (soundGenerator != null) {
+            this.soundGenerator = soundGenerator;
+        } else {
+            this.soundGenerator = new GdxSoundGenerator();
+        }
+        this.keyboardMatrix = keyboardMatrix;
+        this.pixelData = pixelData;
     }
 
     /**
      * Initialises the machine, and optionally loads the given program file (if provided).
      * 
-     * @param programFile The internal path to the program file to automatically load and run.
-     * @param programType The type of program data, e.g. CART, PRG, V20, PCV, VICE, S20, etc.
-     * @param machineType The type of VIC 20 machine, i.e. PAL or NTSC.
-     * @param ramType     The RAM configuration to use.
-     * 
+     * @param basicRom 
+     * @param kernalRom
+     * @param charRom 
+     * @param program 
+     * @param machineType 
+     * @param ramType
      */
-    public void init(String programFile, String programType, MachineType machineType, RamType ramType) {
-        byte[] programData = null;
+    public void init(
+            byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
+            Program program, MachineType machineType, RamType ramType) {
+        
+        byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
 
         this.machineType = machineType;
 
         // If we've been given the path to a program to load, we load the data prior to all
         // other initialisation. Primarily this is to work out what expansion we need.
-        if ((programFile != null) && (programFile.length() > 0)) {
+        if ((programData != null) && (programData.length > 0)) {
+            String programType = program.getProgramType();
             try {
-                programData = Gdx.files.internal(programFile).readBytes();
-
                 if ("PRG".equals(programType) && (programData != null) && (programData.length > 2)
                         && (ramType.equals(RamType.RAM_AUTO))) {
                     // If the RAM type is configured to auto detect, and its a PRG file, then we use
                     // the start address to determine RAM requirements.
                     int startAddress = (programData[1] << 8) + programData[0];
-
+        
                     if (startAddress == 0x1201) {
                         // 8K, 16K, or 24K. We'll give it the full 24K to cover all bases.
                         ramType = RamType.RAM_24K;
@@ -118,7 +126,7 @@ public class Machine {
         cpu = new Cpu6502(snapshot);
 
         // Create the VIC chip and configure it as per the current TV type.
-        vic = new Vic(machineType, snapshot);
+        vic = new Vic(machineType, soundGenerator, snapshot);
 
         // Create the peripherals.
         keyboard = new Keyboard();
@@ -132,7 +140,8 @@ public class Machine {
 
         // Now we create the memory, which will include mapping the VIC chip,
         // the VIA chips, and the creation of RAM chips and ROM chips.
-        memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, snapshot);
+        memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, 
+                basicRom, kernalRom, charRom, snapshot);
 
         // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
         screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
@@ -141,20 +150,19 @@ public class Machine {
         screenRight = screenLeft + machineType.getVisibleScreenWidth();
         screenTop = machineType.getVerticalOffset();
         screenBottom = screenTop + machineType.getVisibleScreenHeight();
-
+        
         // Check if the resource parameters have been set.
         if ((programData != null) && (programData.length > 0)) {
-            if ("PRG".equals(programType)) {
+            String programType = program.getProgramType();
+            if ("CART".equals(programType)) {
+                memory.loadCart(programData);
+            } else if ("PRG".equals(programType)) {
                 memory.loadBasicProgram(programData, true);
-
+            } else if ("DISK".equals(programType)) {
+                // Insert the disk ready to be booted.
+                c1541Drive.insertDisk(programData);
             } else if ("PCV".equals(programType)) {
                 // Nothing to do. Snapshot was already loaded.
-            } else if ("DISK".equals(programType)) {
-                c1541Drive.insertDisk(programData);
-
-            } else {
-                // Default resource type is CART.
-                memory.loadCart(programData);
             }
         }
 

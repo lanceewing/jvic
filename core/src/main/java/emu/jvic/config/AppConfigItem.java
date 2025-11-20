@@ -1,148 +1,187 @@
 package emu.jvic.config;
 
-import emu.jvic.MachineType;
-import emu.jvic.memory.RamType;
-
 public class AppConfigItem {
 
-  private String name = "";
- 
-  private String displayName;
-  
-  private String filePath;
-  
-  private String fileType;
-  
-  private String iconPath;
-  
-  private MachineType machineType;
-  
-  private RamType ram = RamType.RAM_AUTO;
-  
-  private String status = "WORKING";
+    private String gameId;
+    
+    private String name = "";
 
-  /**
-   * Constructor for AppConfigItem.
-   */
-  public AppConfigItem() {
-  }
-  
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
+    private String displayName;
 
-  /**
-   * @param name the name to set
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
-  
-  /**
-   * @return the displayName
-   */
-  public String getDisplayName() {
-    if ((displayName == null) && (name != null)) {
-      int numOfSpaces = name.length() - name.replace(" ", "").length();
-      displayName = name.replace(" ", "\n");
-      if (numOfSpaces == 0) {
-        displayName = displayName + "\n";
-      }
+    private String filePath;
+
+    private String fileType;
+
+    private String iconPath;
+
+    private String machineType;
+
+    private String ram = "RAM_AUTO";
+    
+    private FileLocation fileLocation = FileLocation.INTERNAL;
+
+    private String status = "WORKING";
+
+    // Required for the web open file feature, as the same event that selects
+    // the file needs to read the data.
+    private byte[] fileData;
+    
+    public enum FileLocation {
+        INTERNAL, EXTERNAL, ABSOLUTE, CLASSPATH, LOCAL
+    };
+    
+    /**
+     * Constructor for AppConfigItem.
+     */
+    public AppConfigItem() {
     }
-    return displayName;
-  }
 
-  /**
-   * @param displayName the displayName to set
-   */
-  public void setDisplayName(String displayName) {
-    this.displayName = displayName;
-  }
+    public String getGameId() {
+        return gameId;
+    }
 
-  /**
-   * @return the filePath
-   */
-  public String getFilePath() {
-    return filePath;
-  }
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+    
+    /**
+     * @return the fileLocation
+     */
+    public FileLocation getFileLocation() {
+        return fileLocation;
+    }
 
-  /**
-   * @param filePath the filePath to set
-   */
-  public void setFilePath(String filePath) {
-    this.filePath = filePath;
-  }
+    /**
+     * @param fileLocation the fileLocation to set
+     */
+    public void setFileLocation(FileLocation fileLocation) {
+        this.fileLocation = fileLocation;
+    }
+    
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-  /**
-   * @return the fileType
-   */
-  public String getFileType() {
-    return fileType;
-  }
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  /**
-   * @param fileType the fileType to set
-   */
-  public void setFileType(String fileType) {
-    this.fileType = fileType;
-  }
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        if ((displayName == null) && (name != null)) {
+            int numOfSpaces = name.length() - name.replace(" ", "").length();
+            displayName = name.replace(" ", "\n");
+            if (numOfSpaces == 0) {
+                displayName = displayName + "\n";
+            }
+        }
+        return displayName;
+    }
 
-  /**
-   * @return the iconPath
-   */
-  public String getIconPath() {
-    return iconPath;
-  }
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
-  /**
-   * @param iconPath the iconPath to set
-   */
-  public void setIconPath(String iconPath) {
-    this.iconPath = iconPath;
-  }
+    /**
+     * @return the filePath
+     */
+    public String getFilePath() {
+        return filePath;
+    }
 
-  /**
-   * @return the machineType
-   */
-  public MachineType getMachineType() {
-    return machineType;
-  }
+    /**
+     * @param filePath the filePath to set
+     */
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
 
-  /**
-   * @param machineType the machineType to set
-   */
-  public void setMachineType(MachineType machineType) {
-    this.machineType = machineType;
-  }
+    /**
+     * @return the fileType
+     */
+    public String getFileType() {
+        return fileType;
+    }
 
-  /**
-   * @return The RamType.
-   */
-  public RamType getRam() {
-    return ram;
-  }
+    /**
+     * @param fileType the fileType to set
+     */
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
 
-  /**
-   * @param ram The RamType to set.
-   */
-  public void setRam(RamType ram) {
-    this.ram = ram;
-  }
+    /**
+     * @return the iconPath
+     */
+    public String getIconPath() {
+        return iconPath;
+    }
 
-  /**
-   * @return the status
-   */
-  public String getStatus() {
-    return status;
-  }
+    /**
+     * @param iconPath the iconPath to set
+     */
+    public void setIconPath(String iconPath) {
+        this.iconPath = iconPath;
+    }
 
-  /**
-   * @param status the status to set
-   */
-  public void setStatus(String status) {
-    this.status = status;
-  }
+    /**
+     * @return the machineType
+     */
+    public String getMachineType() {
+        return machineType;
+    }
+
+    /**
+     * @param machineType the machineType to set
+     */
+    public void setMachineType(String machineType) {
+        this.machineType = machineType;
+    }
+
+    /**
+     * @return The RamType.
+     */
+    public String getRam() {
+        return ram;
+    }
+
+    /**
+     * @param ram The RamType to set.
+     */
+    public void setRam(String ram) {
+        this.ram = ram;
+    }
+
+    /**
+     * @return the status
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
+    }
 }

@@ -1,10 +1,13 @@
 package emu.jvic;
 
+import java.util.Map;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
-import emu.jvic.ui.ConfirmHandler;
+import emu.jvic.config.AppConfigItem;
+import emu.jvic.ui.DialogHandler;
 
 /**
  * The main entry point in to the cross-platform part of the JVic emulator. A
@@ -24,41 +27,99 @@ public class JVic extends Game {
      * This is the screen that shows the boot options and programs to load.
      */
     private HomeScreen homeScreen;
-
+    
     /**
-     * Invoked by JVic whenever it would like the user to confirm an action.
+     * Platform specific JVicRunner implementation.
      */
-    private ConfirmHandler confirmHandler;
+    private JVicRunner jvicRunner;
 
     /**
-     * JOric's saved preferences.
+     * Invoked by JVic whenever it would like to show a dialog, such as when it
+     * needs the user to confirm an action, or to choose a file.
+     */
+    private DialogHandler dialogHandler;
+
+    /**
+     * For desktop, contains command line args. For HTML5, the hash and/or query parameters.
+     */
+    private Map<String, String> args;
+    
+    /**
+     * JVic's saved preferences.
      */
     private Preferences preferences;
 
     /**
-     * JOric's application screenshot storage.
+     * JVic's application screenshot storage.
      */
     private Preferences screenshotStore;
 
     /**
-     * Constructor for JVicGdx.
+     * Constructor for JVic.
      * 
      * @param confirmHandler
      */
-    public JVic(ConfirmHandler confirmHandler) {
-        this.confirmHandler = confirmHandler;
+    public JVic(JVicRunner jvicRunner, DialogHandler dialogHandler, Map<String, String> args) {
+        this.jvicRunner = jvicRunner;
+        this.dialogHandler = dialogHandler;
+        this.args = args;
     }
 
     @Override
     public void create() {
         preferences = Gdx.app.getPreferences("jvic.preferences");
         screenshotStore = Gdx.app.getPreferences("jvic_screens.store");
+        machineScreen = new MachineScreen(this, jvicRunner, dialogHandler);
+        homeScreen = new HomeScreen(this, dialogHandler);
 
-        machineScreen = new MachineScreen(this, confirmHandler);
-        homeScreen = new HomeScreen(this, confirmHandler);
+        AppConfigItem appConfigItem = null;
+        
+        if ((args != null) && (args.size() > 0)) {
+            if (args.containsKey("uri")) {
+                // Start by checking to see if the programs.json has an entry.
+                appConfigItem = homeScreen.getAppConfigItemByProgramUri(args.get("uri"));
+            }
+            else if (args.containsKey("url")) {
+                String programUrl = args.get("url");
+                AppConfigItem adhocProgram = new AppConfigItem();
+                adhocProgram.setName("Adhoc VIC Program");
+                adhocProgram.setFilePath(getFilePathForProgramUrl(programUrl));
+                adhocProgram.setMachineType("PAL");
+                adhocProgram.setRam("RAM_48K");
+                appConfigItem = adhocProgram;
+            }
+        }
+        
         setScreen(homeScreen);
+        
+        if (appConfigItem != null) {
+            homeScreen.processProgramSelection(appConfigItem);
+        }
     }
 
+    /**
+     * Gets the filePath to use for the given program URL, when used with the
+     * ?url request parameter.
+     * 
+     * @param programUrl
+     * 
+     * @return
+     */
+    private String getFilePathForProgramUrl(String programUrl) {
+        if ((programUrl.startsWith("http://localhost/")) || 
+            (programUrl.startsWith("http://localhost:")) || 
+            (programUrl.startsWith("https://localhost/")) || 
+            (programUrl.startsWith("https://localhost:")) ||
+            (programUrl.startsWith("http://127.0.0.1/")) || 
+            (programUrl.startsWith("http://127.0.0.1:")) || 
+            (programUrl.startsWith("https://127.0.0.1/")) || 
+            (programUrl.startsWith("https://127.0.0.1:"))) {
+            return programUrl;
+        } else {
+            return ("https://vic20.games/programs?url=" + programUrl);
+        }
+    }
+    
     /**
      * Gets the MachineScreen.
      * 
@@ -78,18 +139,27 @@ public class JVic extends Game {
     }
 
     /**
-     * Gets the Preferences for JOric.
+     * Gets the JVicRunner.
      * 
-     * @return The Preferences for JOric.
+     * @return the JVicRunner.
+     */
+    public JVicRunner getJVicRunner() {
+        return jvicRunner;
+    }
+    
+    /**
+     * Gets the Preferences for JVic.
+     * 
+     * @return The Preferences for JVic.
      */
     public Preferences getPreferences() {
         return preferences;
     }
 
     /**
-     * Gets the screenshot store for JOric.
+     * Gets the screenshot store for JVic.
      * 
-     * @return The screenshot store for JOric.
+     * @return The screenshot store for JVic.
      */
     public Preferences getScreenshotStore() {
         return screenshotStore;
@@ -108,5 +178,25 @@ public class JVic extends Game {
         // Save the preferences when the emulator is closed.
         preferences.flush();
         screenshotStore.flush();
+    }
+    
+    /**
+     * Invoked when a program file (DSK, TAP or ZIP) is dropped onto the home screen.
+     * 
+     * @param filePath
+     * @param fileData
+     */
+    public void fileDropped(String filePath, byte[] fileData) {
+        // File drop is only 
+        if (getScreen() == homeScreen) {
+            AppConfigItem appConfigItem = new AppConfigItem();
+            appConfigItem.setName("Adhoc VIC Program");
+            appConfigItem.setFilePath(filePath);
+            appConfigItem.setFileType("ABSOLUTE");
+            appConfigItem.setMachineType("PAL");
+            appConfigItem.setRam("RAM_48K");
+            appConfigItem.setFileData(fileData);
+            homeScreen.processProgramSelection(appConfigItem);
+        }
     }
 }
