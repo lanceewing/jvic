@@ -126,7 +126,7 @@ public class Machine {
         cpu = new Cpu6502(snapshot);
 
         // Create the VIC chip and configure it as per the current TV type.
-        vic = new Vic(machineType, soundGenerator, snapshot);
+        vic = new Vic(pixelData, machineType, soundGenerator, snapshot);
 
         // Create the peripherals.
         keyboard = new Keyboard();
