@@ -35,6 +35,6 @@ public class DesktopPixelData extends PixelData {
 
     @Override
     public void updatePixmap(Pixmap pixmap) {
-        BufferUtils.copy(imageData, 0, pixmap.getPixels(), imageData.length);
+        BufferUtils.copy(imageData, 0, pixmap.getPixels(), pixmap.getPixels().remaining());
     }
 }
