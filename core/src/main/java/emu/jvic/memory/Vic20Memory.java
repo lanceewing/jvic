@@ -43,8 +43,7 @@ public class Vic20Memory extends Memory {
      * @param basicRom
      * @param kernalRom
      * @param charRom
-     * @param machineType  The type of VIC 20 machine that is being emulated, i.e.
-     *                     PAL or NTSC.
+     * @param machineType  The type of VIC 20 machine that is being emulated, i.e. PAL or NTSC.
      * @param snapshot     Optional snapshot of the machine state to start with.
      */
     public Vic20Memory(Cpu6502 cpu, Vic vic, Via6522 via1, Via6522 via2, int ramExpansion, MachineType machineType,
@@ -244,8 +243,7 @@ public class Vic20Memory extends Memory {
     }
 
     /**
-     * Loads a cartridge file from the given byte array in to the cartridge memory
-     * area.
+     * Loads a cartridge file from the given byte array in to the cartridge memory area.
      * 
      * @param cartData The byte array containing the cartridge program data to load.
      */
