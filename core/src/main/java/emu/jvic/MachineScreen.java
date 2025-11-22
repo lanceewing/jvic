@@ -143,12 +143,6 @@ public class MachineScreen implements Screen {
         this.jvic = jvic;
         this.jvicRunner = jvicRunner;
 
-        // Create the Machine, at this point not configured with a MachineType.
-        // TODO: This will be created in the JVicRunner.
-        //this.machine = new Machine();
-        // TODO: I think this needs to be replaced by the JVicRunner.
-        //this.machineRunnable = new MachineRunnable(this.machine);
-
         // We default to PAL prior to a program being selected. It doesn't really matter
         // what the default is.
         this.machineType = MachineType.PAL;
