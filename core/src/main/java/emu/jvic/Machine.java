@@ -129,7 +129,7 @@ public class Machine {
         vic = new Vic(pixelData, machineType, soundGenerator, snapshot);
 
         // Create the peripherals.
-        keyboard = new Keyboard();
+        keyboard = new Keyboard(keyboardMatrix);
         joystick = new Joystick();
         serialBus = new SerialBus();
         c1541Drive = new C1541Drive(serialBus, dos1541Rom);

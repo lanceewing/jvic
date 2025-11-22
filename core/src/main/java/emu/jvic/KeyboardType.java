@@ -4,7 +4,10 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 
 import emu.jvic.ui.ViewportManager;
-import static emu.jvic.io.Keyboard.*;
+
+import static emu.jvic.KeyboardMatrix.RESTORE;
+import static emu.jvic.KeyboardMatrix.RUN_STOP;
+import static emu.jvic.KeyboardMatrix.SHIFT_LOCK;
 
 /**
  * Enum representing the different types of keyboard available within JVic.

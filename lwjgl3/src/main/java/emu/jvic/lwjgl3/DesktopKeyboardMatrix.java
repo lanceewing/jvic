@@ -4,7 +4,7 @@ import emu.jvic.KeyboardMatrix;
 
 public class DesktopKeyboardMatrix extends KeyboardMatrix {
 
-    private int[] keyMatrix = new int[8];
+    private int[] keyMatrix = new int[513];
     
     @Override
     public int getKeyMatrixRow(int row) {
