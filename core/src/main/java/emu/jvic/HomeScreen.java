@@ -100,7 +100,7 @@ public class HomeScreen extends InputAdapter implements Screen {
     private AppConfigItem lastProgramLaunched;
 
     /**
-     * The JOric version, read from version.txt
+     * The JVic version, read from version.txt
      */
     private String version;
     
@@ -131,7 +131,7 @@ public class HomeScreen extends InputAdapter implements Screen {
         Json json = new Json();
         String appConfigJson = Gdx.files.internal("data/programs.json").readString();
         AppConfig appConfig = json.fromJson(AppConfig.class, appConfigJson);
-        removeProgramsWithIcons(appConfig);
+        //removeProgramsWithIcons(appConfig);
         basicAppConfigItem = buildBasicAppConfigItem();
         appConfigMap = new TreeMap<String, AppConfigItem>();
         for (AppConfigItem appConfigItem : appConfig.getApps()) {
@@ -283,10 +283,10 @@ public class HomeScreen extends InputAdapter implements Screen {
             }
 
             // Currently, we're using the presence of an icon path to decide whether to add it.
-            if ((appConfigItem.getIconPath() != null) && (!appConfigItem.getIconPath().equals(""))) {
+            //if ((appConfigItem.getIconPath() != null) && (!appConfigItem.getIconPath().equals(""))) {
                 currentPage.add(buildAppButton(appConfigItem)).expand().fill();
                 pageItemCount++;
-            }
+            //}
         }
 
         // Add the last page of apps.
@@ -779,12 +779,12 @@ public class HomeScreen extends InputAdapter implements Screen {
     
     private void showAboutJVicDialog() {
         dialogHandler.showAboutDialog(
-                "JOric " + version + "\n\n" + 
+                "JVic " + version + "\n\n" + 
                 "To start, simply swipe or click to the right.\n\n" + 
                 (Gdx.app.getType().equals(ApplicationType.WebGL)?
-                "Or use the ?url= request parameter to point directly to a .dsk or .tap file.\n\n" + 
-                "Most games are available on www.oric.org.\n\n" : "") + 
-                "Source code:\nhttps://github.com/lanceewing/joric\n\n",
+                "Or use the ?url= request parameter to point directly to a .d64 or .prg file.\n\n" + 
+                "Most games are available on archive.org.\n\n" : "") + 
+                "Source code:\nhttps://github.com/lanceewing/jvic\n\n",
                 new TextInputResponseHandler() {
                     @Override
                     public void inputTextResult(boolean success, String button) {

@@ -9,7 +9,7 @@ package emu.jvic.ui;
 public interface DialogHandler {
 
     /**
-     * Invoked when JOric wants to confirm with the user that they really want to
+     * Invoked when JVic wants to confirm with the user that they really want to
      * continue with a particular action.
      * 
      * @param message                The message to be displayed to the user.
@@ -18,7 +18,7 @@ public interface DialogHandler {
     public void confirm(String message, ConfirmResponseHandler confirmResponseHandler);
 
     /**
-     * Invoked when JOric wants the user to choose a file to open.
+     * Invoked when JVic wants the user to choose a file to open.
      * 
      * @param title                   Title for the open file dialog.
      * @param startPath               The starting path.
