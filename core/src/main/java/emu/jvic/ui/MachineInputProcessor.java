@@ -458,9 +458,9 @@ public class MachineInputProcessor extends InputAdapter {
         }
         
         if (screenSize == ScreenSize.FIT) {
-            viewport.setMinWorldWidth(280);
+            viewport.setMinWorldWidth(ScreenSize.FIT.getRenderWidth());
             viewport.setMaxWorldWidth(0);
-            viewport.setMinWorldHeight(224);
+            viewport.setMinWorldHeight(ScreenSize.FIT.getRenderHeight());
             viewport.setMaxWorldHeight(0);
             viewport.setScaling(Scaling.fit);
         } else {
@@ -646,8 +646,10 @@ public class MachineInputProcessor extends InputAdapter {
 
     // TODO: Adjust these sizes to VIC sizes.
     public static enum ScreenSize {
+        // TODO: Needs to be dynamic for PAL/NTSC.
+        FIT(363, 272),
         
-        FIT(280, 224),
+        // TODO: Adjust to VIC sizes.
         X9(2160, 2016),    // Fits 4K screen
         X8(1920, 1792),    // Fits Surface 7 Pro
         X7(1680, 1568),

@@ -323,7 +323,7 @@ public class MachineScreen implements Screen {
         drawScreen = (drawScreen + 1) % 3;
         return true;
     }
-
+    
     private void draw(float delta) {
         // Get the KeyboardType currently being used by the MachineScreenProcessor.
         KeyboardType keyboardType = machineInputProcessor.getKeyboardType();
