@@ -22,6 +22,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
     public static final int SHIFT_LOCK = 511;
     public static final int RUN_STOP = 510;
     public static final int RESTORE = 509;
+    public static final int JOYSTICK = 256;
 
     /**
      * Data used to convert Java keypresses into VIC 20 keypresses.
@@ -102,7 +103,25 @@ public abstract class KeyboardMatrix extends InputAdapter {
         {Keys.NUM_8, 128, 8},
         {Keys.NUM_6, 128, 4},
         {Keys.NUM_4, 128, 2},
-        {Keys.NUM_2, 128, 1}
+        {Keys.NUM_2, 128, 1},
+        
+        
+        // Joystick keys.
+        { Keys.NUMPAD_0, JOYSTICK, 0x20 },  // Fire button
+        { Keys.NUMPAD_1, JOYSTICK, 0x18 },  // SW
+        { Keys.NUMPAD_2, JOYSTICK, 0x08 },  // Down
+        { Keys.NUMPAD_3, JOYSTICK, 0x88 },  // SE
+        { Keys.NUMPAD_4, JOYSTICK, 0x10 },  // Left
+        { Keys.NUMPAD_6, JOYSTICK, 0x80 },  // Right
+        { Keys.NUMPAD_7, JOYSTICK, 0x14 },  // NW
+        { Keys.NUMPAD_8, JOYSTICK, 0x04 },  // Up
+        { Keys.NUMPAD_9, JOYSTICK, 0x84 },  // NE
+
+        { Keys.INSERT,   JOYSTICK, 0x20 },  // Fire button
+        { Keys.DOWN,     JOYSTICK, 0x08 },  // Down
+        { Keys.LEFT,     JOYSTICK, 0x10 },  // Left
+        { Keys.RIGHT,    JOYSTICK, 0x80 },  // Right
+        { Keys.UP,       JOYSTICK, 0x04 },  // Up
     };
     
     /**

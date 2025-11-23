@@ -130,7 +130,7 @@ public class Machine {
 
         // Create the peripherals.
         keyboard = new Keyboard(keyboardMatrix);
-        joystick = new Joystick();
+        joystick = new Joystick(keyboardMatrix);
         serialBus = new SerialBus();
         c1541Drive = new C1541Drive(serialBus, dos1541Rom);
 
