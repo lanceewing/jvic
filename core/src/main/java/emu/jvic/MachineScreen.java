@@ -235,7 +235,7 @@ public class MachineScreen implements Screen {
 
         // Switch libGDX screen resources used by the VIC screen to the size required
         // by the MachineType.
-        MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
+        machineType = MachineType.valueOf(appConfigItem.getMachineType());
         screenPixmap = machineTypePixmaps.get(machineType);
         screens = machineTypeTextures.get(machineType);
         camera = machineTypeCameras.get(machineType);
@@ -329,6 +329,8 @@ public class MachineScreen implements Screen {
         KeyboardType keyboardType = machineInputProcessor.getKeyboardType();
         JoystickAlignment joystickAlignment = machineInputProcessor.getJoystickAlignment();
         ScreenSize currentScreenSize = machineInputProcessor.getScreenSize();
+        int renderWidth = currentScreenSize.getRenderWidth(machineType);
+        int renderHeight = currentScreenSize.getRenderHeight(machineType);
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -366,7 +368,7 @@ public class MachineScreen implements Screen {
             resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
         lastScreenSize = currentScreenSize;
-        camera.position.set((currentScreenSize.getRenderWidth() / 2) + cameraXOffset, (currentScreenSize.getRenderHeight() / 2) - cameraYOffset, 0.0f);
+        camera.position.set((renderWidth / 2) + cameraXOffset, (renderHeight / 2) - cameraYOffset, 0.0f);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         batch.disableBlending();
@@ -377,7 +379,7 @@ public class MachineScreen implements Screen {
         // Texture isn't always drawn to match physical pixels.
         batch.draw(
                 screens[drawScreen], 
-                0, 0, currentScreenSize.getRenderWidth(), currentScreenSize.getRenderHeight(),
+                0, 0, renderWidth, renderHeight,
                 machineType.getHorizontalOffset(), machineType.getVerticalOffset(), 
                 machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(), 
                 false, false);
@@ -608,7 +610,7 @@ public class MachineScreen implements Screen {
             Gdx.input.setInputProcessor(landscapeInputProcessor);
         }
         
-        machineInputProcessor.adjustWorldMinMax(width, height);
+        machineInputProcessor.adjustWorldMinMax(width, height, machineType);
         
         viewport.update(width, height, false);
 
@@ -709,7 +711,11 @@ public class MachineScreen implements Screen {
     public ExtendViewport getViewport() {
         return viewport;
     }
-
+    
+    public MachineType getMachineType() {
+        return machineType;
+    }
+    
     /**
      * Returns user to the Home screen.
      */

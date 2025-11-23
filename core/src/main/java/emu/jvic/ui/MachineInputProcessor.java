@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import emu.jvic.KeyboardMatrix;
 import emu.jvic.KeyboardType;
 import emu.jvic.MachineScreen;
+import emu.jvic.MachineType;
 
 /**
  * InputProcessor for the MachineScreen.
@@ -447,20 +448,20 @@ public class MachineInputProcessor extends InputAdapter {
         return true;
     }
 
-    public void adjustWorldMinMax(int width, int height) {
+    public void adjustWorldMinMax(int width, int height, MachineType machineType) {
         ExtendViewport viewport = machineScreen.getViewport();
         
         // Keep rotating until the screen size will fit the current dimensions.
-        while (((screenSize.getRenderHeight() > Gdx.graphics.getHeight()) || 
-                (screenSize.getRenderWidth() > Gdx.graphics.getWidth())) && 
+        while (((screenSize.getRenderHeight(machineType) > Gdx.graphics.getHeight()) || 
+                (screenSize.getRenderWidth(machineType) > Gdx.graphics.getWidth())) && 
                 (screenSize != ScreenSize.FIT)) {
             screenSize = screenSize.rotateValue();
         }
         
         if (screenSize == ScreenSize.FIT) {
-            viewport.setMinWorldWidth(ScreenSize.FIT.getRenderWidth());
+            viewport.setMinWorldWidth(ScreenSize.FIT.getRenderWidth(machineType));
             viewport.setMaxWorldWidth(0);
-            viewport.setMinWorldHeight(ScreenSize.FIT.getRenderHeight());
+            viewport.setMinWorldHeight(ScreenSize.FIT.getRenderHeight(machineType));
             viewport.setMaxWorldHeight(0);
             viewport.setScaling(Scaling.fit);
         } else {
@@ -483,7 +484,8 @@ public class MachineInputProcessor extends InputAdapter {
             screenSize = screenSize.rotateValue();
         }
         
-        adjustWorldMinMax(viewport.getScreenWidth(), viewport.getScreenHeight());
+        adjustWorldMinMax(viewport.getScreenWidth(), viewport.getScreenHeight(),
+                machineScreen.getMachineType());
     }
     
     /**
@@ -644,40 +646,39 @@ public class MachineInputProcessor extends InputAdapter {
         this.speakerOn = speakerOn;
     }
 
-    // TODO: Adjust these sizes to VIC sizes.
     public static enum ScreenSize {
-        // TODO: Needs to be dynamic for PAL/NTSC.
-        FIT(363, 272),
         
-        // TODO: Adjust to VIC sizes.
-        X9(2160, 2016),    // Fits 4K screen
-        X8(1920, 1792),    // Fits Surface 7 Pro
-        X7(1680, 1568),
-        X6(1440, 1344),
-        X5(1200, 1120),
-        X4(960, 896),
-        X3(720, 672),
-        X2(480, 448)
+        FIT(363, 272,  335,  252),     // 1.33 / 1.33
+        X7(2420, 1904, 2400, 1764),    // 1.27 / 1.36
+        X6(2200, 1632, 2000, 1512),    // 1.35 / 1.32
+        X5(1760, 1360, 1600, 1260),    // 1.29 / 1.27
+        X4(1320, 1088, 1400, 1008),    // 1.21 / 1.39
+        X3(1100, 816,  1000, 756),     // 1.35 / 1.32
+        X2(660,  544,  600,  504)      // 1.21 / 1.19
         ;
         
-        int renderWidth;
-        int renderHeight;
+        int palRenderWidth;
+        int palRenderHeight;
+        int ntscRenderWidth;
+        int ntscRenderHeight;
         
-        ScreenSize(int renderWidth, int renderHeight) {
-            this.renderWidth = renderWidth;
-            this.renderHeight = renderHeight;
+        ScreenSize(int palRenderWidth, int palRenderHeight, int ntscRenderWidth, int ntscRenderHeight) {
+            this.palRenderWidth = palRenderWidth;
+            this.palRenderHeight = palRenderHeight;
+            this.ntscRenderWidth = ntscRenderWidth;
+            this.ntscRenderHeight = ntscRenderWidth;
         }
         
         ScreenSize rotateValue() {
-            return values()[(ordinal() + 1) % 9];
+            return values()[(ordinal() + 1) % 7];  // WAS 9
         }
         
-        public int getRenderWidth() {
-            return renderWidth;
+        public int getRenderWidth(MachineType machineType) {
+            return palRenderWidth;
         }
         
-        public int getRenderHeight() {
-            return renderHeight;
+        public int getRenderHeight(MachineType machineType) {
+            return palRenderHeight;
         }
     }
     
