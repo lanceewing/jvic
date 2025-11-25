@@ -4,7 +4,6 @@ import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.memory.MemoryMappedChip;
 import emu.jvic.snap.Snapshot;
-import emu.jvic.sound.SoundGenerator;
 
 /**
  * This class emulates the VIC chip. The emulation is very similar to the PIVIC firmware code,
@@ -203,33 +202,6 @@ public class Vic extends MemoryMappedChip {
     private int pixelCounter;
 
     /**
-     * Represents the data for one VIC frame.
-     */
-    class Frame {
-
-        /**
-         * Holds the pixel data for the TV frame screen.
-         */
-        short framePixels[];
-
-        /**
-         * Says whether this frame is ready to be blitted to the GPU.
-         */
-        boolean ready;
-    }
-
-    /**
-     * An array of two Frames, one being the one that the VIC is currently writing
-     * to, the other being the last one that was completed and ready to blit.
-     */
-    private Frame[] frames;
-
-    /**
-     * The index of the active frame within the frames. This will toggle between 0 and 1.
-     */
-    private int activeFrame;
-
-    /**
      * A lookup table for determining the start of video memory.
      */
     private final static int videoMemoryTable[] = {
@@ -323,8 +295,6 @@ public class Vic extends MemoryMappedChip {
 
     // Index of the current border colour (used temporarily when we don't want to use the define multiple times in a cycle)
     private int borderColourIndex;
-    
-    private SoundGenerator soundGenerator;
 
     
     /**
@@ -332,21 +302,11 @@ public class Vic extends MemoryMappedChip {
      * 
      * @param pixelData Interface to the platform specific mechanism for writing pixels.
      * @param machineType The type of machine, PAL or NTSC.
-     * @param soundGenerator The SoundGenerator implementation to generate and play sound with.
      * @param snapshot    Optional snapshot of the machine state to start with.
      */
-    public Vic(PixelData pixelData, MachineType machineType, SoundGenerator soundGenerator, Snapshot snapshot) {
+    public Vic(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
         this.pixelData = pixelData;
         this.machineType = machineType;
-        this.soundGenerator = soundGenerator;
-
-        frames = new Frame[2];
-        frames[0] = new Frame();
-        frames[0].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-        frames[0].ready = false;
-        frames[1] = new Frame();
-        frames[1].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-        frames[1].ready = false;
 
         reset();
 
@@ -597,7 +557,7 @@ public class Vic extends MemoryMappedChip {
      * 
      * @return
      */
-    public boolean emulateCyclePal(boolean doSound) {
+    public boolean emulateCyclePal() {
         boolean frameRenderComplete = false;
 
         // Expressions to access different parts of control registers.
@@ -731,16 +691,6 @@ public class Vic extends MemoryMappedChip {
                     // Last line was 0, which is the end of the visible lines.
                     if (verticalCounter == 1) {
                         pixelCounter = 0;
-    
-                        synchronized (frames) {
-                            // Mark the current frame as complete.
-                            frames[activeFrame].ready = true;
-    
-                            // Toggle the active frame.
-                            activeFrame = ((activeFrame + 1) % 2);
-                            frames[activeFrame].ready = false;
-                        }
-    
                         frameRenderComplete = true;
                     }
     
@@ -1411,39 +1361,16 @@ public class Vic extends MemoryMappedChip {
                 }
                 break;
         }
-
-        // Audio.
-        soundGenerator.emulateCycle(doSound);
         
         return frameRenderComplete;
     }
 
     /**
-     * Gets the pixels for the current frame from the VIC chip.
-     * 
-     * @return The pixels for the current frame. Returns null if there isn't one
-     *         that is ready.
-     */
-    public short[] getFramePixels() {
-        short[] framePixels = null;
-        synchronized (frames) {
-            Frame nonActiveFrame = frames[((activeFrame + 1) % 2)];
-            if (nonActiveFrame.ready) {
-                nonActiveFrame.ready = false;
-                framePixels = nonActiveFrame.framePixels;
-            }
-        }
-        return framePixels;
-    }
-
-    /**
      * Emulates PIVIC NTSC loop.
-     * 
-     * @param doSound
      * 
      * @return
      */
-    public boolean emulateCycleNtsc(boolean doSound) {
+    public boolean emulateCycleNtsc() {
         boolean frameRenderComplete = false;
 
         // Expressions to access different parts of control registers.
@@ -1546,16 +1473,6 @@ public class Vic extends MemoryMappedChip {
     
                 if (verticalCounter == 1) {
                     pixelCounter = 0;
-    
-                    synchronized (frames) {
-                        // Mark the current frame as complete.
-                        frames[activeFrame].ready = true;
-    
-                        // Toggle the active frame.
-                        activeFrame = ((activeFrame + 1) % 2);
-                        frames[activeFrame].ready = false;
-                    }
-    
                     frameRenderComplete = true;
                 }
     
@@ -2327,9 +2244,6 @@ public class Vic extends MemoryMappedChip {
                 }
                 break;
         }
-        
-        // Audio.
-        soundGenerator.emulateCycle(doSound);
 
         return frameRenderComplete;
     }

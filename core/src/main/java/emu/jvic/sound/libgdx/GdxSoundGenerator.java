@@ -54,8 +54,7 @@ public class GdxSoundGenerator extends SoundGenerator {
     }
 
     @Override
-    public void emulateCycle(boolean writeSamples) {
-     // Audio.
+    public void emulateCycle() {
         // 5-bit counter in the 6561, but only bottom 4 bits are used. Other bit might have been used for 6562/3.
         soundClockDividerCounter = ((soundClockDividerCounter + 1) & 0xF);
 
@@ -99,9 +98,7 @@ public class GdxSoundGenerator extends SoundGenerator {
 
         // If enough cycles have elapsed since the last sample, then output another.
         if (--cyclesToNextSample <= 0) {
-            if (writeSamples) {
-                writeSample();
-            }
+            writeSample();
             cyclesToNextSample += cyclesPerSample;
         }
     }

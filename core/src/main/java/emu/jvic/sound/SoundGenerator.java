@@ -20,7 +20,7 @@ public abstract class SoundGenerator {
     
     public abstract void initSound(MachineType machineType);
     
-    public abstract void emulateCycle(boolean writeSamples);
+    public abstract void emulateCycle();
     
     public abstract void pauseSound();
     

@@ -96,7 +96,7 @@ public class DesktopJVicRunner extends JVicRunner {
             }
 
             // Updates the Machine's state for a frame.
-            machine.update(warpSpeed);
+            machine.update();
 
             if (!warpSpeed) {
                 // Throttle at expected FPS. Note that the PSG naturally throttles at 50 FPS

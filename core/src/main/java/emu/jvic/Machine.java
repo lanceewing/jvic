@@ -126,7 +126,7 @@ public class Machine {
         cpu = new Cpu6502(snapshot);
 
         // Create the VIC chip and configure it as per the current TV type.
-        vic = new Vic(pixelData, machineType, soundGenerator, snapshot);
+        vic = new Vic(pixelData, machineType, snapshot);
 
         // Create the peripherals.
         keyboard = new Keyboard(keyboardMatrix);
@@ -178,26 +178,22 @@ public class Machine {
 
     /**
      * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
      */
-    public void update(boolean warpSpeed) {
+    public void update() {
         if (machineType.isNTSC()) {
-            updateNTSC(warpSpeed);
+            updateNTSC();
         } else {
-            updatePAL(warpSpeed);
+            updatePAL();
         }
     }
 
     /**
-     * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
+     * Updates the state of the machine of the machine until a frame is complete.
      */
-    public void updatePAL(boolean warpSpeed) {
+    public void updatePAL() {
         boolean frameComplete = false;
         do {
-            frameComplete |= vic.emulateCyclePal(!warpSpeed);
+            frameComplete |= vic.emulateCyclePal();
             cpu.emulateCycle();
             via1.emulateCycle();
             via2.emulateCycle();
@@ -206,14 +202,12 @@ public class Machine {
     }
 
     /**
-     * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
+     * Updates the state of the machine of the machine until a frame is complete.
      */
-    public void updateNTSC(boolean warpSpeed) {
+    public void updateNTSC() {
         boolean frameComplete = false;
         do {
-            frameComplete |= vic.emulateCycleNtsc(!warpSpeed);
+            frameComplete |= vic.emulateCycleNtsc();
             cpu.emulateCycle();
             via1.emulateCycle();
             via2.emulateCycle();
@@ -264,15 +258,22 @@ public class Machine {
     }
 
     /**
-     * Gets the pixels for the current frame from the VIC chip.
+     * Emulates a single machine cycle.
      * 
-     * @return The pixels for the current frame. Returns null if there isn't one
-     *         that is ready.
+     * @return true If the VIC chip has indicated that a frame should be rendered.
      */
-    public short[] getFramePixels() {
-        return vic.getFramePixels();
+    public boolean emulateCycle() {
+        boolean render = machineType.isNTSC()? 
+                vic.emulateCycleNtsc() : 
+                vic.emulateCyclePal(); 
+        cpu.emulateCycle();
+        via1.emulateCycle();
+        via2.emulateCycle();
+        c1541Drive.emulateCycle();
+        soundGenerator.emulateCycle();
+        return render;
     }
-
+    
     /**
      * Pauses and resumes the Machine.
      * 
