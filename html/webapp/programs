@@ -1,0 +1,37 @@
+SSJSKey = 'iwPcQOSK7AzJ43FcPCZvxu4Z2u6p70o6jN51Umi9hBwbLZU9ee175zn3'
+
+const targetUrl = req.arguments.url? req.arguments.url : '';
+
+if (targetUrl == '') {
+    res.contentType('text/plain');
+    res.write('Missing target URL.', 400);
+    res.end();
+}
+else {
+    var request = new httpRequest();
+    request.onload = function(e) {
+        if (e.target.status == 200) {
+            let headers = e.target.responseHeaders;
+            for (let i=0; i<headers.length; i+=2) {
+                let headerName = headers[i];
+                let headerValue = headers[i+1];
+                res.setHeader(headerName, headerValue);
+            }
+            res.setHeader('Cache-Control', 'no-cache');
+            res.contentType('application/octet-stream');
+            res.write(e.target.response, 200);
+            res.end();
+        } else {
+            res.contentType('text/plain');
+            res.write('Failed to fetch remote file ' + targetUrl, e.target.status);
+            res.end();
+        }
+    }
+    request.onerror = function(e) {
+        res.contentType('text/plain');
+        res.write('Failed to fetch remote file ' + targetUrl, 500);
+        res.end();
+    }
+    request.open("GET", targetUrl, true);
+    request.send();
+}

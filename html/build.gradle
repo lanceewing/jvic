@@ -20,7 +20,7 @@ gwt {
 
   // Needs to be in front of "modules" below.
   src = files(file('src/main/java'), project(":core").file('src/main/java'))
-  modules += ["emu.jvic.GdxDefinition"]
+  modules += ["emu.jvic.GdxDefinition","emu.jvic.JVicWebWorker"]
   devModules += ["emu.jvic.GdxDefinitionSuperdev"]
   project.webAppDirName = "webapp"
 
@@ -29,7 +29,7 @@ gwt {
   //// The next line can be useful to uncomment if you want output that hasn't been obfuscated.
 //  compiler.style = org.docstr.gradle.plugins.gwt.Style.DETAILED
 
-  sourceLevel = 1.11
+  sourceLevel = 1.8
 }
 
 dependencies {
@@ -37,8 +37,11 @@ dependencies {
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1"
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1:sources"
   implementation "com.google.jsinterop:jsinterop-annotations:2.0.2:sources"
+  implementation "de.knightsoft-net:gwt-webworker:1.0.8"
+  implementation "org.ainslec:gwt-jszip:1.0.0"
+  implementation "space.earlygrey:shapedrawer:$shapedrawerVersion:sources"
+  api "com.github.payne911:PieMenu:$pieMenuVersion:sources"
   implementation project(':core')
-
 }
 
 import org.akhikhl.gretty.AppBeforeIntegrationTestTask

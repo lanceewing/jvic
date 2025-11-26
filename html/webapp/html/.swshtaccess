@@ -1,0 +1,15 @@
+[
+    {
+        "request_path": "all files",
+        "type": "additional header",
+        "headerType": "Cross-Origin-Opener-Policy",
+        "headerValue": "same-origin"
+    },
+    {
+        "request_path": "all files",
+        "type": "additional header",
+        "headerType": "Cross-Origin-Embedder-Policy",
+        "headerValue": "credentialless"
+    }
+
+]
