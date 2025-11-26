@@ -5,7 +5,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import emu.jvic.worker.Worker;
 
 /**
- * Creates and manages the AudioWorklet for playing the AY-3-8912 sample data.
+ * Creates and manages the AudioWorklet for playing the VIC chip sample data.
  */
 public class PSGAudioWorklet {
 

@@ -31,7 +31,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     private GwtKeyboardMatrix keyboardMatrix;
     private GwtPixelData pixelData;
     private GwtProgramLoader programLoader;
-    private GwtSoundGenerator psg;
+    private GwtSoundGenerator soundGenerator;
     
     /**
      * The actual Machine that runs the program.
@@ -72,7 +72,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 JavaScriptObject audioDataSAB = getNestedObject(eventObject, "audioDataSAB");
                 keyboardMatrix = new GwtKeyboardMatrix(keyMatrixSAB);
                 pixelData = new GwtPixelData(pixelDataSAB);
-                psg = new GwtSoundGenerator(audioDataSAB);
+                soundGenerator = new GwtSoundGenerator(audioDataSAB);
                 break;
                 
             case "Start":
@@ -89,7 +89,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
                 RamType ramType = RamType.valueOf(appConfigItem.getRam());
                 nanosPerFrame = (1000000000 / machineType.getFramesPerSecond());
-                machine = new Machine(psg, keyboardMatrix, pixelData);
+                machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
                 machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
                 // TODO: lastTime = TimeUtils.nanoTime() - nanosPerFrame;
                 performAnimationFrame(0);
@@ -97,12 +97,12 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 
             case "AudioWorkletReady":
                 logToJSConsole("Enabling PSG sample writing...");
-                psg.enableWriteSamples();
+                soundGenerator.enableWriteSamples();
                 break;
                 
             case "SoundOff":
                 logToJSConsole("Disabling PSG sample writing...");
-                psg.disableWriteSamples();
+                soundGenerator.disableWriteSamples();
                 break;
                 
             case "Pause":
@@ -200,16 +200,16 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
             startTime = timestamp;
             
         } else {
-            if (psg.isWriteSamplesEnabled()) {
+            if (soundGenerator.isWriteSamplesEnabled()) {
                 cycleCount = 0;
                 
                 // If the AudioWorklet is running, then adjust expected cycle count
                 // to a value that would leave the available samples in the queue 
                 // at a roughly fixed number. This is to avoid under or over generating
                 // samples, being always a given number of samples ahead in the buffer.
-                int currentBufferSize = psg.getSampleSharedQueue().availableRead();
+                int currentBufferSize = soundGenerator.getSampleSharedQueue().availableRead();
                 int samplesToGenerate = (currentBufferSize >= GwtSoundGenerator.SAMPLE_LATENCY? 0 : GwtSoundGenerator.SAMPLE_LATENCY - currentBufferSize);
-                expectedCycleCount = (int)(samplesToGenerate * GwtSoundGenerator.CYCLES_PER_SAMPLE);
+                expectedCycleCount = (int)(samplesToGenerate * soundGenerator.getCyclesPerSample());
                 
                 // While the emulation cycle rate is throttling by the audio thread 
                 // output rate, we keep resetting the startTime, in case sound is turned
