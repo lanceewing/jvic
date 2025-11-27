@@ -209,31 +209,33 @@ public class Vic20Memory extends Memory {
         };
 
         if (waitForBasic) {
-            // We need to wait for BASIC to boot up before loading the program.
-            Thread basicWaitThread = new Thread() {
-                public void run() {
-                    // The simplest way to wait for BASIC to be ready is to check for
-                    // the starting cursor position.
-                    while (mem[0xD1] != 110) {
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException ie) {
-                        }
-                    }
-
-                    // Now that the BASIC cursor is in the start position, let's load the
-                    // program data in to memory.
-                    loadProgramTask.run();
-
-                    // And finally pretend that the user typed RUN
-                    mem[631] = 'R';
-                    mem[632] = 'U';
-                    mem[633] = 'N';
-                    mem[634] = 0x0D;
-                    mem[198] = 4;
-                }
-            };
-            basicWaitThread.start();
+            // TODO: Needs to be moved into platform independent logic. 
+            
+//            // We need to wait for BASIC to boot up before loading the program.
+//            Thread basicWaitThread = new Thread() {
+//                public void run() {
+//                    // The simplest way to wait for BASIC to be ready is to check for
+//                    // the starting cursor position.
+//                    while (mem[0xD1] != 110) {
+//                        try {
+//                            Thread.sleep(10);
+//                        } catch (InterruptedException ie) {
+//                        }
+//                    }
+//
+//                    // Now that the BASIC cursor is in the start position, let's load the
+//                    // program data in to memory.
+//                    loadProgramTask.run();
+//
+//                    // And finally pretend that the user typed RUN
+//                    mem[631] = 'R';
+//                    mem[632] = 'U';
+//                    mem[633] = 'N';
+//                    mem[634] = 0x0D;
+//                    mem[198] = 4;
+//                }
+//            };
+//            basicWaitThread.start();
 
         } else {
             // In this case we assume BASIC is already loaded, so we load the program

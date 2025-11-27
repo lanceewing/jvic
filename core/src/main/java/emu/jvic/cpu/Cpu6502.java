@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import emu.jvic.BaseChip;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.util.StringUtils;
 
 /**
  * This class emulates a 6502 CPU. It emulates at the machine cycle level
@@ -1774,7 +1775,7 @@ public class Cpu6502 extends BaseChip {
     
     if (instructionSteps.length == 0) {
         if (instructionRegister != 114)
-      System.out.println(String.format("Unknown instruction: %d (%02X)", instructionRegister, instructionRegister));
+      System.out.println(StringUtils.format("Unknown instruction: {0}", instructionRegister));
     }
   }
   
@@ -1868,7 +1869,7 @@ public class Cpu6502 extends BaseChip {
     StringBuffer insBuf = new StringBuffer();
     insBuf.append(getRegisterStatus());
     insBuf.append("\n");
-    insBuf.append(String.format("%04X", start));
+    insBuf.append(StringUtils.format("{0}", start));
     insBuf.append(":    ");
     insBuf.append(instructionNames[instructionInfo[insNum]]);
 
@@ -1908,7 +1909,7 @@ public class Cpu6502 extends BaseChip {
   public String getRegisterStatus() {
     StringBuffer regBuf = new StringBuffer();
 
-    regBuf.append(String.format("%010d", totalCycles));
+    regBuf.append(StringUtils.format("{0}", totalCycles));
     regBuf.append(":  ");
     regBuf.append("PC=");
     regBuf.append(addLeadingZeroes(Integer.toHexString(programCounter), 4));

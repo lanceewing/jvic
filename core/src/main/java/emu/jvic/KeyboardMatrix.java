@@ -165,7 +165,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
         // Initialise the hashmap.
         for (int i = 0; i < keyConvMapArr.length; i++) {
             int[] keyDetails = keyConvMapArr[i];
-            keyConvHashMap.put(new Integer(keyDetails[0]), keyDetails);
+            keyConvHashMap.put(keyDetails[0], keyDetails);
         }
     }
     
@@ -181,7 +181,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
             minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
             
             // Update the key matrix to indicate to the Oric that this key is down.
-            int keyDetails[] = (int[]) keyConvHashMap.get(new Integer(keycode));
+            int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
             if (keyDetails != null) {
                 int currentRowValue = getKeyMatrixRow(keyDetails[1]);
                 setKeyMatrixRow(keyDetails[1], currentRowValue | keyDetails[2]);
@@ -226,7 +226,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 
             } else {
                 // Otherwise we process the release by updating the key matrix that the Oric polls.
-                int keyDetails[] = (int[]) keyConvHashMap.get(new Integer(keycode));
+                int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
                 if (keyDetails != null) {
                     int currentRowValue = getKeyMatrixRow(keyDetails[1]);
                     setKeyMatrixRow(keyDetails[1], currentRowValue & ~keyDetails[2]);

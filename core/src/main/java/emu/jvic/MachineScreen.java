@@ -15,9 +15,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.PixmapIO.PNG;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -576,27 +574,29 @@ public class MachineScreen implements Screen {
                 filePath.append("_");
                 filePath.append(System.currentTimeMillis());
                 filePath.append(".png");
-                PixmapIO.writePNG(Gdx.files.external(filePath.toString()), screenPixmap);
+                // TODO: Move to platform specific code, as not supported by GWT/HTML5
+                //PixmapIO.writePNG(Gdx.files.external(filePath.toString()), screenPixmap);
             } catch (Exception e) {
                 // Ignore.
             }
         }
-        if (appConfigItem != null) {
-            try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
-                try {
-                    writer.setFlipY(false);
-                    writer.write(out, screenPixmap);
-                } finally {
-                    writer.dispose();
-                }
-                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
-                jvic.getScreenshotStore().flush();
-            } catch (IOException ex) {
-                // Ignore.
-            }
-        }
+        // TODO: Move to platform specific code, as not supported by GWT/HTML5
+//        if (appConfigItem != null) {
+//            try {
+//                ByteArrayOutputStream out = new ByteArrayOutputStream();
+//                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
+//                try {
+//                    writer.setFlipY(false);
+//                    writer.write(out, screenPixmap);
+//                } finally {
+//                    writer.dispose();
+//                }
+//                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
+//                jvic.getScreenshotStore().flush();
+//            } catch (IOException ex) {
+//                // Ignore.
+//            }
+//        }
     }
 
     @Override
