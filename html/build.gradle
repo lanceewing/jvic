@@ -27,7 +27,7 @@ gwt {
   compiler.strict = true
   compiler.disableCastChecking = true
   //// The next line can be useful to uncomment if you want output that hasn't been obfuscated.
-//  compiler.style = org.docstr.gradle.plugins.gwt.Style.DETAILED
+  compiler.style = org.docstr.gradle.plugins.gwt.Style.DETAILED
 
   sourceLevel = 1.8
 }
