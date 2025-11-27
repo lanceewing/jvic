@@ -34,10 +34,10 @@ public class DesktopLauncher {
     
     private static Lwjgl3Application createApplication(Map<String, String> argsMap) {
         DesktopDialogHandler desktopDialogHandler = new DesktopDialogHandler();
-        DesktopJVicRunner desktopJOricRunner = new DesktopJVicRunner(
+        DesktopJVicRunner desktopJVicRunner = new DesktopJVicRunner(
                 new DesktopKeyboardMatrix(), new DesktopPixelData(), 
                 new DesktopSoundGenerator());
-        JVic jvic = new JVic(desktopJOricRunner, desktopDialogHandler, argsMap);
+        JVic jvic = new JVic(desktopJVicRunner, desktopDialogHandler, argsMap);
         return new Lwjgl3Application(jvic, getDefaultConfiguration(jvic));
     }
 

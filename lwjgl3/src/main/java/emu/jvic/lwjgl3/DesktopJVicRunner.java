@@ -54,7 +54,7 @@ public class DesktopJVicRunner extends JVicRunner {
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         
-        // Create the Machine instance that will run the Oric program.
+        // Create the Machine instance that will run the VIC 20 program.
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
         
         // Load the ROM files.
@@ -67,7 +67,7 @@ public class DesktopJVicRunner extends JVicRunner {
         
         machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
         
-        final int NANOS_PER_FRAME = (1000000000 / MachineType.PAL.getFramesPerSecond());
+        final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         
         long lastTime = TimeUtils.nanoTime();
 
