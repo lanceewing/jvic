@@ -36,7 +36,7 @@ public class GwtKeyboardMatrix extends KeyboardMatrix {
     }-*/;
     
     private native Uint8ClampedArray createKeyMatrixArray()/*-{
-        var sharedArrayBuffer = new SharedArrayBuffer(8);
+        var sharedArrayBuffer = new SharedArrayBuffer(513);
         return new Uint8ClampedArray(sharedArrayBuffer);
     }-*/;
     
