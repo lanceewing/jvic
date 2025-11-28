@@ -99,14 +99,14 @@ public class GwtJVicRunner extends JVicRunner {
         programLoader.fetchProgram(appConfigItem, p -> createWorker(appConfigItem, p));
     }
 
-    private ArrayBuffer convertProgramToArrayBuffer(Program program) {
+    private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem) {
         int programDataLength = (program != null? program.getProgramData().length : 0);
         ArrayBuffer programArrayBuffer = TypedArrays.createArrayBuffer(
                 programDataLength + 8192 + 16384 + 4096 + 8192);
         Uint8Array programUint8Array = TypedArrays.createUint8Array(programArrayBuffer);
         int index = 0;
         
-        MachineType machineType = MachineType.valueOf(program.getAppConfigItem().getMachineType());
+        MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         byte[] basicRom = Gdx.files.internal("roms/basic.rom").readBytes();
         byte[] dos1541Rom = Gdx.files.internal("roms/dos1541.rom").readBytes();
         byte[] charRom = Gdx.files.internal("roms/char.rom").readBytes();
@@ -142,7 +142,7 @@ public class GwtJVicRunner extends JVicRunner {
      */
     public void createWorker(AppConfigItem appConfigItem, Program program) {
         // Convert program bytes to ArrayBuffer.
-        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program);
+        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem);
         
         worker = Worker.create("/worker/worker.nocache.js");
         
