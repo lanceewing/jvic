@@ -81,7 +81,7 @@ public class Machine {
      * @param machineType 
      * @param ramType
      * 
-     * @return Runnable that, if null, should be run when BASIC is ready.
+     * @return Runnable that, if not null, should be run when BASIC is ready.
      */
     public Runnable init(
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,

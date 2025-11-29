@@ -53,9 +53,9 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     private boolean warpSpeed = false;
     
     /**
-     * Whether to automatically load program or not.
+     * Runnable that, if not null, should be run when BASIC is ready.
      */
-    private boolean loadProgram;
+    private Runnable autoLoadProgram;
     
     // Used by the old implementations.
     private double lastTime = -1;
@@ -94,7 +94,9 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 RamType ramType = RamType.valueOf(appConfigItem.getRam());
                 nanosPerFrame = (1000000000 / machineType.getFramesPerSecond());
                 machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
-                machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
+                autoLoadProgram = machine.init(
+                        basicRom, kernalRom, charRom, dos1541Rom, 
+                        program, machineType, ramType);
                 // TODO: lastTime = TimeUtils.nanoTime() - nanosPerFrame;
                 performAnimationFrame(0);
                 break;
@@ -230,6 +232,28 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 expectedCycleCount = 1000000;
                 cycleCount = 0;
                 startTime = timestamp;
+            }
+            
+            // Check for BASIC program auto-load
+            if (autoLoadProgram != null) {
+                int[] mem = machine.getMemory().getMemoryArray();
+                
+                // We need to wait for BASIC to boot up before loading the program.
+                // The simplest way to wait for BASIC to be ready is to check for
+                // the starting cursor position.
+                if (mem[0xD1] == 110) {
+                    // Now that the BASIC cursor is in the start position, let's load the
+                    // program data in to memory.
+                    autoLoadProgram.run();
+                    autoLoadProgram = null;
+                    
+                    // Pretend that the user typed RUN.
+                    mem[631] = 'R';
+                    mem[632] = 'U';
+                    mem[633] = 'N';
+                    mem[634] = 0x0D;
+                    mem[198] = 4;
+                }
             }
             
             // Emulate the required number of cycles.

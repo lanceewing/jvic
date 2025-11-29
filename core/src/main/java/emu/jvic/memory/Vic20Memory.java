@@ -187,7 +187,7 @@ public class Vic20Memory extends Memory {
      * @param waitForBasic If true then it assumes the machine hasn't yet started,
      *                     so will wait for BASIC to load first.
      *                     
-     * @return Runnable that, if null, should be run when BASIC is ready.
+     * @return Runnable that, if not null, should be run when BASIC is ready.
      */
     public Runnable loadBasicProgram(final byte[] programData, boolean waitForBasic) {
         final int startAddress = (programData[1] << 8) + programData[0];
