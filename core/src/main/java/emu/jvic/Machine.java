@@ -8,6 +8,7 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
+import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
@@ -79,13 +80,16 @@ public class Machine {
      * @param program 
      * @param machineType 
      * @param ramType
+     * 
+     * @return Runnable that, if null, should be run when BASIC is ready.
      */
-    public void init(
+    public Runnable init(
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
             Program program, MachineType machineType, RamType ramType) {
         
         byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
+        Runnable autoLoadRunnable = null;
 
         this.machineType = machineType;
 
@@ -160,7 +164,7 @@ public class Machine {
             if ("CART".equals(programType)) {
                 memory.loadCart(programData);
             } else if ("PRG".equals(programType)) {
-                memory.loadBasicProgram(programData, true);
+                autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
                 // Insert the disk ready to be booted.
                 c1541Drive.insertDisk(programData);
@@ -174,6 +178,8 @@ public class Machine {
         if (snapshot == null) {
             cpu.reset();
         }
+        
+        return autoLoadRunnable;
     }
 
     /**
@@ -335,5 +341,14 @@ public class Machine {
      */
     public Vic getVic() {
         return this.vic;
+    }
+    
+    /**
+     * Gets the Memory used by this Machine.
+     * 
+     * @return
+     */
+    public Memory getMemory() {
+        return memory;
     }
 }

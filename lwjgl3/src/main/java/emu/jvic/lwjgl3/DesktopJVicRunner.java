@@ -65,7 +65,8 @@ public class DesktopJVicRunner extends JVicRunner {
                 Gdx.files.internal("roms/kernal_ntsc.rom").readBytes() :
                 Gdx.files.internal("roms/kernal_pal.rom").readBytes());
         
-        machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
+        Runnable autoLoadProgram = machine.init(
+                basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         
@@ -97,6 +98,28 @@ public class DesktopJVicRunner extends JVicRunner {
 
             // Updates the Machine's state for a frame.
             machine.update();
+            
+            // Check for BASIC program auto-load
+            if (autoLoadProgram != null) {
+                int[] mem = machine.getMemory().getMemoryArray();
+                
+                // We need to wait for BASIC to boot up before loading the program.
+                // The simplest way to wait for BASIC to be ready is to check for
+                // the starting cursor position.
+                if (mem[0xD1] == 110) {
+                    // Now that the BASIC cursor is in the start position, let's load the
+                    // program data in to memory.
+                    autoLoadProgram.run();
+                    autoLoadProgram = null;
+                    
+                    // Pretend that the user typed RUN.
+                    mem[631] = 'R';
+                    mem[632] = 'U';
+                    mem[633] = 'N';
+                    mem[634] = 0x0D;
+                    mem[198] = 4;
+                }
+            }
 
             if (!warpSpeed) {
                 // Throttle at expected FPS. Note that the PSG naturally throttles at 50 FPS

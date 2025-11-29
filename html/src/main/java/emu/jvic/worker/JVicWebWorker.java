@@ -30,7 +30,6 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     // between the client and worker.
     private GwtKeyboardMatrix keyboardMatrix;
     private GwtPixelData pixelData;
-    private GwtProgramLoader programLoader;
     private GwtSoundGenerator soundGenerator;
     
     /**
@@ -52,6 +51,11 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
      * Whether or not the machine is running in warp speed mode.
      */
     private boolean warpSpeed = false;
+    
+    /**
+     * Whether to automatically load program or not.
+     */
+    private boolean loadProgram;
     
     // Used by the old implementations.
     private double lastTime = -1;
