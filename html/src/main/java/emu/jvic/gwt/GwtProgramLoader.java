@@ -52,18 +52,7 @@ public class GwtProgramLoader implements ProgramLoader {
         byte[] programData = null;
         
         if ((data != null) && (data.length >= 4)) {
-            if ((data[0] == 0x16) && (data[1] == 0x16) && (data[2] == 0x16)) {
-                // At least 3 0x16 bytes followed by a 0x24 is a tape file.
-                appConfigItem.setFileType("TAPE");
-                programData = data;
-            }
-            else if ((data[0] == 0x4D) && (data[1] == 0x46) && (data[2] == 0x4D)) {
-                // MFM_DISK - 4D 46 4D 5F 44 49 53 4B
-                appConfigItem.setFileType("DISK");
-                programData = data;
-            }
-            else if ((data[0] == 0x50) && (data[1] == 0x4B) && (data[2] == 0x03) && (data[3] == 0x04)) {
-                // ZIP starts with: 50 4B 03 04
+            if (isZipFile(data)) {
                 logToJSConsole("Scanning ZIP file...");
                 
                 JSZip jsZip = JSZip.loadFromArray(Uint8Array.createUint8(data));
@@ -81,19 +70,36 @@ public class GwtProgramLoader implements ProgramLoader {
                                 appConfigItem.setFileType("DISK");
                                 break;
                             }
-                            if (isTapeFile(fileData)) {
-                                programData = fileData;
-                                appConfigItem.setFileType("TAPE");
+                            if (isPcvSnapshot(data)) {
+                                appConfigItem.setFileType("PCV");
+                                programData = data;
+                                break;
+                            }
+                            if (isProgramFile(data)) {
+                                appConfigItem.setFileType("PRG");
+                                programData = data;
                                 break;
                             }
                         }
                     }
                 }
             }
-            else {
-                // Assume it is ROM if not TAPE or DISK.
+            else if (isDiskFile(data)) {
+                appConfigItem.setFileType("DISK");
                 programData = data;
-                appConfigItem.setFileType("ROM");
+            }
+            else if (isPcvSnapshot(data)) {
+                appConfigItem.setFileType("PCV");
+                programData = data;
+            }
+            else if (isProgramFile(data)) {
+                appConfigItem.setFileType("PRG");
+                programData = data;
+            }
+            else {
+                // Assume CART for everything else.
+                appConfigItem.setFileType("CART");
+                programData = data;
             }
         }
         else {
@@ -112,14 +118,32 @@ public class GwtProgramLoader implements ProgramLoader {
         programConsumer.accept(program);
     }
     
-    private boolean isTapeFile(byte[] data) {
-        return ((data != null) && (data.length > 3) && 
-                (data[0] == 0x16) && (data[1] == 0x16) && (data[2] == 0x16));
+    private boolean isProgramFile(byte[] data) {
+        if ((data != null) && (data.length >= 2)) {
+            int startAddress = (data[1] << 8) + data[0];
+            return ((startAddress == 0x1201) || (startAddress == 0x0401) || (startAddress == 0x1001));
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean isZipFile(byte[] data) {
+        // ZIP starts with: 50 4B 03 04
+        return ((data != null) && (data.length >= 4) &&
+                (data[0] == 0x50) && (data[1] == 0x4B) && 
+                (data[2] == 0x03) && (data[3] == 0x04));
     }
     
     private boolean isDiskFile(byte[] data) {
-        return ((data != null) && (data.length > 3) && 
-                (data[0] == 0x4D) && (data[1] == 0x46) && (data[2] == 0x4D));
+        // .D64 files are almost always 174848 bytes. Greater values are non standard.
+        return ((data != null) && (data.length >= 174848));
+    }
+    
+    private boolean isPcvSnapshot(byte[] data) {
+        // PCVIC Signature : 50 43 56 49 43
+        return ((data != null) && (data.length >= 5) && 
+                (data[0] == 0x50) && (data[1] == 0x43) && (data[2] == 0x56) && 
+                (data[3] == 0x49) && (data[4] == 0x43));
     }
     
     private byte[] convertBinaryStringToBytes(String binaryStr) {
