@@ -52,7 +52,7 @@ public class DesktopLauncher {
         //// You may also need to configure GPU drivers to fully disable Vsync; this can cause screen tearing.
         //configuration.setWindowedMode(540, 960);
         configuration.setWindowedMode(960, 640);
-        configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+        configuration.setWindowIcon("jvic-128x128.png", "jvic-64x64.png", "jvic-32x32.png", "jvic-16x16.png");
         configuration.setWindowListener(new Lwjgl3WindowAdapter() {
             @Override
             public void filesDropped (String[] files) {
