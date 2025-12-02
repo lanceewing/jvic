@@ -135,7 +135,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
     private boolean restoreDown;
     
     /**
-     * HashMap used to store mappings between Java key events and Oric
+     * HashMap used to store mappings between Java key events and VIC 20
      * keyboard scan codes.
      */
     private HashMap<Integer, int[]> keyConvHashMap;
@@ -180,7 +180,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
             // Store the minimum expected release time for this key, i.e. current time + 50ms.
             minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
             
-            // Update the key matrix to indicate to the Oric that this key is down.
+            // Update the key matrix to indicate to the VIC 20 that this key is down.
             int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
             if (keyDetails != null) {
                 int currentRowValue = getKeyMatrixRow(keyDetails[1]);
@@ -225,7 +225,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 }
                 
             } else {
-                // Otherwise we process the release by updating the key matrix that the Oric polls.
+                // Otherwise we process the release by updating the key matrix that the VIC 20 polls.
                 int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
                 if (keyDetails != null) {
                     int currentRowValue = getKeyMatrixRow(keyDetails[1]);
