@@ -1,7 +1,5 @@
 package emu.jvic.io.disk;
 
-import com.badlogic.gdx.Gdx;
-
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.Via6522;
@@ -123,12 +121,13 @@ public class C1541Drive {
    * Constructor for C1541Drive.
    * 
    * @param serialBus The SerialBus that the 1541 disk drive is connected to.
+   * @param dos1541Rom Byte array containing the data for the DOS 1541 ROM.
    */
-  public C1541Drive(SerialBus serialBus) {
+  public C1541Drive(SerialBus serialBus, byte[] dos1541Rom) {
     cpu = new Cpu6502(null);
     via1 = createVia1();
     via2 = createVia2();
-    createMemory(cpu, via1, via2);
+    createMemory(cpu, via1, via2, dos1541Rom);
     this.serialBus = serialBus;
     cpu.reset();
   }
@@ -191,10 +190,11 @@ public class C1541Drive {
    * @param cpu The 6502 CPU that runs the 1541 disk drive unit.
    * @param via1 The first 6522 VIA that handles the serial communication with the serial port.
    * @param via2 The second 6522 VIA that handles the CPU R/W and motor control logic.
+   * @param dos1541Rom 
    * 
    * @return The created Memory.
    */
-  private Memory createMemory(final Cpu6502 cpu, final Via6522 via1, final Via6522 via2) {
+  private Memory createMemory(final Cpu6502 cpu, final Via6522 via1, final Via6522 via2, final byte[] dos1541Rom) {
     return new Memory(cpu, null) {{
       // UB2 is a 2048 x 8 bit RAM. UB2 resides at memory locations $0000-$07FF. This memory is
       // used for processor stack operations, general processor housekeeping, use program storage,
@@ -222,7 +222,7 @@ public class C1541Drive {
       // locations $C000-$DFFF. UB4 resides at memory locations $E000-$FFFF. UC5 and UC6 decodes the addresses
       // output from the microprocessor when selecting these ROMS. However, it isn't fully decoded, so also
       // mirrors from $8000-$9FFF and $A000-$BFFF.
-      mapChipToMemory(new RomChip(), 0x8000, 0xBFFF, 0x4000, Gdx.files.internal("roms/dos1541.rom").readBytes());
+      mapChipToMemory(new RomChip(), 0x8000, 0xBFFF, 0x4000, dos1541Rom);
       
       // Everything else is unmapped.
       UnconnectedMemory unconnectedMemory = new UnconnectedMemory();

@@ -1,7 +1,5 @@
 package emu.jvic;
 
-import com.badlogic.gdx.Gdx;
-
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
@@ -10,10 +8,13 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
+import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.sound.SoundGenerator;
+import emu.jvic.sound.libgdx.GdxSoundGenerator;
 import emu.jvic.video.Vic;
 
 /**
@@ -36,6 +37,11 @@ public class Machine {
     private SerialBus serialBus;
     private C1541Drive c1541Drive;
 
+    // Platform specific component.
+    private KeyboardMatrix keyboardMatrix;
+    private PixelData pixelData;
+    private SoundGenerator soundGenerator;
+    
     private boolean paused = true;
 
     private MachineType machineType;
@@ -47,51 +53,57 @@ public class Machine {
     private int screenBottom;
     private int screenWidth;
     private int screenHeight;
-
+    
     /**
      * Constructor for Machine.
-     */
-    public Machine() {
-    }
-
-    /**
-     * Initialises the machine. It will boot in to BASIC with the given RAM
-     * configuration.
      * 
-     * @param ramType     The RAM configuration to use.
-     * @param machineType The type of VIC 2- machine, i.e. PAL or NTSC.
+     * @param soundGenerator 
+     * @param keyboardMatrix 
+     * @param pixelData 
      */
-    public void init(RamType ramType, MachineType machineType) {
-        init(null, null, machineType, ramType);
+    public Machine(SoundGenerator soundGenerator, KeyboardMatrix keyboardMatrix, PixelData pixelData) {
+        if (soundGenerator != null) {
+            this.soundGenerator = soundGenerator;
+        } else {
+            this.soundGenerator = new GdxSoundGenerator();
+        }
+        this.keyboardMatrix = keyboardMatrix;
+        this.pixelData = pixelData;
     }
 
     /**
      * Initialises the machine, and optionally loads the given program file (if provided).
      * 
-     * @param programFile The internal path to the program file to automatically load and run.
-     * @param programType The type of program data, e.g. CART, PRG, V20, PCV, VICE, S20, etc.
-     * @param machineType The type of VIC 20 machine, i.e. PAL or NTSC.
-     * @param ramType     The RAM configuration to use.
+     * @param basicRom 
+     * @param kernalRom
+     * @param charRom 
+     * @param program 
+     * @param machineType 
+     * @param ramType
      * 
+     * @return Runnable that, if not null, should be run when BASIC is ready.
      */
-    public void init(String programFile, String programType, MachineType machineType, RamType ramType) {
-        byte[] programData = null;
+    public Runnable init(
+            byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
+            Program program, MachineType machineType, RamType ramType) {
+        
+        byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
+        Runnable autoLoadRunnable = null;
 
         this.machineType = machineType;
 
         // If we've been given the path to a program to load, we load the data prior to all
         // other initialisation. Primarily this is to work out what expansion we need.
-        if ((programFile != null) && (programFile.length() > 0)) {
+        if ((programData != null) && (programData.length > 0)) {
+            String programType = program.getProgramType();
             try {
-                programData = Gdx.files.internal(programFile).readBytes();
-
                 if ("PRG".equals(programType) && (programData != null) && (programData.length > 2)
                         && (ramType.equals(RamType.RAM_AUTO))) {
                     // If the RAM type is configured to auto detect, and its a PRG file, then we use
                     // the start address to determine RAM requirements.
                     int startAddress = (programData[1] << 8) + programData[0];
-
+        
                     if (startAddress == 0x1201) {
                         // 8K, 16K, or 24K. We'll give it the full 24K to cover all bases.
                         ramType = RamType.RAM_24K;
@@ -118,22 +130,26 @@ public class Machine {
         cpu = new Cpu6502(snapshot);
 
         // Create the VIC chip and configure it as per the current TV type.
-        vic = new Vic(machineType, snapshot);
+        vic = new Vic(pixelData, machineType, snapshot);
 
         // Create the peripherals.
-        keyboard = new Keyboard();
-        joystick = new Joystick();
+        keyboard = new Keyboard(keyboardMatrix);
+        joystick = new Joystick(keyboardMatrix);
         serialBus = new SerialBus();
-        c1541Drive = new C1541Drive(serialBus);
+        c1541Drive = new C1541Drive(serialBus, dos1541Rom);
 
         // Create two instances of the VIA chip; one for VIA1 and one for VIA2.
         via1 = new Via1(cpu, joystick, serialBus, snapshot);
         via2 = new Via2(cpu, keyboard, joystick, serialBus, snapshot);
-
+        
         // Now we create the memory, which will include mapping the VIC chip,
         // the VIA chips, and the creation of RAM chips and ROM chips.
-        memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, snapshot);
+        memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, 
+                basicRom, kernalRom, charRom, snapshot);
 
+        // Initialise the sound generator.
+        soundGenerator.init(memory.getMemoryArray(), machineType);
+        
         // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
         screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
         screenHeight = machineType.getVisibleScreenHeight();
@@ -141,20 +157,19 @@ public class Machine {
         screenRight = screenLeft + machineType.getVisibleScreenWidth();
         screenTop = machineType.getVerticalOffset();
         screenBottom = screenTop + machineType.getVisibleScreenHeight();
-
+        
         // Check if the resource parameters have been set.
         if ((programData != null) && (programData.length > 0)) {
-            if ("PRG".equals(programType)) {
-                memory.loadBasicProgram(programData, true);
-
+            String programType = program.getProgramType();
+            if ("CART".equals(programType)) {
+                memory.loadCart(programData);
+            } else if ("PRG".equals(programType)) {
+                autoLoadRunnable = memory.loadBasicProgram(programData, true);
+            } else if ("DISK".equals(programType)) {
+                // Insert the disk ready to be booted.
+                c1541Drive.insertDisk(programData);
             } else if ("PCV".equals(programType)) {
                 // Nothing to do. Snapshot was already loaded.
-            } else if ("DISK".equals(programType)) {
-                c1541Drive.insertDisk(programData);
-
-            } else {
-                // Default resource type is CART.
-                memory.loadCart(programData);
             }
         }
 
@@ -163,30 +178,28 @@ public class Machine {
         if (snapshot == null) {
             cpu.reset();
         }
+        
+        return autoLoadRunnable;
     }
 
     /**
      * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
      */
-    public void update(boolean warpSpeed) {
+    public void update() {
         if (machineType.isNTSC()) {
-            updateNTSC(warpSpeed);
+            updateNTSC();
         } else {
-            updatePAL(warpSpeed);
+            updatePAL();
         }
     }
 
     /**
-     * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
+     * Updates the state of the machine of the machine until a frame is complete.
      */
-    public void updatePAL(boolean warpSpeed) {
+    public void updatePAL() {
         boolean frameComplete = false;
         do {
-            frameComplete |= vic.emulateCyclePal(!warpSpeed);
+            frameComplete |= vic.emulateCyclePal();
             cpu.emulateCycle();
             via1.emulateCycle();
             via2.emulateCycle();
@@ -195,14 +208,12 @@ public class Machine {
     }
 
     /**
-     * Updates the state of the machine of the machine until a frame is complete
-     * 
-     * @param warpSpeed  true If the machine is running at warp speed.
+     * Updates the state of the machine of the machine until a frame is complete.
      */
-    public void updateNTSC(boolean warpSpeed) {
+    public void updateNTSC() {
         boolean frameComplete = false;
         do {
-            frameComplete |= vic.emulateCycleNtsc(!warpSpeed);
+            frameComplete |= vic.emulateCycleNtsc();
             cpu.emulateCycle();
             via1.emulateCycle();
             via2.emulateCycle();
@@ -253,15 +264,22 @@ public class Machine {
     }
 
     /**
-     * Gets the pixels for the current frame from the VIC chip.
+     * Emulates a single machine cycle.
      * 
-     * @return The pixels for the current frame. Returns null if there isn't one
-     *         that is ready.
+     * @return true If the VIC chip has indicated that a frame should be rendered.
      */
-    public short[] getFramePixels() {
-        return vic.getFramePixels();
+    public boolean emulateCycle() {
+        boolean render = machineType.isNTSC()? 
+                vic.emulateCycleNtsc() : 
+                vic.emulateCyclePal(); 
+        cpu.emulateCycle();
+        via1.emulateCycle();
+        via2.emulateCycle();
+        c1541Drive.emulateCycle();
+        soundGenerator.emulateCycle();
+        return render;
     }
-
+    
     /**
      * Pauses and resumes the Machine.
      * 
@@ -323,5 +341,14 @@ public class Machine {
      */
     public Vic getVic() {
         return this.vic;
+    }
+    
+    /**
+     * Gets the Memory used by this Machine.
+     * 
+     * @return
+     */
+    public Memory getMemory() {
+        return memory;
     }
 }

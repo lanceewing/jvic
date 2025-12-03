@@ -1,10 +1,7 @@
 package emu.jvic.video;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.AudioDevice;
-import com.badlogic.gdx.utils.GdxRuntimeException;
-
 import emu.jvic.MachineType;
+import emu.jvic.PixelData;
 import emu.jvic.memory.MemoryMappedChip;
 import emu.jvic.snap.Snapshot;
 
@@ -107,125 +104,87 @@ public class Vic extends MemoryMappedChip {
     //
     // Visible pixels - From 12.75 to 70.915 Len: 58.165 cycles (232.66 pixels, i.e. approx. 233)
     
-    private static final int PAL_FRONTPORCH_1 = (4 << 16);      // From 0 to 10 
-    private static final int PAL_FRONTPORCH_2 = (3 << 16);      // From 1 to 1.75
-    private static final int PAL_HSYNC = (20 << 16);            // From 1.75 to 6.75
-    private static final int PAL_BREEZEWAY = (3 << 16);         // From 6.75 to 7.5
-    private static final int PAL_COLBURST_O = (17 << 16);       // From 7.5 to 11.75
-    private static final int PAL_COLBURST_E = (17 << 16);       // From 7.5 to 11.75
-    private static final int PAL_BACKPORCH = (4 << 16);         // From 11.75 to 12.75
+    private static final int PAL_FRONTPORCH_1 = (4 << 0);      // From 0 to 10 
+    private static final int PAL_FRONTPORCH_2 = (3 << 0);      // From 1 to 1.75
+    private static final int PAL_HSYNC = (20 << 0);            // From 1.75 to 6.75
+    private static final int PAL_BREEZEWAY = (3 << 0);         // From 6.75 to 7.5
+    private static final int PAL_COLBURST_O = (17 << 0);       // From 7.5 to 11.75
+    private static final int PAL_COLBURST_E = (17 << 0);       // From 7.5 to 11.75
+    private static final int PAL_BACKPORCH = (4 << 0);         // From 11.75 to 12.75
     
     // Vertical blanking and sync.
-    private static final int PAL_LONG_SYNC_L = (133 << 16);
-    private static final int PAL_LONG_SYNC_H = (9 << 16);
-    private static final int PAL_SHORT_SYNC_L = (9 << 16);
-    private static final int PAL_SHORT_SYNC_H = (133 << 16);
+    private static final int PAL_LONG_SYNC_L = (133 << 0);
+    private static final int PAL_LONG_SYNC_H = (9 << 0);
+    private static final int PAL_SHORT_SYNC_L = (9 << 0);
+    private static final int PAL_SHORT_SYNC_H = (133 << 0);
 
     // Front porch split into two, to allow for change to vertical blanking after
     // first part, if required.
-    private static final int NTSC_FRONTPORCH_1 = (12 << 16);
-    private static final int NTSC_FRONTPORCH_2 = (4 << 16);
-    private static final int NTSC_HSYNC = (20 << 16);
-    private static final int NTSC_BREEZEWAY = (2 << 16);
-    private static final int NTSC_BACKPORCH = (2 << 16);
-    private static final int NTSC_LONG_SYNC_L = (110 << 16);
-    private static final int NTSC_LONG_SYNC_H = (20 << 16);
-    private static final int NTSC_SHORT_SYNC_L = (20 << 16);
-    private static final int NTSC_SHORT_SYNC_H = (110 << 16);
-    private static final int NTSC_BLANKING = (200 << 16);
+    private static final int NTSC_FRONTPORCH_1 = (12 << 0);
+    private static final int NTSC_FRONTPORCH_2 = (4 << 0);
+    private static final int NTSC_HSYNC = (20 << 0);
+    private static final int NTSC_BREEZEWAY = (2 << 0);
+    private static final int NTSC_BACKPORCH = (2 << 0);
+    private static final int NTSC_LONG_SYNC_L = (110 << 0);
+    private static final int NTSC_LONG_SYNC_H = (20 << 0);
+    private static final int NTSC_SHORT_SYNC_L = (20 << 0);
+    private static final int NTSC_SHORT_SYNC_H = (110 << 0);
+    private static final int NTSC_BLANKING = (200 << 0);
 
     // Two NTSC burst methods available CMD_BURST or PIXEL_RUN CMD_BURST is more 
     // experimental since it runs carrier cycles instead of dot clock cycles
     // 17 carrier cycles => 19.5 dot clock cycles, syncs up as 20 dot clock cycles
-    private static final int NTSC_BURST_E = (20 << 16);
-    private static final int NTSC_BURST_O = (20 << 16);
+    private static final int NTSC_BURST_E = (20 << 0);
+    private static final int NTSC_BURST_O = (20 << 0);
 
     private static final int CVBS_PIO = 0;
     private static final int CVBS_SM = 0;
 
-    private final static int palRGBA8888Colours[] = { 
-            0xFF000000, // BLACK
+    private final static int palOddRGBA8888Colours[] = { 
+            0x000000FF, // BLACK
             0xFFFFFFFF, // WHITE
-            0xFF211FB6, // RED
-            0xFFFFF04D, // CYAN
-            0xFFFF3FB4, // PURPLE
-            0xFF37E244, // GREEN
-            0xFFFF341A, // BLUE
-            0xFF1BD7DC, // YELLOW
-            0xFF0054CA, // ORANGE
-            0xFF72B0E9, // LIGHT ORANGE
-            0xFF9392E7, // PINK
-            0xFFFDF79A, // LIGHT CYAN
-            0xFFE09FFF, // LIGHT PURPLE
-            0xFF93E48F, // LIGHT GREEN
-            0xFFFF9082, // LIGHT BLUE
-            0xFF85DEE5  // LIGHT YELLOW
+            0x942741FF, // RED
+            0x66EAB5FF, // CYAN
+            0xA13ED2FF, // PURPLE
+            0x69DC30FF, // GREEN
+            0x2C3BC1FF, // BLUE
+            0xE1E631FF, // YELLOW
+            0xBF6531FF, // ORANGE
+            0xD5C382FF, // LIGHT ORANGE
+            0xD2AB8EFF, // PINK
+            0xC4EDFFFF, // LIGHT CYAN
+            0xE3A8D3FF, // LIGHT PURPLE
+            0xADF2C0FF, // LIGHT GREEN
+            0xAE99E9FF, // LIGHT BLUE
+            0xE7FFBEFF  // LIGHT YELLOW
+    };
+    
+    private final static int palEvenRGBA8888Colours[] = { 
+            0x000000FF, // BLACK
+            0xFFFFFFFF, // WHITE
+            0x982D18FF, // RED
+            0x73D5FFFF, // CYAN
+            0xB63BA7FF, // PURPLE
+            0x54D87DFF, // GREEN
+            0x502DA8FF, // BLUE
+            0xD0E65CFF, // YELLOW
+            0xB47017FF, // ORANGE
+            0xE8B0B1FF, // LIGHT ORANGE
+            0xDC9CC1FF, // PINK
+            0xB3FCDDFF, // LIGHT CYAN
+            0xD6A7F9FF, // LIGHT PURPLE
+            0xBAF2A1FF, // LIGHT GREEN
+            0xA0A4D8FF, // LIGHT BLUE
+            0xFFF2C2FF  // LIGHT YELLOW
     };
 
-    private final static short palRGB565Colours[] = { 
-            (short) 0x0000, // BLACK
-            (short) 0xFFFF, // WHITE
-            (short) 0xB0E4, // RED
-            (short) 0x4F9F, // CYAN
-            (short) 0xB1FF, // PURPLE
-            (short) 0x4706, // GREEN
-            (short) 0x19BF, // BLUE
-            (short) 0xDEA3, // YELLOW
-            (short) 0xCAA0, // ORANGE
-            (short) 0xED8E, // LIGHT ORANGE
-            (short) 0xE492, // PINK
-            (short) 0x9FBF, // LIGHT CYAN
-            (short) 0xE4FF, // LIGHT PURPLE
-            (short) 0x8F32, // LIGHT GREEN
-            (short) 0x849F, // LIGHT BLUE
-            (short) 0xE6F0  // LIGHT YELLOW
-    };
-
-    private final static short palEvenRGB565Colours[] = { 
-            (short) 0x0000, // BLACK
-            (short) 0xFFFF, // WHITE
-            (short) 0x9963, // RED
-            (short) 0x76BF, // CYAN
-            (short) 0xB1D4, // PURPLE
-            (short) 0x56CF, // GREEN
-            (short) 0x5175, // BLUE
-            (short) 0xD72B, // YELLOW
-            (short) 0xB382, // ORANGE
-            (short) 0xED96, // LIGHT ORANGE
-            (short) 0xDCF8, // PINK
-            (short) 0xB7FB, // LIGHT CYAN
-            (short) 0xD53F, // LIGHT PURPLE
-            (short) 0xBF94, // LIGHT GREEN
-            (short) 0xA53B, // LIGHT BLUE
-            (short) 0xFF98  // LIGHT YELLOW
-    };
-
-    private final static short palOddRGB565Colours[] = { 
-            (short) 0x0000, // BLACK
-            (short) 0xFFFF, // WHITE
-            (short) 0x9128, // RED
-            (short) 0x6756, // CYAN
-            (short) 0xA1FA, // PURPLE
-            (short) 0x6EE6, // GREEN
-            (short) 0x29D8, // BLUE
-            (short) 0xE726, // YELLOW
-            (short) 0xBB26, // ORANGE
-            (short) 0xD610, // LIGHT ORANGE
-            (short) 0xD551, // PINK
-            (short) 0xC77F, // LIGHT CYAN
-            (short) 0xE55A, // LIGHT PURPLE
-            (short) 0xAF98, // LIGHT GREEN
-            (short) 0xACDD, // LIGHT BLUE
-            (short) 0xE7F7  // LIGHT YELLOW
-    };
-
-    private short[] pal_palette_o = palOddRGB565Colours;
-    private short[] pal_palette_e = palEvenRGB565Colours;
+    private int[] pal_palette_o = palOddRGBA8888Colours;
+    private int[] pal_palette_e = palEvenRGBA8888Colours;
 
     // NTSC Palette data.
     private int pIndex;
     // TODO: Change to NTSC palette.
-    private short[][] palette = { 
+    private int[][] palette = { 
         pal_palette_e, pal_palette_e, pal_palette_e, pal_palette_e, 
         pal_palette_e, pal_palette_e, pal_palette_e, pal_palette_e, 
         pal_palette_e, pal_palette_e, pal_palette_e, pal_palette_e,
@@ -233,36 +192,14 @@ public class Vic extends MemoryMappedChip {
     };
     
     /**
+     * Interface to the platform specific mechanism for writing pixels.
+     */
+    private PixelData pixelData;
+    
+    /**
      * Pixel counter. Current offset into TV frame array.
      */
     private int pixelCounter;
-
-    /**
-     * Represents the data for one VIC frame.
-     */
-    class Frame {
-
-        /**
-         * Holds the pixel data for the TV frame screen.
-         */
-        short framePixels[];
-
-        /**
-         * Says whether this frame is ready to be blitted to the GPU.
-         */
-        boolean ready;
-    }
-
-    /**
-     * An array of two Frames, one being the one that the VIC is currently writing
-     * to, the other being the last one that was completed and ready to blit.
-     */
-    private Frame[] frames;
-
-    /**
-     * The index of the active frame within the frames. This will toggle between 0 and 1.
-     */
-    private int activeFrame;
 
     /**
      * A lookup table for determining the start of video memory.
@@ -330,8 +267,8 @@ public class Vic extends MemoryMappedChip {
     boolean oddLine = true;
     
     // Reference that alternates on each line between even and odd PAL palettes.
-    private short[] pal_palette = pal_palette_e;
-    private short[] pal_trunc_palette = pal_palette;
+    private int[] pal_palette = pal_palette_e;
+    private int[] pal_trunc_palette = pal_palette;
     
     // Optimisation to represent "in matrix", "address output enabled", and "pixel output enabled" 
     // all with one simple state variable. It might not be 100% accurate but should work for most 
@@ -358,62 +295,24 @@ public class Vic extends MemoryMappedChip {
 
     // Index of the current border colour (used temporarily when we don't want to use the define multiple times in a cycle)
     private int borderColourIndex;
-    
-    
-    private int cyclesPerSample;
-    private short[] sampleBuffer;
-    private int sampleBufferOffset = 0;
-    private int cyclesToNextSample;
-    private AudioDevice audioDevice;
-    private boolean soundPaused;
-    private int soundClockDividerCounter;
-    private int[] voiceClockDividerTriggers;
-    private int[] voiceCounters;
-    private int[] voiceShiftRegisters;
-    private int noiseLFSR = 0xFFFF;
-    private int lastNoiseLFSR0 = 0x1;
 
     
     /**
      * Constructor for VIC.
      * 
+     * @param pixelData Interface to the platform specific mechanism for writing pixels.
      * @param machineType The type of machine, PAL or NTSC.
      * @param snapshot    Optional snapshot of the machine state to start with.
      */
-    public Vic(MachineType machineType, Snapshot snapshot) {
+    public Vic(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
+        this.pixelData = pixelData;
         this.machineType = machineType;
-
-        this.cyclesPerSample = (machineType.getCyclesPerSecond() / SAMPLE_RATE);
-
-        frames = new Frame[2];
-        frames[0] = new Frame();
-        frames[0].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-        frames[0].ready = false;
-        frames[1] = new Frame();
-        frames[1].framePixels = new short[(machineType.getTotalScreenWidth() * machineType.getTotalScreenHeight())];
-        frames[1].ready = false;
 
         reset();
 
         if (snapshot != null) {
             loadSnapshot(snapshot);
         }
-
-        int audioBufferSize = ((((SAMPLE_RATE / 20) * 2) / 10) * 10);
-        sampleBuffer = new short[audioBufferSize / 10];
-        sampleBufferOffset = 0;
-
-        try {
-            audioDevice = Gdx.audio.newAudioDevice(SAMPLE_RATE, true);
-        } catch (GdxRuntimeException e) {
-            audioDevice = null;
-        }
-
-        cyclesToNextSample = cyclesPerSample;
-
-        voiceCounters = new int[4];
-        voiceShiftRegisters = new int[4];
-        voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 };
     }
 
     /**
@@ -638,15 +537,16 @@ public class Vic extends MemoryMappedChip {
     }
 
     private void pio_sm_put(int pio, int sm, int pixel) {
+        // TODO: Fix this check. Is it needed?
         if ((pixelCounter < 88608)) {
-            if (((int) pixel) <= 0xFFFF) {
-                // TODO: 67860 out of bounds error for Apple Panic. NTSC.
-                // TODO: Also Atlantis is NTSC.
-                frames[activeFrame].framePixels[pixelCounter++] = (short) pixel;
+            if ((pixel & 0xFF) == 0xFF) {
+                // If alpha channel is set to 0xFF, then its a normal colour.
+                pixelData.putPixel(pixelCounter++, pixel);
             } else {
-                int count = (pixel >> 16);
-                for (int i = 0; i < count; i++) {
-                    frames[activeFrame].framePixels[pixelCounter++] = 0;
+                // Otherwise it is command that happens during blanking, e.g. hsync, col burst,
+                // front porch, back porch, etc., so we simply output transparent black.
+                for (int i = 0; i < pixel; i++) {
+                    pixelData.putPixel(pixelCounter++, 0);
                 }
             }
         }
@@ -657,7 +557,7 @@ public class Vic extends MemoryMappedChip {
      * 
      * @return
      */
-    public boolean emulateCyclePal(boolean doSound) {
+    public boolean emulateCyclePal() {
         boolean frameRenderComplete = false;
 
         // Expressions to access different parts of control registers.
@@ -791,16 +691,6 @@ public class Vic extends MemoryMappedChip {
                     // Last line was 0, which is the end of the visible lines.
                     if (verticalCounter == 1) {
                         pixelCounter = 0;
-    
-                        synchronized (frames) {
-                            // Mark the current frame as complete.
-                            frames[activeFrame].ready = true;
-    
-                            // Toggle the active frame.
-                            activeFrame = ((activeFrame + 1) % 2);
-                            frames[activeFrame].ready = false;
-                        }
-    
                         frameRenderComplete = true;
                     }
     
@@ -1471,119 +1361,16 @@ public class Vic extends MemoryMappedChip {
                 }
                 break;
         }
-
-        // Audio.
-        // 5-bit counter in the 6561, but only bottom 4 bits are used. Other bit might have been used for 6562/3.
-        soundClockDividerCounter = ((soundClockDividerCounter + 1) & 0xF);
-
-        for (int i = 0; i < 4; i++) {
-            if ((voiceClockDividerTriggers[i] & soundClockDividerCounter) == 0) {
-                voiceCounters[i] = (voiceCounters[i] + 1) & 0x7F;
-                if (voiceCounters[i] == 0) {
-                    // Reload the voice counter from the control register.
-                    voiceCounters[i] = (mem[VIC_REG_10 + i] & 0x7F);
-
-                    if (i == 3) {
-                        // For Noise voice, we perform a shift of the LFSR whenever the counter is
-                        // reloaded, and only shift the main voice shift register when LFSR bit 0 changes 
-                        // from LOW to HIGH, i.e. on the positive edge.
-                        if ((lastNoiseLFSR0 == 0) && (noiseLFSR & 0x0001) > 0) {
-                            voiceShiftRegisters[i] = (((voiceShiftRegisters[i] & 0x7F) << 1)
-                                    | ((mem[VIC_REG_10 + i] & 0x80) > 0 ? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1)
-                                            : 0));
-                        }
-
-                        // The LFSR taps are bits 3, 12, 14 and 15.
-                        int bit3 = (noiseLFSR >> 3) & 1;
-                        int bit12 = (noiseLFSR >> 12) & 1;
-                        int bit14 = (noiseLFSR >> 14) & 1;
-                        int bit15 = (noiseLFSR >> 15) & 1;
-                        int feedback = (((bit3 ^ bit12) ^ (bit14 ^ bit15)) ^ 1);
-                        lastNoiseLFSR0 = (noiseLFSR & 0x1);
-                        noiseLFSR = (((noiseLFSR << 1) | (((feedback & ((mem[VIC_REG_10 + i] & 0x80) >> 7)) ^ 1) & 0x1))
-                                & 0xFFFF);
-
-                    } else {
-                        // For the three other voices, we shift the voice shift register whenever the
-                        // counter is reloaded.
-                        voiceShiftRegisters[i] = (((voiceShiftRegisters[i] & 0x7F) << 1)
-                                | ((mem[VIC_REG_10 + i] & 0x80) > 0 ? (((voiceShiftRegisters[i] & 0x80) >> 7) ^ 1)
-                                        : 0));
-                    }
-                }
-            }
-        }
-
-        // If enough cycles have elapsed since the last sample, then output another.
-        if (--cyclesToNextSample <= 0) {
-            if (doSound) {
-                writeSample();
-            }
-            cyclesToNextSample += cyclesPerSample;
-        }
         
         return frameRenderComplete;
     }
 
     /**
-     * Writes a single sample to the sample buffer. If the buffer is full after
-     * writing the sample, then the whole buffer is written out.
-     */
-    public void writeSample() {
-        short sample = 0;
-        int masterVolume = (mem[VIC_REG_14] & 0x0F);
-
-        for (int i = 0; i < 4; i++) {
-            if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
-                // Voice enabled. First bit of SR goes out.
-                // sample += ((voiceShiftRegisters[i] & 0x01) * 2500); // TODO: Try shifting to
-                // multiply by 2048
-                sample += ((voiceShiftRegisters[i] & 0x01) << 11);
-            }
-        }
-
-        sampleBuffer[sampleBufferOffset + 0] = (short) (((sample >> 2) * masterVolume) & 0x7FFF); // TODO: Try shifting.
-
-        // If the sample buffer is full, write it out to the audio line.
-        if ((sampleBufferOffset += 1) == sampleBuffer.length) {
-            try {
-                if (!soundPaused) {
-                    audioDevice.writeSamples(sampleBuffer, 0, sampleBuffer.length);
-                }
-            } catch (Throwable e) {
-                // An Exception or Error can occur here if the app is closing, so we catch and
-                // ignore.
-            }
-            sampleBufferOffset = 0;
-        }
-    }
-
-    /**
-     * Gets the pixels for the current frame from the VIC chip.
-     * 
-     * @return The pixels for the current frame. Returns null if there isn't one
-     *         that is ready.
-     */
-    public short[] getFramePixels() {
-        short[] framePixels = null;
-        synchronized (frames) {
-            Frame nonActiveFrame = frames[((activeFrame + 1) % 2)];
-            if (nonActiveFrame.ready) {
-                nonActiveFrame.ready = false;
-                framePixels = nonActiveFrame.framePixels;
-            }
-        }
-        return framePixels;
-    }
-
-    /**
      * Emulates PIVIC NTSC loop.
-     * 
-     * @param doSound
      * 
      * @return
      */
-    public boolean emulateCycleNtsc(boolean doSound) {
+    public boolean emulateCycleNtsc() {
         boolean frameRenderComplete = false;
 
         // Expressions to access different parts of control registers.
@@ -1686,16 +1473,6 @@ public class Vic extends MemoryMappedChip {
     
                 if (verticalCounter == 1) {
                     pixelCounter = 0;
-    
-                    synchronized (frames) {
-                        // Mark the current frame as complete.
-                        frames[activeFrame].ready = true;
-    
-                        // Toggle the active frame.
-                        activeFrame = ((activeFrame + 1) % 2);
-                        frames[activeFrame].ready = false;
-                    }
-    
                     frameRenderComplete = true;
                 }
     

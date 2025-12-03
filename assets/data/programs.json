@@ -499,6 +499,14 @@
       "ram": "RAM_35K"
     },
     {
+      "name": "Raid on Fort Knox",
+      "displayName": "Raid on\nFort Knox",
+      "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
+      "fileType": "CART",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
       "name": "Raster Stable EX4",
       "filePath": "tapes/ex4.prg",
       "fileType": "PRG",
