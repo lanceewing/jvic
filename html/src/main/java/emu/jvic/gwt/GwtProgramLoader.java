@@ -96,6 +96,10 @@ public class GwtProgramLoader implements ProgramLoader {
                 appConfigItem.setFileType("PRG");
                 programData = data;
             }
+            else if (isCartFile(data)) {
+                appConfigItem.setFileType("CART");
+                programData = removeStartAddress(data);
+            }
             else {
                 // Assume CART for everything else.
                 appConfigItem.setFileType("CART");
@@ -120,8 +124,17 @@ public class GwtProgramLoader implements ProgramLoader {
     
     private boolean isProgramFile(byte[] data) {
         if ((data != null) && (data.length >= 2)) {
-            int startAddress = (data[1] << 8) + data[0];
+            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
             return ((startAddress == 0x1201) || (startAddress == 0x0401) || (startAddress == 0x1001));
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean isCartFile(byte[] data) {
+        if ((data != null) && (data.length >= 2)) {
+            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
+            return ((startAddress == 0xA000));
         } else {
             return false;
         }
@@ -144,6 +157,15 @@ public class GwtProgramLoader implements ProgramLoader {
         return ((data != null) && (data.length >= 5) && 
                 (data[0] == 0x50) && (data[1] == 0x43) && (data[2] == 0x56) && 
                 (data[3] == 0x49) && (data[4] == 0x43));
+    }
+    
+    private byte[] removeStartAddress(byte[] data) {
+        byte[] newData = new byte[data.length - 2];
+        int srcIndex = 2;
+        for (int i=0; srcIndex < data.length; i++, srcIndex++) {
+            newData[i] = data[srcIndex];
+        }
+        return newData;
     }
     
     private byte[] convertBinaryStringToBytes(String binaryStr) {

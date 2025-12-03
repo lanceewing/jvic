@@ -162,7 +162,7 @@ public class DesktopProgramLoader implements ProgramLoader {
 
     private boolean isProgramFile(byte[] data) {
         if ((data != null) && (data.length >= 2)) {
-            int startAddress = (data[1] << 8) + data[0];
+            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
             return ((startAddress == 0x1201) || (startAddress == 0x0401) || (startAddress == 0x1001));
         } else {
             return false;
