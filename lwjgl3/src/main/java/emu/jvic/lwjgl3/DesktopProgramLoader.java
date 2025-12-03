@@ -61,34 +61,42 @@ public class DesktopProgramLoader implements ProgramLoader {
             byte[] programData = null;
             
             if ((data != null) && (data.length >= 4)) {
-                if ((data[0] == 0x16) && (data[1] == 0x16) && (data[2] == 0x16)) {
-                    // At least 3 0x16 bytes followed by a 0x24 is a tape file.
-                    appConfigItem.setFileType("TAPE");
-                    programData = data;
-                }
-                else if ((data[0] == 0x4D) && (data[1] == 0x46) && (data[2] == 0x4D)) {
-                    // MFM_DISK - 4D 46 4D 5F 44 49 53 4B
-                    appConfigItem.setFileType("DISK");
-                    programData = data;
-                }
-                else if ((data[0] == 0x50) && (data[1] == 0x4B) && (data[2] == 0x03) && (data[3] == 0x04)) {
+                if (isZipFile(data)) {
                     // ZIP starts with: 50 4B 03 04
                     ByteArrayInputStream bais = new ByteArrayInputStream(data);
                     ZipInputStream zis = new ZipInputStream(bais);
                     ZipEntry zipEntry = zis.getNextEntry();
+                    byte[] fileData = null;
+                    int numOfEntries = 0;
                     
                     while (zipEntry != null) {
                         try {
                             if (!zipEntry.isDirectory()) {
-                                byte[] fileData = readBytesFromInputStream(zis);
+                                numOfEntries++;
+                                fileData = readBytesFromInputStream(zis);
                                 if (isDiskFile(fileData)) {
                                     programData = fileData;
                                     appConfigItem.setFileType("DISK");
                                     break;
                                 }
-                                if (isTapeFile(fileData)) {
+                                if (isPcvSnapshot(fileData)) {
+                                    appConfigItem.setFileType("PCV");
                                     programData = fileData;
-                                    appConfigItem.setFileType("TAPE");
+                                    break;
+                                }
+                                if (isProgramFile(fileData)) {
+                                    appConfigItem.setFileType("PRG");
+                                    programData = fileData;
+                                    break;
+                                }
+                                if (isCartFile(fileData)) {
+                                    appConfigItem.setFileType("CART");
+                                    programData = removeStartAddress(fileData);
+                                    break;
+                                }
+                                if (zipEntry.getName().toLowerCase().endsWith(".crt")) {
+                                    appConfigItem.setFileType("CART");
+                                    programData = fileData;
                                     break;
                                 }
                             }
@@ -97,10 +105,35 @@ public class DesktopProgramLoader implements ProgramLoader {
                         }
                         
                         zipEntry = zis.getNextEntry();
+                        
+                        if ((zipEntry == null) && (numOfEntries == 1)) {
+                            // If the ZIP contains only one file, and it didn't match one
+                            // of the other type checks, then assume it is CART.
+                            appConfigItem.setFileType("CART");
+                            programData = fileData;
+                            break;
+                        }
                     }
                 }
+                else if (isDiskFile(data)) {
+                    appConfigItem.setFileType("DISK");
+                    programData = data;
+                }
+                else if (isPcvSnapshot(data)) {
+                    appConfigItem.setFileType("PCV");
+                    programData = data;
+                }
+                else if (isProgramFile(data)) {
+                    appConfigItem.setFileType("PRG");
+                    programData = data;
+                }
+                else if (isCartFile(data)) {
+                    appConfigItem.setFileType("CART");
+                    programData = removeStartAddress(data);
+                }
                 else {
-                    // Leave the file type as is, e.g. it might be ROM.
+                    // Assume CART for everything else.
+                    appConfigItem.setFileType("CART");
                     programData = data;
                 }
             }
@@ -127,14 +160,50 @@ public class DesktopProgramLoader implements ProgramLoader {
         programConsumer.accept(program);
     }
 
-    private boolean isTapeFile(byte[] data) {
-        return ((data != null) && (data.length > 3) && 
-                (data[0] == 0x16) && (data[1] == 0x16) && (data[2] == 0x16));
+    private boolean isProgramFile(byte[] data) {
+        if ((data != null) && (data.length >= 2)) {
+            int startAddress = (data[1] << 8) + data[0];
+            return ((startAddress == 0x1201) || (startAddress == 0x0401) || (startAddress == 0x1001));
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean isCartFile(byte[] data) {
+        if ((data != null) && (data.length >= 2)) {
+            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
+            return ((startAddress == 0xA000));
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean isZipFile(byte[] data) {
+        // ZIP starts with: 50 4B 03 04
+        return ((data != null) && (data.length >= 4) &&
+                (data[0] == 0x50) && (data[1] == 0x4B) && 
+                (data[2] == 0x03) && (data[3] == 0x04));
     }
     
     private boolean isDiskFile(byte[] data) {
-        return ((data != null) && (data.length > 3) && 
-                (data[0] == 0x4D) && (data[1] == 0x46) && (data[2] == 0x4D));
+        // .D64 files are almost always 174848 bytes. Greater values are non standard.
+        return ((data != null) && (data.length >= 174848));
+    }
+    
+    private boolean isPcvSnapshot(byte[] data) {
+        // PCVIC Signature : 50 43 56 49 43
+        return ((data != null) && (data.length >= 5) && 
+                (data[0] == 0x50) && (data[1] == 0x43) && (data[2] == 0x56) && 
+                (data[3] == 0x49) && (data[4] == 0x43));
+    }
+    
+    private byte[] removeStartAddress(byte[] data) {
+        byte[] newData = new byte[data.length - 2];
+        int srcIndex = 2;
+        for (int i=0; srcIndex < data.length; i++, srcIndex++) {
+            newData[i] = data[srcIndex];
+        }
+        return newData;
     }
     
     private byte[] readBytesFromInputStream(InputStream is) throws IOException {
