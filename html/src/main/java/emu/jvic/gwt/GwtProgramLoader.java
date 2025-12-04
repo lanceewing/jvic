@@ -70,14 +70,24 @@ public class GwtProgramLoader implements ProgramLoader {
                                 appConfigItem.setFileType("DISK");
                                 break;
                             }
-                            if (isPcvSnapshot(data)) {
+                            if (isPcvSnapshot(fileData)) {
                                 appConfigItem.setFileType("PCV");
-                                programData = data;
+                                programData = fileData;
                                 break;
                             }
-                            if (isProgramFile(data)) {
+                            if (isProgramFile(fileData)) {
                                 appConfigItem.setFileType("PRG");
-                                programData = data;
+                                programData = fileData;
+                                break;
+                            }
+                            if (isCartFile(fileData)) {
+                                appConfigItem.setFileType("CART");
+                                programData = removeStartAddress(fileData);
+                                break;
+                            }
+                            if (file.getName().toLowerCase().endsWith(".crt")) {
+                                appConfigItem.setFileType("CART");
+                                programData = fileData;
                                 break;
                             }
                         }
