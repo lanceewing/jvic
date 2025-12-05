@@ -245,7 +245,7 @@
     },
     {
       "name": "Galactic Abductor",
-      "filePath": "tapes/16k/GALABDCT.PRG",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FGalactic%20Abductor%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
@@ -450,14 +450,14 @@
     {
       "name": "Perils of Willy",
       "displayName": "Perils of\nWilly",
-      "filePath": "tapes/16k/PERILS.PRG",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPerils%20of%20Willy%2C%20The%20%281984%29%28Software%20Projects%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Pharoah's Curse",
-      "filePath": "carts/16k/pharoahc.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPharaoh%27s%20Curse%20%281983%29%28HES%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
