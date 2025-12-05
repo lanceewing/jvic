@@ -179,21 +179,21 @@
     },
     {
       "name": "Datapop",
-      "filePath": "tapes/tlr_-_datapop_vic20.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FDatapop%21%20%282009-10-12%29%28tlr%29.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Defender",
-      "filePath": "carts/16k/defender.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDefender%20%281983%29%28Atarisoft%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "",      
       "machineType": "PAL"
     },
     {
       "name": "Demon Attack",
-      "filePath": "carts/8k/demonata.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDemon%20Attack%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
@@ -426,26 +426,18 @@
     },
     {
       "name": "Omega Race",
-      "filePath": "carts/8k/omegarac.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOmega%20Race%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "NTSC"
     },
     {
       "name": "Outworld",
-      "filePath": "carts/16k/outworld.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOutworld%20%281981%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED",
-      "status": "BROKEN"
-    },
-    {
-      "name": "Over Sing",
-      "filePath": "tapes/over_sing.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
+      "ram": "RAM_UNEXPANDED"
     },
     {
       "name": "Perils of Willy",
@@ -461,13 +453,6 @@
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
-    },
-    {
-      "name": "Pipes",
-      "filePath": "carts/8k/pipes.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "NTSC"
     },
     {
       "name": "Pitfall",
