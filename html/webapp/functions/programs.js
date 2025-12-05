@@ -21,6 +21,7 @@ export async function onRequest(context) {
         if ((url.origin == "https://vic20.games") && 
             (targetUrl.startsWith("https://sleepingelephant.com/") || 
              targetUrl.startsWith("https://www.zimmers.net/") ||
+			 targetUrl.startsWith("http://viznut.fi/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 
             // Rewrite request to point to target URL. This also makes the request 
