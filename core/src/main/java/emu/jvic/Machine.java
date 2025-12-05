@@ -120,6 +120,9 @@ public class Machine {
                 } else if ("CART".equals(programType) && (ramType.equals(RamType.RAM_AUTO))) {
                     // For cartridges, we always go with unexpanded for auto detection.
                     ramType = RamType.RAM_UNEXPANDED;
+                } else if ("DISK".equals(programType) && (ramType.equals(RamType.RAM_AUTO))) {
+                    // TODO: May need to be more intelligent that this, e.g. use disk signatures.
+                    ramType = RamType.RAM_35K;
                 }
             } catch (Exception e) {
                 // Continue with default behaviour, which is to boot in to BASIC.
