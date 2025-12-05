@@ -854,7 +854,11 @@ public class HomeScreen extends InputAdapter implements Screen {
                     appConfigItem.setName("Adhoc VIC Program");
                     appConfigItem.setFilePath(filePath);
                     appConfigItem.setFileType("ABSOLUTE");
-                    appConfigItem.setMachineType("PAL");
+                    if (filePath.toUpperCase().contains("NTSC")) {
+                        appConfigItem.setMachineType("NTSC");
+                    } else {
+                        appConfigItem.setMachineType("PAL");
+                    }
                     appConfigItem.setRam("RAM_UNEXPANDED");
                     appConfigItem.setFileData(fileData);
                     

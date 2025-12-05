@@ -84,7 +84,11 @@ public class JVic extends Game {
                 AppConfigItem adhocProgram = new AppConfigItem();
                 adhocProgram.setName("Adhoc VIC Program");
                 adhocProgram.setFilePath(getFilePathForProgramUrl(programUrl));
-                adhocProgram.setMachineType("PAL");
+                if (programUrl.toUpperCase().contains("NTSC")) {
+                    adhocProgram.setMachineType("NTSC");
+                } else {
+                    adhocProgram.setMachineType("PAL");
+                }
                 adhocProgram.setRam("RAM_AUTO");
                 appConfigItem = adhocProgram;
             }
@@ -193,7 +197,11 @@ public class JVic extends Game {
             appConfigItem.setName("Adhoc VIC Program");
             appConfigItem.setFilePath(filePath);
             appConfigItem.setFileType("ABSOLUTE");
-            appConfigItem.setMachineType("PAL");
+            if (filePath.toUpperCase().contains("NTSC")) {
+                appConfigItem.setMachineType("NTSC");
+            } else {
+                appConfigItem.setMachineType("PAL");
+            }
             appConfigItem.setRam("RAM_AUTO");
             appConfigItem.setFileData(fileData);
             homeScreen.processProgramSelection(appConfigItem);
