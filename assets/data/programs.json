@@ -4,7 +4,7 @@
       "name": "BASIC",
       "filePath": "",
       "fileType": "",
-      "iconPath": "icons/basic2.png",
+      "iconPath": "screenshots/B/Basic/BASIC.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -12,7 +12,7 @@
       "name": "BASIC NTSC",
       "filePath": "",
       "fileType": "",
-      "iconPath": "icons/basic2.png",
+      "iconPath": "",
       "machineType": "NTSC",
       "ram": "RAM_UNEXPANDED"
     },
@@ -61,95 +61,81 @@
       "displayName": "Ate Bit\nMiami Vic",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
       "fileType": "PRG",
-      "iconPath": "",      
+      "iconPath": "screenshots/A/Ate Bit Miami Vic/Ate_Bit_Miami_Vic.png",
       "machineType": "PAL"
     },
     {
       "name": "Atlantis",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FAtlantis%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/A/Atlantis/Atlantis.png",
       "machineType": "PAL"
     },
     {
       "name": "Bad Scene Poetry",
+      "displayName": "Bad Scene\nPoetry",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FBad%20Scene%20Poetry%20%282003-08-30%29%28Cosine%29.zip",
       "fileType": "PRG",
-      "iconPath": "",      
+      "iconPath": "screenshots/B/Bad Scene Poetry/Bad_Scene_Poetry.png",      
       "machineType": "PAL"
     },
     {
       "name": "Bongo",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBongo%20%281984%29%28Kingsoft%29%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",      
+      "iconPath": "screenshots/B/Bongo/Bongo.png",      
       "machineType": "PAL"
     },
     {
       "name": "Buck Rogers",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBuck%20Rogers%20-%20Planet%20of%20Zoom%20%281983%29%28Sega%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",      
-      "machineType": "PAL"
+      "iconPath": "screenshots/B/Buck Rogers/Buck_Rogers.png",      
+      "machineType": "NTSC"
     },
     {
       "name": "Capture the Flag",
       "displayName": "Capture\nthe Flag",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "DISK",
-      "iconPath": "",      
+      "iconPath": "screenshots/C/Capture the Flag/Capture_the_Flag.png",      
       "machineType": "NTSC",
       "ram": "RAM_32K"
     },
     {
-      "name": "Colour Bars",
-      "filePath": "tapes/vic20colorbars.prg",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
-      "name": "Colour Mix",
-      "filePath": "tapes/vic20mix.prg",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
       "name": "Cncd Cheat Split",
+      "displayName": "Cncd Cheat\nSplit",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FCheat%20Split%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
-      "iconPath": "",      
+      "iconPath": "screenshots/C/Cncd Cheat Split/Cncd_Cheat_Split.png",      
       "machineType": "PAL"
     },
     {
       "name": "Datapop",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FDatapop%21%20%282009-10-12%29%28tlr%29.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/D/Datapop/Datapop.png",
       "machineType": "PAL"
     },
     {
       "name": "Defender",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDefender%20%281983%29%28Atarisoft%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",      
+      "iconPath": "screenshots/D/Defender/Defender.png",      
       "machineType": "PAL"
     },
     {
       "name": "Demon Attack",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDemon%20Attack%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/D/Demon Attack/Demon_Attack.png",
       "machineType": "PAL"
     },
     {
-      "name": "Dragon Fire",
+      "name": "Dragonfire",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDragonfire%20%281983%29%28Imagic%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/D/Dragonfire/Dragonfire.png",
       "machineType": "PAL"
     },
     {
@@ -164,14 +150,15 @@
       "name": "Dunno",
       "filePath": "tapes/dsr_dunno_4k_revision_2018.prg",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/D/Dunno/Dunno.png",
       "machineType": "PAL"
     },
     {
       "name": "Eight Dollar Math",
+      "displayName": "Eight Dollar\nMath",
       "filePath": "disks/eight_dollar_math.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/E/Eight Dollar Math/Eight_Dollar_Math.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
