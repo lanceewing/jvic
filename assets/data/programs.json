@@ -201,7 +201,7 @@
     },
     {
       "name": "Frozen Time",
-      "filePath": "tapes/frozen.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FFrozen%20Time%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
@@ -230,29 +230,22 @@
       "ram": "RAM_16K",
     },
     {
-      "name": "Gold Fever",
-      "filePath": "carts/8k/goldfeve.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Gorf",
-      "filePath": "carts/8k/gorf.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGorf%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Grid Runner",
-      "filePath": "carts/8k/gridrunn.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGridrunner%20%281982%29%28HES%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Happy Hour",
-      "filePath": "tapes/happyhour.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FHappyhour%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
@@ -433,7 +426,7 @@
     },
     {
       "name": "Psycho Shopper",
-      "filePath": "tapes/16k/PSYCHO.PRG",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPsycho%20Shopper%20%281984%29%28Mastertronic%29%5B8k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
@@ -507,14 +500,14 @@
     },
     {
       "name": "Skramble",
-      "filePath": "tapes/16k/SKRAMBLE.PRG",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSkramble%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Slap Dab",
-      "filePath": "snaps/pcv/SLAPDAB.PCV",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSlap%20Dab%20%281983%29%28Anirog%29.zip",
       "fileType": "PCV",
       "iconPath": "",
       "machineType": "PAL"
