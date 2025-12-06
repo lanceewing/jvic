@@ -51,28 +51,7 @@
     {
       "name": "Pu239 - 9teensplit",
       "displayName": "Pu239\n9teensplit",
-      "filePath": "tapes/Pu239 - 9teensplit.prg",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL"
-    },
-    {
-      "name": "Amok",
-      "filePath": "carts/8k/amok.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Apple Panic",
-      "filePath": "carts/16k/applepan.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "NTSC"
-    },
-    {
-      "name": "AR98-1",
-      "filePath": "tapes/VIC20-AR89-1.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
       "fileType": "PRG",
       "iconPath": "",      
       "machineType": "PAL"
@@ -80,35 +59,35 @@
     {
       "name": "Ate Bit Miami Vic",
       "displayName": "Ate Bit\nMiami Vic",
-      "filePath": "tapes/atebit-miami_vic.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
       "fileType": "PRG",
       "iconPath": "",      
       "machineType": "PAL"
     },
     {
       "name": "Atlantis",
-      "filePath": "carts/8k/atlantis.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FAtlantis%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
-      "machineType": "NTSC"
+      "machineType": "PAL"
     },
     {
       "name": "Bad Scene Poetry",
-      "filePath": "tapes/bad_scene_poetry.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FBad%20Scene%20Poetry%20%282003-08-30%29%28Cosine%29.zip",
       "fileType": "PRG",
       "iconPath": "",      
       "machineType": "PAL"
     },
     {
       "name": "Bongo",
-      "filePath": "tapes/16k/BONGO.PRG",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBongo%20%281984%29%28Kingsoft%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",      
       "machineType": "PAL"
     },
     {
       "name": "Buck Rogers",
-      "filePath": "carts/16k/buck_rog.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBuck%20Rogers%20-%20Planet%20of%20Zoom%20%281983%29%28Sega%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "",      
       "machineType": "PAL"
@@ -116,7 +95,7 @@
     {
       "name": "Capture the Flag",
       "displayName": "Capture\nthe Flag",
-      "filePath": "disks/capture-flag-ntsc-bk5.d64",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "DISK",
       "iconPath": "",      
       "machineType": "NTSC",
@@ -155,25 +134,9 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
-      "name": "Colour Test",
-      "filePath": "tapes/colourtest.prg",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
       "name": "Cncd Cheat Split",
-      "filePath": "tapes/Cncd - Cheat Split.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FCheat%20Split%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL"
-    },
-    {
-      "name": "Curse of the Werewolf",
-      "displayName": "Curse of the\nWerewolf",
-      "filePath": "snaps/pcv/WEREWOLF.PCV",
-      "fileType": "PCV",
       "iconPath": "",      
       "machineType": "PAL"
     },
@@ -530,7 +493,7 @@
     },
     {
       "name": "Robotic Liberation",
-      "filePath": "tapes/rl-16k.prg",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
