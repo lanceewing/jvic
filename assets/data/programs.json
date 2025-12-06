@@ -345,17 +345,10 @@
     },
     {
       "name": "Moon Patrol",
-      "filePath": "carts/16k/moonpatr.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMoon%20Patrol%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "NTSC"
-    },
-    {
-      "name": "Mutant Herd",
-      "filePath": "carts/8k/mutanthe.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "PAL"
     },
     {
       "name": "Nano Watt",
@@ -419,7 +412,7 @@
     },
     {
       "name": "Predator",
-      "filePath": "carts/8k/predator.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
@@ -446,20 +439,6 @@
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
-    },
-    {
-      "name": "Raster Stable EX4",
-      "filePath": "tapes/ex4.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL",
-    },
-    {
-      "name": "Raster Stable EX6",
-      "filePath": "tapes/ex6.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL",
     },
     {
       "name": "Retina Color",
@@ -513,16 +492,9 @@
       "machineType": "PAL"
     },
     {
-      "name": "Sonar Sweep'r",
-      "filePath": "tapes/sonar sweep'r.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Spiders of Mars",
       "displayName": "Spiders\nof Mars",
-      "filePath": "carts/16k/spiderso.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FSpiders%20of%20Mars%20%281982%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
@@ -530,7 +502,7 @@
     {
       "name": "Sword of Hrakel",
       "displayName": "Sword of\nHrakel",
-      "filePath": "snaps/pcv/HRAKEL.PCV",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Hrakel%20%281983%29%28Romik%29%5B8k%5D.zip",
       "fileType": "PCV",
       "iconPath": "",
       "machineType": "PAL"
@@ -545,7 +517,7 @@
     },
     {
       "name": "Terraguard",
-      "filePath": "carts/8k/terragua.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTerraguard%20%281982%29%28Creative%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
@@ -695,25 +667,11 @@
       "machineType": "PAL"
     },
     {
-      "name": "Viznut Test",
-      "filePath": "tapes/viznut_test.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Warning",
       "filePath": "tapes/pwp-warning.prg",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
-    },    
-    {
-      "name": "Robotic Warrior",
-      "filePath": "tapes/warrior.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },    
+    },   
   ]
 }
