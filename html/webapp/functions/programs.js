@@ -22,6 +22,7 @@ export async function onRequest(context) {
             (targetUrl.startsWith("https://sleepingelephant.com/") || 
              targetUrl.startsWith("https://www.zimmers.net/") ||
 			 targetUrl.startsWith("http://viznut.fi/") ||
+			 targetUrl.startsWith("https://files.scene.org/") ||
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 
