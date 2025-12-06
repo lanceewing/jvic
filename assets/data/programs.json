@@ -102,22 +102,6 @@
       "ram": "RAM_32K"
     },
     {
-      "name": "Char Flow",
-      "filePath": "tapes/charflow.prg",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
-      "name": "Cheese & Onion",
-      "filePath": "disks/vic20_cheese_and_onion_32k.d64",
-      "fileType": "DISK",
-      "iconPath": "",      
-      "machineType": "PAL",
-      "ram": "RAM_35K"
-    },
-    {
       "name": "Colour Bars",
       "filePath": "tapes/vic20colorbars.prg",
       "fileType": "PRG",
@@ -260,7 +244,7 @@
     },
     {
       "name": "Impossiblator 3",
-      "filePath": "disks/impo3.d64",
+      "filePath": "http://viznut.fi/demos/vic20/impo3.zip",
       "fileType": "DISK",
       "iconPath": "",
       "machineType": "PAL",
@@ -472,10 +456,11 @@
     },
     {
       "name": "Rockman",
-      "filePath": "snaps/pcv/ROCKMAN.PCV",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FRockman%20%281984%29%28Mastertronic%29.zip",
       "fileType": "PCV",
       "iconPath": "",
-      "machineType": "PAL"
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
     },
     {
       "name": "Skramble",
