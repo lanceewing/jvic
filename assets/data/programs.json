@@ -49,14 +49,6 @@
       "ram": "RAM_24K"
     },
     {
-      "name": "Pu239 - 9teensplit",
-      "displayName": "Pu239\n9teensplit",
-      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
-      "fileType": "PRG",
-      "iconPath": "",      
-      "machineType": "PAL"
-    },
-    {
       "name": "Ate Bit Miami Vic",
       "displayName": "Ate Bit\nMiami Vic",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
@@ -291,7 +283,7 @@
       "name": "Outworld",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOutworld%20%281981%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/O/Outworld/Outworld.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -300,42 +292,50 @@
       "displayName": "Perils of\nWilly",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPerils%20of%20Willy%2C%20The%20%281984%29%28Software%20Projects%29%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Perils of Willy/Perils_of_Willy.png",
       "machineType": "PAL"
     },
     {
       "name": "Pharoah's Curse",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPharaoh%27s%20Curse%20%281983%29%28HES%29%5B6000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Pharoah's Curse/Pharoah's_Curse.png",
       "machineType": "PAL"
     },
     {
       "name": "Pitfall",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPitfall%20%282013%29%28Victragic%29%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Pitfall/Pitfall.png",
       "machineType": "PAL"
     },
     {
       "name": "Predator",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Predator/Predator.png",
       "machineType": "PAL"
     },
     {
       "name": "Psycho Shopper",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPsycho%20Shopper%20%281984%29%28Mastertronic%29%5B8k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Psycho Shopper/Psycho_Shopper.png",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Pu239 - 9teensplit",
+      "displayName": "Pu239\n9teensplit",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/P/Pu239 - 9teensplit/Pu239_-_9teensplit.png",      
       "machineType": "PAL"
     },
     {
       "name": "Purple Planet Yo",
-      "filePath": "tapes/proxima_ppy.prg",
+      "filePath": "https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/P/Purple Planet Yo/Purple_Planet_Yo.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
     },
@@ -344,7 +344,7 @@
       "displayName": "Raid on\nFort Knox",
       "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/R/Raid on Fort Knox/Raid_on_Fort_Knox.png",
       "machineType": "PAL"
     },
     {
@@ -354,21 +354,6 @@
       "iconPath": "",
       "machineType": "NTSC",
       "ram": "RAM_32K"
-    },
-    {
-      "name": "Reverse Mode Test",
-      "filePath": "tapes/vic20bar-reverse.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL",
-    },
-    {
-      "name": "Reverse Mode Test NTSC",
-      "displayName": "Reverse Mode\nTest NTSC",
-      "filePath": "tapes/vic20bar-reverse_ntsc.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "NTSC",
     },
     {
       "name": "Robotic Liberation",
@@ -431,13 +416,6 @@
       "machineType": "PAL"
     },
     {
-      "name": "Tokra Test Case",
-      "filePath": "tapes/testcase.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Tres Monos",
       "filePath": "tapes/3m.prg",
       "fileType": "PRG",
@@ -446,110 +424,12 @@
       "ram": "RAM_35K"
     },
     {
-      "name": "Test Back",
-      "filePath": "tapes/testback.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36864",
-      "filePath": "tapes/test36864.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36865-1",
-      "filePath": "tapes/test36865-1.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36865-2",
-      "filePath": "tapes/test36865-2.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36865-3",
-      "filePath": "tapes/test36865-3.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36866-1",
-      "filePath": "tapes/test36866-1.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36866-2",
-      "filePath": "tapes/test36866-2.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-        {
-      "name": "Test 36867-1",
-      "filePath": "tapes/test36867-1.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test 36867-2",
-      "filePath": "tapes/test36867-2.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test Charheight 1",
-      "filePath": "tapes/testcharheigh-1.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test Charheight 2",
-      "filePath": "tapes/testcharheigh-2.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test Memfetch 1",
-      "filePath": "tapes/testmemfetch-1.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
-      "name": "Test Memfetch 2",
-      "filePath": "tapes/testmemfetch-2.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Tiger",
       "filePath": "disks/tiger.d64",
       "fileType": "DISK",
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_35K"
-    },
-    {
-      "name": "Vector Test",
-      "filePath": "tapes/vector.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
     },
     {
       "name": "Veni Vidi Vic!",
@@ -566,13 +446,6 @@
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_24K"
-    },
-    {
-      "name": "VIC Test",
-      "filePath": "disks/victest.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL"
     },
     {
       "name": "Warning",
