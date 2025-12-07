@@ -139,16 +139,8 @@
       "machineType": "PAL"
     },
     {
-      "name": "DSR Revicion",
-      "filePath": "disks/DSR_Revicion_VIC20_oldschool_demo_PAL.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_24K"
-    },
-    {
       "name": "Dunno",
-      "filePath": "tapes/dsr_dunno_4k_revision_2018.prg",
+      "filePath": "http://www.evilshirt.com/ataristuff/dsr_dunno_4k.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/D/Dunno/Dunno.png",
       "machineType": "PAL"
@@ -239,7 +231,7 @@
     },
     {
       "name": "Lipstick Traces",
-      "filePath": "tapes/lipstick_traces.prg",
+      "filePath": "https://ftp.area536.com/mirrors/scene.org/demos/groups/orb/orb-lipstick_traces.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/L/Lipstick Traces/Lipstick_Traces.png",
       "machineType": "PAL"
@@ -248,7 +240,7 @@
       "name": "Loderunner",
       "filePath": "carts/16k/loderunn.crt",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/L/Loderunner/Loderunner.png",
       "machineType": "PAL"
     },
     {
@@ -269,7 +261,7 @@
       "name": "MG Raster",
       "filePath": "disks/mg_raster.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/M/MG Raster/MG_Raster.png",
       "machineType": "PAL",
       "ram": "RAM_8K",
     },
