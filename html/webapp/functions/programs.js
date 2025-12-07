@@ -24,6 +24,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("http://viznut.fi/") ||
 			 targetUrl.startsWith("https://files.scene.org/") ||
 			 targetUrl.startsWith("http://www.evilshirt.com/") ||
+			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 
