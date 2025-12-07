@@ -238,23 +238,16 @@
     },
     {
       "name": "Loderunner",
-      "filePath": "carts/16k/loderunn.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FLode%20Runner%20%281983%29%28Broderbund%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/L/Loderunner/Loderunner.png",
       "machineType": "PAL"
     },
     {
-      "name": "Master Type",
-      "filePath": "carts/16k/masterty.crt",
-      "fileType": "CART",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Maze",
-      "filePath": "carts/8k/maze.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMaze%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/M/Maze/Maze.png",
       "machineType": "NTSC"
     },
     {
@@ -267,38 +260,23 @@
     },
     {
       "name": "Monster Maze",
-      "filePath": "carts/8k/monsterm.crt",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMonster%20Maze%20%281982%29%28Epyx%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/M/Monster Maze/Monster_Maze.png",
       "machineType": "PAL"
     },
     {
       "name": "Moon Patrol",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMoon%20Patrol%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/M/Moon Patrol/Moon_Patrol.png",
       "machineType": "NTSC"
     },
     {
-      "name": "Nano Watt",
-      "filePath": "tapes/nw.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Next Level",
-      "filePath": "disks/tnl.d64",
+      "filePath": "http://viznut.fi/demos/vic20/pwp_-_the_next_level.zip",
       "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
-      "name": "Orb MegaDemo",
-      "filePath": "disks/OMD_Delux.d64",
-      "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/N/Next Level/Next_Level.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -306,7 +284,7 @@
       "name": "Omega Race",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOmega%20Race%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/O/Omega Race/Omega_Race.png",
       "machineType": "NTSC"
     },
     {
