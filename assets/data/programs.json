@@ -174,37 +174,21 @@
       "name": "Frozen Time",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FFrozen%20Time%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/F/Frozen Time/Frozen_Time.png",
       "machineType": "PAL"
     },
     {
       "name": "Galactic Abductor",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FGalactic%20Abductor%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/G/Galactic Abductor/Galactic_Abductor.png",
       "machineType": "PAL"
-    },
-    {
-      "name": "Going Lowres",
-      "filePath": "disks/tRSi_-_VIC20_-_Going-Lowres.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_16K",
-    },
-    {
-      "name": "Gnork",
-      "filePath": "disks/dsr_gnork_revision2018_oldschool_vic20.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_16K",
     },
     {
       "name": "Gorf",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGorf%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/G/Gorf/Gorf.png",
       "machineType": "PAL"
     },
     {
@@ -218,14 +202,14 @@
       "name": "Happy Hour",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FHappyhour%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/H/Happy Hour/Happy_Hour.png",
       "machineType": "PAL"
     },
     {
       "name": "Impossiblator 2",
       "filePath": "disks/impo2.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/I/Impossiblator 2/Impossiblator_2.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -238,28 +222,10 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
-      "name": "Interlaced Test 7A",
-      "displayName": "Interlaced\nTest 7A",
-      "filePath": "tapes/test7a.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "NTSC",
-      "ram": "RAM_35K"
-    },
-    {
-      "name": "Interlaced Test 8A",
-      "displayName": "Interlaced\nTest 8A",
-      "filePath": "tapes/test8a.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "NTSC",
-      "ram": "RAM_35K"
-    },
-    {
       "name": "Jalapeno",
       "filePath": "disks/jalapeno.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/J/Jalapeno/Jalapeno.png",
       "machineType": "PAL",
       "ram": "RAM_35K",
     },
@@ -267,7 +233,7 @@
       "name": "Large Unified Theory",
       "filePath": "disks/pwp-lut.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/L/Large Unified Theory/Large_Unified_Theory.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -275,7 +241,7 @@
       "name": "Lipstick Traces",
       "filePath": "tapes/lipstick_traces.prg",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/L/Lipstick Traces/Lipstick_Traces.png",
       "machineType": "PAL"
     },
     {
