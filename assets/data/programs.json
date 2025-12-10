@@ -333,6 +333,7 @@
     },
     {
       "name": "Purple Planet Yo",
+      "displayName": "Purple\nPlanet Yo",
       "filePath": "https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Purple Planet Yo/Purple_Planet_Yo.png",
@@ -365,10 +366,10 @@
     {
       "name": "Rockman",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FRockman%20%281984%29%28Mastertronic%29.zip",
-      "fileType": "PCV",
+      "fileType": "DISK",
       "iconPath": "",
       "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
+      "ram": "RAM_8K"
     },
     {
       "name": "Skramble",
@@ -404,7 +405,7 @@
       "name": "Tenebra Macabre",
       "filePath": "disks/TenebraMacabreVIC20.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/T/Tenebra Macabre/Tenebra_Macabre.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
     },
@@ -419,23 +420,16 @@
       "name": "Tres Monos",
       "filePath": "tapes/3m.prg",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/T/Tres Monos/Tres_Monos.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
     },
     {
-      "name": "Veni Vidi Vic!",
-      "filePath": "disks/veni vidi vic! PAL.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_8K"
-    },
-    {
       "name": "Vici Iterum MM",
+      "displayName": "Vici Iterum\nMM",
       "filePath": "disks/Pu239 - Vimm.d64",
       "fileType": "DISK",
-      "iconPath": "",
+      "iconPath": "screenshots/V/Vici Iterum MM/Vici_Iterum_MM.png",
       "machineType": "PAL",
       "ram": "RAM_24K"
     },
