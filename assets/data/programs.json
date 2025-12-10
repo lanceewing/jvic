@@ -89,7 +89,7 @@
       "name": "Capture the Flag",
       "displayName": "Capture\nthe Flag",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
-      "fileType": "DISK",
+      "fileType": "CART",
       "iconPath": "screenshots/C/Capture the Flag/Capture_the_Flag.png",      
       "machineType": "NTSC",
       "ram": "RAM_32K"
@@ -359,7 +359,7 @@
       "name": "Robotic Liberation",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/R/Robotic Liberation/Robotic_Liberation.png",
       "machineType": "PAL"
     },
     {
@@ -374,14 +374,14 @@
       "name": "Skramble",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSkramble%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/S/Skramble/Skramble.png",
       "machineType": "PAL"
     },
     {
       "name": "Slap Dab",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSlap%20Dab%20%281983%29%28Anirog%29.zip",
       "fileType": "PCV",
-      "iconPath": "",
+      "iconPath": "screenshots/S/Slap Dab/Slap_Dab.png",
       "machineType": "PAL"
     },
     {
@@ -389,15 +389,15 @@
       "displayName": "Spiders\nof Mars",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FSpiders%20of%20Mars%20%281982%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/S/Spiders of Mars/Spiders_of_Mars.png",
       "machineType": "PAL"
     },
     {
       "name": "Sword of Hrakel",
       "displayName": "Sword of\nHrakel",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Hrakel%20%281983%29%28Romik%29%5B8k%5D.zip",
-      "fileType": "PCV",
-      "iconPath": "",
+      "fileType": "PRG",
+      "iconPath": "screenshots/S/Sword of Hrakel/Sword_of_Hrakel.png",
       "machineType": "PAL"
     },
     {
@@ -412,21 +412,13 @@
       "name": "Terraguard",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTerraguard%20%281982%29%28Creative%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
+      "iconPath": "screenshots/T/Terraguard/Terraguard.png",
       "machineType": "PAL"
     },
     {
       "name": "Tres Monos",
       "filePath": "tapes/3m.prg",
       "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_35K"
-    },
-    {
-      "name": "Tiger",
-      "filePath": "disks/tiger.d64",
-      "fileType": "DISK",
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_35K"
