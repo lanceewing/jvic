@@ -25,6 +25,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("https://files.scene.org/") ||
 			 targetUrl.startsWith("https://ftp.area536.com/mirrors/scene.org/") ||
 			 targetUrl.startsWith("http://www.evilshirt.com/") ||
+			 targetUrl.startsWith("http://majikeyric.free.fr/") || 
 			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
