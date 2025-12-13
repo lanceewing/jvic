@@ -403,7 +403,7 @@
     },
     {
       "name": "Tenebra Macabre",
-      "filePath": "disks/TenebraMacabreVIC20.d64",
+      "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/tenebra-macabre/TenebraMacabreVIC20.zip",
       "fileType": "DISK",
       "iconPath": "screenshots/T/Tenebra Macabre/Tenebra_Macabre.png",
       "machineType": "PAL",
@@ -418,7 +418,7 @@
     },
     {
       "name": "Tres Monos",
-      "filePath": "tapes/3m.prg",
+      "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org//parties/2019/revision19/oldskool-4k-intro/3m.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/T/Tres Monos/Tres_Monos.png",
       "machineType": "PAL",
@@ -435,7 +435,7 @@
     },
     {
       "name": "Warning",
-      "filePath": "tapes/pwp-warning.prg",
+      "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org//parties/2014/assembly14/wild/warning_by_pwp.zip",
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
