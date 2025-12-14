@@ -215,7 +215,7 @@
     },
     {
       "name": "Jalapeno",
-      "filePath": "disks/jalapeno.d64",
+      "filePath": "https://vic20.games/programs?url=https://kollektivet.nu/archive/jalapeno.zip",
       "fileType": "DISK",
       "iconPath": "screenshots/J/Jalapeno/Jalapeno.png",
       "machineType": "PAL",
@@ -223,7 +223,7 @@
     },
     {
       "name": "Large Unified Theory",
-      "filePath": "disks/pwp-lut.d64",
+      "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/pwp-lut.zip",
       "fileType": "DISK",
       "iconPath": "screenshots/L/Large Unified Theory/Large_Unified_Theory.png",
       "machineType": "PAL",
@@ -373,7 +373,7 @@
     },
     {
       "name": "Rockman",
-      "filePath": "https://web.archive.org/web/20160401124931/http://vic-20.appspot.com/rockman.zip",
+      "filePath": "https://vic20.games/programs?url=https://web.archive.org/web/20160401124931/http://vic-20.appspot.com/rockman.zip",
       "fileType": "DISK",
       "entryName": "ROCKMAN.PCV",
       "iconPath": "screenshots/R/Rockman/Rockman.png",
