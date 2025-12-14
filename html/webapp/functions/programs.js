@@ -28,6 +28,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("http://majikeyric.free.fr/") || 
 			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://kollektivet.nu/") || 
+			 targetUrl.startsWith("http://atebit.org/") || 
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 

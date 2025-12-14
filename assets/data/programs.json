@@ -140,7 +140,7 @@
     {
       "name": "Eight Dollar Math",
       "displayName": "Eight Dollar\nMath",
-      "filePath": "disks/eight_dollar_math.d64",
+      "filePath": "https://vic20.games/programs?url=http://atebit.org/downloads/eight_dollar_math.zip",
       "fileType": "DISK",
       "iconPath": "screenshots/E/Eight Dollar Math/Eight_Dollar_Math.png",
       "machineType": "PAL",
@@ -199,7 +199,7 @@
     },
     {
       "name": "Impossiblator 2",
-      "filePath": "disks/impo2.d64",
+      "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/impo2.zip",
       "fileType": "DISK",
       "iconPath": "screenshots/I/Impossiblator 2/Impossiblator_2.png",
       "machineType": "PAL",
