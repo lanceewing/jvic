@@ -47,8 +47,8 @@ public class GwtLauncher extends GwtApplication {
             } else {
                 // JVic also supports loading from a provided URL.
                 String programUrl = Window.Location.getParameter("url");
-                logToJSConsole("Attempting to load program from URL: " + programUrl);
                 if ((programUrl != null) && (!programUrl.trim().equals(""))) {
+                    logToJSConsole("Attempting to load program from URL: " + programUrl);
                     if (isProgramURLValid(programUrl)) {
                         argsMap.put("url", programUrl);
                     } else {
