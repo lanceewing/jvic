@@ -1,0 +1,27 @@
+<IfModule mod_headers.c>
+Header set Cross-Origin-Embedder-Policy "require-corp"
+Header set Cross-Origin-Opener-Policy "same-origin"
+</IfModule>
+
+# Set CORS headers to allow XHR
+# Determine if Origin matches the regex
+SetEnvIf Origin "http(s)?://(localhost:.*)$" AccessControlAllowOrigin=$0
+# Set Access-Control-Allow-Origin if the Origin is allowd
+Header always set Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+Header always set Access-Control-Allow-Credentials true
+Header always set Access-Control-Allow-Headers "Origin, Authorization, Accept"
+Header always set Access-Control-Allow-Methods "POST, GET, OPTIONS, DELETE, PUT"
+Header always set Access-Control-Max-Age "600"
+Header always set Access-Control-Expose-Headers "Content-Security-Policy, Location"
+Header merge Vary Origin
+
+# Answer pre-flight requests with a 204 No Content
+# https://developer.mozilla.org/en-US/docs/Glossary/Preflight_request
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=204,L]
+
+# Proxy to the requested URL if the url request parameter.
+RewriteCond %{REQUEST_URI} ^/programs
+RewriteCond %{QUERY_STRING} ^url=(.*)
+RewriteRule ^programs %1 [P,L]

@@ -1,0 +1,20 @@
+[
+    {
+        "request_path": "programs",
+        "type": "serverSideJavaScript",
+        "key": "iwPcQOSK7AzJ43FcPCZvxu4Z2u6p70o6jN51Umi9hBwbLZU9ee175zn3"
+    },
+    {
+        "request_path": "all files",
+        "type": "additional header",
+        "headerType": "Cross-Origin-Opener-Policy",
+        "headerValue": "same-origin"
+    },
+    {
+        "request_path": "all files",
+        "type": "additional header",
+        "headerType": "Cross-Origin-Embedder-Policy",
+        "headerValue": "credentialless"
+    }
+
+]
