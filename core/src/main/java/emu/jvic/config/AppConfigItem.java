@@ -23,6 +23,8 @@ public class AppConfigItem {
     private String status = "WORKING";
     
     private String autoRunCommand;
+    
+    private String entryName;
 
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
@@ -193,5 +195,13 @@ public class AppConfigItem {
 
     public void setAutoRunCommand(String autoRunCommand) {
         this.autoRunCommand = autoRunCommand;
+    }
+
+    public String getEntryName() {
+        return entryName;
+    }
+
+    public void setEntryName(String entryName) {
+        this.entryName = entryName;
     }
 }

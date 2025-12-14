@@ -5,8 +5,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -46,7 +46,9 @@ public class DesktopProgramLoader implements ProgramLoader {
             } 
             else {
                 URL url = new URL(appConfigItem.getFilePath());
-                URLConnection connection = url.openConnection();
+                HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("User-Agent", "JVic - The VIC 20 Emulator");
                 
                 int b = 0;
                 bis = new BufferedInputStream(connection.getInputStream());
@@ -54,7 +56,6 @@ public class DesktopProgramLoader implements ProgramLoader {
                 while ((b = bis.read()) != -1 ) {
                     out.write(b);
                 }
-                
                 data = out.toByteArray();
             }
             
@@ -72,29 +73,32 @@ public class DesktopProgramLoader implements ProgramLoader {
                     while (zipEntry != null) {
                         try {
                             if (!zipEntry.isDirectory()) {
+                                String entryName = zipEntry.getName().toLowerCase();
+                                boolean entryMatch = (appConfigItem.getEntryName() == null || 
+                                        entryName.equals(appConfigItem.getEntryName().toLowerCase()));
                                 numOfEntries++;
                                 fileData = readBytesFromInputStream(zis);
-                                if (isDiskFile(fileData)) {
+                                if (isDiskFile(fileData) && entryMatch) {
                                     programData = fileData;
                                     appConfigItem.setFileType("DISK");
                                     break;
                                 }
-                                if (isPcvSnapshot(fileData)) {
+                                if (isPcvSnapshot(fileData) && entryMatch) {
                                     appConfigItem.setFileType("PCV");
                                     programData = fileData;
                                     break;
                                 }
-                                if (isProgramFile(fileData)) {
+                                if (isProgramFile(fileData) && entryMatch) {
                                     appConfigItem.setFileType("PRG");
                                     programData = fileData;
                                     break;
                                 }
-                                if (isCartFile(fileData)) {
+                                if (isCartFile(fileData) && entryMatch) {
                                     appConfigItem.setFileType("CART");
                                     programData = removeStartAddress(fileData);
                                     break;
                                 }
-                                if (zipEntry.getName().toLowerCase().endsWith(".crt")) {
+                                if (entryName.endsWith(".crt") && entryMatch) {
                                     appConfigItem.setFileType("CART");
                                     programData = fileData;
                                     break;

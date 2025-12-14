@@ -63,29 +63,32 @@ public class GwtProgramLoader implements ProgramLoader {
                     if (!fileName.endsWith("/")) {
                         // File is not a directory, so check file content...
                         JSFile file = jsZip.getFile(fileName);
+                        String entryName = file.getName().toLowerCase();
+                        boolean entryMatch = (appConfigItem.getEntryName() == null || 
+                                entryName.equals(appConfigItem.getEntryName().toLowerCase()));
                         if (file != null) {
                             byte[] fileData = file.asUint8Array().toByteArray();
-                            if (isDiskFile(fileData)) {
+                            if (isDiskFile(fileData) && entryMatch) {
                                 programData = fileData;
                                 appConfigItem.setFileType("DISK");
                                 break;
                             }
-                            if (isPcvSnapshot(fileData)) {
+                            if (isPcvSnapshot(fileData) && entryMatch) {
                                 appConfigItem.setFileType("PCV");
                                 programData = fileData;
                                 break;
                             }
-                            if (isProgramFile(fileData)) {
+                            if (isProgramFile(fileData) && entryMatch) {
                                 appConfigItem.setFileType("PRG");
                                 programData = fileData;
                                 break;
                             }
-                            if (isCartFile(fileData)) {
+                            if (isCartFile(fileData) && entryMatch) {
                                 appConfigItem.setFileType("CART");
                                 programData = removeStartAddress(fileData);
                                 break;
                             }
-                            if (file.getName().toLowerCase().endsWith(".crt")) {
+                            if (file.getName().toLowerCase().endsWith(".crt") && entryMatch) {
                                 appConfigItem.setFileType("CART");
                                 programData = fileData;
                                 break;
