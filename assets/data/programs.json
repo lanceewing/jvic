@@ -147,6 +147,14 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
+      "name": "Elite",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7337",
+      "fileType": "DISK",
+      "iconPath": "screenshots/E/Elite/Elite.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "FLInale PAL",
       "filePath": "disks/flinale-pal.d64",
       "fileType": "DISK",
@@ -365,9 +373,10 @@
     },
     {
       "name": "Rockman",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FRockman%20%281984%29%28Mastertronic%29.zip",
+      "filePath": "https://web.archive.org/web/20160401124931/http://vic-20.appspot.com/rockman.zip",
       "fileType": "DISK",
-      "iconPath": "",
+      "entryName": "ROCKMAN.PCV",
+      "iconPath": "screenshots/R/Rockman/Rockman.png",
       "machineType": "PAL",
       "ram": "RAM_8K"
     },
