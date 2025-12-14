@@ -1,5 +1,9 @@
 package emu.jvic;
 
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
@@ -81,15 +85,15 @@ public class Machine {
      * @param machineType 
      * @param ramType
      * 
-     * @return Runnable that, if not null, should be run when BASIC is ready.
+     * @return Callable that, if not null, should be run when BASIC is ready.
      */
-    public Runnable init(
+    public Callable<Queue<char[]>> init(
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
             Program program, MachineType machineType, RamType ramType) {
         
         byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
-        Runnable autoLoadRunnable = null;
+        Callable<Queue<char[]>> autoLoadRunnable = null;
 
         this.machineType = machineType;
 
@@ -171,6 +175,14 @@ public class Machine {
             } else if ("DISK".equals(programType)) {
                 // Insert the disk ready to be booted.
                 c1541Drive.insertDisk(programData);
+                autoLoadRunnable = new Callable<Queue<char[]>>() {
+                    public Queue<char[]> call() throws Exception {
+                        Queue<char[]> autoRunCmds = new LinkedList<char[]>();
+                        autoRunCmds.add(new char[] {'L','O','A','D','"','*','"',',','8'});
+                        autoRunCmds.add(new char[] {'R','U','N'});
+                        return autoRunCmds;
+                    }
+                };
             } else if ("PCV".equals(programType)) {
                 // Nothing to do. Snapshot was already loaded.
             }

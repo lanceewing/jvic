@@ -21,6 +21,8 @@ public class AppConfigItem {
     private FileLocation fileLocation = FileLocation.INTERNAL;
 
     private String status = "WORKING";
+    
+    private String autoRunCommand;
 
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
@@ -183,5 +185,13 @@ public class AppConfigItem {
 
     public void setFileData(byte[] fileData) {
         this.fileData = fileData;
+    }
+
+    public String getAutoRunCommand() {
+        return autoRunCommand;
+    }
+
+    public void setAutoRunCommand(String autoRunCommand) {
+        this.autoRunCommand = autoRunCommand;
     }
 }

@@ -15,6 +15,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
+//import com.badlogic.gdx.graphics.PixmapIO;
+//import com.badlogic.gdx.graphics.PixmapIO.PNG;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -565,6 +567,7 @@ public class MachineScreen implements Screen {
      * Saves a screenshot of the machine's current screen contents.
      */
     public void saveScreenshot() {
+        /*
         String friendlyAppName = appConfigItem != null ? appConfigItem.getName().replaceAll("[ ,\n/\\:;*?\"<>|!]", "_")
                 : "shot";
         if (Gdx.app.getType().equals(ApplicationType.Desktop)) {
@@ -574,29 +577,42 @@ public class MachineScreen implements Screen {
                 filePath.append("_");
                 filePath.append(System.currentTimeMillis());
                 filePath.append(".png");
+                
+                ScreenSize currentScreenSize = machineInputProcessor.getScreenSize();
+                int renderWidth = currentScreenSize.getRenderWidth(machineType);
+                int renderHeight = currentScreenSize.getRenderHeight(machineType);
+                Pixmap pixmap = new Pixmap(renderWidth, renderHeight, Pixmap.Format.RGBA8888);
+                pixmap.drawPixmap(
+                        screenPixmap, 
+                        machineType.getHorizontalOffset(), machineType.getVerticalOffset(),
+                        machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(),
+                        0, 0, renderWidth, renderHeight);
+                
                 // TODO: Move to platform specific code, as not supported by GWT/HTML5
-                //PixmapIO.writePNG(Gdx.files.external(filePath.toString()), screenPixmap);
+                PixmapIO.writePNG(Gdx.files.external(filePath.toString()), pixmap);
             } catch (Exception e) {
                 // Ignore.
             }
         }
+        
         // TODO: Move to platform specific code, as not supported by GWT/HTML5
-//        if (appConfigItem != null) {
-//            try {
-//                ByteArrayOutputStream out = new ByteArrayOutputStream();
-//                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
-//                try {
-//                    writer.setFlipY(false);
-//                    writer.write(out, screenPixmap);
-//                } finally {
-//                    writer.dispose();
-//                }
-//                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
-//                jvic.getScreenshotStore().flush();
-//            } catch (IOException ex) {
-//                // Ignore.
-//            }
-//        }
+        if (appConfigItem != null) {
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
+                try {
+                    writer.setFlipY(false);
+                    writer.write(out, screenPixmap);
+                } finally {
+                    writer.dispose();
+                }
+                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
+                jvic.getScreenshotStore().flush();
+            } catch (IOException ex) {
+                // Ignore.
+            }
+        }
+        */
     }
 
     @Override

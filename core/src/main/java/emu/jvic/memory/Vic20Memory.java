@@ -1,5 +1,9 @@
 package emu.jvic.memory;
 
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+
 import emu.jvic.MachineType;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Via6522;
@@ -187,16 +191,16 @@ public class Vic20Memory extends Memory {
      * @param waitForBasic If true then it assumes the machine hasn't yet started,
      *                     so will wait for BASIC to load first.
      *                     
-     * @return Runnable that, if not null, should be run when BASIC is ready.
+     * @return Callable that, if not null, should be run when BASIC is ready.
      */
-    public Runnable loadBasicProgram(final byte[] programData, boolean waitForBasic) {
+    public Callable<Queue<char[]>> loadBasicProgram(final byte[] programData, boolean waitForBasic) {
         final int startAddress = (programData[1] << 8) + programData[0];
         final int endAddress = startAddress + programData.length;
 
         // This is what we will run regardless of whether we do it immediately or after
         // BASIC has loaded.
-        final Runnable loadProgramTask = new Runnable() {
-            public void run() {
+        final Callable<Queue<char[]>> loadProgramTask = new Callable<Queue<char[]>>() {
+            public Queue<char[]> call() {
                 // Start by loading the program data in to the VIC 20's memory.
                 for (int i = 2; i < programData.length; i++) {
                     mem[startAddress + (i - 2)] = (programData[i] & 0xFF);
@@ -207,6 +211,11 @@ public class Vic20Memory extends Memory {
                 mem[0x2c] = mem[0xad] = (startAddress >> 8);
                 mem[0x2d] = mem[0x2f] = mem[0x31] = mem[0xae] = (endAddress & 0xff);
                 mem[0x2e] = mem[0x30] = mem[0x32] = mem[0xaf] = (endAddress >> 8);
+                
+                // Add RUN command to the autorun cmd queue.
+                Queue<char[]> autoRunCmds = new LinkedList<char[]>();
+                autoRunCmds.add(new char[] {'R','U','N'});
+                return autoRunCmds;
             }
         };
 
@@ -215,7 +224,10 @@ public class Vic20Memory extends Memory {
         } else {
             // In this case we assume BASIC is already loaded, so we load the program
             // immediately. Not clear if this scenario is actually needed
-            loadProgramTask.run();
+            try {
+                loadProgramTask.call();
+            } catch (Exception e) {
+            }
             return null;
         }
     }

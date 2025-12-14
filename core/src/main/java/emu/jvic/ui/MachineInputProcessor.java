@@ -150,6 +150,9 @@ public class MachineInputProcessor extends InputAdapter {
                 }
             }
         }
+        else if (keycode == Keys.F12) {
+            machineScreen.saveScreenshot();
+        }
         return false;
     }
 

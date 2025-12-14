@@ -1,6 +1,8 @@
 package emu.jvic.worker;
 
-import com.badlogic.gdx.utils.TimeUtils;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.typedarrays.shared.ArrayBuffer;
 import com.google.gwt.typedarrays.shared.TypedArrays;
@@ -15,7 +17,6 @@ import emu.jvic.cpu.Cpu6502;
 import emu.jvic.gwt.GwtSoundGenerator;
 import emu.jvic.gwt.GwtKeyboardMatrix;
 import emu.jvic.gwt.GwtPixelData;
-import emu.jvic.gwt.GwtProgramLoader;
 import emu.jvic.memory.RamType;
 
 /**
@@ -53,9 +54,14 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     private boolean warpSpeed = false;
     
     /**
-     * Runnable that, if not null, should be run when BASIC is ready.
+     * Callable<Queue<char[]>> that, if not null, should be run when BASIC is ready.
      */
-    private Runnable autoLoadProgram;
+    private Callable<Queue<char[]>> autoLoadProgram;
+    
+    /**
+     * The current queue of auto run commands to execute.
+     */
+    private Queue<char[]> autoRunCmdQueue;
     
     // Used by the old implementations.
     private double lastTime = -1;
@@ -241,18 +247,26 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 // We need to wait for BASIC to boot up before loading the program.
                 // The simplest way to wait for BASIC to be ready is to check for
                 // the starting cursor position.
+                
                 if (mem[0xD1] == 110) {
                     // Now that the BASIC cursor is in the start position, let's load the
                     // program data in to memory.
-                    autoLoadProgram.run();
-                    autoLoadProgram = null;
+                    try {
+                        autoRunCmdQueue = autoLoadProgram.call();
+                    } catch (Exception e) {}
                     
-                    // Pretend that the user typed RUN.
-                    mem[631] = 'R';
-                    mem[632] = 'U';
-                    mem[633] = 'N';
-                    mem[634] = 0x0D;
-                    mem[198] = 4;
+                    // If there is an auto run command, then run it.
+                    runNextBasicCommand(autoRunCmdQueue, mem);
+                    
+                    if (autoRunCmdQueue.isEmpty()) {
+                        autoLoadProgram = null;
+                    }
+                }
+                
+                // If it is a DISK, then we run two commands, the second being the RUN.
+                if (mem[0xD1] == 220) {
+                    runNextBasicCommand(autoRunCmdQueue, mem);
+                    autoLoadProgram = null;
                 }
             }
             
@@ -265,7 +279,22 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
 
         requestNextAnimationFrame();
     }
-        
+    
+    private void runNextBasicCommand(Queue<char[]> cmdQueue, int[] mem) {
+        if ((cmdQueue != null) && (!cmdQueue.isEmpty())) {
+            // Keyboard buffer, 10 bytes (631 - 640)
+            char[] cmdChars = cmdQueue.remove();
+            int cmdCharPos = 0;
+            for (; cmdCharPos < cmdChars.length; cmdCharPos++) {
+                mem[631 + cmdCharPos] = cmdChars[cmdCharPos];
+            }
+            mem[631 + cmdCharPos] = 0x0D;
+            
+            // Num of chars in keyboard buffer.
+            mem[198] = cmdCharPos + 1;
+        }
+    }
+    
     public native void exportPerformAnimationFrame() /*-{
         var that = this;
         $self.performAnimationFrame = $entry(function(timestamp) {
