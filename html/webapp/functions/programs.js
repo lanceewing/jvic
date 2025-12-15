@@ -40,6 +40,8 @@ export async function onRequest(context) {
 			if (!(targetUrl.startsWith("https://archive.org/") || 
 		          targetUrl.startsWith("https://web.archive.org/"))) {
             	request.headers.set("Origin", new URL(targetUrl).origin);
+			} else {
+				request.headers.delete("Origin");
 			}
             
             // Perform request to destination URL.
