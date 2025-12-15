@@ -41,7 +41,7 @@ export async function onRequest(context) {
 		          targetUrl.startsWith("https://web.archive.org/"))) {
             	request.headers.set("Origin", new URL(targetUrl).origin);
 			} else {
-				request.headers.delete("Origin");
+				//request.headers.delete("Origin");
 				
 				request.headers.set("Accept", "*/*");
 				request.headers.set("Accept-Encoding", "gzip, deflate, br, zstd");
@@ -50,8 +50,8 @@ export async function onRequest(context) {
 				request.headers.set("Pragma", "no-cache");
 				request.headers.set("Priority", "u=0, i");
 				
-				//request.headers.set("Referer", "https://vic20.games/");
-				//request.headers.set("Origin", "https://vic20.games");
+				request.headers.set("Referer", "https://vic20.games/");
+				request.headers.set("Origin", "https://vic20.games");
 				
 				request.headers.set("Sec-CH-UA", "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"");
 				request.headers.set("Sec-CH-UA-Mobile", "?0");
