@@ -29,6 +29,9 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://kollektivet.nu/") || 
 			 targetUrl.startsWith("http://atebit.org/") || 
+			 targetUrl.startsWith("https://raw.githubusercontent.com/") || 
+			 targetUrl.startsWith("https://github.com/") ||
+			 targetUrl.startsWith("https://raw.github.com/") || 
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 

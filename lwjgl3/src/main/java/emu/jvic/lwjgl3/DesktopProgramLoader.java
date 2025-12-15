@@ -75,7 +75,8 @@ public class DesktopProgramLoader implements ProgramLoader {
                             if (!zipEntry.isDirectory()) {
                                 String entryName = zipEntry.getName().toLowerCase();
                                 boolean entryMatch = (appConfigItem.getEntryName() == null || 
-                                        entryName.equals(appConfigItem.getEntryName().toLowerCase()));
+                                        entryName.equals(appConfigItem.getEntryName().toLowerCase()) || 
+                                        entryName.endsWith("/" + appConfigItem.getEntryName().toLowerCase()));
                                 numOfEntries++;
                                 fileData = readBytesFromInputStream(zis);
                                 if (isDiskFile(fileData) && entryMatch) {

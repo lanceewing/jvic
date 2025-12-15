@@ -155,12 +155,12 @@
       "ram": "RAM_35K"
     },
     {
-      "name": "FLInale PAL",
-      "filePath": "disks/flinale-pal.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_35K"
+      "name": "Freax",
+      "filePath": "https://raw.githubusercontent.com/orac81/FREAX/refs/heads/main/freax32.zip",
+      "fileType": "PRG",
+      "entryName": "freax-v20.prg",
+      "iconPath": "screenshots/F/Freax/Freax.png",
+      "machineType": "PAL"
     },
     {
       "name": "Frozen Time",
@@ -249,14 +249,6 @@
       "fileType": "CART",
       "iconPath": "screenshots/M/Maze/Maze.png",
       "machineType": "NTSC"
-    },
-    {
-      "name": "MG Raster",
-      "filePath": "disks/mg_raster.d64",
-      "fileType": "DISK",
-      "iconPath": "screenshots/M/MG Raster/MG_Raster.png",
-      "machineType": "PAL",
-      "ram": "RAM_8K",
     },
     {
       "name": "Monster Maze",
@@ -357,19 +349,19 @@
       "machineType": "PAL"
     },
     {
-      "name": "Retina Color",
-      "filePath": "disks/retina color.d64",
-      "fileType": "DISK",
-      "iconPath": "",
-      "machineType": "NTSC",
-      "ram": "RAM_32K"
-    },
-    {
       "name": "Robotic Liberation",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/R/Robotic Liberation/Robotic_Liberation.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "Robots Rumble",
+      "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/robots-rumble/RobotsRumbleVIC20.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/R/Robots Rumble/Robots_Rumble.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
     },
     {
       "name": "Rockman",
@@ -432,15 +424,6 @@
       "iconPath": "screenshots/T/Tres Monos/Tres_Monos.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
-    },
-    {
-      "name": "Vici Iterum MM",
-      "displayName": "Vici Iterum\nMM",
-      "filePath": "disks/Pu239 - Vimm.d64",
-      "fileType": "DISK",
-      "iconPath": "screenshots/V/Vici Iterum MM/Vici_Iterum_MM.png",
-      "machineType": "PAL",
-      "ram": "RAM_24K"
     },
     {
       "name": "Warning",
