@@ -34,9 +34,13 @@ export async function onRequest(context) {
 
             // Rewrite request to point to target URL. This also makes the request 
             // mutable so you can add the correct Origin header to make the API server
-            // think that this request is not cross-site.
+            // think that this request is not cross-site. The archive.org website 
+			// doesn't require this.
             request = new Request(targetUrl, request);
-            request.headers.set("Origin", new URL(targetUrl).origin);
+			if (!(targetUrl.startsWith("https://archive.org/") || 
+		          targetUrl.startsWith("https://web.archive.org/"))) {
+            	request.headers.set("Origin", new URL(targetUrl).origin);
+			}
             
             // Perform request to destination URL.
             let response = await fetch(request);
