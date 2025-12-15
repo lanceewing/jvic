@@ -51,14 +51,14 @@
     {
       "name": "Ate Bit Miami Vic",
       "displayName": "Ate Bit\nMiami Vic",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/A/Ate Bit Miami Vic/Ate_Bit_Miami_Vic.png",
       "machineType": "PAL"
     },
     {
       "name": "Atlantis",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FAtlantis%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FAtlantis%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/A/Atlantis/Atlantis.png",
       "machineType": "PAL"
@@ -66,21 +66,21 @@
     {
       "name": "Bad Scene Poetry",
       "displayName": "Bad Scene\nPoetry",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FBad%20Scene%20Poetry%20%282003-08-30%29%28Cosine%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FBad%20Scene%20Poetry%20%282003-08-30%29%28Cosine%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/B/Bad Scene Poetry/Bad_Scene_Poetry.png",      
       "machineType": "PAL"
     },
     {
       "name": "Bongo",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBongo%20%281984%29%28Kingsoft%29%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBongo%20%281984%29%28Kingsoft%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/B/Bongo/Bongo.png",      
       "machineType": "PAL"
     },
     {
       "name": "Buck Rogers",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBuck%20Rogers%20-%20Planet%20of%20Zoom%20%281983%29%28Sega%29%28NTSC-PAL%29%5B6000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBuck%20Rogers%20-%20Planet%20of%20Zoom%20%281983%29%28Sega%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/B/Buck Rogers/Buck_Rogers.png",      
       "machineType": "NTSC"
@@ -88,7 +88,7 @@
     {
       "name": "Capture the Flag",
       "displayName": "Capture\nthe Flag",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/C/Capture the Flag/Capture_the_Flag.png",      
       "machineType": "NTSC",
@@ -97,35 +97,35 @@
     {
       "name": "Cncd Cheat Split",
       "displayName": "Cncd Cheat\nSplit",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FCheat%20Split%20%282002-03%29%28CNCD%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FCheat%20Split%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/C/Cncd Cheat Split/Cncd_Cheat_Split.png",      
       "machineType": "PAL"
     },
     {
       "name": "Datapop",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FDatapop%21%20%282009-10-12%29%28tlr%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FDatapop%21%20%282009-10-12%29%28tlr%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/D/Datapop/Datapop.png",
       "machineType": "PAL"
     },
     {
       "name": "Defender",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDefender%20%281983%29%28Atarisoft%29%28NTSC-PAL%29%5B6000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDefender%20%281983%29%28Atarisoft%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/D/Defender/Defender.png",      
       "machineType": "PAL"
     },
     {
       "name": "Demon Attack",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDemon%20Attack%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDemon%20Attack%20%281983%29%28Imagic%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/D/Demon Attack/Demon_Attack.png",
       "machineType": "PAL"
     },
     {
       "name": "Dragonfire",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDragonfire%20%281983%29%28Imagic%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDragonfire%20%281983%29%28Imagic%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/D/Dragonfire/Dragonfire.png",
       "machineType": "PAL"
@@ -164,35 +164,35 @@
     },
     {
       "name": "Frozen Time",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FFrozen%20Time%20%282002-03%29%28CNCD%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FFrozen%20Time%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/F/Frozen Time/Frozen_Time.png",
       "machineType": "PAL"
     },
     {
       "name": "Galactic Abductor",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FGalactic%20Abductor%20%281983%29%28Anirog%29%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FGalactic%20Abductor%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/G/Galactic Abductor/Galactic_Abductor.png",
       "machineType": "PAL"
     },
     {
       "name": "Gorf",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGorf%20%281982%29%28Commodore%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGorf%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/G/Gorf/Gorf.png",
       "machineType": "PAL"
     },
     {
       "name": "Grid Runner",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGridrunner%20%281982%29%28HES%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGridrunner%20%281982%29%28HES%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "",
       "machineType": "PAL"
     },
     {
       "name": "Happy Hour",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FHappyhour%20%282002-03%29%28CNCD%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FHappyhour%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/H/Happy Hour/Happy_Hour.png",
       "machineType": "PAL"
@@ -238,14 +238,14 @@
     },
     {
       "name": "Loderunner",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FLode%20Runner%20%281983%29%28Broderbund%29%28NTSC-PAL%29%5B6000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FLode%20Runner%20%281983%29%28Broderbund%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/L/Loderunner/Loderunner.png",
       "machineType": "PAL"
     },
     {
       "name": "Maze",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMaze%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMaze%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/M/Maze/Maze.png",
       "machineType": "NTSC"
@@ -260,14 +260,14 @@
     },
     {
       "name": "Monster Maze",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMonster%20Maze%20%281982%29%28Epyx%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMonster%20Maze%20%281982%29%28Epyx%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/M/Monster Maze/Monster_Maze.png",
       "machineType": "PAL"
     },
     {
       "name": "Moon Patrol",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMoon%20Patrol%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMoon%20Patrol%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/M/Moon Patrol/Moon_Patrol.png",
       "machineType": "NTSC"
@@ -282,14 +282,14 @@
     },
     {
       "name": "Omega Race",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOmega%20Race%20%281982%29%28Commodore%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOmega%20Race%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/O/Omega Race/Omega_Race.png",
       "machineType": "NTSC"
     },
     {
       "name": "Outworld",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOutworld%20%281981%29%28UMI%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOutworld%20%281981%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/O/Outworld/Outworld.png",
       "machineType": "PAL",
@@ -298,35 +298,35 @@
     {
       "name": "Perils of Willy",
       "displayName": "Perils of\nWilly",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPerils%20of%20Willy%2C%20The%20%281984%29%28Software%20Projects%29%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPerils%20of%20Willy%2C%20The%20%281984%29%28Software%20Projects%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Perils of Willy/Perils_of_Willy.png",
       "machineType": "PAL"
     },
     {
       "name": "Pharoah's Curse",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPharaoh%27s%20Curse%20%281983%29%28HES%29%5B6000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPharaoh%27s%20Curse%20%281983%29%28HES%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/P/Pharoah's Curse/Pharoah's_Curse.png",
       "machineType": "PAL"
     },
     {
       "name": "Pitfall",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPitfall%20%282013%29%28Victragic%29%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPitfall%20%282013%29%28Victragic%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Pitfall/Pitfall.png",
       "machineType": "PAL"
     },
     {
       "name": "Predator",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/P/Predator/Predator.png",
       "machineType": "PAL"
     },
     {
       "name": "Psycho Shopper",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPsycho%20Shopper%20%281984%29%28Mastertronic%29%5B8k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPsycho%20Shopper%20%281984%29%28Mastertronic%29%5B8k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Psycho Shopper/Psycho_Shopper.png",
       "machineType": "PAL"
@@ -334,7 +334,7 @@
     {
       "name": "Pu239 - 9teensplit",
       "displayName": "Pu239\n9teensplit",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Pu239 - 9teensplit/Pu239_-_9teensplit.png",      
       "machineType": "PAL"
@@ -351,7 +351,7 @@
     {
       "name": "Raid on Fort Knox",
       "displayName": "Raid on\nFort Knox",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
+      "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
       "fileType": "CART",
       "iconPath": "screenshots/R/Raid on Fort Knox/Raid_on_Fort_Knox.png",
       "machineType": "PAL"
@@ -366,14 +366,14 @@
     },
     {
       "name": "Robotic Liberation",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/R/Robotic Liberation/Robotic_Liberation.png",
       "machineType": "PAL"
     },
     {
       "name": "Rockman",
-      "filePath": "https://vic20.games/programs?url=https://web.archive.org/web/20160401124931/http://vic-20.appspot.com/rockman.zip",
+      "filePath": "https://web.archive.org/web/20160401124931/http://vic-20.appspot.com/rockman.zip",
       "fileType": "DISK",
       "entryName": "ROCKMAN.PCV",
       "iconPath": "screenshots/R/Rockman/Rockman.png",
@@ -382,14 +382,14 @@
     },
     {
       "name": "Skramble",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSkramble%20%281983%29%28Anirog%29%5B16k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSkramble%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/S/Skramble/Skramble.png",
       "machineType": "PAL"
     },
     {
       "name": "Slap Dab",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSlap%20Dab%20%281983%29%28Anirog%29.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSlap%20Dab%20%281983%29%28Anirog%29.zip",
       "fileType": "PCV",
       "iconPath": "screenshots/S/Slap Dab/Slap_Dab.png",
       "machineType": "PAL"
@@ -397,7 +397,7 @@
     {
       "name": "Spiders of Mars",
       "displayName": "Spiders\nof Mars",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FSpiders%20of%20Mars%20%281982%29%28UMI%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FSpiders%20of%20Mars%20%281982%29%28UMI%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/S/Spiders of Mars/Spiders_of_Mars.png",
       "machineType": "PAL"
@@ -405,7 +405,7 @@
     {
       "name": "Sword of Hrakel",
       "displayName": "Sword of\nHrakel",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Hrakel%20%281983%29%28Romik%29%5B8k%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Hrakel%20%281983%29%28Romik%29%5B8k%5D.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/S/Sword of Hrakel/Sword_of_Hrakel.png",
       "machineType": "PAL"
@@ -420,7 +420,7 @@
     },
     {
       "name": "Terraguard",
-      "filePath": "https://vic20.games/programs?url=https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTerraguard%20%281982%29%28Creative%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTerraguard%20%281982%29%28Creative%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/T/Terraguard/Terraguard.png",
       "machineType": "PAL"
