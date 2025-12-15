@@ -42,6 +42,24 @@ export async function onRequest(context) {
             	request.headers.set("Origin", new URL(targetUrl).origin);
 			} else {
 				request.headers.delete("Origin");
+				
+				request.headers.set("Accept", "*/*");
+				request.headers.set("Accept-Encoding", "gzip, deflate, br, zstd");
+				request.headers.set("Accept-Language", "en-US,en;q=0.9,ja;q=0.8");
+				request.headers.set("Cache-Control", "no-cache");
+				request.headers.set("Pragma", "no-cache");
+				request.headers.set("Priority", "u=0, i");
+				
+				//request.headers.set("Referer", "https://vic20.games/");
+				//request.headers.set("Origin", "https://vic20.games");
+				
+				request.headers.set("Sec-CH-UA", "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"");
+				request.headers.set("Sec-CH-UA-Mobile", "?0");
+				request.headers.set("Sec-CH-UA-Platform", "\"Windows\"");
+				request.headers.set("Sec-Fetch-Dest", "empty");
+				request.headers.set("Sec-Fetch-Mode", "cors");
+				request.headers.set("Sec-Fetch-Site", "cross-site");
+				request.headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36");
 			}
             
             // Perform request to destination URL.
