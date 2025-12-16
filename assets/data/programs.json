@@ -79,6 +79,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Boulder Dash",
+      "filePath": "https://vic20.games/programs?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64",
+      "fileType": "DISK",
+      "iconPath": "screenshots/B/Boulder Dash/Boulder_Dash.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Buck Rogers",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBuck%20Rogers%20-%20Planet%20of%20Zoom%20%281983%29%28Sega%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
@@ -138,19 +146,19 @@
       "machineType": "PAL"
     },
     {
-      "name": "Eight Dollar Math",
-      "displayName": "Eight Dollar\nMath",
-      "filePath": "https://vic20.games/programs?url=http://atebit.org/downloads/eight_dollar_math.zip",
-      "fileType": "DISK",
-      "iconPath": "screenshots/E/Eight Dollar Math/Eight_Dollar_Math.png",
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
       "name": "Elite",
       "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7337",
       "fileType": "DISK",
       "iconPath": "screenshots/E/Elite/Elite.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "FLInale (PAL)",
+      "filePath": "https://vic20.games/programs?url=https://www.tokra.de/vic/flinale/flinale.zip",
+      "fileType": "DISK",
+      "entryName": "flinale-pal.d64",
+      "iconPath": "screenshots/F/FLInale (PAL)/FLInale_(PAL).png",
       "machineType": "PAL",
       "ram": "RAM_35K"
     },
