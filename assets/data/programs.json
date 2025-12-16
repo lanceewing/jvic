@@ -230,6 +230,14 @@
       "ram": "RAM_35K",
     },
     {
+      "name": "Lala Prologue",
+      "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/lala-prologue/LalaPrologueVIC20.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/L/Lala Prologue/Lala_Prologue.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Large Unified Theory",
       "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/pwp-lut.zip",
       "fileType": "DISK",
@@ -439,6 +447,14 @@
       "fileType": "PRG",
       "iconPath": "",
       "machineType": "PAL"
-    },   
+    },
+    {
+      "name": "Zombie Calavera Prologue",
+      "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/zombie-calavera-prologue/ZombieCalaveraPrologueVIC20.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/Z/Zombie Calavera Prologue/Zombie_Calavera_Prologue.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
   ]
 }
