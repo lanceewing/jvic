@@ -246,14 +246,6 @@
       "ram": "RAM_35K",
     },
     {
-      "name": "Kikstart",
-      "filePath": "https://vic20.games/programs?url=https://files.vic20reloaded.com/get/7fe1f8abaad094e0b5cb1b01d712f708",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_35K",
-    },
-    {
       "name": "Lala Prologue",
       "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/lala-prologue/LalaPrologueVIC20.zip",
       "fileType": "DISK",
@@ -310,6 +302,13 @@
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMoon%20Patrol%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/M/Moon Patrol/Moon_Patrol.png",
+      "machineType": "NTSC"
+    },
+    {
+      "name": "Moonsweeper",
+      "filePath": "https://vic20.games/programs?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/M/Moonsweeper/Moonsweeper.png",
       "machineType": "NTSC"
     },
     {
