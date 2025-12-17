@@ -31,6 +31,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("http://atebit.org/") || 
 			 targetUrl.startsWith("https://files.vic20reloaded.com/") || 
 			 targetUrl.startsWith("https://drive.usercontent.google.com/") || 
+			 targetUrl.startsWith("https://www.gamesthatwerent.com/") || 
 			 targetUrl.startsWith("https://www.tokra.de/") || 
 			 targetUrl.startsWith("https://raw.githubusercontent.com/") || 
 			 targetUrl.startsWith("https://github.com/") ||
