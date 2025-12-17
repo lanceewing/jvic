@@ -49,12 +49,28 @@
       "ram": "RAM_24K"
     },
     {
+      "name": "Astro Nell",
+      "filePath": "https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
+      "fileType": "PRG",
+      "entryName": "astro_nell_(pal).prg",
+      "iconPath": "screenshots/A/Astro Nell/Astro_Nell.png",
+      "machineType": "PAL"
+    },
+    {
       "name": "Ate Bit Miami Vic",
       "displayName": "Ate Bit\nMiami Vic",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FMiami%20Vic%20%282009-09%29%28Ate%20Bit%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/A/Ate Bit Miami Vic/Ate_Bit_Miami_Vic.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "Athanor",
+      "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/athanor-the-awakening/athanor_vic20.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/A/Athanor/Athanor.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
     },
     {
       "name": "Atlantis",
@@ -260,6 +276,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Manic Miner",
+      "filePath": "https://web.archive.org/web/20180205142312/https://kweepa.org/step/vic20/miner-20180201b.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/M/Manic Miner/Manic_Miner.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Maze",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMaze%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
@@ -304,6 +328,14 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
+      "name": "Panicman",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPanicman%20%282014%29%28Bills%2C%20Dane%29%5B8k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/P/Panicman/Panicman.png",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
+    },
+    {
       "name": "Perils of Willy",
       "displayName": "Perils of\nWilly",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPerils%20of%20Willy%2C%20The%20%281984%29%28Software%20Projects%29%5B16k%5D.zip",
@@ -345,6 +377,13 @@
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2F9teensplit%20%28199x%29%28Pu-239%20-%20Zapac%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/P/Pu239 - 9teensplit/Pu239_-_9teensplit.png",      
+      "machineType": "PAL"
+    },
+    {
+      "name": "Pulse",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPulse%20%282014-03-08%29%28Klose%2C%20Sven%20Michael%29%5Baka%20pixel%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/P/Pulse/Pulse.png",
       "machineType": "PAL"
     },
     {
@@ -438,6 +477,41 @@
       "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org//parties/2019/revision19/oldskool-4k-intro/3m.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/T/Tres Monos/Tres_Monos.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Ultima I",
+      "displayName": "Ultima I",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7643",
+      "fileType": "DISK",
+      "iconPath": "screenshots/U/Ultima I/Ultima_I.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Ultima II",
+      "displayName": "Ultima II",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7430",
+      "fileType": "DISK",
+      "iconPath": "screenshots/U/Ultima II/Ultima_II.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Ultima III",
+      "displayName": "Ultima III",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7390",
+      "fileType": "DISK",
+      "iconPath": "screenshots/U/Ultima III/Ultima_III.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
+      "name": "Vic McKracken",
+      "filePath": "https://vic20.games/programs?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64",
+      "fileType": "DISK",
+      "iconPath": "screenshots/V/Vic McKracken/Vic_McKracken.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
     },
