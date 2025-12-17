@@ -246,6 +246,14 @@
       "ram": "RAM_35K",
     },
     {
+      "name": "Kikstart",
+      "filePath": "https://vic20.games/programs?url=https://files.vic20reloaded.com/get/7fe1f8abaad094e0b5cb1b01d712f708",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL",
+      "ram": "RAM_35K",
+    },
+    {
       "name": "Lala Prologue",
       "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/lala-prologue/LalaPrologueVIC20.zip",
       "fileType": "DISK",
