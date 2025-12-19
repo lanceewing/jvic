@@ -36,6 +36,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("https://raw.githubusercontent.com/") || 
 			 targetUrl.startsWith("https://github.com/") ||
 			 targetUrl.startsWith("https://raw.github.com/") || 
+			 targetUrl.startsWith("http://davbucci.chez-alice.fr/") || 
 			 targetUrl.startsWith("https://sourceforge.net/p/vice-emu/code/HEAD/tree/testprogs/VIC20/") ||
              targetUrl.startsWith("https://archive.org/"))) {
 
