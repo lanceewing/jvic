@@ -88,6 +88,13 @@
       "machineType": "PAL"
     },
     {
+      "name": "Block Buster",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBlock%20Buster%20%281984%29%28Romik%29.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/B/Block Buster/Block_Buster.png",      
+      "machineType": "PAL"
+    },
+    {
       "name": "Bongo",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBongo%20%281984%29%28Kingsoft%29%5B16k%5D.zip",
       "fileType": "PRG",
@@ -240,17 +247,33 @@
       "machineType": "PAL"
     },
     {
+      "name": "Great Adventure, The",
+      "displayName": "Great Adventure,\nThe",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FGreat%20Adventure%2C%20The%20%282010%29%28Ubiali%2C%20Alessandro%29%5B24k%5D.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/G/Great Adventure, The/Great_Adventure_The.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K",
+    },
+    {
       "name": "Grid Runner",
-      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGridrunner%20%281982%29%28HES%29%28PAL%29%5BA000%5D.zip",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FGridrunner%20%281982%29%28HES%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
-      "iconPath": "",
-      "machineType": "PAL"
+      "iconPath": "screenshots/G/Grid Runner/Grid_Runner.png",
+      "machineType": "NTSC"
     },
     {
       "name": "Happy Hour",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FHappyhour%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/H/Happy Hour/Happy_Hour.png",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Ice",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FIce%20%281983%29%28Cymbal%29.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/I/Ice/Ice.png",
       "machineType": "PAL"
     },
     {
@@ -265,6 +288,7 @@
       "name": "Impossiblator 3",
       "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/impo3.zip",
       "fileType": "DISK",
+      "entryName": "impo3.d64",
       "iconPath": "",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
