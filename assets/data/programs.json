@@ -211,6 +211,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Frogger",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FFrogger%20%281983%29%28Sierra%29%28NTSC%29%5B8k%5D.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/F/Frogger/Frogger.png",
+      "machineType": "NTSC",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Frozen Time",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FFrozen%20Time%20%282002-03%29%28CNCD%29.zip",
       "fileType": "PRG",
@@ -510,6 +518,13 @@
       "fileType": "CART",
       "iconPath": "screenshots/T/Terraguard/Terraguard.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "Threshold",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FThreshold%20%281981%29%28Sierra%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/T/Threshold/Threshold.png",
+      "machineType": "NTSC"
     },
     {
       "name": "Tres Monos",
