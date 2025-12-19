@@ -449,6 +449,14 @@
       "ram": "RAM_8K"
     },
     {
+      "name": "Silk Dust",
+      "filePath": "https://vic20.games/programs?url=http://davbucci.chez-alice.fr/varie/silk/VIC20_SilkDust.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/S/Silk Dust/Silk_Dust.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Skramble",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSkramble%20%281983%29%28Anirog%29%5B16k%5D.zip",
       "fileType": "PRG",
