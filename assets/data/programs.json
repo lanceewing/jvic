@@ -134,6 +134,13 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Crossfire",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCrossfire%20%281981%29%28Sierra%29%28PAL%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/C/Crossfire/Crossfire.png",
+      "machineType": "PAL"
+    },
+    {
       "name": "Datapop",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FDatapop%21%20%282009-10-12%29%28tlr%29.zip",
       "fileType": "PRG",
