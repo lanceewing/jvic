@@ -184,6 +184,16 @@
       "ram": "RAM_35K"
     },
     {
+      "name": "Exit Plan Z",
+      "displayName": "Exit Plan\nZ",
+      "filePath": "https://vic20.games/programs?url=https://www.zimmers.net/anonftp/pub/cbm/vic20/games/16k/exit_plan_z_16k_d64.zip",
+      "fileType": "DISK",
+      "entryName": "exit plan z.d64",
+      "iconPath": "screenshots/E/Exit Plan Z/Exit_Plan_Z.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "FLInale (PAL)",
       "filePath": "https://vic20.games/programs?url=https://www.tokra.de/vic/flinale/flinale.zip",
       "fileType": "DISK",
