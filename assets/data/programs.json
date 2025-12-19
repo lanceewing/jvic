@@ -562,6 +562,16 @@
       "machineType": "PAL"
     },
     {
+      "name": "Yes VIC Can",
+      "displayName": "Yes\nVIC Can",
+      "filePath": "https://vic20.games/programs?url=https://www.tokra.de/vic/yesviccan/yes_vic_can-release-withsource.zip",
+      "fileType": "DISK",
+      "entryName": "Yes VIC can.d64",
+      "iconPath": "screenshots/Y/Yes VIC Can/Yes_VIC_Can.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Zombie Calavera Prologue",
       "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/zombie-calavera-prologue/ZombieCalaveraPrologueVIC20.zip",
       "fileType": "DISK",
