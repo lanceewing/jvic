@@ -49,14 +49,6 @@ public class Machine {
     private boolean paused = true;
 
     private MachineType machineType;
-
-    // These control what part of the generate pixel data is rendered to the screen.
-    private int screenLeft;
-    private int screenRight;
-    private int screenTop;
-    private int screenBottom;
-    private int screenWidth;
-    private int screenHeight;
     
     /**
      * Constructor for Machine.
@@ -157,14 +149,6 @@ public class Machine {
         // Initialise the sound generator.
         soundGenerator.init(memory.getMemoryArray(), machineType);
         
-        // Set up the screen dimensions based on the VIC chip settings. Aspect ratio of 4:3.
-        screenWidth = (machineType.getVisibleScreenHeight() / 3) * 4;
-        screenHeight = machineType.getVisibleScreenHeight();
-        screenLeft = machineType.getHorizontalOffset();
-        screenRight = screenLeft + machineType.getVisibleScreenWidth();
-        screenTop = machineType.getVerticalOffset();
-        screenBottom = screenTop + machineType.getVisibleScreenHeight();
-        
         // Check if the resource parameters have been set.
         if ((programData != null) && (programData.length > 0)) {
             String programType = program.getProgramType();
@@ -234,48 +218,6 @@ public class Machine {
             via2.emulateCycle();
             c1541Drive.emulateCycle();
         } while (!frameComplete);
-    }
-
-    /**
-     * @return the screenLeft
-     */
-    public int getScreenLeft() {
-        return screenLeft;
-    }
-
-    /**
-     * @return the screenRight
-     */
-    public int getScreenRight() {
-        return screenRight;
-    }
-
-    /**
-     * @return the screenTop
-     */
-    public int getScreenTop() {
-        return screenTop;
-    }
-
-    /**
-     * @return the screenBottom
-     */
-    public int getScreenBottom() {
-        return screenBottom;
-    }
-
-    /**
-     * @return the screenWidth
-     */
-    public int getScreenWidth() {
-        return screenWidth;
-    }
-
-    /**
-     * @return the screenHeight
-     */
-    public int getScreenHeight() {
-        return screenHeight;
     }
 
     /**
