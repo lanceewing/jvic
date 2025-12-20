@@ -229,7 +229,7 @@ public class MachineInputProcessor extends InputAdapter {
             boolean speakerClicked = false;
             boolean screenSizeClicked = false;
             boolean pausePlayClicked = false;
-            boolean nmiClicked = false;
+            boolean joystickClicked = false;
 
             if (viewportManager.isPortrait()) {
                 // Portrait.
@@ -258,7 +258,7 @@ public class MachineInputProcessor extends InputAdapter {
                             keyboardClicked = true;
                         }
                         else if ((touchXY.x > (fiveSixths - 100)) && (touchXY.x < (fiveSixths + 26))) {
-                            nmiClicked = true;
+                            joystickClicked = true;
                         }
                     }
                 }
@@ -296,7 +296,7 @@ public class MachineInputProcessor extends InputAdapter {
                             else
                             if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 96) - leftAdjustment) && 
                                 (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 0) - leftAdjustment)) {
-                                nmiClicked = true;
+                                joystickClicked = true;
                             }
                             else
                             if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 0 ) / 12)) - 96) - leftAdjustment) && 
@@ -328,7 +328,7 @@ public class MachineInputProcessor extends InputAdapter {
                         } else if ((touchXY.y > (viewportManager.getHeight() / 3) - 42) &&
                                 (touchXY.y < (viewportManager.getHeight() / 3) + 74)) {
                              if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                 nmiClicked = true;
+                                 joystickClicked = true;
                              } else if (touchXY.x < 112) {
                                  // Free slot.
                              }
@@ -352,7 +352,7 @@ public class MachineInputProcessor extends InputAdapter {
                             float fiveSixths = (viewportManager.getHeight() - (viewportManager.getHeight() / 6));
                             
                             if ((touchXY.y > (sixthPos - 26)) && (touchXY.y < (sixthPos + 100))) {
-                                nmiClicked = true;
+                                joystickClicked = true;
                             }
                             else if ((touchXY.y > (thirdPos - 42)) && (touchXY.y < (thirdPos + 84))) {
                                 keyboardClicked = true;
@@ -380,21 +380,20 @@ public class MachineInputProcessor extends InputAdapter {
                 }
             }
 
-            // TODO: Add back in after proper joystick implementation.
-            //if (joystickClicked) {
-            //    // Rotate the joystick screen alignment.
-            //    joystickAlignment = joystickAlignment.rotateValue();
-            //    if (!viewportManager.isPortrait()) {
-            //        if (joystickAlignment.equals(JoystickAlignment.MIDDLE)) {
-            //            joystickAlignment = joystickAlignment.rotateValue();
-            //        }
-            //       if ((viewportManager.getOricScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
-            //            if (joystickAlignment.equals(JoystickAlignment.LEFT)) {
-            //                joystickAlignment = joystickAlignment.rotateValue();
-            //            }
-            //        }
-            //    }
-            //}
+            if (joystickClicked) {
+                // Rotate the joystick screen alignment.
+                joystickAlignment = joystickAlignment.rotateValue();
+                if (!viewportManager.isPortrait()) {
+                    if (joystickAlignment.equals(JoystickAlignment.MIDDLE)) {
+                        joystickAlignment = joystickAlignment.rotateValue();
+                    }
+                   if ((viewportManager.getVICScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
+                        if (joystickAlignment.equals(JoystickAlignment.LEFT)) {
+                            joystickAlignment = joystickAlignment.rotateValue();
+                        }
+                    }
+                }
+            }
 
             if (speakerClicked) {
                 speakerOn = !speakerOn;
@@ -441,10 +440,6 @@ public class MachineInputProcessor extends InputAdapter {
                         // Nothing to do.
                     }
                 });
-            }
-            
-            if (nmiClicked) {
-                machineScreen.getJvicRunner().sendNmi();
             }
         }
 
@@ -669,7 +664,7 @@ public class MachineInputProcessor extends InputAdapter {
             this.palRenderWidth = palRenderWidth;
             this.palRenderHeight = palRenderHeight;
             this.ntscRenderWidth = ntscRenderWidth;
-            this.ntscRenderHeight = ntscRenderWidth;
+            this.ntscRenderHeight = ntscRenderHeight;
         }
         
         ScreenSize rotateValue() {
@@ -677,11 +672,11 @@ public class MachineInputProcessor extends InputAdapter {
         }
         
         public int getRenderWidth(MachineType machineType) {
-            return palRenderWidth;
+            return MachineType.PAL.equals(machineType)? palRenderWidth : ntscRenderWidth;
         }
         
         public int getRenderHeight(MachineType machineType) {
-            return palRenderHeight;
+            return MachineType.PAL.equals(machineType)? palRenderHeight : ntscRenderHeight;
         }
     }
     
