@@ -38,8 +38,19 @@ public class Vic extends MemoryMappedChip {
     // $3400                  $1400  BASIC program area
     // $3800                  $1800  BASIC program area
     // $3C00                  $1C00  BASIC program area / $1E00 screen mem for unexp VIC
-
-    private static final int SAMPLE_RATE = 22050;
+    
+    /**
+     * A lookup table to map between the VIC chip's memory addresses and VIC 20 memory map.
+     */
+    private final static int[] VIC_MEM_TABLE = new int[0x4000];
+    {
+        for (int i=0; i<0x2000; i++) {
+            VIC_MEM_TABLE[i] = 0x8000 + i;
+        }
+        for (int i=0x2000; i<0x4000; i++) {
+            VIC_MEM_TABLE[i] = i - 0x2000;
+        }
+    }
             
     // VIC chip memory mapped registers.
     private static final int VIC_REG_0 = 0x9000;   // ABBBBBBB A=Interlace B=Screen Origin X (4 pixels granularity)
@@ -200,25 +211,7 @@ public class Vic extends MemoryMappedChip {
      * Pixel counter. Current offset into TV frame array.
      */
     private int pixelCounter;
-
-    /**
-     * A lookup table for determining the start of video memory.
-     */
-    private final static int videoMemoryTable[] = {
-        0x8000, 0x8200, 0x8400, 0x8600, 0x8800, 0x8A00, 0x8C00, 0x8E00,
-        0x9000, 0x9200, 0x9400, 0x9600, 0x9800, 0x9A00, 0x9C00, 0x9E00, 
-        0x0000, 0x0200, 0x0400, 0x0600, 0x0800, 0x0A00, 0x0C00, 0x0E00, 
-        0x1000, 0x1200, 0x1400, 0x1600, 0x1800, 0x1A00, 0x1C00, 0x1E00
-    };
-
-    /**
-     * A lookup table for determining the start of character memory.
-     */
-    private final static int charMemoryTable[] = {
-        0x8000, 0x8400, 0x8800, 0x8C00, 0x9000, 0x9400, 0x9800, 0x9C00,
-        0x0000, 0x0400, 0x0800, 0x0C00, 0x1000, 0x1400, 0x1800, 0x1C00
-    };
-
+    
     /**
      * The type of machine that this Vic chip is in, i.e. either PAL or NTSC.
      */
@@ -572,8 +565,8 @@ public class Vic extends MemoryMappedChip {
         int double_height_mode = (mem[VIC_REG_3] & 0x01);
         int last_line_of_cell = (7 | (double_height_mode << 3));
         int char_size_shift = (3 + double_height_mode);
-        int screen_mem_start = videoMemoryTable[((mem[VIC_REG_5] & 0xF0) >> 3) | ((mem[VIC_REG_2] & 0x80) >> 7)];
-        int char_mem_start = charMemoryTable[mem[VIC_REG_5] & 0x0F];
+        int screen_mem_start = (((mem[VIC_REG_5] & 0xF0) << 6) | ((mem[VIC_REG_2] & 0x80) << 2));
+        int char_mem_start = ((mem[VIC_REG_5] & 0x0F) << 10);
         int colour_mem_start = (0x9400 | ((mem[VIC_REG_2] & 0x80) << 2));
 
         // VERTICAL TIMINGS:
@@ -1214,25 +1207,26 @@ public class Vic extends MemoryMappedChip {
         
                                 // Calculate address within video memory and fetch cell index.
                                 // TODO: Implement unconnected memory check.
-                                //int screenAddress = screen_mem_start + videoMatrixCounter;
-                                // cellIndex = mem[screenAddress];
+                                int screenAddress = screen_mem_start + videoMatrixCounter;
+                                
                                 //switch ((screenAddress >> 10) & 0xF) {
                                 //    case 4:
                                 //    case 5:
                                 //    case 6:
                                 //    case 7:
-                                //        // case 9:
-                                //        // case 10:
-                                //        // case 11:
-                                //        cellIndex = memory.getLastBusData();
+                                //    case 9:
+                                //    case 10:
+                                //    case 11:
+                                //        cellIndex = memory.getLastWrite();
                                 //        break;
+                                //        
                                 //    default:
-                                //        cellIndex = mem[screenAddress];
+                                //        cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
                                 //        break;
                                 //}
                                 
                                 // TODO: Replace with unconnected memory version above.
-                                cellIndex = mem[screen_mem_start + videoMatrixCounter];
+                                cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
         
                                 // Due to the way the colour memory is wired up, the above fetch of the cell
                                 // index also happens to automatically fetch the foreground colour from the 
@@ -1270,15 +1264,25 @@ public class Vic extends MemoryMappedChip {
                                 // Calculate offset of data.
                                 charDataOffset = char_mem_start + (cellIndex << char_size_shift) + cellDepthCounter;
         
-                                // Adjust offset for memory wrap around.
-                                if ((char_mem_start < 8192) && (charDataOffset >= 8192)) {
-                                    charDataOffset += 24576;
-                                }
-                                
                                 // TODO: Add unconnected memory check here.
+                                //switch ((charDataOffset >> 10) & 0xF) {
+                                //    case 4:
+                                //    case 5:
+                                //    case 6:
+                                //    case 7:
+                                //    case 9:
+                                //    case 10:
+                                //    case 11:
+                                //        charDataLatch = memory.getLastWrite();
+                                //        break;
+                                //    default:
+                                //        // Adjust offset for memory wrap around.
+                                //        charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
+                                //        break;
+                                //}
         
                                 // Fetch cell data, initially latched to the side until it is needed.
-                                charDataLatch = mem[charDataOffset];
+                                charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
         
                                 // Determine next character pixels.
                                 if (hiresMode) {
@@ -1386,8 +1390,8 @@ public class Vic extends MemoryMappedChip {
         int double_height_mode = (mem[VIC_REG_3] & 0x01);
         int last_line_of_cell = (7 | (double_height_mode << 3));
         int char_size_shift = (3 + double_height_mode);
-        int screen_mem_start = videoMemoryTable[((mem[VIC_REG_5] & 0xF0) >> 3) | ((mem[VIC_REG_2] & 0x80) >> 7)];
-        int char_mem_start = charMemoryTable[mem[VIC_REG_5] & 0x0F];
+        int screen_mem_start = (((mem[VIC_REG_5] & 0xF0) << 6) | ((mem[VIC_REG_2] & 0x80) << 2));
+        int char_mem_start = ((mem[VIC_REG_5] & 0x0F) << 10);
         int colour_mem_start = (0x9400 | ((mem[VIC_REG_2] & 0x80) << 2));
 
         // VERTICAL TIMINGS:
@@ -2106,8 +2110,9 @@ public class Vic extends MemoryMappedChip {
                                 // Look up foreground colour before outputting first pixel.
                                 multiColourTable[2] = (colourData & 0x07);
 
-                                // TODO: Replace with unconnected memory version above.
-                                cellIndex = mem[screen_mem_start + videoMatrixCounter];
+                                int screenAddress = screen_mem_start + videoMatrixCounter;
+                                // TODO: Replace with unconnected memory version.
+                                cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
 
                                 // Due to the way the colour memory is wired up, the above fetch of the cell index
                                 // also happens to automatically fetch the foreground colour from the Colour Matrix
@@ -2147,7 +2152,7 @@ public class Vic extends MemoryMappedChip {
                                 
                                 // TODO: Add unconnected memory check here.
                                 // Fetch cell data, initially latched to the side until it is needed.
-                                charDataLatch = mem[charDataOffset];
+                                charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
                                 
                                 // Pixels 4-7 calculations are less complex, since the hires mode,
                                 // reverse mode and char data stay the same four all four pixels.
