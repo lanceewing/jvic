@@ -88,6 +88,15 @@
       "machineType": "PAL"
     },
     {
+      "name": "Bertie the Ball",
+      "displayName": "Bertie\nthe Ball",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBertie%20The%20Ball%20%282014%29%28Keranen%2C%20Mika%29%5Baka%20Misfit%5D%5B16k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/B/Bertie the Ball/Bertie_the_Ball.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Block Buster",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBlock%20Buster%20%281984%29%28Romik%29.zip",
       "fileType": "PRG",
@@ -428,6 +437,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Pooyan",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPooyan%20%282014%29%28F.%2C%20Adrian%29%5B16k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/P/Pooyan/Pooyan.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Psycho Shopper",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FPsycho%20Shopper%20%281984%29%28Mastertronic%29%5B8k%5D.zip",
       "fileType": "PRG",
@@ -519,6 +536,15 @@
       "fileType": "CART",
       "iconPath": "screenshots/S/Spiders of Mars/Spiders_of_Mars.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "Super Starship Space Attack",
+      "displayName": "Super Starship\nSpace Attack",
+      "filePath": "https://web.archive.org/web/20160721222022/http://www.riimukivi.net/data/super_starship_space_attack.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/S/Super Starship Space Attack/Super_Starship_Space_Attack.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
     },
     {
       "name": "Sword of Hrakel",
