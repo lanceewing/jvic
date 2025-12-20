@@ -9,7 +9,7 @@ public enum MachineType {
 
     PAL(1108405, 284, 312, 220, 272, 55, 34, 50),
 
-    NTSC(1022727, 260, 263, 200, 252, 50, 20, 60);
+    NTSC(1022727, 260, 263, 199, 252, 49, 8, 60);
 
     private int cyclesPerSecond;
     private int totalScreenWidth;
