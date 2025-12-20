@@ -1,54 +1,6 @@
 {
   "apps": [
     {
-      "name": "BASIC",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "screenshots/B/Basic/BASIC.png",
-      "machineType": "PAL",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
-      "name": "BASIC NTSC",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "",
-      "machineType": "NTSC",
-      "ram": "RAM_UNEXPANDED"
-    },
-    {
-      "name": "BASIC 3K",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_3K"
-    },
-    {
-      "name": "BASIC 8K",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_8K"
-    },
-    {
-      "name": "BASIC 16K",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_16K"
-    },
-    {
-      "name": "BASIC 24K",
-      "filePath": "",
-      "fileType": "",
-      "iconPath": "",
-      "machineType": "PAL",
-      "ram": "RAM_24K"
-    },
-    {
       "name": "Astro Nell",
       "filePath": "https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
       "fileType": "PRG",
