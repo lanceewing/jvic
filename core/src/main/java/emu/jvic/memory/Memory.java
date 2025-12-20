@@ -178,6 +178,10 @@ public class Memory {
     public int getLastRead() {
         return lastRead;
     }
+    
+    public int getLastWrite() {
+        return lastWrite;
+    }
 
     /**
      * Gets the array of memory mapped devices.
