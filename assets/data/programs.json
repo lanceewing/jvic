@@ -263,6 +263,13 @@
       "ram": "RAM_35K",
     },
     {
+      "name": "Key Quest",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FKey%20Quest%20%281983%29%28Tymac%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/K/Key Quest/Key_Quest.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Lala Prologue",
       "filePath": "https://vic20.games/programs?url=http://majikeyric.free.fr/my-itch/lala-prologue/LalaPrologueVIC20.zip",
       "fileType": "DISK",
@@ -535,6 +542,13 @@
       "iconPath": "screenshots/T/Tres Monos/Tres_Monos.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Tutankham",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTutankham%20%281983%29%28Parker%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/T/Tutankham/Tutankham.png",
+      "machineType": "PAL"
     },
     {
       "name": "Ultima I",
