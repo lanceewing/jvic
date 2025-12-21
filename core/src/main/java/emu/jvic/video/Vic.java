@@ -1960,50 +1960,43 @@ public class Vic extends MemoryMappedChip {
                             case FETCH_IN_MATRIX_Y:
                             case FETCH_MATRIX_LINE:
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    // Look up very latest background, border and auxiliary colour values. This
-                                    // should not include an update to the foreground colour, as that will not 
-                                    // have changed.
+
+                                    // Look up very latest background, border and auxiliary colour values.
                                     multiColourTable[0] = background_colour_index;
                                     multiColourTable[1] = border_colour_index;
                                     multiColourTable[3] = auxiliary_colour_index;
                                     
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel2]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel3]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
                                     
-                                    // Pixels 4-7 calculations are less complex, since the hires mode,
-                                    // reverse mode and char data stay the same four all four pixels.
-                                    if (hiresMode) {
-                                        if (non_reverse_mode != 0) {
-                                            pixel4 = ((charData & 0x10) > 0 ? 2 : 0);
-                                            pixel5 = ((charData & 0x08) > 0 ? 2 : 0);
-                                            pixel6 = ((charData & 0x04) > 0 ? 2 : 0);
-                                            pixel7 = ((charData & 0x02) > 0 ? 2 : 0);
+                                    // Handle the last pixel of the last char of the current matrix row.
+                                    if (non_reverse_mode != 0) {
+                                        if (hiresMode) {
+                                            pixel8 = ((charData & 0x01) > 0? 2 : 0);
                                         } else {
-                                            pixel4 = ((charData & 0x10) > 0 ? 0 : 2);
-                                            pixel5 = ((charData & 0x08) > 0 ? 0 : 2);
-                                            pixel6 = ((charData & 0x04) > 0 ? 0 : 2);
-                                            pixel7 = ((charData & 0x02) > 0 ? 0 : 2);
+                                            pixel8 = (charData & 0x03);
                                         }
                                     } else {
-                                        // Multicolour graphics.
-                                        pixel4 = ((charData >> 4) & 0x03);
-                                        pixel5 = pixel6 = ((charData >> 2) & 0x03);
-                                        pixel7 = (charData & 0x03);
+                                        if (hiresMode) {
+                                            pixel8 = ((charData & 0x01) > 0? 0 : 2);
+                                        } else {
+                                            pixel8 = (charData & 0x03);
+                                        }
                                     }
-
-                                    // Pixels 4 & 5 have to be output after the pixel var calculations above.
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel4]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
-                                  
-                                    // Rotate pixels so that the other 3 remaining char pixels are output
-                                    // and then border colours takes over after that.
-                                    pixel2 = pixel6;
-                                    pixel3 = pixel7;
-                                    pixel4 = pixel8;
-                                    pixel5 = pixel6 = pixel7 = pixel8 = pixel1 = 1;
-
+                                    
+                                    hiresMode = false;
+                                    colourData = 0x08;
+                                    charData = charDataLatch = 0x55;
+                                    
+                                    pixel6 = pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                    pixel7 = pixel3 = ((charData >> 4) & 0x03);
+                                    
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
+                                    
+                                    pixel8 = pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = 1;
+        
                                     if (prevHorizontalCounter == screen_origin_x) {
-                                        // Last 4 pixels before first char renders are still border.
                                         fetchState = FETCH_MATRIX_DLY_1;
                                     }
                                 }
@@ -2012,10 +2005,6 @@ public class Vic extends MemoryMappedChip {
                                     // where the next cycle isn't in horiz blanking, i.e. when HC=8 this cycle.
                                     fetchState = FETCH_MATRIX_DLY_1;
                                 }
-                                
-                                hiresMode = false;
-                                colourData = 0x08;
-                                charData = charDataLatch = 0x55;
                                 break;
         
                             case FETCH_MATRIX_DLY_1:
@@ -2127,10 +2116,11 @@ public class Vic extends MemoryMappedChip {
                                 }
 
                                 // Toggle fetch state. Close matrix if HCC hits zero.
-                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                                 break;
         
                             case FETCH_CHAR_DATA:
+                            case FETCH_MATRIX_END:
                                 
                                 // Look up very latest background, border and auxiliary colour values.
                                 multiColourTable[0] = background_colour_index;
@@ -2181,11 +2171,16 @@ public class Vic extends MemoryMappedChip {
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
                                 }
 
-                                // Increment the video matrix counter to next cell.
-                                videoMatrixCounter++;
-                                
-                                // Toggle fetch state. For efficiency, HCC deliberately not checked here.
-                                fetchState = FETCH_SCREEN_CODE;
+                                if (fetchState == FETCH_MATRIX_END) {
+                                    // Leaving the matrix
+                                    fetchState = FETCH_MATRIX_LINE;
+                                } else {
+                                    // Increment the video matrix counter to next cell.
+                                    videoMatrixCounter++;
+                                    
+                                    // Toggle fetch state. For efficiency, HCC deliberately not checked here.
+                                    fetchState = FETCH_SCREEN_CODE;
+                                }
                                 break;
                         }
     
