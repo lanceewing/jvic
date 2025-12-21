@@ -1,13 +1,6 @@
 {
   "apps": [
     {
-      "name": "Arukanoido",
-      "filePath": "https://www.vic-20.it/wp-content/uploads/2023/10/arukanoido.prg",
-      "fileType": "PRG",
-      "iconPath": "",
-      "machineType": "PAL"
-    },
-    {
       "name": "Astro Nell",
       "filePath": "https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
       "fileType": "PRG",
