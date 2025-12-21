@@ -29,6 +29,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://kollektivet.nu/") || 
 			 targetUrl.startsWith("http://atebit.org/") || 
+			 targetUrl.startsWith("https://www.vic-20.it/") || 
 			 targetUrl.startsWith("https://files.vic20reloaded.com/") || 
 			 targetUrl.startsWith("https://drive.usercontent.google.com/") || 
 			 targetUrl.startsWith("https://www.gamesthatwerent.com/") || 
