@@ -1,6 +1,13 @@
 {
   "apps": [
     {
+      "name": "Arukanoido",
+      "filePath": "https://www.vic-20.it/wp-content/uploads/2023/10/arukanoido.prg",
+      "fileType": "PRG",
+      "iconPath": "",
+      "machineType": "PAL"
+    },
+    {
       "name": "Astro Nell",
       "filePath": "https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
       "fileType": "PRG",
@@ -38,6 +45,13 @@
       "fileType": "PRG",
       "iconPath": "screenshots/B/Bad Scene Poetry/Bad_Scene_Poetry.png",      
       "machineType": "PAL"
+    },
+    {
+      "name": "Bandits",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBandits%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/B/Bandits/Bandits.png",
+      "machineType": "NTSC"
     },
     {
       "name": "Bertie the Ball",
@@ -229,6 +243,15 @@
       "fileType": "PRG",
       "iconPath": "screenshots/H/Happy Hour/Happy_Hour.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "H.E.R.O",
+      "filePath": "https://vic20.games/programs?url=https://kollektivet.nu/hero/binaries/hero.zip",
+      "fileType": "DISK",
+      "entryName": "hero.d64",
+      "iconPath": "screenshots/H/H.E.R.O/H.E.R.O.png",
+      "machineType": "PAL",
+      "ram": "RAM_32K"
     },
     {
       "name": "Ice",
@@ -465,6 +488,13 @@
       "iconPath": "screenshots/R/Rockman/Rockman.png",
       "machineType": "PAL",
       "ram": "RAM_8K"
+    },
+    {
+      "name": "Shamus",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FShamus%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/S/Shamus/Shamus.png",
+      "machineType": "NTSC"
     },
     {
       "name": "Silk Dust",
