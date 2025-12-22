@@ -711,13 +711,13 @@ public class Vic6560 extends Vic {
                                     hiresMode = false;
                                     colourData = 0x08;
                                     charData = charDataLatch = 0x55;
-                                    
-                                    pixel6 = pixel1 = pixel2 = ((charData >> 6) & 0x03);
-                                    pixel7 = pixel3 = ((charData >> 4) & 0x03);
+                                    pixel1 = ((charData >> 6) & 0x03);
                                     
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
                                     
+                                    pixel6 = pixel2 = ((charData >> 6) & 0x03);
+                                    pixel7 = pixel3 = ((charData >> 4) & 0x03);
                                     pixel8 = pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = 1;
         
                                     if (prevHorizontalCounter == screen_origin_x) {
