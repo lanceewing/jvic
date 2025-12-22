@@ -716,7 +716,7 @@ public class Vic6560 extends Vic {
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
                                     pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
                                     
-                                    pixel6 = pixel2 = ((charData >> 6) & 0x03);
+                                    pixel6 = pixel2 = pixel1;
                                     pixel7 = pixel3 = ((charData >> 4) & 0x03);
                                     pixel8 = pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = 1;
         
