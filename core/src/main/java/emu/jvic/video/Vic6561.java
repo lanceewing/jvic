@@ -609,18 +609,14 @@ public class Vic6561 extends Vic {
                                     }
             
                                     // Handle the last pixel of the last char of the current matrix row.
-                                    if (non_reverse_mode != 0) {
-                                        if (hiresMode) {
+                                    if (hiresMode) {
+                                        if (non_reverse_mode != 0) {
                                             pixel8 = ((charData & 0x01) > 0? 2 : 0);
                                         } else {
-                                            pixel8 = (charData & 0x03);
+                                            pixel8 = ((charData & 0x01) > 0? 0 : 2);
                                         }
                                     } else {
-                                        if (hiresMode) {
-                                            pixel8 = ((charData & 0x01) > 0? 0 : 2);
-                                        } else {
-                                            pixel8 = (charData & 0x03);
-                                        }
+                                        pixel8 = (charData & 0x03);
                                     }
                                     
                                     hiresMode = false;
