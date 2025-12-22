@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 
 import emu.jvic.MachineType;
+import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Via6522;
 import emu.jvic.snap.Snapshot;
@@ -236,10 +237,14 @@ public class Vic20Memory extends Memory {
      * Loads a cartridge file from the given byte array in to the cartridge memory area.
      * 
      * @param cartData The byte array containing the cartridge program data to load.
+     * @param appConfigItem AppConfigItem containing details about the cartridge.
      */
-    public void loadCart(byte[] cartData) {
+    public void loadCart(byte[] cartData, AppConfigItem appConfigItem) {
         if (cartData != null) {
             if (cartData.length == 16384) {
+                // If the length exactly matches 16K, then it is usually made up of two 8K
+                // blocks loaded at different addresses, often 0x6000 and 0xA000, but sometimes
+                // 0x2000 and 0xA000.
                 mapChipToMemory(new RomChip(), 0x6000, 0x7FFF, cartData);
                 byte data2ndHalf[] = new byte[8192];
                 System.arraycopy(cartData, 8192, data2ndHalf, 0, 8192);

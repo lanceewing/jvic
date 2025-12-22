@@ -198,7 +198,9 @@ public class GwtJVicRunner extends JVicRunner {
                         appConfigItem.getFilePath(),
                         appConfigItem.getFileType(),
                         appConfigItem.getMachineType(),
-                        appConfigItem.getRam())
+                        appConfigItem.getRam(),
+                        appConfigItem.getAutoRunCommand(),
+                        appConfigItem.getLoadAddress())
                 );
         
         // Resume sound output whenever a new instance of JVic is starting up.
@@ -235,19 +237,23 @@ public class GwtJVicRunner extends JVicRunner {
      * @param fileType
      * @param machineType
      * @param ramType
+     * @param autoRunCommand
+     * @param loadAddress
      * 
      * @return
      */
     private native JavaScriptObject createStartObject(
             String name, String filePath, String fileType, String machineType, 
-            String ramType
+            String ramType, String autoRunCommand, String loadAddress
             )/*-{
         return {
             name: name,
             filePath: filePath,
             fileType: fileType,
             machineType: machineType,
-            ramType: ramType
+            ramType: ramType,
+            autoRunCommand: autoRunCommand,
+            loadAddress: loadAddress
         };
     }-*/;
     

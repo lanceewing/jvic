@@ -177,6 +177,8 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         appConfigItem.setFileType(getNestedString(eventObject, "fileType"));
         appConfigItem.setMachineType(getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(getNestedString(eventObject, "ramType"));
+        appConfigItem.setAutoRunCommand(getNestedString(eventObject, "autoRunCommand"));
+        appConfigItem.setLoadAddress(getNestedString(eventObject, "loadAddress"));
         return appConfigItem;
     }
     

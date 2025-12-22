@@ -25,6 +25,8 @@ public class AppConfigItem {
     private String autoRunCommand;
     
     private String entryName;
+    
+    private String loadAddress;
 
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
@@ -203,5 +205,13 @@ public class AppConfigItem {
 
     public void setEntryName(String entryName) {
         this.entryName = entryName;
+    }
+
+    public String getLoadAddress() {
+        return loadAddress;
+    }
+
+    public void setLoadAddress(String loadAddress) {
+        this.loadAddress = loadAddress;
     }
 }

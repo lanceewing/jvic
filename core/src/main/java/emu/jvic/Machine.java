@@ -159,7 +159,7 @@ public class Machine {
         if ((programData != null) && (programData.length > 0)) {
             String programType = program.getProgramType();
             if ("CART".equals(programType)) {
-                memory.loadCart(programData);
+                memory.loadCart(programData, program.getAppConfigItem());
             } else if ("PRG".equals(programType)) {
                 autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
