@@ -1,0 +1,974 @@
+package emu.jvic.video;
+
+import emu.jvic.MachineType;
+import emu.jvic.PixelData;
+import emu.jvic.snap.Snapshot;
+
+/**
+ * This class emulates the NTSC VIC chip (6560).
+ */
+public class Vic6560 extends Vic {
+    
+    // Constants related to video timing for NTSC.
+    private static final int NTSC_HBLANK_END = 9;
+    private static final int NTSC_HBLANK_START = 59;
+    private static final int NTSC_LINE_END = 64;
+    private static final int NTSC_VBLANK_START = 1;
+    private static final int NTSC_VSYNC_START = 4;
+    private static final int NTSC_VSYNC_END = 6;
+    private static final int NTSC_VBLANK_END = 9;
+    private static final int NTSC_NORM_LAST_LINE = 261;
+    private static final int NTSC_INTL_LAST_LINE = 262;
+    
+    // Front porch split into two, to allow for change to vertical blanking after
+    // first part, if required.
+    private static final int NTSC_FRONTPORCH_1 = (12 << 0);
+    private static final int NTSC_FRONTPORCH_2 = (4 << 0);
+    private static final int NTSC_HSYNC = (20 << 0);
+    private static final int NTSC_BREEZEWAY = (2 << 0);
+    private static final int NTSC_BACKPORCH = (2 << 0);
+    private static final int NTSC_LONG_SYNC_L = (110 << 0);
+    private static final int NTSC_LONG_SYNC_H = (20 << 0);
+    private static final int NTSC_SHORT_SYNC_L = (20 << 0);
+    private static final int NTSC_SHORT_SYNC_H = (110 << 0);
+    private static final int NTSC_BLANKING = (200 << 0);
+
+    // Two NTSC burst methods available CMD_BURST or PIXEL_RUN CMD_BURST is more 
+    // experimental since it runs carrier cycles instead of dot clock cycles
+    // 17 carrier cycles => 19.5 dot clock cycles, syncs up as 20 dot clock cycles
+    private static final int NTSC_BURST_E = (20 << 0);
+    private static final int NTSC_BURST_O = (20 << 0);
+
+    // TODO: Chane to actual NTSC palette.
+    private final static int ntsc_palette[] = { 
+            0x000000FF, // BLACK
+            0xFFFFFFFF, // WHITE
+            0x982D18FF, // RED
+            0x73D5FFFF, // CYAN
+            0xB63BA7FF, // PURPLE
+            0x54D87DFF, // GREEN
+            0x502DA8FF, // BLUE
+            0xD0E65CFF, // YELLOW
+            0xB47017FF, // ORANGE
+            0xE8B0B1FF, // LIGHT ORANGE
+            0xDC9CC1FF, // PINK
+            0xB3FCDDFF, // LIGHT CYAN
+            0xD6A7F9FF, // LIGHT PURPLE
+            0xBAF2A1FF, // LIGHT GREEN
+            0xA0A4D8FF, // LIGHT BLUE
+            0xFFF2C2FF  // LIGHT YELLOW
+    };
+    
+    // NTSC Palette data.
+    private int pIndex;
+    
+    private int[][] palette = { 
+        ntsc_palette, ntsc_palette, ntsc_palette, ntsc_palette, 
+        ntsc_palette, ntsc_palette, ntsc_palette, ntsc_palette, 
+        ntsc_palette, ntsc_palette, ntsc_palette, ntsc_palette,
+        ntsc_palette, ntsc_palette, ntsc_palette, ntsc_palette
+    };
+    
+    // Used by NTSC to keep track of whether it is an odd or even line.
+    protected boolean oddLine = true;
+    
+    // Due to the complexity of how the NTSC vertical blanking shifts depending on state, we keep 
+    // track of the vblanking state in a separate boolean, so that we know when we should be writing 
+    // out visible line content. It is complex to deduce it otherwise.
+    protected boolean vblanking = false;
+    
+    // Flag variable to delay vblank command push to late in cycle
+    protected static final int DO_VBLANK_LONG  = 1;
+    protected static final int DO_VBLANK_SHORT = 2;
+    protected int do_vblank = 0;
+    
+    /**
+     * Constructor for Vic6560.
+     * 
+     * @param pixelData Interface to the platform specific mechanism for writing pixels.
+     * @param machineType The type of machine, PAL or NTSC.
+     * @param snapshot    Optional snapshot of the machine state to start with.
+     */
+    public Vic6560(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
+        super(pixelData, machineType, snapshot);
+    }
+ 
+    /**
+     * Emulates single NTSC VIC cycle.
+     * 
+     * @return
+     */
+    public boolean emulateCycle() {
+        boolean frameRenderComplete = false;
+
+        // Expressions to access different parts of control registers.
+        int border_colour_index = (mem[VIC_REG_15] & 0x07);
+        int background_colour_index = (mem[VIC_REG_15] >> 4);
+        int auxiliary_colour_index = (mem[VIC_REG_14] >> 4);
+        int non_reverse_mode = (mem[VIC_REG_15] & 0x08);
+        int interlaced_mode = (mem[VIC_REG_0] & 0x80);
+        int screen_origin_x = ((mem[VIC_REG_0] & 0x7F));
+        int screen_origin_y = (mem[VIC_REG_1]);
+        int num_of_columns = (mem[VIC_REG_2] & 0x7F);
+        int num_of_rows = ((mem[VIC_REG_3] & 0x7E) >> 1);
+        int double_height_mode = (mem[VIC_REG_3] & 0x01);
+        int last_line_of_cell = (7 | (double_height_mode << 3));
+        int char_size_shift = (3 + double_height_mode);
+        int screen_mem_start = (((mem[VIC_REG_5] & 0xF0) << 6) | ((mem[VIC_REG_2] & 0x80) << 2));
+        int char_mem_start = ((mem[VIC_REG_5] & 0x0F) << 10);
+        int colour_mem_start = (0x9400 | ((mem[VIC_REG_2] & 0x80) << 2));
+
+        // VERTICAL TIMINGS:
+        // The definition of a line is somewhat fuzzy in the NTSC 6560 chip.
+        // The vertical counter (VC) increments partway through the visible part of the raster line (at HC=29)
+        // and can reset at two different points along the raster line (HC=29 or HC=62) depending on the 
+        // interlaced mode and half-line counter (HLC) states.
+        // So, unlike the 6561 PAL chip, the VC and raster line are NOT equivalent in the 6560.
+        // Also note that things like the vblank and vsync can start/end at two different HC values half a line 
+        // apart (HC=29 or HC=62), once again depending on the interlaced mode and half-line counter states.
+        // Given that, then documenting what lines are vblank, vsync and visible is a little complex, as they
+        // shift depending on state, and can span multiple vertical counter values. 
+        // The code is the source of truth in that regard.
+
+        // HORIZONTAL TIMINGS:
+        // The horizontal timings for the NTSC 6560 are also quite strange compared to the PAL 6561.
+        // There are 65 cycles per "line" (see above for comments on the obscure nature of what a line is)
+        // The horizontal counter (HC) continously counts from 0 to 64, then resets back to 0.
+        // 15 cycles for horizontal blanking, between HC=59 and HC=9.
+        // - 4 cycles of front porch [59 -> 63]
+        // - 5 cycles of hsync [63 -> 3]
+        // - 0.5 cycles of breezeway [3 -> 3.5]
+        // - 5 cycles colour burst [3.5 -> 8.5]
+        // - 0.5 back porch [8.5 -> 9]
+        // 50 cycles for visible pixels, making 200 visible pixels total [9 -> 59]
+        //
+        // The following are some events of note that happen for certain HC (horizontal counter) values:
+        // 1: New line logic. Same as PAL.
+        // 2: Horizontal Cell Counter (HCC) reloaded.
+        // 3: Vertical Cell Counter (VCC) reloaded if VC=0. Same as PAL.
+        // 9: Start of visible pixels. Technically they start halfway into the cycle.
+        // 29: Increments VC and HLC (half-line counter). Resets VC every second field for interlaced.
+        // 59: Horiz blanking starts, for visible lines.
+        // 62: Increments half-line counter. Resets VC if non-interlaced, or every second field for interlaced.
+        // 64: Resets HC.
+
+        switch (horizontalCounter) {
+
+            // HC = 0. The main reason for this having its own special case block is due to
+            // the special handling for screen origin X matching when HC=0.
+            case 0:
+    
+                // Reset pixel output buffer to be all border colour.
+                pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
+                hiresMode = false;
+                colourData = 0x08;
+                charData = charDataLatch = 0x55;
+                
+                // Simplified state updates for HC=0. Counters and states still need to
+                // change as appropriate, regardless of it being during blanking.
+                switch (fetchState) {
+                    case FETCH_OUTSIDE_MATRIX:
+                        // In HC=0, it is not possible to match screen origin x, if the last
+                        // line was not a matrix line. This is as per the real chip. It is 
+                        // possible to match screen origin y though.
+                        if ((verticalCounter >> 1) == screen_origin_y) {
+                            // This is the line the video matrix starts on. As in the real chip, we use
+                            // a different state for the first part of the first video matrix line.
+                            fetchState = FETCH_IN_MATRIX_Y;
+                        }
+                        break;
+                    case FETCH_IN_MATRIX_Y:
+                        // Since we are now looking at prev HC, this behaves same as FETCH_MATRIX_LINE.
+                    case FETCH_MATRIX_LINE:
+                        // NOTE: Due to comparison being prev HC, this is matching HC=64.
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                        break;
+                    case FETCH_MATRIX_DLY_1:
+                    case FETCH_MATRIX_DLY_2:
+                    case FETCH_MATRIX_DLY_3:
+                        fetchState++;
+                        break;
+                    case FETCH_SCREEN_CODE:
+                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        break;
+                    case FETCH_CHAR_DATA:
+                        videoMatrixCounter++;
+                        fetchState = FETCH_SCREEN_CODE;
+                        break;
+                }
+    
+                if (verticalCounter == 1) {
+                    pixelCounter = 0;
+                    frameRenderComplete = true;
+                }
+    
+                prevHorizontalCounter = horizontalCounter++;
+                break;
+    
+            // HC = 1 is another special case, handled in a single block for ALL lines. This
+            // is when the "new line" signal is seen by most components.
+            case 1:
+    
+                // Due to the "new line" signal being generated by the Horizontal Counter Reset
+                // logic, and the pass transistors used within it delaying the propagation of
+                // that signal, this signal doesn't get seen by components such as the Cell Depth
+                // Counter Reset logic, the "In Matrix" status logic, and Video Matrix Latch,
+                // until HC = 1.
+    
+                // The "new line" signal closes the matrix, if it is still open.
+                if (fetchState >= FETCH_MATRIX_DLY_1) {
+                    // The real chip appears to have another increment in this cycle, if the 
+                    // state is FETCH_CHAR_DATA. Not 100% clear though, since distortion ensues
+                    // when setting the registers such that the matrix closes here.
+                    if (fetchState == FETCH_CHAR_DATA) {
+                        videoMatrixCounter++;
+                    }
+                    fetchState = FETCH_MATRIX_LINE;
+                }
+    
+                // Check for Cell Depth Counter reset.
+                if ((cellDepthCounter == last_line_of_cell) || (cellDepthCounter == 0xF)) {
+                    // Reset CDC.
+                    cellDepthCounter = 0;
+                    
+                    // If last line was the last line of the character cell, then we latch
+                    // the current VMC value ready for the next character row.
+                    videoMatrixLatch = videoMatrixCounter;
+                    
+                    // Vertical Cell Counter decrements when CDC resets, unless its the first line, 
+                    // since it was loaded instead (see VC reset logic in HC=2).
+                    if (verticalCounter > 0) {
+                        verticalCellCounter--;
+    
+                        if ((verticalCellCounter == 0) && (screen_origin_x > 0)) {
+                            // If all text rows rendered, then we're outside the matrix again.
+                            fetchState = FETCH_OUTSIDE_MATRIX;
+                        } else {
+                            // NOTE: Due to comparison being prev HC, this is match HC=0.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                // Last line was in the matrix, so start the in matrix delay.
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
+                        }
+                    }
+                }
+                else if (fetchState >= FETCH_MATRIX_LINE) {
+                    // If the line that just ended was a video matrix line, then increment CDC,
+                    // unless the VCC is 0, in which case close the matrix.
+                    if (verticalCellCounter > 0) {
+                        cellDepthCounter++;
+                      
+                        // NOTE: Due to comparison being prev HC, this is match HC=0.
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            // Last line was in the matrix, so start the in matrix delay.
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                    } else {
+                        fetchState = FETCH_OUTSIDE_MATRIX;
+                    }
+                }
+                else if (fetchState == FETCH_IN_MATRIX_Y) {
+                    // If fetchState is already FETCH_IN_MATRIX_Y at this point, it means that the
+                    // last line matched the screen origin Y but not X. This results in the
+                    // matrix being rendered one line lower if X now matches, as per real chip.
+                    if (prevHorizontalCounter == screen_origin_x) {
+                        fetchState = FETCH_IN_MATRIX_X;
+                    }
+                }
+                else if (fetchState == FETCH_OUTSIDE_MATRIX) {
+                    if ((verticalCounter >> 1) == screen_origin_y) {
+                        // This is the line the video matrix starts on. As in the real chip, we use
+                        // a different state for the first part of the first video matrix line.
+                        fetchState = FETCH_IN_MATRIX_Y;
+                    }
+                }
+              
+                prevHorizontalCounter = horizontalCounter++;
+                break;
+    
+            // HC = 2 is yet another special case, handled in a single block for ALL 
+            // lines. This is when the horizontal cell counter is loaded.
+            case 2:
+    
+                // Simplified state changes. We're in hblank, so its just the bare minimum.
+                switch (fetchState) {
+                    case FETCH_OUTSIDE_MATRIX:
+                        if ((verticalCounter >> 1) == screen_origin_y) {
+                            // This is the line the video matrix starts on. As in the real chip, we use
+                            // a different state for the first part of the first video matrix line.
+                            fetchState = FETCH_IN_MATRIX_Y;
+                        }
+                        break;
+                    case FETCH_IN_MATRIX_X:
+                        // If screen origin x matched during HC=1, which can only mean that the screen 
+                        // origin y matched on the previous line, then we move to second matrix delay 
+                        // state, since the match happened in the previous cycle.
+                        fetchState = FETCH_MATRIX_DLY_2;
+                        break;
+                    case FETCH_IN_MATRIX_Y:
+                    case FETCH_MATRIX_LINE:
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                        break;
+                    case FETCH_MATRIX_DLY_1:
+                    case FETCH_MATRIX_DLY_2:
+                    case FETCH_MATRIX_DLY_3:
+                        fetchState++;
+                        break;
+                    // In theory, the following states should not be possible at this point.
+                    case FETCH_SCREEN_CODE:
+                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        break;
+                    case FETCH_CHAR_DATA:
+                        videoMatrixCounter++;
+                        fetchState = FETCH_SCREEN_CODE;
+                        break;
+                }
+              
+                // Video Matrix Counter (VMC) is reloaded from latch on "new line" signal.
+                videoMatrixCounter = videoMatrixLatch;
+                
+                // Horizontal Cell Counter (HCC) is reloaded on "new line" signal.
+                horizontalCellCounter = num_of_columns;
+                prevHorizontalCounter = horizontalCounter++;
+                break;
+                
+             // HC = 3 is yet another special case, handled in a single block for ALL 
+             // lines. This is when the vertical cell counter is loaded.
+            case 3:
+
+                // Simplified state changes. We're in hblank, so its just the bare minimum.
+                switch (fetchState) {
+                    case FETCH_OUTSIDE_MATRIX:
+                        if ((verticalCounter >> 1) == screen_origin_y) {
+                            // This is the line the video matrix starts on. As in the real chip, we use
+                            // a different state for the first part of the first video matrix line.
+                            fetchState = FETCH_IN_MATRIX_Y;
+                        }
+                        break;
+                    case FETCH_IN_MATRIX_Y:
+                    case FETCH_MATRIX_LINE:
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                        break;
+                    case FETCH_MATRIX_DLY_1:
+                    case FETCH_MATRIX_DLY_2:
+                    case FETCH_MATRIX_DLY_3:
+                        fetchState++;
+                        break;
+                    // In theory, the following states should not be possible at this point.
+                    case FETCH_SCREEN_CODE:
+                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        break;
+                    case FETCH_CHAR_DATA:
+                        videoMatrixCounter++;
+                        fetchState = FETCH_SCREEN_CODE;
+                        break;
+                }
+                
+                // Vertical Cell Counter is loaded 2 cycles after the VC resets.
+                // TODO: This probably needs to move for the 6560, as VC doesn't reset in HC=1.
+                if (verticalCounter == 0) {
+                    verticalCellCounter = num_of_rows;
+                }
+                
+                prevHorizontalCounter = horizontalCounter++;
+                break;
+    
+            // HC = 62 is one of the two increment points for the 1/2 line counter. It is also when 
+            // the vertical counter resets when in non-interlaced mode, and for interlaced mode where 
+            // it resets every second field. It is also one of two points where vertical blanking
+            // and vertical sync can start and end.
+            case 62:
+                if (interlaced_mode != 0) {
+                    if ((verticalCounter >= NTSC_INTL_LAST_LINE) && (halfLineCounter == 0)) {
+                        // For interlaced mode, the vertical counter resets here every second field, as
+                        // controlled by the half-line counter.
+                        verticalCounter = 0;
+                        fetchState = FETCH_OUTSIDE_MATRIX;
+                        cellDepthCounter = 0;
+                        halfLineCounter = 0;
+    
+                        // Update raster line CR value to be 0.
+                        mem[VIC_REG_4] = 0;
+                        mem[VIC_REG_3] &= 0x7F;
+                    } else {
+                        // Half line counter simply toggles between 0 and 1.
+                        halfLineCounter ^= 1;
+                    }
+                } else {
+                    if (verticalCounter == NTSC_NORM_LAST_LINE) {
+                        // For non-interlaced mode, the vertical counter always resets at this point.
+                        verticalCounter = 0;
+                        fetchState = FETCH_OUTSIDE_MATRIX;
+                        cellDepthCounter = 0;
+                        halfLineCounter = 0;
+    
+                        // Update raster line CR value to be 0.
+                        mem[VIC_REG_4] = 0;
+                        mem[VIC_REG_3] &= 0x7F;
+                    } else {
+                        // Half line counter simply toggles between 0 and 1.
+                        halfLineCounter ^= 1;
+                    }
+                }
+    
+                // Output vertical blanking or vsync, if required. If the half-line counter is 1, then 
+                // vblank and vsync get delayed by half a line, i.e. to HC=29.
+                if (halfLineCounter == 0) {
+                    if ((verticalCounter > 0) && (verticalCounter <= NTSC_VBLANK_END)) {
+                        // Vertical blanking and sync - Lines 1-9.
+                        vblanking = true;
+    
+                        if (verticalCounter < NTSC_VSYNC_START) {
+                            // Lines 1, 2, 3.
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                        } else if (verticalCounter <= NTSC_VSYNC_END) {
+                            // Vertical sync, lines 4, 5, 6.
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+    
+                            // Vertical sync is what resets the video matrix latch.
+                            videoMatrixLatch = videoMatrixCounter = 0;
+                        } else {
+                            // Lines 7, 8, 9.
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                        }
+                    } else {
+                        vblanking = false;
+                    }
+                }
+    
+                // If we're not in vertical blanking, i.e. we didn't output the CVBS commands above, 
+                // then we continue horizontal blanking commands instead, including hsync and colour 
+                // burst. It will end at HC=9
+                if (!vblanking) {
+                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_FRONTPORCH_2);
+                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_HSYNC);
+                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BREEZEWAY);
+                    if (oddLine) {
+                        // Odd line. Switch palette starting offset.
+                        pIndex = 2;
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BURST_O);
+                    } else {
+                        // Even line. Switch palette starting offset.
+                        pIndex = 6;
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BURST_E);
+                    }
+                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BACKPORCH);
+                }
+                oddLine = !oddLine;
+    
+                //
+                // IMPORTANT: THE HC=62 CASE STATEMENT DELIBERATELY FALLS THROUGH TO NEXT BLOCK.
+                //
+    
+            // These HC values are always in blanking and have no special behaviour other than
+            // the standard state changes common to all cycles.
+            case 60:
+            case 61:
+            case 63:
+                // Simplified state changes. We're in hblank, so its just the bare minimum.
+                switch (fetchState) {
+                    case FETCH_OUTSIDE_MATRIX:
+                        if ((verticalCounter >> 1) == screen_origin_y) {
+                            // This is the line the video matrix starts on. As in the real chip, we use
+                            // a different state for the first part of the first video matrix line.
+                            fetchState = FETCH_IN_MATRIX_Y;
+                        }
+                        break;
+                    case FETCH_IN_MATRIX_Y:
+                    case FETCH_MATRIX_LINE:
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                        break;
+                    case FETCH_MATRIX_DLY_1:
+                    case FETCH_MATRIX_DLY_2:
+                    case FETCH_MATRIX_DLY_3:
+                        fetchState++;
+                        break;
+                    case FETCH_SCREEN_CODE:
+                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        break;
+                    case FETCH_CHAR_DATA:
+                        videoMatrixCounter++;
+                        fetchState = FETCH_SCREEN_CODE;
+                        break;
+                }
+                prevHorizontalCounter = horizontalCounter++;
+                break;
+    
+            // HC = 64 is the last HC value, so triggers HC reset.
+            case 64:
+                // Simplified state changes. We're in hblank, so its just the bare minimum.
+                switch (fetchState) {
+                    case FETCH_OUTSIDE_MATRIX:
+                        if ((verticalCounter >> 1) == screen_origin_y) {
+                            // This is the line the video matrix starts on. As in the real chip, we use
+                            // a different state for the first part of the first video matrix line.
+                            fetchState = FETCH_IN_MATRIX_Y;
+                        }
+                        break;
+                    case FETCH_IN_MATRIX_Y:
+                    case FETCH_MATRIX_LINE:
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
+                        break;
+                    case FETCH_MATRIX_DLY_1:
+                    case FETCH_MATRIX_DLY_2:
+                    case FETCH_MATRIX_DLY_3:
+                        fetchState++;
+                        break;
+                    case FETCH_SCREEN_CODE:
+                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        break;
+                    case FETCH_CHAR_DATA:
+                        videoMatrixCounter++;
+                        fetchState = FETCH_SCREEN_CODE;
+                        break;
+                } 
+
+                // And then reset HC.
+                prevHorizontalCounter = horizontalCounter;
+                horizontalCounter = 0;
+                break;
+    
+            // HC=29 is when the 6560 increments the vertical counter (VC). The 1/2 line counter also
+            // toggles at this time. This is therefore the end of the raster line as reported by
+            // the VIC registers, but is not the actual end of the raster, as that happens when the 
+            // hsync occurs at HC=62.
+            case 29:
+                // NOTE: The VC always resets at HC=62 when in non-interlaced mode, but for interlaced,
+                // it can reset in HC=29 as controlled by the half-line counter.
+                if ((interlaced_mode != 0) && (verticalCounter == NTSC_INTL_LAST_LINE) && (halfLineCounter == 0)) {
+                    // For interlaced mode, the vertical counter resets every second field at HC=29.
+                    verticalCounter = 0;
+                    fetchState = FETCH_OUTSIDE_MATRIX;
+                    cellDepthCounter = 0;
+                    halfLineCounter = 0;
+                } else {
+                    // Otherwise increment vertical counter.
+                    verticalCounter++;
+    
+                    // Half line counter simply toggles between 0 and 1.
+                    halfLineCounter ^= 1;
+                }
+    
+                // Update the raster line value stored in the VIC registers. Note that this is
+                // correct for NTSC, i.e. the VIC control registers for the raster value do
+                // change at HC=29 (not at HC=1 like PAL does). It can also change at HC=62,
+                // if the VC is reset to 0 during that cycle.
+                mem[VIC_REG_4] = (verticalCounter >> 1);
+                if ((verticalCounter & 0x01) == 0) {
+                    mem[VIC_REG_3] &= 0x7F;
+                } else {
+                    mem[VIC_REG_3] |= 0x80;
+                }
+    
+                // Output vertical blanking or vsync, if required. If the half-line counter is 1, then 
+                // vblank and vsync get delayed by half a line, i.e. to HC=62. 
+                // Actual FIFO submission moved to the end of the cycle (default case) to counter FIFO overruns. 
+                if (halfLineCounter == 0) {
+                    if ((verticalCounter > 0) && (verticalCounter <= NTSC_VBLANK_END)) {
+                        // Vertical blanking and sync - Lines 1-9.
+                        vblanking = true;
+    
+                        if (verticalCounter < NTSC_VSYNC_START) {
+                            // Lines 1, 2, 3.
+                            do_vblank = DO_VBLANK_SHORT;
+                        }
+                        else if (verticalCounter <= NTSC_VSYNC_END) {
+                            // Vertical sync, lines 4, 5, 6.
+                            do_vblank = DO_VBLANK_LONG;
+
+                            // Vertical sync is what resets the video matrix latch.
+                            videoMatrixLatch = videoMatrixCounter = 0;
+                        }
+                        else {
+                            // Lines 7, 8, 9.
+                            do_vblank = DO_VBLANK_SHORT;
+                        }
+                    } else {
+                        vblanking = false;
+                    }
+                }
+    
+                //
+                // IMPORTANT: THE HC=29 CASE STATEMENT DELIBERATELY FALLS THROUGH TO THE DEFAULT BLOCK.
+                //
+    
+            // Covers from HC=4 to HC=59.
+            default:
+                // Line 0, and Lines after 9, are "visible", i.e. not within the vertical blanking.
+                if (!vblanking) {
+                    // Is the visible part of the line ending now and horizontal blanking starting?
+                    if (horizontalCounter == NTSC_HBLANK_START) {
+                        // Horizontal blanking starts here. Simplified state changes, so its just the bare minimum.
+                        switch (fetchState) {
+                            case FETCH_OUTSIDE_MATRIX:
+                                if ((verticalCounter >> 1) == screen_origin_y) {
+                                    // This is the line the video matrix starts on. As in the real chip, we use
+                                    // a different state for the first part of the first video matrix line.
+                                    fetchState = FETCH_IN_MATRIX_Y;
+                                }
+                                break;
+                            case FETCH_IN_MATRIX_Y:
+                            case FETCH_MATRIX_LINE:
+                                if (prevHorizontalCounter == screen_origin_x) {
+                                    fetchState = FETCH_MATRIX_DLY_1;
+                                }
+                                break;
+                                
+                            case FETCH_MATRIX_DLY_1:
+                            case FETCH_MATRIX_DLY_2:
+                            case FETCH_MATRIX_DLY_3:
+                                fetchState++;
+                                break;
+                                
+                            case FETCH_SCREEN_CODE:
+                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                                break;
+                          
+                            case FETCH_CHAR_DATA:
+                                // If the matrix hasn't yet closed, then in the FETCH_CHAR_DATA 
+                                // state, we need to keep incrementing the video matrix counter
+                                // until it is closed, which at the latest could be HC=1 on the
+                                // next line.
+                                videoMatrixCounter++;
+                                
+                                fetchState = FETCH_SCREEN_CODE;
+                                break;
+                        }
+    
+                        // We output the start of horiz blanking here, enough of it to last to the start
+                        // of HC=62, where a decision is then made as to whether it will be horizontal
+                        // blanking or vertical blanking. This is why there is a part 1 and 2 of the front
+                        // porch.
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_FRONTPORCH_1);
+    
+                        // Unlike PAL, for NTSC hblank starts 6 cycles before the HC reset, so we increment.
+                        prevHorizontalCounter = horizontalCounter++;
+                    } else {
+                        // Covers visible line cycles from HC=4 to HC=58, i.e. 1 cycle before HBLANK start.
+                        switch (fetchState) {
+                            case FETCH_OUTSIDE_MATRIX:
+                                if ((verticalCounter >> 1) == screen_origin_y) {
+                                    // This is the line the video matrix starts on. As in the real chip, we use
+                                    // a different state for the first part of the first video matrix line.
+                                    fetchState = FETCH_IN_MATRIX_Y;
+                                }
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    borderColour = border_colour_index;
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                }
+                                // Nothing to do otherwise. Still in blanking if below 12.
+                                break;
+        
+                            case FETCH_IN_MATRIX_Y:
+                            case FETCH_MATRIX_LINE:
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+
+                                    // Look up very latest background, border and auxiliary colour values.
+                                    multiColourTable[0] = background_colour_index;
+                                    multiColourTable[1] = border_colour_index;
+                                    multiColourTable[3] = auxiliary_colour_index;
+                                    
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
+                                    
+                                    // Handle the last pixel of the last char of the current matrix row.
+                                    if (non_reverse_mode != 0) {
+                                        if (hiresMode) {
+                                            pixel8 = ((charData & 0x01) > 0? 2 : 0);
+                                        } else {
+                                            pixel8 = (charData & 0x03);
+                                        }
+                                    } else {
+                                        if (hiresMode) {
+                                            pixel8 = ((charData & 0x01) > 0? 0 : 2);
+                                        } else {
+                                            pixel8 = (charData & 0x03);
+                                        }
+                                    }
+                                    
+                                    hiresMode = false;
+                                    colourData = 0x08;
+                                    charData = charDataLatch = 0x55;
+                                    
+                                    pixel6 = pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                    pixel7 = pixel3 = ((charData >> 4) & 0x03);
+                                    
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
+                                    
+                                    pixel8 = pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = 1;
+        
+                                    if (prevHorizontalCounter == screen_origin_x) {
+                                        fetchState = FETCH_MATRIX_DLY_1;
+                                    }
+                                }
+                                else if (prevHorizontalCounter == screen_origin_x) {
+                                    // Still in horizontal blanking, but we still need to prepare for the case
+                                    // where the next cycle isn't in horiz blanking, i.e. when HC=8 this cycle.
+                                    fetchState = FETCH_MATRIX_DLY_1;
+                                }
+                                break;
+        
+                            case FETCH_MATRIX_DLY_1:
+                            case FETCH_MATRIX_DLY_2:
+                            case FETCH_MATRIX_DLY_3:
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    // Output border pixels.
+                                    borderColour = border_colour_index;
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                }
+                                else {
+                                    pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
+                                }
+
+                                // Prime the pixel output queue with border pixels in multicolour 
+                                // mode. Not quite what the real chip does but is functionally equivalent.
+                                hiresMode = false;
+                                colourData = 0x08;
+                                charDataLatch = 0x55;
+
+                                fetchState++;
+                                break;
+        
+                            case FETCH_SCREEN_CODE:
+                                
+                                // Look up very latest background, border and auxiliary colour values.
+                                multiColourTable[0] = background_colour_index;
+                                multiColourTable[1] = border_colour_index;
+                                multiColourTable[3] = auxiliary_colour_index;
+                            
+                                // Output last 3 pixels of the last character. These had already left 
+                                // the shift register but in the delay path to the colour lookup.
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
+                                }
+                                
+                                if (non_reverse_mode != 0) {
+                                    // New non-reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 2 : 0);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same non-reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
+                                        pixel1 = ((charData & 0x80) > 0? 2 : 0);
+                                        pixel2 = ((charData & 0x40) > 0? 2 : 0);
+                                        pixel3 = ((charData & 0x20) > 0? 2 : 0);
+                                    } else {
+                                        pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                        pixel3 = ((charData >> 4) & 0x03);
+                                    }
+                                } else {
+                                    // New reversed mode value kicks in a pixel before new character.
+                                    if (hiresMode) {
+                                        pixel8 = ((charData & 0x01) > 0? 0 : 2);
+                                    } else {
+                                        pixel8 = (charData & 0x03);
+                                    }
+                                    
+                                    // Update the operating hires state and char data immediately prior to
+                                    // shifting out new character pixel.
+                                    hiresMode = ((colourData & 0x08) == 0);
+                                    charData = charDataLatch;
+                                    
+                                    // Pixel 1 should be same reversed mode but pick up the new hires mode.
+                                    if (hiresMode) {
+                                        pixel1 = ((charData & 0x80) > 0? 0 : 2);
+                                        pixel2 = ((charData & 0x40) > 0? 0 : 2);
+                                        pixel3 = ((charData & 0x20) > 0? 0 : 2);
+                                    } else {
+                                        pixel1 = pixel2 = ((charData >> 6) & 0x03);
+                                        pixel3 = ((charData >> 4) & 0x03);
+                                    }
+                                }
+                              
+                                // The 3rd pixel is from the previous character with new reverse mode applied (see above).
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
+                                }
+                                
+                                // Look up foreground colour before outputting first pixel.
+                                multiColourTable[2] = (colourData & 0x07);
+
+                                int screenAddress = screen_mem_start + videoMatrixCounter;
+                                // TODO: Replace with unconnected memory version.
+                                cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
+
+                                // Due to the way the colour memory is wired up, the above fetch of the cell index
+                                // also happens to automatically fetch the foreground colour from the Colour Matrix
+                                // via the top 4 lines of the data bus (DB8-DB11), which are wired directly from 
+                                // colour RAM in to the VIC chip.
+                                colourData = mem[colour_mem_start + videoMatrixCounter];
+
+                                // Output the 1st pixel of next character. Note that this is not the character
+                                // that relates to the cell index and colour data fetched above.
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
+                                }
+
+                                // Toggle fetch state. Close matrix if HCC hits zero.
+                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_END);
+                                break;
+        
+                            case FETCH_CHAR_DATA:
+                            case FETCH_MATRIX_END:
+                                
+                                // Look up very latest background, border and auxiliary colour values.
+                                multiColourTable[0] = background_colour_index;
+                                multiColourTable[1] = border_colour_index;
+                                multiColourTable[3] = auxiliary_colour_index;
+                                
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel2]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel3]]);
+                                }
+                                
+                                // Calculate offset of data.
+                                charDataOffset = char_mem_start + (cellIndex << char_size_shift) + cellDepthCounter;
+                                
+                                // Adjust offset for memory wrap around.
+                                if ((char_mem_start < 8192) && (charDataOffset >= 8192)) {
+                                    charDataOffset += 24576;
+                                }
+                                
+                                // TODO: Add unconnected memory check here.
+                                // Fetch cell data, initially latched to the side until it is needed.
+                                charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
+                                
+                                // Pixels 4-7 calculations are less complex, since the hires mode,
+                                // reverse mode and char data stay the same four all four pixels.
+                                if (hiresMode) {
+                                    if (non_reverse_mode != 0) {
+                                        pixel4 = ((charData & 0x10) > 0 ? 2 : 0);
+                                        pixel5 = ((charData & 0x08) > 0 ? 2 : 0);
+                                        pixel6 = ((charData & 0x04) > 0 ? 2 : 0);
+                                        pixel7 = ((charData & 0x02) > 0 ? 2 : 0);
+                                    } else {
+                                        pixel4 = ((charData & 0x10) > 0 ? 0 : 2);
+                                        pixel5 = ((charData & 0x08) > 0 ? 0 : 2);
+                                        pixel6 = ((charData & 0x04) > 0 ? 0 : 2);
+                                        pixel7 = ((charData & 0x02) > 0 ? 0 : 2);
+                                    }
+                                } else {
+                                    // Multicolour graphics.
+                                    pixel4 = ((charData >> 4) & 0x03);
+                                    pixel5 = pixel6 = ((charData >> 2) & 0x03);
+                                    pixel7 = (charData & 0x03);
+                                }
+                                
+                                // Pixels 4 & 5 have to be output after the pixel var calculations above.
+                                if (horizontalCounter >= NTSC_HBLANK_END) {
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel4]]);
+                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
+                                }
+
+                                if (fetchState == FETCH_MATRIX_END) {
+                                    // Leaving the matrix
+                                    fetchState = FETCH_MATRIX_LINE;
+                                } else {
+                                    // Increment the video matrix counter to next cell.
+                                    videoMatrixCounter++;
+                                    
+                                    // Toggle fetch state. For efficiency, HCC deliberately not checked here.
+                                    fetchState = FETCH_SCREEN_CODE;
+                                }
+                                break;
+                        }
+    
+                        prevHorizontalCounter = horizontalCounter++;
+                    }
+                } else {
+                    // Inside vertical blanking. The CVBS commands for each line were already sent during 
+                    // HC=62 or decided in HC=29 and output here (to avoid FIFO overruns)
+                    // In case the screen origin Y is set within the vertical blanking
+                    // lines, we still need to update the fetch state, video matrix counter, and the horizontal
+                    // cell counter, even though we're not outputting character pixels. So for the rest of the 
+                    // line, it is a simplified version of the standard line, except that we don't output 
+                    // any pixels.
+                    switch (fetchState) {
+                        case FETCH_OUTSIDE_MATRIX:
+                            if ((verticalCounter >> 1) == screen_origin_y) {
+                                // This is the line the video matrix starts on. As in the real chip, we use
+                                // a different state for the first part of the first video matrix line.
+                                fetchState = FETCH_IN_MATRIX_Y;
+                            }
+                            break;
+                        case FETCH_IN_MATRIX_Y:
+                        case FETCH_MATRIX_LINE:
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
+                            break;
+                        case FETCH_MATRIX_DLY_1:
+                        case FETCH_MATRIX_DLY_2:
+                        case FETCH_MATRIX_DLY_3:
+                            fetchState++;
+                            break;
+                        case FETCH_SCREEN_CODE:
+                            fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                            break;
+                        case FETCH_CHAR_DATA:
+                            videoMatrixCounter++;
+                            fetchState = FETCH_SCREEN_CODE;
+                            break;
+                    }
+
+                    // Delayed FIFO put to avoid overrun
+                    if (do_vblank == DO_VBLANK_LONG){
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+                        do_vblank = 0;
+                    }
+                    if (do_vblank == DO_VBLANK_SHORT){
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
+                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                        do_vblank = 0;
+                    }
+    
+                    // The horizontal counter reset always happens within the top level case 64 statement, so
+                    // we only need to cater for HC increments here.
+                    prevHorizontalCounter = horizontalCounter++;
+                }
+                break;
+        }
+
+        return frameRenderComplete;
+    }
+}
