@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "Astro Nell",
-      "filePath": "https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
+      "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org//demos/groups/cosine/c64/astro_nell.zip",
       "fileType": "PRG",
       "entryName": "astro_nell_(pal).prg",
       "iconPath": "screenshots/A/Astro Nell/Astro_Nell.png",
