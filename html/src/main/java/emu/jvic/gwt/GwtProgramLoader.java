@@ -90,7 +90,7 @@ public class GwtProgramLoader implements ProgramLoader {
                             }
                             if (file.getName().toLowerCase().endsWith(".crt") && entryMatch) {
                                 appConfigItem.setFileType("CART");
-                                programData = fileData;
+                                programData = removeStartAddress(fileData);
                                 break;
                             }
                         }
@@ -173,12 +173,17 @@ public class GwtProgramLoader implements ProgramLoader {
     }
     
     private byte[] removeStartAddress(byte[] data) {
-        byte[] newData = new byte[data.length - 2];
-        int srcIndex = 2;
-        for (int i=0; srcIndex < data.length; i++, srcIndex++) {
-            newData[i] = data[srcIndex];
+        int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
+        if ((startAddress == 0xA000) || (startAddress == 0x6000) || (startAddress == 0x4000) || (startAddress == 0x2000)) {
+            byte[] newData = new byte[data.length - 2];
+            int srcIndex = 2;
+            for (int i=0; srcIndex < data.length; i++, srcIndex++) {
+                newData[i] = data[srcIndex];
+            }
+            return newData;
+        } else {
+            return data;
         }
-        return newData;
     }
     
     private byte[] convertBinaryStringToBytes(String binaryStr) {
