@@ -1,6 +1,8 @@
 package emu.jvic.gwt;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 
 import com.akjava.gwt.jszip.JSFile;
@@ -15,7 +17,7 @@ import emu.jvic.Program;
 import emu.jvic.ProgramLoader;
 import emu.jvic.config.AppConfigItem;
 
-public class GwtProgramLoader implements ProgramLoader {
+public class GwtProgramLoader extends ProgramLoader {
 
     @Override
     public void fetchProgram(AppConfigItem appConfigItem, Consumer<Program> programConsumer) {
@@ -90,7 +92,7 @@ public class GwtProgramLoader implements ProgramLoader {
                             }
                             if (file.getName().toLowerCase().endsWith(".crt") && entryMatch) {
                                 appConfigItem.setFileType("CART");
-                                programData = removeStartAddress(fileData);
+                                programData = loadFullCartProgramData(entryName, fileData, jsZip, i, appConfigItem);
                                 break;
                             }
                         }
@@ -135,53 +137,73 @@ public class GwtProgramLoader implements ProgramLoader {
         programConsumer.accept(program);
     }
     
-    private boolean isProgramFile(byte[] data) {
-        if ((data != null) && (data.length >= 2)) {
-            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
-            return ((startAddress == 0x1201) || (startAddress == 0x0401) || (startAddress == 0x1001));
-        } else {
-            return false;
-        }
-    }
-    
-    private boolean isCartFile(byte[] data) {
-        if ((data != null) && (data.length >= 2)) {
-            int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
-            return ((startAddress == 0xA000));
-        } else {
-            return false;
-        }
-    }
-    
-    private boolean isZipFile(byte[] data) {
-        // ZIP starts with: 50 4B 03 04
-        return ((data != null) && (data.length >= 4) &&
-                (data[0] == 0x50) && (data[1] == 0x4B) && 
-                (data[2] == 0x03) && (data[3] == 0x04));
-    }
-    
-    private boolean isDiskFile(byte[] data) {
-        // .D64 files are almost always 174848 bytes. Greater values are non standard.
-        return ((data != null) && (data.length >= 174848));
-    }
-    
-    private boolean isPcvSnapshot(byte[] data) {
-        // PCVIC Signature : 50 43 56 49 43
-        return ((data != null) && (data.length >= 5) && 
-                (data[0] == 0x50) && (data[1] == 0x43) && (data[2] == 0x56) && 
-                (data[3] == 0x49) && (data[4] == 0x43));
-    }
-    
-    private byte[] removeStartAddress(byte[] data) {
-        int startAddress = ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
-        if ((startAddress == 0xA000) || (startAddress == 0x6000) || (startAddress == 0x4000) || (startAddress == 0x2000)) {
-            byte[] newData = new byte[data.length - 2];
-            int srcIndex = 2;
-            for (int i=0; srcIndex < data.length; i++, srcIndex++) {
-                newData[i] = data[srcIndex];
+    private byte[] loadFullCartProgramData(String entryName, byte[] data, 
+            JSZip jsZip, int fileNum, AppConfigItem appConfigItem) {
+        try {
+            TreeMap<String, byte[]> cartParts = new TreeMap<String, byte[]>();
+            JsArrayString files = jsZip.getFiles();
+            String fileName = null;
+            boolean stillLoading = true;
+            
+            while (stillLoading) {
+                int startAddress = getStartAddress(data);
+                if ((startAddress == 0x2000) || (entryName.contains("[2000]")) || 
+                        (entryName.endsWith("-20.crt"))) {
+                    cartParts.put("2000", removeStartAddress(data));
+                }
+                else if ((startAddress == 0x4000) || (entryName.contains("[4000]")) || 
+                        (entryName.endsWith("-40.crt"))) {
+                    cartParts.put("4000", removeStartAddress(data));
+                }
+                else if ((startAddress == 0x6000) || (entryName.contains("[6000]")) || 
+                        (entryName.endsWith("-60.crt"))) {
+                    cartParts.put("6000", removeStartAddress(data));
+                }
+                else if ((startAddress == 0xA000) || (entryName.contains("[A000]")) || 
+                        (entryName.endsWith("-a0.crt"))) {
+                    cartParts.put("A000", removeStartAddress(data));
+                }
+                
+                do {
+                    fileName = null;
+                    fileNum++;
+                    if (fileNum < files.length()) {
+                        fileName = files.get(fileNum);
+                    }
+                } while((fileName != null) && (fileName.endsWith("/")));
+                
+                // If a non-directory entry was found, read the file name and data.
+                if (fileName != null) {
+                    JSFile file = jsZip.getFile(fileName);
+                    entryName = file.getName().toLowerCase();
+                    data = file.asUint8Array().toByteArray();
+                } else {
+                    stillLoading = false;
+                }
             }
-            return newData;
-        } else {
+            
+            // Build data and app config item.
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            StringBuilder loadAddress = new StringBuilder();
+            for (String loadAddrKey : cartParts.keySet()) {
+                if (loadAddress.length() > 0) {
+                    loadAddress.append("|");
+                }
+                loadAddress.append(loadAddrKey);
+                byte[] partData = cartParts.get(loadAddrKey);
+                baos.write(partData);
+                // If less than 8192, then pad with 00s.
+                int paddingSize = (8192 - partData.length);
+                for (int i=0; i<paddingSize; i++) {
+                    baos.write(0);
+                }
+            }
+            
+            appConfigItem.setLoadAddress(loadAddress.toString());
+            
+            return baos.toByteArray();
+            
+        } catch (IOException ioe) {
             return data;
         }
     }

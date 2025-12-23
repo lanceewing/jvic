@@ -261,11 +261,6 @@ public class Vic20Memory extends Memory {
                 byte data2ndHalf[] = new byte[8192];
                 System.arraycopy(cartData, 8192, data2ndHalf, 0, 8192);
                 mapChipToMemory(new RomChip(), secondPartStartAddress, secondPartStartAddress + 0x1FFF, data2ndHalf);
-                System.out.println("filePath: " + appConfigItem.getFilePath());
-                System.out.println("autoRunCommand: " + appConfigItem.getAutoRunCommand());
-                System.out.println("loadAddress: " + appConfigItem.getLoadAddress());
-                System.out.println("firstPartStartAddress: " + Integer.toHexString(firstPartStartAddress));
-                System.out.println("secondPartStartAddress: " + Integer.toHexString(secondPartStartAddress));
             } else {
                 mapChipToMemory(new RomChip(), 0xA000, 0xA000 + (cartData.length - 1), cartData);
             }
