@@ -332,6 +332,13 @@
       "machineType": "PAL"
     },
     {
+      "name": "Lunar Leeper",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FLunar%20Leeper%20%281981%29%28Sierra%29%28NTSC%29%5B2000%5D%5BA000%5D%5Bmultipart%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/L/Lunar Leeper/Lunar_Leeper.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Manic Miner",
       "filePath": "https://web.archive.org/web/20180205142312/https://kweepa.org/step/vic20/miner-20180201b.zip",
       "fileType": "PRG",
@@ -588,6 +595,15 @@
       "fileType": "CART",
       "iconPath": "screenshots/T/Tutankham/Tutankham.png",
       "machineType": "PAL"
+    },
+    {
+      "name": "Ultima - Escape from Mount Drash",
+      "displayName": "Ultima:\nEscape from\nMount Drash",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FUltima%20-%20Escape%20From%20Mount%20Drash%20%281983%29%28Sierra%29%5B8k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/U/Ultima - Escape from Mount Drash/Ultima_-_Escape_from_Mount_Drash.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
     },
     {
       "name": "Ultima I",
