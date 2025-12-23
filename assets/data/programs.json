@@ -633,12 +633,28 @@
       "ram": "RAM_35K"
     },
     {
+      "name": "VIC Avenger",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FAvenger%20%281981%29%28Commodore%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/V/VIC Avenger/VIC_Avenger.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Vic McKracken",
       "filePath": "https://vic20.games/programs?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64",
       "fileType": "DISK",
       "iconPath": "screenshots/V/Vic McKracken/Vic_McKracken.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Xeno II",
+      "displayName": "Xeno II",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FXeno%20II%20%281982%29%28Anirog%29%5B16k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/X/Xeno II/Xeno_II.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
     },
     {
       "name": "Warning",
