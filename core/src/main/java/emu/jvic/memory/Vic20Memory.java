@@ -241,14 +241,31 @@ public class Vic20Memory extends Memory {
      */
     public void loadCart(byte[] cartData, AppConfigItem appConfigItem) {
         if (cartData != null) {
-            if (cartData.length == 16384) {
+            if (cartData.length >= 16384) {
                 // If the length exactly matches 16K, then it is usually made up of two 8K
                 // blocks loaded at different addresses, often 0x6000 and 0xA000, but sometimes
-                // 0x2000 and 0xA000.
-                mapChipToMemory(new RomChip(), 0x6000, 0x7FFF, cartData);
+                // 0x2000 and 0xA000, or 0x4000 and 0x6000.
+                int firstPartStartAddress = 0x6000;
+                int secondPartStartAddress = 0xA000;
+                if ((appConfigItem.getLoadAddress() != null) && (!appConfigItem.getLoadAddress().isEmpty())) {
+                    String[] addressParts = appConfigItem.getLoadAddress().split("[|]");
+                    if (addressParts.length > 0) {
+                        firstPartStartAddress = Integer.parseInt(addressParts[0], 16);
+                    }
+                    if (addressParts.length > 1) {
+                        secondPartStartAddress = Integer.parseInt(addressParts[1], 16);
+                    }
+                }
+                
+                mapChipToMemory(new RomChip(), firstPartStartAddress, firstPartStartAddress + 0x1FFF, cartData);
                 byte data2ndHalf[] = new byte[8192];
                 System.arraycopy(cartData, 8192, data2ndHalf, 0, 8192);
-                mapChipToMemory(new RomChip(), 0xA000, 0xBFFF, data2ndHalf);
+                mapChipToMemory(new RomChip(), secondPartStartAddress, secondPartStartAddress + 0x1FFF, data2ndHalf);
+                System.out.println("filePath: " + appConfigItem.getFilePath());
+                System.out.println("autoRunCommand: " + appConfigItem.getAutoRunCommand());
+                System.out.println("loadAddress: " + appConfigItem.getLoadAddress());
+                System.out.println("firstPartStartAddress: " + Integer.toHexString(firstPartStartAddress));
+                System.out.println("secondPartStartAddress: " + Integer.toHexString(secondPartStartAddress));
             } else {
                 mapChipToMemory(new RomChip(), 0xA000, 0xA000 + (cartData.length - 1), cartData);
             }
