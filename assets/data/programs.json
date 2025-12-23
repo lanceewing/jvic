@@ -94,6 +94,13 @@
       "ram": "RAM_32K"
     },
     {
+      "name": "Choplifter",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FChoplifter%20%281982%29%28Creative%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/C/Choplifter/Choplifter.png",      
+      "machineType": "NTSC"
+    },
+    {
       "name": "Cncd Cheat Split",
       "displayName": "Cncd Cheat\nSplit",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FCheat%20Split%20%282002-03%29%28CNCD%29.zip",
@@ -192,6 +199,14 @@
       "iconPath": "screenshots/F/FLInale (PAL)/FLInale_(PAL).png",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Forbidden Tower",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FForbidden%20Tower%20%281985%29%28Atlantis%29%5B8k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/F/Forbidden Tower/Forbidden_Tower.png",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
     },
     {
       "name": "Freax",
@@ -548,6 +563,15 @@
       "filePath": "https://web.archive.org/web/20160721222022/http://www.riimukivi.net/data/super_starship_space_attack.zip",
       "fileType": "PRG",
       "iconPath": "screenshots/S/Super Starship Space Attack/Super_Starship_Space_Attack.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
+      "name": "Sword of Fargoal",
+      "displayName": "Sword of\nFargoal",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Fargoal%20%281982%29%28Epyx%29%5B16k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/S/Sword of Fargoal/Sword_of_Fargoal.png",
       "machineType": "PAL",
       "ram": "RAM_16K"
     },
