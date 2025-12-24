@@ -450,11 +450,11 @@
       "machineType": "PAL"
     },
     {
-      "name": "Predator",
-      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
+      "name": "Pole Position",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPole%20Position%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
       "fileType": "CART",
-      "iconPath": "screenshots/P/Predator/Predator.png",
-      "machineType": "PAL"
+      "iconPath": "screenshots/P/Pole Position/Pole_Position.png",
+      "machineType": "NTSC"
     },
     {
       "name": "Pooyan",
@@ -463,6 +463,13 @@
       "iconPath": "screenshots/P/Pooyan/Pooyan.png",
       "machineType": "PAL",
       "ram": "RAM_16K"
+    },
+    {
+      "name": "Predator",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPredator%20%281983%29%28HES%29%28PAL%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/P/Predator/Predator.png",
+      "machineType": "PAL"
     },
     {
       "name": "Psycho Shopper",
@@ -617,6 +624,13 @@
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FTerraguard%20%281982%29%28Creative%29%28PAL%29%5BA000%5D.zip",
       "fileType": "CART",
       "iconPath": "screenshots/T/Terraguard/Terraguard.png",
+      "machineType": "PAL"
+    },
+    {
+      "name": "Tetris",
+      "filePath": "https://vic20.games/programs?url=https://www.vic-20.it/wp-content/uploads/tetris-unexp.prg",
+      "fileType": "PRG",
+      "iconPath": "screenshots/T/Tetris/Tetris.png",
       "machineType": "PAL"
     },
     {
