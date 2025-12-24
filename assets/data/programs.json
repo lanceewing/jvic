@@ -47,6 +47,13 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Battlezone",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FBattlezone%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/B/Battlezone/Battlezone.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Bertie the Ball",
       "displayName": "Bertie\nthe Ball",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBertie%20The%20Ball%20%282014%29%28Keranen%2C%20Mika%29%5Baka%20Misfit%5D%5B16k%5D.zip",
@@ -733,6 +740,13 @@
       "iconPath": "screenshots/V/Vic McKracken/Vic_McKracken.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Whack-E",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FWhack-E%20%282009%29%28McCrea%2C%20Steve%29.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/W/Whack-E/Whack-E.png",
+      "machineType": "PAL",
     },
     {
       "name": "Xeno II",
