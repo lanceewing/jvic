@@ -565,6 +565,13 @@
       "machineType": "PAL"
     },
     {
+      "name": "Spike's Peak",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FSpike%27s%20Peak%20%281983%29%28Xonox%29%28NTSC%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/S/Spike's Peak/Spike's_Peak.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Star Battle",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FStar%20Battle%20%281981%29%28Commodore%29%28NTSC-PAL%29%5BA000%5D.zip",
       "fileType": "CART",
@@ -718,6 +725,14 @@
       "iconPath": "screenshots/Z/Zombie Calavera Prologue/Zombie_Calavera_Prologue.png",
       "machineType": "PAL",
       "ram": "RAM_35K"
+    },
+    {
+      "name": "Zorgon's Kingdom",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BD64%5D%2FZorgon%27s%20Kingdom%20%281983%29%28Romik%29%5B8k%5D.zip",
+      "fileType": "DISK",
+      "iconPath": "screenshots/Z/Zorgon's Kingdom/Zorgon's_Kingdom.png",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
     },
   ]
 }
