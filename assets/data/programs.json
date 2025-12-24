@@ -340,6 +340,13 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
+      "name": "Lazer Zone",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FLazer%20Zone%20%281983%29%28HES%29%28NTSC-PAL%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/L/Lazer Zone/Lazer_Zone.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Lipstick Traces",
       "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org/demos/groups/orb/orb-lipstick_traces.zip",
       "fileType": "PRG",
@@ -397,6 +404,13 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Ms. Pac-Man",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FMs.%20Pac-Man%20%281983%29%28Atarisoft%29%28NTSC%29%5B6000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/M/Ms. Pac-Man/Ms._Pac-Man.png",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Next Level",
       "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/pwp_-_the_next_level.zip",
       "fileType": "DISK",
@@ -418,6 +432,13 @@
       "iconPath": "screenshots/O/Outworld/Outworld.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "Pac-Man",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FPac-Man%20%281983%29%28Atarisoft%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/P/Pac-Man/Pac-Man.png",
+      "machineType": "PAL"
     },
     {
       "name": "Panicman",
