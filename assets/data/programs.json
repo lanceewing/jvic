@@ -524,6 +524,13 @@
       "ram": "RAM_35K"
     },
     {
+      "name": "Quackers",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FQuackers%20%281982%29%28Rabbit%29%28PAL%29%5BA000%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/Q/Quackers/Quackers.png",
+      "machineType": "PAL"
+    },
+    {
       "name": "Raid on Fort Knox",
       "displayName": "Raid on\nFort Knox",
       "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
