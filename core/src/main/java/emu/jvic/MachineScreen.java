@@ -221,6 +221,7 @@ public class MachineScreen implements Screen {
         touchpadStyle.knob = touchKnob;
         Touchpad touchpad = new Touchpad(10, touchpadStyle);
         touchpad.setBounds(15, 15, size, size);
+        touchpad.setVisible(false);
         return touchpad;
     }
     
@@ -228,6 +229,7 @@ public class MachineScreen implements Screen {
         Image image = new Image(new Texture("png/joystick_button.png"));
         image.setBounds(15, 15, size, size);
         image.addListener(fireButtonClickListener);
+        image.setVisible(false);
         return image;
     }
 
@@ -490,8 +492,10 @@ public class MachineScreen implements Screen {
                 int joyWidth = 200;
                 int agiScreenBase = viewportManager.getVICScreenBase();
                 int midBetweenKeybAndPic = ((agiScreenBase + 900) / 2);
+                portraitTouchpad.setVisible(true);
                 portraitTouchpad.setSize(joyWidth, joyWidth);
                 portraitTouchpad.setY(midBetweenKeybAndPic - (joyWidth / 2));
+                portraitFireButton.setVisible(true);
                 portraitFireButton.setSize(joyWidth, joyWidth);
                 portraitFireButton.setY(midBetweenKeybAndPic - (joyWidth / 2));
                 switch (joystickAlignment) {
@@ -515,11 +519,13 @@ public class MachineScreen implements Screen {
                 if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 64)) {
                     // Icons at bottom. Joystick at bottom.
                     int joyWidth = 200;
+                    landscapeTouchpad.setVisible(true);
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.setY(16);
                     landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
+                    landscapeFireButton.setVisible(true);
                     landscapeFireButton.setSize(joyWidth, joyWidth);
                     landscapeFireButton.setY(16);
                     landscapeFireButton.setX(16);
@@ -530,10 +536,12 @@ public class MachineScreen implements Screen {
                 } else {
                     // Joystick left and right.
                     float joyWidth = Math.min(sidePaddingWidth, 200) - 10;
+                    landscapeTouchpad.setVisible(true);
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
                     landscapeTouchpad.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
+                    landscapeFireButton.setVisible(true);
                     landscapeFireButton.setSize(joyWidth, joyWidth);
                     landscapeFireButton.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
                     switch (joystickAlignment) {
@@ -555,6 +563,15 @@ public class MachineScreen implements Screen {
                 }
             }
             processJoystickInput(joyX, joyY);
+        } else {
+            // Hide joystick. Ensures it will not receive touch events.
+            if (viewportManager.isPortrait()) {
+                portraitTouchpad.setVisible(false);
+                landscapeTouchpad.setVisible(false);
+            } else {
+                landscapeTouchpad.setVisible(false);
+                landscapeFireButton.setVisible(false);
+            }
         }
     }
     
