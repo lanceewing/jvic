@@ -384,10 +384,7 @@ public class MachineInputProcessor extends InputAdapter {
                 // Rotate the joystick screen alignment.
                 joystickAlignment = joystickAlignment.rotateValue();
                 if (!viewportManager.isPortrait()) {
-                    if (joystickAlignment.equals(JoystickAlignment.MIDDLE)) {
-                        joystickAlignment = joystickAlignment.rotateValue();
-                    }
-                   if ((viewportManager.getVICScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
+                    if ((viewportManager.getVICScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
                         if (joystickAlignment.equals(JoystickAlignment.LEFT)) {
                             joystickAlignment = joystickAlignment.rotateValue();
                         }
@@ -619,10 +616,10 @@ public class MachineInputProcessor extends InputAdapter {
     }
 
     public static enum JoystickAlignment {
-        OFF, RIGHT, MIDDLE, LEFT;
+        OFF, LEFT, RIGHT;
         
         JoystickAlignment rotateValue() {
-            return values()[(ordinal() + 1) % 4];
+            return values()[(ordinal() + 1) % 3];
         }
     }
 

@@ -20,10 +20,13 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad.TouchpadStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Base64Coder;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -104,6 +107,8 @@ public class MachineScreen implements Screen {
     private Stage landscapeStage;
     private Touchpad portraitTouchpad;
     private Touchpad landscapeTouchpad;
+    private Image portraitFireButton;
+    private Image landscapeFireButton;
     private int previousDirection;
 
     // FPS text font
@@ -172,15 +177,19 @@ public class MachineScreen implements Screen {
 
         // Create the portrait and landscape joystick touchpads.
         portraitTouchpad = createTouchpad(300);
+        portraitFireButton = createFireButton(300);
         landscapeTouchpad = createTouchpad(200);
+        landscapeFireButton = createFireButton(200);
         
         viewportManager = ViewportManager.getInstance();
 
         // Create a Stage and add TouchPad
         portraitStage = new Stage(viewportManager.getPortraitViewport(), batch);
         portraitStage.addActor(portraitTouchpad);
+        portraitStage.addActor(portraitFireButton);
         landscapeStage = new Stage(viewportManager.getLandscapeViewport(), batch);
         landscapeStage.addActor(landscapeTouchpad);
+        landscapeStage.addActor(landscapeFireButton);
 
         // Create and register an input processor for keys, etc.
         machineInputProcessor = new MachineInputProcessor(this, dialogHandler);
@@ -213,6 +222,13 @@ public class MachineScreen implements Screen {
         Touchpad touchpad = new Touchpad(10, touchpadStyle);
         touchpad.setBounds(15, 15, size, size);
         return touchpad;
+    }
+    
+    private Image createFireButton(int size) {
+        Image image = new Image(new Texture("png/joystick_button.png"));
+        image.setBounds(15, 15, size, size);
+        image.addListener(fireButtonClickListener);
+        return image;
     }
 
     /**
@@ -466,7 +482,7 @@ public class MachineScreen implements Screen {
         batch.end();
         
         // The joystick touch pad is updated and rendered via the Stage.
-        if (!joystickAlignment.equals(JoystickAlignment.OFF) && (false)) {
+        if (!joystickAlignment.equals(JoystickAlignment.OFF)) {
             float joyX = 0;
             float joyY = 0;
             if (viewportManager.isPortrait()) {
@@ -476,17 +492,18 @@ public class MachineScreen implements Screen {
                 int midBetweenKeybAndPic = ((agiScreenBase + 900) / 2);
                 portraitTouchpad.setSize(joyWidth, joyWidth);
                 portraitTouchpad.setY(midBetweenKeybAndPic - (joyWidth / 2));
+                portraitFireButton.setSize(joyWidth, joyWidth);
+                portraitFireButton.setY(midBetweenKeybAndPic - (joyWidth / 2));
                 switch (joystickAlignment) {
                     case OFF:
                         break;
                     case RIGHT:
                         portraitTouchpad.setX(1080 - joyWidth - 20);
-                        break;
-                    case MIDDLE:
-                        portraitTouchpad.setX(viewportManager.getWidth() - viewportManager.getWidth() / 2 - (joyWidth / 2));
+                        portraitFireButton.setX(20);
                         break;
                     case LEFT:
                         portraitTouchpad.setX(20);
+                        portraitFireButton.setX(1080 - joyWidth - 20);
                         break;
                 }
                 portraitStage.act(delta);
@@ -518,8 +535,6 @@ public class MachineScreen implements Screen {
                         case RIGHT:
                             landscapeTouchpad.setX(1920 - joyWidth - 16);
                             break;
-                        case MIDDLE:
-                            break;
                         case LEFT:
                             landscapeTouchpad.setX(16);
                             break;
@@ -534,17 +549,30 @@ public class MachineScreen implements Screen {
         }
     }
     
+    public ClickListener fireButtonClickListener = new ClickListener() {
+        @Override
+        public void clicked(InputEvent event, float x, float y) {
+            KeyboardMatrix keyboardMatrix = jvicRunner.getKeyboardMatrix();
+            keyboardMatrix.keyDown(Keys.INSERT);
+            keyboardMatrix.keyUp(Keys.INSERT);
+        }
+    };
+    
     private static final int[] DIRECTION_TO_KEY_MAP = new int[] {
-        0, 
-        Keys.UP, 
-        Keys.RIGHT, 
-        Keys.DOWN, 
-        Keys.LEFT
+            0, 
+            Keys.NUMPAD_8,  // Up
+            Keys.NUMPAD_9,  // NE
+            Keys.NUMPAD_6,  // Right
+            Keys.NUMPAD_3,  // SE
+            Keys.NUMPAD_2,  // Down
+            Keys.NUMPAD_1,  // SW
+            Keys.NUMPAD_4,  // Left
+            Keys.NUMPAD_7   // NW
     };
         
     /**
-     * Processes joystick input, converting the touchpad position into a VIC
-     * arrow direction and then setting the corresponding direction key.
+     * Processes joystick input, converting the touchpad position into an AGI
+     * direction and then setting the corresponding direction key.
      * 
      * @param joyX
      * @param joyY
@@ -556,38 +584,55 @@ public class MachineScreen implements Screen {
         int direction = 0;
         
         if (distance > 0.3) {
+            // Convert heading to an AGI direction.
             if (heading == 0) {
                 // Right
-                direction = 2;
+                direction = 3;
             }
             else if (heading > 0) {
                 // Down
-                if (heading < 0.785398) {
+                if (heading < 0.3926991) {
                     // Right
-                    direction = 2;
-                }
-                else if (heading < 2.3561946) {
-                    // Down
                     direction = 3;
+                }
+                else if (heading < 1.178097) {
+                    // Down/Right
+                    direction = 4;
+                }
+                else if (heading < 1.9634954) {
+                    // Down
+                    direction = 5;
+                }
+                else if (heading < 2.7488936) {
+                    // Down/Left
+                    direction = 6;
                 }
                 else {
                     // Left
-                    direction = 4;
+                    direction = 7;
                 }
             }
             else {
                 // Up
-                if (heading > -0.785398) {
+                if (heading > -0.3926991) {
                     // Right
+                    direction = 3;
+                }
+                else if (heading > -1.178097) {
+                    // Up/Right
                     direction = 2;
                 }
-                else if (heading > -2.3561946) {
+                else if (heading > -1.9634954) {
                     // Up
                     direction = 1;
                 }
+                else if (heading > -2.7488936) {
+                    // Up/Left
+                    direction = 8;
+                }
                 else {
                     // Left
-                    direction = 4;
+                    direction = 7;
                 }
             }
         }
