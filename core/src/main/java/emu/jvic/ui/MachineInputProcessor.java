@@ -318,19 +318,19 @@ public class MachineInputProcessor extends InputAdapter {
                             } else if (touchXY.x < 112) {
                                 keyboardClicked = true;
                             }
-                        } else if ((touchXY.y > (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 74) &&
-                                   (touchXY.y < (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) + 42)) {
+                        } else if ((touchXY.y > (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 100) &&
+                                   (touchXY.y < (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) + 26)) {
                             if (touchXY.x > (viewportManager.getWidth() - 112)) {
                                 screenSizeClicked = true;
                             } else if (touchXY.x < 112) {
                                 pausePlayClicked = true;
                             }
-                        } else if ((touchXY.y > (viewportManager.getHeight() / 3) - 42) &&
-                                (touchXY.y < (viewportManager.getHeight() / 3) + 74)) {
+                        } else if ((touchXY.y > (viewportManager.getHeight() / 6) - 42) &&
+                                (touchXY.y < (viewportManager.getHeight() / 6) + 84)) {
                              if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                 joystickClicked = true;
-                             } else if (touchXY.x < 112) {
                                  // Free slot.
+                             } else if (touchXY.x < 112) {
+                                 joystickClicked = true;
                              }
                          }
                     }
@@ -352,10 +352,10 @@ public class MachineInputProcessor extends InputAdapter {
                             float fiveSixths = (viewportManager.getHeight() - (viewportManager.getHeight() / 6));
                             
                             if ((touchXY.y > (sixthPos - 26)) && (touchXY.y < (sixthPos + 100))) {
-                                joystickClicked = true;
+                                keyboardClicked = true;
                             }
                             else if ((touchXY.y > (thirdPos - 42)) && (touchXY.y < (thirdPos + 84))) {
-                                keyboardClicked = true;
+                                joystickClicked = true;
                             }
                             else if ((touchXY.y > (halfPos - 58)) && (touchXY.y < (halfPos + 58))) {
                                 pausePlayClicked = true;

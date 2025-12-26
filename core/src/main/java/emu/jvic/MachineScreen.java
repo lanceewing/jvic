@@ -450,12 +450,12 @@ public class MachineScreen implements Screen {
                 } else {
                     // Normal landscape.
                     batch.draw(speakerIcon,   16, viewportManager.getHeight() - 112);
-                    batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    // Free slot.
-                    batch.draw(keyboardIcon,  16, 0);
+                    batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
+                    batch.draw(joystickIcon,  16, (viewportManager.getHeight() / 6) - 16);
+                    batch.draw(keyboardIcon,  16, 16);
                     batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, viewportManager.getHeight() - 112);
-                    batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
+                    batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
+                    // Free slot.
                     batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
                 }
             } else if (cameraXOffset < 0) {
@@ -464,8 +464,8 @@ public class MachineScreen implements Screen {
                 batch.draw(screenSizeIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
                 batch.draw(speakerIcon,    16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
                 batch.draw(pausePlayIcon,  16, (viewportManager.getHeight() / 2) - 48);
-                batch.draw(keyboardIcon,   16, (viewportManager.getHeight() / 3) - 32);
-                batch.draw(joystickIcon,   16, (viewportManager.getHeight() / 6) - 16);
+                batch.draw(joystickIcon,   16, (viewportManager.getHeight() / 3) - 32);
+                batch.draw(keyboardIcon,   16, (viewportManager.getHeight() / 6) - 16);
                 batch.draw(backIcon,       16, 16);
             } else if (cameraXOffset > 0) {
                 // Right
@@ -473,8 +473,8 @@ public class MachineScreen implements Screen {
                 batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
                 batch.draw(speakerIcon,    viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
                 batch.draw(pausePlayIcon,  viewportManager.getWidth() - 112, (viewportManager.getHeight() / 2) - 48);
-                batch.draw(keyboardIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
-                batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 6) - 16);
+                batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
+                batch.draw(keyboardIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 6) - 16);
                 batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
             }
         }
@@ -513,12 +513,16 @@ public class MachineScreen implements Screen {
             } else {
                 // Landscape
                 if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 64)) {
+                    // Icons at bottom.
                     int joyWidth = Math.max(Math.min(140 + viewportManager.getVICScreenBase(), 216), 140);
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.setY(16);
                     landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
+                    landscapeFireButton.setSize(joyWidth, joyWidth);
+                    landscapeFireButton.setY(16);
+                    landscapeFireButton.setX(16);
                     landscapeStage.act(delta);
                     landscapeStage.draw();
                     joyX = landscapeTouchpad.getKnobPercentX();
@@ -529,14 +533,18 @@ public class MachineScreen implements Screen {
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
                     landscapeTouchpad.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
+                    landscapeFireButton.setSize(joyWidth, joyWidth);
+                    landscapeFireButton.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
                     switch (joystickAlignment) {
                         case OFF:
                             break;
                         case RIGHT:
                             landscapeTouchpad.setX(1920 - joyWidth - 16);
+                            landscapeFireButton.setX(16);
                             break;
                         case LEFT:
                             landscapeTouchpad.setX(16);
+                            landscapeFireButton.setX(1920 - joyWidth - 16);
                             break;
                     }
                     landscapeStage.act(delta);
