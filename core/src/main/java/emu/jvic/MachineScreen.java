@@ -513,8 +513,8 @@ public class MachineScreen implements Screen {
             } else {
                 // Landscape
                 if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 64)) {
-                    // Icons at bottom.
-                    int joyWidth = Math.max(Math.min(140 + viewportManager.getVICScreenBase(), 216), 140);
+                    // Icons at bottom. Joystick at bottom.
+                    int joyWidth = 200;
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.setY(16);
                     landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16);
@@ -528,7 +528,8 @@ public class MachineScreen implements Screen {
                     joyX = landscapeTouchpad.getKnobPercentX();
                     joyY = landscapeTouchpad.getKnobPercentY();
                 } else {
-                    float joyWidth = Math.min(Math.max((sidePaddingWidth * 2) - 32, 96), 200);
+                    // Joystick left and right.
+                    float joyWidth = Math.min(sidePaddingWidth, 200) - 10;
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
@@ -539,12 +540,12 @@ public class MachineScreen implements Screen {
                         case OFF:
                             break;
                         case RIGHT:
-                            landscapeTouchpad.setX(1920 - joyWidth - 16);
-                            landscapeFireButton.setX(16);
+                            landscapeTouchpad.setX(1920 - joyWidth - 0);
+                            landscapeFireButton.setX(0);
                             break;
                         case LEFT:
-                            landscapeTouchpad.setX(16);
-                            landscapeFireButton.setX(1920 - joyWidth - 16);
+                            landscapeTouchpad.setX(4);
+                            landscapeFireButton.setX(1920 - joyWidth - 0);
                             break;
                     }
                     landscapeStage.act(delta);
