@@ -18,17 +18,17 @@ public enum KeyboardType {
 
       LANDSCAPE(
             new Integer[][] {
-              { null, Keys.LEFT, Keys.LEFT, Keys.LEFT, Keys.LEFT, Keys.NUM_1, Keys.NUM_1, Keys.NUM_1, Keys.NUM_1, Keys.NUM_2, Keys.NUM_2, Keys.NUM_2, Keys.NUM_2, Keys.NUM_3, Keys.NUM_3, Keys.NUM_3, Keys.NUM_3, Keys.NUM_4, Keys.NUM_4, Keys.NUM_4, Keys.NUM_4, Keys.NUM_5, Keys.NUM_5, Keys.NUM_5, Keys.NUM_5, Keys.NUM_6, Keys.NUM_6, Keys.NUM_6, Keys.NUM_6, Keys.NUM_7, Keys.NUM_7, Keys.NUM_7, Keys.NUM_7, Keys.NUM_8, Keys.NUM_8, Keys.NUM_8, Keys.NUM_8, Keys.NUM_9, Keys.NUM_9, Keys.NUM_9, Keys.NUM_9, Keys.NUM_0, Keys.NUM_0, Keys.NUM_0, Keys.NUM_0, Keys.PLUS, Keys.PLUS, Keys.PLUS, Keys.PLUS, Keys.MINUS, Keys.MINUS, Keys.MINUS, Keys.MINUS, Keys.POUND, Keys.POUND, Keys.POUND, Keys.POUND, Keys.HOME, Keys.HOME, Keys.HOME, Keys.HOME, Keys.DEL, Keys.DEL, Keys.DEL, Keys.DEL, null, null, null, null, null, null, null, null, null, null, null },
-              { null, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.Q, Keys.Q, Keys.Q, Keys.Q, Keys.W, Keys.W, Keys.W, Keys.W, Keys.E, Keys.E, Keys.E, Keys.E, Keys.R, Keys.R, Keys.R, Keys.R, Keys.T, Keys.T, Keys.T, Keys.T, Keys.Y, Keys.Y, Keys.Y, Keys.Y, Keys.U, Keys.U, Keys.U, Keys.U, Keys.I, Keys.I, Keys.I, Keys.I, Keys.O, Keys.O, Keys.O, Keys.O, Keys.P, Keys.P, Keys.P, Keys.P, Keys.AT, Keys.AT, Keys.AT, Keys.AT, Keys.STAR, Keys.STAR, Keys.STAR, Keys.STAR, Keys.UP, Keys.UP, Keys.UP, Keys.UP, RESTORE, RESTORE, RESTORE, RESTORE, RESTORE, RESTORE, null, null, null, null, null, null, null, null, null, null, null },
-              { RUN_STOP, RUN_STOP, RUN_STOP, RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, SHIFT_LOCK, SHIFT_LOCK, Keys.A, Keys.A, Keys.A, Keys.A, Keys.S, Keys.S, Keys.S, Keys.S, Keys.D, Keys.D, Keys.D, Keys.D, Keys.F, Keys.F, Keys.F, Keys.F, Keys.G, Keys.G, Keys.G, Keys.G, Keys.H, Keys.H, Keys.H, Keys.H, Keys.J, Keys.J, Keys.J, Keys.J, Keys.K, Keys.K, Keys.K, Keys.K, Keys.L, Keys.L, Keys.L, Keys.L, Keys.COLON, Keys.COLON, Keys.COLON, Keys.COLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.EQUALS, Keys.EQUALS, Keys.EQUALS, Keys.EQUALS, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER, null, null, null, null, null, null, null, null, null, null, null, null },
-              { Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.Z, Keys.Z, Keys.Z, Keys.Z, Keys.X, Keys.X, Keys.X, Keys.X, Keys.C, Keys.C, Keys.C, Keys.C, Keys.V, Keys.V, Keys.V, Keys.V, Keys.B, Keys.B, Keys.B, Keys.B, Keys.N, Keys.N, Keys.N, Keys.N, Keys.M, Keys.M, Keys.M, Keys.M, Keys.COMMA, Keys.COMMA, Keys.COMMA, Keys.COMMA, Keys.PERIOD, Keys.PERIOD, Keys.PERIOD, Keys.PERIOD, Keys.SLASH, Keys.SLASH, Keys.SLASH, Keys.SLASH, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.DOWN, Keys.DOWN, Keys.DOWN, Keys.RIGHT, Keys.RIGHT, Keys.RIGHT, Keys.RIGHT, null, null, null, null, null, null, null, null, null, null, null, null },
-              { null, null, null, null, null, null, null, null, null, null, null, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null }
+              { Keys.LEFT, Keys.LEFT, Keys.NUM_1, Keys.NUM_1, Keys.NUM_2, Keys.NUM_2, Keys.NUM_3, Keys.NUM_3, Keys.NUM_4, Keys.NUM_4, Keys.NUM_5, Keys.NUM_5, Keys.NUM_6, Keys.NUM_6, Keys.NUM_7, Keys.NUM_7, Keys.NUM_8, Keys.NUM_8, Keys.NUM_9, Keys.NUM_9, Keys.NUM_0, Keys.NUM_0, Keys.PLUS, Keys.PLUS, Keys.MINUS, Keys.MINUS, Keys.POUND, Keys.POUND, Keys.HOME, Keys.HOME, Keys.DEL, Keys.DEL },
+              { Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.Q, Keys.Q, Keys.W, Keys.W, Keys.E, Keys.E, Keys.R, Keys.R, Keys.T, Keys.T, Keys.Y, Keys.Y, Keys.U, Keys.U, Keys.I, Keys.I, Keys.O, Keys.O, Keys.P, Keys.P, Keys.AT, Keys.AT, Keys.STAR, Keys.STAR, Keys.UP, Keys.UP, RESTORE, RESTORE, RESTORE },
+              { RUN_STOP, RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, Keys.A, Keys.A, Keys.S, Keys.S, Keys.D, Keys.D, Keys.F, Keys.F, Keys.G, Keys.G, Keys.H, Keys.H, Keys.J, Keys.J, Keys.K, Keys.K, Keys.L, Keys.L, Keys.COLON, Keys.COLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.EQUALS, Keys.EQUALS, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER },
+              { Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.Z, Keys.Z, Keys.X, Keys.X, Keys.C, Keys.C, Keys.V, Keys.V, Keys.B, Keys.B, Keys.N, Keys.N, Keys.M, Keys.M, Keys.COMMA, Keys.COMMA, Keys.PERIOD, Keys.PERIOD, Keys.SLASH, Keys.SLASH, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.DOWN, Keys.RIGHT, Keys.RIGHT },
+              { Keys.F1, Keys.F1, Keys.F1, Keys.F3, Keys.F3, Keys.F3, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.F5, Keys.F5, Keys.F5, Keys.F7, Keys.F7, Keys.F7 }
             },
             "png/keyboard_landscape.png",
             0.5f,
-            110,
-            0,
-            -1,
+            230,
+            208,
+            1504,
             0
           ),
       PORTRAIT(
@@ -259,7 +259,7 @@ public enum KeyboardType {
         if (isLandscape()) {
             ViewportManager viewportManager = ViewportManager.getInstance();
             if (viewportManager.getVICScreenBase() > 0) {
-                return 135;
+                return renderOffset;
             } else {
                 return renderOffset;
             }
