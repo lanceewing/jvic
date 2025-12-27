@@ -370,7 +370,7 @@ public class MachineInputProcessor extends InputAdapter {
                     }
                 }
             }
-
+            
             if (keyboardClicked) {
                 if (keyboardType.equals(KeyboardType.OFF)) {
                     keyboardType = (viewportManager.isPortrait() ? KeyboardType.PORTRAIT : KeyboardType.LANDSCAPE);
@@ -379,19 +379,12 @@ public class MachineInputProcessor extends InputAdapter {
                     keyboardType = KeyboardType.OFF;
                 }
             }
-
+            
             if (joystickClicked) {
                 // Rotate the joystick screen alignment.
                 joystickAlignment = joystickAlignment.rotateValue();
-                if (!viewportManager.isPortrait()) {
-                    if ((viewportManager.getVICScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
-                        if (joystickAlignment.equals(JoystickAlignment.LEFT)) {
-                            joystickAlignment = joystickAlignment.rotateValue();
-                        }
-                    }
-                }
             }
-
+            
             if (speakerClicked) {
                 speakerOn = !speakerOn;
                 machineScreen.getJvicRunner().changeSound(speakerOn);

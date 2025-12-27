@@ -367,11 +367,7 @@ public class MachineScreen implements Screen {
                 // Icons on one side.
                 // 128 = 2 * min width on sides.
                 // 64 = when icon on one side is perfectly centred.
-                float unadjustedXOffset = Math.min(128 - sidePaddingWidth, sidePaddingWidth);
-                cameraXOffset = (unadjustedXOffset / vicWidthRatio);
-                if (joystickAlignment.equals(JoystickAlignment.LEFT)) {
-                    cameraXOffset *= -1;
-                }
+                cameraXOffset = (sidePaddingWidth / vicWidthRatio);
             }
         } else {
             float vicScreenHeight = (viewportManager.getWidth() / 1.33f);
@@ -460,17 +456,8 @@ public class MachineScreen implements Screen {
                     // Free slot.
                     batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
                 }
-            } else if (cameraXOffset < 0) {
-                // Left
-                batch.draw(fullScreenIcon, 16, (viewportManager.getHeight() - 112));
-                batch.draw(screenSizeIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
-                batch.draw(speakerIcon,    16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                batch.draw(pausePlayIcon,  16, (viewportManager.getHeight() / 2) - 48);
-                batch.draw(joystickIcon,   16, (viewportManager.getHeight() / 3) - 32);
-                batch.draw(keyboardIcon,   16, (viewportManager.getHeight() / 6) - 16);
-                batch.draw(backIcon,       16, 16);
             } else if (cameraXOffset > 0) {
-                // Right
+                // Right side.
                 batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - 112));
                 batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
                 batch.draw(speakerIcon,    viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
@@ -516,19 +503,39 @@ public class MachineScreen implements Screen {
                 joyY = portraitTouchpad.getKnobPercentY();
             } else {
                 // Landscape
-                if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 64)) {
+                if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 128)) {
                     // Icons at bottom. Joystick at bottom.
                     int joyWidth = 200;
                     landscapeTouchpad.setVisible(true);
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
-                    landscapeTouchpad.setY(16);
-                    landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
+                    landscapeTouchpad.setY(16);
                     landscapeFireButton.setVisible(true);
                     landscapeFireButton.setSize(joyWidth, joyWidth);
                     landscapeFireButton.setY(16);
-                    landscapeFireButton.setX(16);
+                    switch (joystickAlignment) {
+                        case OFF:
+                            break;
+                        case RIGHT:
+                            if (sidePaddingWidth < 64) {
+                                landscapeTouchpad.setX(1920 - joyWidth - sidePaddingWidth - 16);
+                                landscapeFireButton.setX(sidePaddingWidth + 16);
+                            } else {
+                                landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16 - (sidePaddingWidth * 2));
+                                landscapeFireButton.setX(16);
+                            }
+                            break;
+                        case LEFT:
+                            if (sidePaddingWidth < 64) {
+                                landscapeTouchpad.setX(sidePaddingWidth + 16);
+                                landscapeFireButton.setX(1920 - joyWidth - sidePaddingWidth - 16);
+                            } else {
+                                landscapeTouchpad.setX(16);
+                                landscapeFireButton.setX(viewportManager.getWidth() - joyWidth - 16 - (sidePaddingWidth * 2));
+                            }
+                            break;
+                    }
                     landscapeStage.act(delta);
                     landscapeStage.draw();
                     joyX = landscapeTouchpad.getKnobPercentX();
