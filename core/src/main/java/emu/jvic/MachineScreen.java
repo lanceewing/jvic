@@ -367,7 +367,8 @@ public class MachineScreen implements Screen {
                 // Icons on one side.
                 // 128 = 2 * min width on sides.
                 // 64 = when icon on one side is perfectly centred.
-                cameraXOffset = (sidePaddingWidth / vicWidthRatio);
+                float unadjustedXOffset = Math.min(128 - sidePaddingWidth, sidePaddingWidth);
+                cameraXOffset = (unadjustedXOffset / vicWidthRatio);
             }
         } else {
             float vicScreenHeight = (viewportManager.getWidth() / 1.33f);
@@ -510,10 +511,10 @@ public class MachineScreen implements Screen {
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
-                    landscapeTouchpad.setY(16);
+                    landscapeTouchpad.setY(viewportManager.getHeight() - 16 - 200);
                     landscapeFireButton.setVisible(true);
                     landscapeFireButton.setSize(joyWidth, joyWidth);
-                    landscapeFireButton.setY(16);
+                    landscapeFireButton.setY(viewportManager.getHeight() - 16 - 200);
                     switch (joystickAlignment) {
                         case OFF:
                             break;
