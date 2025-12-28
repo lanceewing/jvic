@@ -145,7 +145,7 @@ public enum KeyboardType {
         float height = getHeight();
         float vertKeySize = ((float) (((float) height) - (float) this.yStart) / (float) this.keyMap.length);
         
-        int keyRow = (int) ((getHeight() - (y - yStart) + renderOffset) / vertKeySize);
+        int keyRow = (int) ((getHeight() - (y - yStart) + getRenderOffset()) / vertKeySize);
 
         if (keyRow >= keyMap.length) {
             keyRow = keyMap.length - 1;
@@ -203,6 +203,7 @@ public enum KeyboardType {
      */
     public boolean isInKeyboard(float x, float y) {
         if (isRendered()) {
+            float renderOffset = getRenderOffset();
             boolean isInYBounds = (y < (getHeight() + renderOffset) && (y > renderOffset));
             boolean isInXBounds = ((x >= xStart) && (x < (xStart + activeWidth)));
             return isInYBounds && isInXBounds;
@@ -259,9 +260,22 @@ public enum KeyboardType {
         if (isLandscape()) {
             ViewportManager viewportManager = ViewportManager.getInstance();
             if (viewportManager.getVICScreenBase() > 0) {
+                // Landscape mode where icons are at bottom.
                 return renderOffset;
             } else {
-                return renderOffset;
+                float sidePaddingWidth = viewportManager.getSidePaddingWidth();
+                if (sidePaddingWidth < 128) {
+                    if (sidePaddingWidth > 64) {
+                        // Landscape mode where icons only on right (but joystick at button).
+                        return 0;
+                    } else {
+                        // Landscape mode where icons at bottom and joystick left and right.
+                        return renderOffset;
+                    }
+                } else {
+                    // Landscape mode where icons on left and right (and the joystick).
+                    return 0;
+                }
             }
         } else {
             return renderOffset;
