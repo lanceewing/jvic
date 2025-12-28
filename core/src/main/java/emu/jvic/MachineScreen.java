@@ -370,6 +370,11 @@ public class MachineScreen implements Screen {
                 float unadjustedXOffset = Math.min(128 - sidePaddingWidth, sidePaddingWidth);
                 cameraXOffset = (unadjustedXOffset / vicWidthRatio);
             }
+            if (!currentScreenSize.equals(ScreenSize.FIT)) {
+                // Adjusts the position of screen to align with the top.
+                int screenHeight = viewportManager.getCurrentViewport().getScreenHeight();
+                cameraYOffset = (((screenHeight / 2) - renderHeight)) + (renderHeight / 2);
+            }
         } else {
             float vicScreenHeight = (viewportManager.getWidth() / 1.33f);
             float vicHeightRatio = (vicScreenHeight / ADJUSTED_HEIGHT);
