@@ -528,7 +528,7 @@ public class MachineScreen implements Screen {
                                 landscapeTouchpad.setX(1920 - joyWidth - sidePaddingWidth - 16);
                                 landscapeFireButton.setX(sidePaddingWidth + 16);
                             } else {
-                                landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16 - (sidePaddingWidth * 2));
+                                landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16 - 128);
                                 landscapeFireButton.setX(16);
                             }
                             break;
@@ -538,7 +538,7 @@ public class MachineScreen implements Screen {
                                 landscapeFireButton.setX(1920 - joyWidth - sidePaddingWidth - 16);
                             } else {
                                 landscapeTouchpad.setX(16);
-                                landscapeFireButton.setX(viewportManager.getWidth() - joyWidth - 16 - (sidePaddingWidth * 2));
+                                landscapeFireButton.setX(viewportManager.getWidth() - joyWidth - 16 - 128);
                             }
                             break;
                     }
