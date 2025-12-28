@@ -26,7 +26,7 @@ public enum KeyboardType {
             },
             "png/keyboard_landscape.png",
             0.5f,
-            230,
+            150,
             208,
             1504,
             0
