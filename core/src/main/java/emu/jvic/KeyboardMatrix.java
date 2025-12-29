@@ -26,86 +26,11 @@ public abstract class KeyboardMatrix extends InputAdapter {
 
     /**
      * Data used to convert Java keypresses into VIC 20 keypresses.
+     * 
+     * TODO: Need to work out a replacement for joystick keys.
      */
-    private static int keyConvMapArr[][] = {
+    private static int old_keyConvMapArr[][] = {
             
-        {Keys.BACKSPACE, 1, 128},
-        {Keys.POUND, 1, 64},
-        {Keys.PLUS, 1, 32},
-        {Keys.NUM_9, 1, 16},
-        {Keys.NUM_7, 1, 8},
-        {Keys.NUM_5, 1, 4},
-        {Keys.NUM_3, 1, 2},
-        {Keys.NUM_1, 1, 1},
-        
-        {Keys.ENTER, 2, 128},
-        {Keys.STAR, 2, 64},
-        {Keys.P, 2, 32},
-        {Keys.I, 2, 16},
-        {Keys.Y, 2, 8},
-        {Keys.R, 2, 4},
-        {Keys.W, 2, 2},
-        {Keys.PAGE_DOWN, 2, 1},  // TODO: What about ````
-        
-        {Keys.CONTROL_RIGHT, 4, 128},
-        {Keys.SEMICOLON, 4, 64},
-        {Keys.L, 4, 32},
-        {Keys.J, 4, 16},
-        {Keys.G, 4, 8},
-        {Keys.D, 4, 4},
-        {Keys.A, 4, 2},
-        {Keys.CONTROL_LEFT, 4, 1},
-        
-        // Special Ctrl key mapping for Android Hacker's Keyboard.
-        {113, 4, 1},
-        
-        {Keys.ALT_RIGHT, 8, 128},
-        {Keys.SLASH, 8, 64},
-        {Keys.COMMA, 8, 32},
-        {Keys.N, 8, 16},
-        {Keys.V, 8, 8},
-        {Keys.X, 8, 4},
-        {Keys.SHIFT_LEFT, 8, 2},
-        {Keys.TAB, 8, 1},
-        {RUN_STOP, 8, 1},
-        
-        {Keys.F1, 16, 128},
-        {Keys.SHIFT_RIGHT, 16, 64},
-        {Keys.PERIOD, 16, 32},
-        {Keys.M, 16, 16},
-        {Keys.B, 16, 8},
-        {Keys.C, 16, 4},
-        {Keys.Z, 16, 2},
-        {Keys.SPACE, 16, 1},
-        
-        {Keys.F3, 32, 128},
-        {Keys.EQUALS, 32, 64},
-        {Keys.COLON, 32, 32},
-        {Keys.K, 32, 16},
-        {Keys.H, 32, 8},
-        {Keys.F, 32, 4},
-        {Keys.S, 32, 2},
-        {Keys.ALT_LEFT, 32, 1},
-        
-        {Keys.F5, 64, 128},
-        {Keys.PAGE_UP, 64, 64},
-        {Keys.AT, 64, 32},
-        {Keys.O, 64, 16},
-        {Keys.U, 64, 8},
-        {Keys.T, 64, 4},
-        {Keys.E, 64, 2},
-        {Keys.Q, 64, 1},
-        
-        {Keys.F7, 128, 128},
-        {Keys.HOME, 128, 64},
-        {Keys.MINUS, 128, 32},
-        {Keys.NUM_0, 128, 16},
-        {Keys.NUM_8, 128, 8},
-        {Keys.NUM_6, 128, 4},
-        {Keys.NUM_4, 128, 2},
-        {Keys.NUM_2, 128, 1},
-        
-        
         // Joystick keys.
         { Keys.NUMPAD_0, JOYSTICK, 0x20 },  // Fire button
         { Keys.NUMPAD_1, JOYSTICK, 0x18 },  // SW
@@ -125,6 +50,84 @@ public abstract class KeyboardMatrix extends InputAdapter {
     };
     
     /**
+     * Data used to map VIC 20 keys to the appropriate keyboard col/row scan values.
+     */
+    private static int keyConvMapArr[][] = {
+            
+        { VicKeys.DELETE, 1, 128 },
+        { VicKeys.POUND, 1, 64 },
+        { VicKeys.PLUS, 1, 32 },
+        { VicKeys.NINE, 1, 16 },
+        { VicKeys.SEVEN, 1, 8 },
+        { VicKeys.FIVE, 1, 4 },
+        { VicKeys.THREE, 1, 2 },
+        { VicKeys.ONE, 1, 1 },
+        
+        { VicKeys.RETURN, 2, 128 },
+        { VicKeys.ASTERISK, 2, 64 },
+        { VicKeys.P, 2, 32 },
+        { VicKeys.I, 2, 16 },
+        { VicKeys.Y, 2, 8 },
+        { VicKeys.R, 2, 4 },
+        { VicKeys.W, 2, 2 },
+        { VicKeys.LEFT_ARROW, 2, 1 },
+        
+        { VicKeys.CURSOR_RIGHT, 4, 128},
+        { VicKeys.SEMI_COLON, 4, 64},
+        { VicKeys.L, 4, 32},
+        { VicKeys.J, 4, 16},
+        { VicKeys.G, 4, 8},
+        { VicKeys.D, 4, 4},
+        { VicKeys.A, 4, 2},
+        { VicKeys.CONTROL, 4, 1},
+        
+        { VicKeys.CURSOR_DOWN, 8, 128 },
+        { VicKeys.FORWARD_SLASH, 8, 64 },
+        { VicKeys.COMMA, 8, 32 },
+        { VicKeys.N, 8, 16 },
+        { VicKeys.V, 8, 8 },
+        { VicKeys.X, 8, 4 },
+        { VicKeys.LEFT_SHIFT, 8, 2 },
+        { VicKeys.RUN_STOP, 8, 1 },
+        
+        { VicKeys.F1, 16, 128 },
+        { VicKeys.RIGHT_SHIFT, 16, 64 },
+        { VicKeys.PERIOD, 16, 32 },
+        { VicKeys.M, 16, 16 },
+        { VicKeys.B, 16, 8 },
+        { VicKeys.C, 16, 4 },
+        { VicKeys.Z, 16, 2 },
+        { VicKeys.SPACE, 16, 1 },
+        
+        { VicKeys.F3, 32, 128 },
+        { VicKeys.EQUALS, 32, 64 },
+        { VicKeys.COLON, 32, 32 },
+        { VicKeys.K, 32, 16 },
+        { VicKeys.H, 32, 8 },
+        { VicKeys.F, 32, 4 },
+        { VicKeys.S, 32, 2 },
+        { VicKeys.CBM, 32, 1 },
+        
+        { VicKeys.F5, 64, 128 },
+        { VicKeys.UP_ARROW, 64, 64 },
+        { VicKeys.AT, 64, 32 },
+        { VicKeys.O, 64, 16 },
+        { VicKeys.U, 64, 8 },
+        { VicKeys.T, 64, 4 },
+        { VicKeys.E, 64, 2 },
+        { VicKeys.Q, 64, 1 },
+        
+        { VicKeys.F7, 128, 128 },
+        { VicKeys.HOME, 128, 64 },
+        { VicKeys.HYPHEN, 128, 32 },
+        { VicKeys.ZERO, 128, 16 },
+        { VicKeys.EIGHT, 128, 8 },
+        { VicKeys.SIX, 128, 4 },
+        { VicKeys.FOUR, 128, 2 },
+        { VicKeys.TWO, 128, 1 },
+    };
+    
+    /**
      * Whether the SHIFT LOCK is currently on or not (this is a toggle).
      */
     private boolean shiftLockOn;
@@ -138,7 +141,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
      * HashMap used to store mappings between Java key events and VIC 20
      * keyboard scan codes.
      */
-    private HashMap<Integer, int[]> keyConvHashMap;
+    private HashMap<Integer, int[]> vickeyConvHashMap;
     
     /**
      * Holds the last time that the key was pressed down, or 0 if it has since been released.
@@ -153,64 +156,96 @@ public abstract class KeyboardMatrix extends InputAdapter {
      */
     private TreeMap<Long, Integer> delayedReleaseKeys = new TreeMap<Long, Integer>();
     
-    private int lastKeyDownKeycode;
+    /**
+     * Maps keypress characters to VIC keys.
+     */
+    private HashMap<Character, int[]> charConvHashMap;
+    
+    /**
+     * Maps libgdx keycodes to VIC keys.
+     */
+    private HashMap<Integer, int[]> keycodeConvHashMap;
     
     /**
      * Constructor for KeyboardMatrix.
      */
     public KeyboardMatrix() {
-        // Create the hash map for fast lookup.
-        keyConvHashMap = new HashMap<Integer, int[]>();
-
-        // Initialise the hashmap.
+        // Converts VIC keys to keyboard row/col scan matrix positions.
+        vickeyConvHashMap = new HashMap<Integer, int[]>();
         for (int i = 0; i < keyConvMapArr.length; i++) {
             int[] keyDetails = keyConvMapArr[i];
-            keyConvHashMap.put(keyDetails[0], keyDetails);
+            vickeyConvHashMap.put(keyDetails[0], keyDetails);
+        }
+        
+        // Converts typed characters into VIC key combinations.
+        charConvHashMap = new HashMap<Character, int[]>();
+        for (int i=0; i < VicKeys.VIC_CHAR_MAP.length; i++) {
+            int[] vicKeyMapping = VicKeys.VIC_CHAR_MAP[i];
+            int[] vicKeys = new int[vicKeyMapping.length - 1];
+            System.arraycopy(vicKeyMapping, 1, vicKeys, 0, vicKeyMapping.length-1);
+            charConvHashMap.put((char)vicKeyMapping[0], vicKeys);
+        }
+        
+        // Converts libgdx keycodes into VIC key combinations.
+        keycodeConvHashMap = new HashMap<Integer, int[]>();
+        for (int i=0; i < VicKeys.VIC_KEY_MAP.length; i++) {
+            int[] vicKeyMapping = VicKeys.VIC_KEY_MAP[i];
+            int[] vicKeys = new int[vicKeyMapping.length - 1];
+            System.arraycopy(vicKeyMapping, 1, vicKeys, 0, vicKeyMapping.length-1);
+            keycodeConvHashMap.put(vicKeyMapping[0], vicKeys);
         }
     }
     
     public boolean keyDown(int keycode) {
-        if (!keyConvHashMap.containsKey(keycode)) return false;
-        
-        if (keycode == 0) {
-            // The framework wasn't able to identify the key, so we'll have to 
-            // deduce it from the key typed character.
+        if (!keycodeConvHashMap.containsKey(keycode)) return false;
+        int[] vicKeys = keycodeConvHashMap.get(keycode);
+        for (int i=0; i<vicKeys.length; i++) {
+            vicKeyDown(vicKeys[i]);
         }
-        else {
-            // Store the minimum expected release time for this key, i.e. current time + 50ms.
-            minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
-            
-            // Update the key matrix to indicate to the VIC 20 that this key is down.
-            int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
-            if (keyDetails != null) {
-                int currentRowValue = getKeyMatrixRow(keyDetails[1]);
-                setKeyMatrixRow(keyDetails[1], currentRowValue | keyDetails[2]);
-            } else {
-                // Special keycodes without direct mappings.
-                switch (keycode) {
-                    case SHIFT_LOCK:
-                        shiftLockOn = !shiftLockOn;
-                        if (shiftLockOn) {
-                            setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
-                        } else {
-                            setKeyMatrixRow(8, getKeyMatrixRow(8) & ~2);
-                        }
-                        break;
-                    case RESTORE:
-                        restoreDown = true;
-                        break;
-                    default:
-                        break;
-                }
+        return true;
+    }
+    
+    public void vicKeyDown(int keycode) {
+        // Store the minimum expected release time for this key, i.e. current time + 50ms.
+        minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
+        
+        // Update the key matrix to indicate to the VIC 20 that this key is down.
+        int keyDetails[] = (int[]) vickeyConvHashMap.get(keycode);
+        if (keyDetails != null) {
+            int currentRowValue = getKeyMatrixRow(keyDetails[1]);
+            setKeyMatrixRow(keyDetails[1], currentRowValue | keyDetails[2]);
+        } else {
+            // Special keycodes without direct mappings.
+            switch (keycode) {
+                case SHIFT_LOCK:
+                    shiftLockOn = !shiftLockOn;
+                    if (shiftLockOn) {
+                        setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
+                    } else {
+                        setKeyMatrixRow(8, getKeyMatrixRow(8) & ~2);
+                    }
+                    break;
+                case RESTORE:
+                    restoreDown = true;
+                    break;
+                default:
+                    break;
             }
         }
-        lastKeyDownKeycode = keycode;
+    }
+    
+    public boolean keyUp(int keycode) {
+        if (!keycodeConvHashMap.containsKey(keycode)) return false;
+        if (keycode != 0) {
+            int[] vicKeys = keycodeConvHashMap.get(keycode);
+            for (int i=0; i<vicKeys.length; i++) {
+                vicKeyUp(vicKeys[i]);
+            }
+        }
         return true;
     }
 
-    public boolean keyUp(int keycode) {
-        if (!keyConvHashMap.containsKey(keycode)) return false;
-        
+    public void vicKeyUp(int keycode) {
         if (keycode != 0) {
             long currentTime = TimeUtils.nanoTime();
             long minKeyReleaseTime = minKeyReleaseTimes[keycode];
@@ -226,7 +261,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 
             } else {
                 // Otherwise we process the release by updating the key matrix that the VIC 20 polls.
-                int keyDetails[] = (int[]) keyConvHashMap.get(keycode);
+                int keyDetails[] = (int[]) vickeyConvHashMap.get(keycode);
                 if (keyDetails != null) {
                     int currentRowValue = getKeyMatrixRow(keyDetails[1]);
                     setKeyMatrixRow(keyDetails[1], currentRowValue & ~keyDetails[2]);
@@ -243,33 +278,18 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 }
             }
         }
-
-        return true;
     }
 
     public boolean keyTyped(char ch) {
-        // The keyTyped method is invoked within a millisecond of the keyDown
-        // method, so it is very likely that the last keyDown was for the same key.
-        int keycode = 0;
-
-        if (lastKeyDownKeycode == 0) {
-            // Last keyDown call had an unrecognised keycode.
-            if ((ch == '\\') || (ch == '|')) {
-                keycode = Keys.BACKSLASH;
-            } else if (ch == '_') {
-                keycode = Keys.MINUS;
-            } else if (ch == '^') {
-                keycode = Keys.NUM_6;
-            } else if ((ch == '\'') || (ch == '@')) {
-                keycode = Keys.APOSTROPHE;
+        int[] vicKeys = charConvHashMap.get(ch);
+        if (vicKeys != null) {
+            for (int i=0; i<vicKeys.length; i++) {
+                vicKeyDown(vicKeys[i]);
             }
-        }
-
-        if (keycode != 0) {
-            keyDown(keycode);
-            keyUp(keycode);
+            for (int i=0; i<vicKeys.length; i++) {
+                vicKeyUp(vicKeys[i]);
+            }
             return true;
-
         } else {
             return false;
         }
@@ -287,7 +307,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 processedReleases.addAll(delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet());
                 for (Long keyReleaseTime : processedReleases) {
                     int delayedReleaseKeyCode = delayedReleaseKeys.remove(keyReleaseTime);
-                    keyUp(delayedReleaseKeyCode);
+                    vicKeyUp(delayedReleaseKeyCode);
                 }
             }
         }

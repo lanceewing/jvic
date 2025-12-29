@@ -507,8 +507,12 @@ public class MachineInputProcessor extends InputAdapter {
      * @return whether the input was processed
      */
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-     // Convert the screen coordinates to world coordinates.
+        // Convert the screen coordinates to world coordinates.
         Vector2 touchXY = viewportManager.unproject(screenX, screenY);
+        
+        // TODO: Do we really need drag support for the keyboard? Doesn't seem useful.
+        
+        // TODO: Extend drag handle to experiment with joystick mechanism.
 
         // Update the touch info for this pointer.
         TouchInfo touchInfo = null;
@@ -580,12 +584,12 @@ public class MachineInputProcessor extends InputAdapter {
         return machineScreen.getJvicRunner().getKeyboardMatrix();
     }
     
-    private void processVirtualKeyboardKeyDown(int keycode) {
-        getKeyboardMatrix().keyDown(keycode & 0xFF);
+    private void processVirtualKeyboardKeyDown(int vicKey) {
+        getKeyboardMatrix().vicKeyDown(vicKey & 0xFF);
     }
     
-    private void processVirtualKeyboardKeyUp(int keycode) {
-        getKeyboardMatrix().keyUp(keycode & 0xFF);
+    private void processVirtualKeyboardKeyUp(int vicKey) {
+        getKeyboardMatrix().vicKeyUp(vicKey & 0xFF);
     }
     
     /**

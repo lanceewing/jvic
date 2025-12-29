@@ -18,11 +18,11 @@ public enum KeyboardType {
 
       LANDSCAPE(
             new Integer[][] {
-              { Keys.LEFT, Keys.LEFT, Keys.NUM_1, Keys.NUM_1, Keys.NUM_2, Keys.NUM_2, Keys.NUM_3, Keys.NUM_3, Keys.NUM_4, Keys.NUM_4, Keys.NUM_5, Keys.NUM_5, Keys.NUM_6, Keys.NUM_6, Keys.NUM_7, Keys.NUM_7, Keys.NUM_8, Keys.NUM_8, Keys.NUM_9, Keys.NUM_9, Keys.NUM_0, Keys.NUM_0, Keys.PLUS, Keys.PLUS, Keys.MINUS, Keys.MINUS, Keys.POUND, Keys.POUND, Keys.HOME, Keys.HOME, Keys.DEL, Keys.DEL },
-              { Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.CONTROL_LEFT, Keys.Q, Keys.Q, Keys.W, Keys.W, Keys.E, Keys.E, Keys.R, Keys.R, Keys.T, Keys.T, Keys.Y, Keys.Y, Keys.U, Keys.U, Keys.I, Keys.I, Keys.O, Keys.O, Keys.P, Keys.P, Keys.AT, Keys.AT, Keys.STAR, Keys.STAR, Keys.UP, Keys.UP, RESTORE, RESTORE, RESTORE },
-              { RUN_STOP, RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, Keys.A, Keys.A, Keys.S, Keys.S, Keys.D, Keys.D, Keys.F, Keys.F, Keys.G, Keys.G, Keys.H, Keys.H, Keys.J, Keys.J, Keys.K, Keys.K, Keys.L, Keys.L, Keys.COLON, Keys.COLON, Keys.SEMICOLON, Keys.SEMICOLON, Keys.EQUALS, Keys.EQUALS, Keys.ENTER, Keys.ENTER, Keys.ENTER, Keys.ENTER },
-              { Keys.ALT_LEFT, Keys.ALT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.SHIFT_LEFT, Keys.Z, Keys.Z, Keys.X, Keys.X, Keys.C, Keys.C, Keys.V, Keys.V, Keys.B, Keys.B, Keys.N, Keys.N, Keys.M, Keys.M, Keys.COMMA, Keys.COMMA, Keys.PERIOD, Keys.PERIOD, Keys.SLASH, Keys.SLASH, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.DOWN, Keys.RIGHT, Keys.RIGHT },
-              { Keys.F1, Keys.F1, Keys.F1, Keys.F3, Keys.F3, Keys.F3, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.F5, Keys.F5, Keys.F5, Keys.F7, Keys.F7, Keys.F7 }
+              { VicKeys.LEFT_ARROW, VicKeys.LEFT_ARROW, VicKeys.ONE, VicKeys.ONE, VicKeys.TWO, VicKeys.TWO, VicKeys.THREE, VicKeys.THREE, VicKeys.FOUR, VicKeys.FOUR, VicKeys.FIVE, VicKeys.FIVE, VicKeys.SIX, VicKeys.SIX, VicKeys.SEVEN, VicKeys.SEVEN, VicKeys.EIGHT, VicKeys.EIGHT, VicKeys.NINE, VicKeys.NINE, VicKeys.ZERO, VicKeys.ZERO, VicKeys.PLUS, VicKeys.PLUS, VicKeys.HYPHEN, VicKeys.HYPHEN, VicKeys.POUND, VicKeys.POUND, VicKeys.HOME, VicKeys.HOME, VicKeys.DELETE, VicKeys.DELETE },
+              { VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.Q, VicKeys.Q, VicKeys.W, VicKeys.W, VicKeys.E, VicKeys.E, VicKeys.R, VicKeys.R, VicKeys.T, VicKeys.T, VicKeys.Y, VicKeys.Y, VicKeys.U, VicKeys.U, VicKeys.I, VicKeys.I, VicKeys.O, VicKeys.O, VicKeys.P, VicKeys.P, VicKeys.AT, VicKeys.AT, VicKeys.ASTERISK, VicKeys.ASTERISK, VicKeys.UP_ARROW, VicKeys.UP_ARROW, RESTORE, RESTORE, RESTORE },
+              { VicKeys.RUN_STOP, VicKeys.RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, VicKeys.A, VicKeys.A, VicKeys.S, VicKeys.S, VicKeys.D, VicKeys.D, VicKeys.F, VicKeys.F, VicKeys.G, VicKeys.G, VicKeys.H, VicKeys.H, VicKeys.J, VicKeys.J, VicKeys.K, VicKeys.K, VicKeys.L, VicKeys.L, VicKeys.COLON, VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.EQUALS, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN },
+              { VicKeys.CBM, VicKeys.CBM, VicKeys.LEFT_SHIFT, VicKeys.LEFT_SHIFT, VicKeys.LEFT_SHIFT, VicKeys.Z, VicKeys.Z, VicKeys.X, VicKeys.X, VicKeys.C, VicKeys.C, VicKeys.V, VicKeys.V, VicKeys.B, VicKeys.B, VicKeys.N, VicKeys.N, VicKeys.M, VicKeys.M, VicKeys.COMMA, VicKeys.COMMA, VicKeys.PERIOD, VicKeys.PERIOD, VicKeys.FORWARD_SLASH, VicKeys.FORWARD_SLASH, VicKeys.RIGHT_SHIFT, VicKeys.RIGHT_SHIFT, VicKeys.RIGHT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_RIGHT, VicKeys.CURSOR_RIGHT },
+              { VicKeys.F1, VicKeys.F1, VicKeys.F1, VicKeys.F3, VicKeys.F3, VicKeys.F3, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.F5, VicKeys.F5, VicKeys.F5, VicKeys.F7, VicKeys.F7, VicKeys.F7 }
             },
             "png/keyboard_landscape.png",
             0.5f,
@@ -33,13 +33,13 @@ public enum KeyboardType {
           ),
       PORTRAIT(
             new Integer[][] {
-              { Keys.CONTROL_LEFT, Keys.LEFT, Keys.UP, Keys.F1, Keys.F3, Keys.F5, Keys.F7, Keys.POUND, Keys.HOME, Keys.DEL },
-              { Keys.COLON, Keys.SEMICOLON, Keys.EQUALS, Keys.AT, Keys.PLUS, Keys.MINUS, Keys.STAR, Keys.SLASH, RUN_STOP, RESTORE },
-              { Keys.NUM_1, Keys.NUM_2, Keys.NUM_3, Keys.NUM_4, Keys.NUM_5, Keys.NUM_6, Keys.NUM_7, Keys.NUM_8, Keys.NUM_9, Keys.NUM_0 },
-              { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P },
-              { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L, Keys.ENTER },
-              { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M, Keys.COMMA, Keys.PERIOD, Keys.ENTER },
-              { Keys.ALT_LEFT, SHIFT_LOCK, Keys.SHIFT_LEFT, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SPACE, Keys.SHIFT_RIGHT, Keys.DOWN, Keys.RIGHT }
+              { VicKeys.CONTROL, VicKeys.LEFT_ARROW, VicKeys.UP_ARROW, VicKeys.F1, VicKeys.F3, VicKeys.F5, VicKeys.F7, VicKeys.POUND, VicKeys.HOME, VicKeys.DELETE },
+              { VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.AT, VicKeys.PLUS, VicKeys.HYPHEN, VicKeys.ASTERISK, VicKeys.FORWARD_SLASH, VicKeys.RUN_STOP, RESTORE },
+              { VicKeys.ONE, VicKeys.TWO, VicKeys.THREE, VicKeys.FOUR, VicKeys.FIVE, VicKeys.SIX, VicKeys.SEVEN, VicKeys.EIGHT, VicKeys.NINE, VicKeys.ZERO },
+              { VicKeys.Q, VicKeys.W, VicKeys.E, VicKeys.R, VicKeys.T, VicKeys.Y, VicKeys.U, VicKeys.I, VicKeys.O, VicKeys.P },
+              { VicKeys.A, VicKeys.S, VicKeys.D, VicKeys.F, VicKeys.G, VicKeys.H, VicKeys.J, VicKeys.K, VicKeys.L, VicKeys.RETURN },
+              { VicKeys.Z, VicKeys.X, VicKeys.C, VicKeys.V, VicKeys.B, VicKeys.N, VicKeys.M, VicKeys.COMMA, VicKeys.PERIOD, VicKeys.RETURN },
+              { VicKeys.CBM, SHIFT_LOCK, VicKeys.LEFT_SHIFT, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.RIGHT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_RIGHT }
             },
             "png/keyboard_portrait_10x7.png",
             1.0f,
