@@ -205,18 +205,18 @@ public abstract class KeyboardMatrix extends InputAdapter {
         return true;
     }
     
-    public void vicKeyDown(int keycode) {
+    public void vicKeyDown(int vicKey) {
         // Store the minimum expected release time for this key, i.e. current time + 50ms.
-        minKeyReleaseTimes[keycode] = TimeUtils.nanoTime() + 50000000;
+        minKeyReleaseTimes[vicKey] = TimeUtils.nanoTime() + 50000000;
         
         // Update the key matrix to indicate to the VIC 20 that this key is down.
-        int keyDetails[] = (int[]) vickeyConvHashMap.get(keycode);
+        int keyDetails[] = (int[]) vickeyConvHashMap.get(vicKey);
         if (keyDetails != null) {
             int currentRowValue = getKeyMatrixRow(keyDetails[1]);
             setKeyMatrixRow(keyDetails[1], currentRowValue | keyDetails[2]);
         } else {
             // Special keycodes without direct mappings.
-            switch (keycode) {
+            switch (vicKey) {
                 case SHIFT_LOCK:
                     shiftLockOn = !shiftLockOn;
                     if (shiftLockOn) {
@@ -245,35 +245,35 @@ public abstract class KeyboardMatrix extends InputAdapter {
         return true;
     }
 
-    public void vicKeyUp(int keycode) {
-        if (keycode != 0) {
+    public void vicKeyUp(int vicKey) {
+        if (vicKey != 0) {
             long currentTime = TimeUtils.nanoTime();
-            long minKeyReleaseTime = minKeyReleaseTimes[keycode];
-            minKeyReleaseTimes[keycode] = 0;
+            long minKeyReleaseTime = minKeyReleaseTimes[vicKey];
+            minKeyReleaseTimes[vicKey] = 0;
             
             if (currentTime < minKeyReleaseTime) {
                 // Key hasn't been down long enough (possibly due to it being an Android virtual 
                 // keyboard or something similar that doesn't reflect the actual time the key 
                 // is down), so let's add this keycode to the delayed release list.
                 synchronized(delayedReleaseKeys) {
-                    delayedReleaseKeys.put(minKeyReleaseTime, keycode);
+                    delayedReleaseKeys.put(minKeyReleaseTime, vicKey);
                 }
                 
             } else {
                 // Otherwise we process the release by updating the key matrix that the VIC 20 polls.
-                int keyDetails[] = (int[]) vickeyConvHashMap.get(keycode);
+                int keyDetails[] = (int[]) vickeyConvHashMap.get(vicKey);
                 if (keyDetails != null) {
                     int currentRowValue = getKeyMatrixRow(keyDetails[1]);
                     setKeyMatrixRow(keyDetails[1], currentRowValue & ~keyDetails[2]);
                 } else {
                     // Special keycodes.
-                    if (keycode == RESTORE) {
+                    if (vicKey == RESTORE) {
                         restoreDown = false;
                     }
                 }
                 
                 // If SHIFT LOCK is on, we override the left shift key.
-                if ((keycode == Keys.SHIFT_LEFT) && shiftLockOn) {
+                if ((vicKey == Keys.SHIFT_LEFT) && shiftLockOn) {
                     setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
                 }
             }
@@ -306,8 +306,8 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 List<Long> processedReleases = new ArrayList<Long>();
                 processedReleases.addAll(delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet());
                 for (Long keyReleaseTime : processedReleases) {
-                    int delayedReleaseKeyCode = delayedReleaseKeys.remove(keyReleaseTime);
-                    vicKeyUp(delayedReleaseKeyCode);
+                    int delayedReleaseVicKey = delayedReleaseKeys.remove(keyReleaseTime);
+                    vicKeyUp(delayedReleaseVicKey);
                 }
             }
         }
