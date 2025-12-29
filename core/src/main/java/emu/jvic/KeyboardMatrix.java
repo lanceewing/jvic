@@ -284,7 +284,11 @@ public abstract class KeyboardMatrix extends InputAdapter {
         int[] vicKeys = charConvHashMap.get(ch);
         if (vicKeys != null) {
             for (int i=0; i<vicKeys.length; i++) {
-                vicKeyDown(vicKeys[i]);
+                if (vicKeys[i] == VicKeys.NO_SHIFT) {
+                    noShift();
+                } else {
+                    vicKeyDown(vicKeys[i]);
+                }
             }
             for (int i=0; i<vicKeys.length; i++) {
                 vicKeyUp(vicKeys[i]);
@@ -293,6 +297,16 @@ public abstract class KeyboardMatrix extends InputAdapter {
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Forces the shift key status to be up. Does nothing if it already is up.
+     */
+    private void noShift() {
+        minKeyReleaseTimes[VicKeys.LEFT_SHIFT] = 0;
+        minKeyReleaseTimes[VicKeys.RIGHT_SHIFT] = 0;
+        vicKeyUp(VicKeys.LEFT_SHIFT);
+        vicKeyUp(VicKeys.RIGHT_SHIFT);
     }
     
     /**

@@ -95,6 +95,9 @@ public interface VicKeys {
     public static final int LEFT_ARROW = 63;
     public static final int ONE = 64;
     
+    // Special code that instructs keyboard matrix to clear shift status.
+    public static final int NO_SHIFT = 99;
+    
     /**
      * Mapping between typed characters and the equivalent VIC keyboard key combinations.
      */
@@ -105,17 +108,17 @@ public interface VicKeys {
         { '2', VicKeys.TWO },
         { '"', VicKeys.LEFT_SHIFT, VicKeys.TWO },
         { '3', VicKeys.THREE },
-        { '£', VicKeys.POUND },
+        { '£', VicKeys.NO_SHIFT, VicKeys.POUND },
         { '4', VicKeys.FOUR },
         { '$', VicKeys.LEFT_SHIFT, VicKeys.FOUR },
         { '5', VicKeys.FIVE },
         { '%', VicKeys.LEFT_SHIFT, VicKeys.FIVE },
         { '6', VicKeys.SIX },
-        { '^', VicKeys.SIX },
+        { '^', VicKeys.NO_SHIFT, VicKeys.SIX },
         { '7', VicKeys.SEVEN },
         { '&', VicKeys.LEFT_SHIFT, VicKeys.SIX },
         { '8', VicKeys.EIGHT },
-        { '*', VicKeys.ASTERISK },
+        { '*', VicKeys.NO_SHIFT, VicKeys.ASTERISK },
         { '\'', VicKeys.LEFT_SHIFT, VicKeys.SEVEN },
         { '9', VicKeys.NINE },
         { '(', VicKeys.LEFT_SHIFT, VicKeys.EIGHT },
@@ -123,7 +126,7 @@ public interface VicKeys {
         { '0', VicKeys.ZERO },
         { '-', VicKeys.HYPHEN },
         { '_', VicKeys.LEFT_SHIFT, VicKeys.AT },
-        { '+', VicKeys.PLUS },
+        { '+', VicKeys.NO_SHIFT, VicKeys.PLUS },
         { '=', VicKeys.EQUALS },
         { 'Q', VicKeys.Q },
         { 'q', VicKeys.Q },
@@ -168,8 +171,8 @@ public interface VicKeys {
         { 'L', VicKeys.L },
         { 'l', VicKeys.L },
         { ';', VicKeys.SEMI_COLON },
-        { ':', VicKeys.COLON },
-        { '@', VicKeys.AT },
+        { ':', VicKeys.NO_SHIFT, VicKeys.COLON },
+        { '@', VicKeys.NO_SHIFT, VicKeys.AT },
         { '#', VicKeys.LEFT_SHIFT, VicKeys.THREE },
         { '\\', VicKeys.UP_ARROW },
         { '|', VicKeys.LEFT_SHIFT, VicKeys.UP_ARROW },
