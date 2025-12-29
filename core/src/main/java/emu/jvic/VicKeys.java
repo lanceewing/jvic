@@ -95,6 +95,17 @@ public interface VicKeys {
     public static final int LEFT_ARROW = 63;
     public static final int ONE = 64;
     
+    // Joystick keys.
+    public static final int JOYSTICK_FIRE = 90;
+    public static final int JOYSTICK_LEFT = 91;
+    public static final int JOYSTICK_RIGHT = 92;
+    public static final int JOYSTICK_UP = 93;
+    public static final int JOYSTICK_DOWN = 94;
+    public static final int JOYSTICK_NW = 95;
+    public static final int JOYSTICK_NE = 96;
+    public static final int JOYSTICK_SW = 97;
+    public static final int JOYSTICK_SE = 98;
+    
     // Special code that instructs keyboard matrix to clear shift status.
     public static final int NO_SHIFT = 99;
     
@@ -211,12 +222,12 @@ public interface VicKeys {
         { Keys.SHIFT_LEFT, VicKeys.LEFT_SHIFT },
         { Keys.SHIFT_RIGHT, VicKeys.RIGHT_SHIFT },
         { Keys.CONTROL_LEFT, VicKeys.CONTROL },
-        { Keys.LEFT, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_RIGHT },
-        { Keys.UP, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_DOWN },
-        { Keys.DOWN, VicKeys.CURSOR_DOWN },
-        { Keys.RIGHT, VicKeys.CURSOR_RIGHT },
+        { Keys.LEFT, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_RIGHT, VicKeys.JOYSTICK_LEFT },
+        { Keys.UP, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.JOYSTICK_UP },
+        { Keys.DOWN, VicKeys.CURSOR_DOWN, VicKeys.JOYSTICK_DOWN },
+        { Keys.RIGHT, VicKeys.CURSOR_RIGHT, VicKeys.JOYSTICK_RIGHT },
         { Keys.HOME, VicKeys.HOME },
-        { Keys.INSERT, VicKeys.LEFT_SHIFT, VicKeys.DELETE },
+        { Keys.INSERT, VicKeys.LEFT_SHIFT, VicKeys.DELETE, VicKeys.JOYSTICK_FIRE },
         { Keys.ESCAPE, VicKeys.RUN_STOP },
         { Keys.F1, VicKeys.F1 },
         { Keys.F2, VicKeys.LEFT_SHIFT, VicKeys.F1 },
@@ -226,5 +237,15 @@ public interface VicKeys {
         { Keys.F6, VicKeys.LEFT_SHIFT, VicKeys.F5 },
         { Keys.F7, VicKeys.F7 },
         { Keys.F8, VicKeys.LEFT_SHIFT, VicKeys.F7 },
+        
+        { Keys.NUMPAD_0, VicKeys.JOYSTICK_FIRE },  // Fire button
+        { Keys.NUMPAD_1, VicKeys.JOYSTICK_SW },  // SW
+        { Keys.NUMPAD_2, VicKeys.JOYSTICK_DOWN },  // Down
+        { Keys.NUMPAD_3, VicKeys.JOYSTICK_SE },  // SE
+        { Keys.NUMPAD_4, VicKeys.JOYSTICK_LEFT },  // Left
+        { Keys.NUMPAD_6, VicKeys.JOYSTICK_RIGHT },  // Right
+        { Keys.NUMPAD_7, VicKeys.JOYSTICK_NW },  // NW
+        { Keys.NUMPAD_8, VicKeys.JOYSTICK_UP },  // Up
+        { Keys.NUMPAD_9, VicKeys.JOYSTICK_NE },  // NE
     };
 }

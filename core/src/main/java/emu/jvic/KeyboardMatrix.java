@@ -125,6 +125,16 @@ public abstract class KeyboardMatrix extends InputAdapter {
         { VicKeys.SIX, 128, 4 },
         { VicKeys.FOUR, 128, 2 },
         { VicKeys.TWO, 128, 1 },
+        
+        { VicKeys.JOYSTICK_FIRE,  JOYSTICK, 0x20 },  // Fire button
+        { VicKeys.JOYSTICK_DOWN,  JOYSTICK, 0x08 },  // Down
+        { VicKeys.JOYSTICK_LEFT,  JOYSTICK, 0x10 },  // Left
+        { VicKeys.JOYSTICK_RIGHT, JOYSTICK, 0x80 },  // Right
+        { VicKeys.JOYSTICK_UP,    JOYSTICK, 0x04 },  // Up
+        { VicKeys.JOYSTICK_SW,    JOYSTICK, 0x18 },  // SW
+        { VicKeys.JOYSTICK_SE,    JOYSTICK, 0x88 },  // SE
+        { VicKeys.JOYSTICK_NW,    JOYSTICK, 0x14 },  // NW
+        { VicKeys.JOYSTICK_NE,    JOYSTICK, 0x84 },  // NE
     };
     
     /**
