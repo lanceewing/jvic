@@ -431,6 +431,13 @@ public class MachineInputProcessor extends InputAdapter {
                     }
                 });
             }
+            
+            if (!(backArrowClicked || fullScreenClicked || pausePlayClicked || screenSizeClicked || 
+                    speakerClicked || joystickClicked || keyboardClicked)) {
+                KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
+                keyboardMatrix.keyDown(Keys.INSERT);
+                keyboardMatrix.keyUp(Keys.INSERT);
+            }
         }
 
         return true;

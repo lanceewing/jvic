@@ -1,0 +1,14 @@
+NOTE 1: LWJGL3 does not support multitouch, which means that the libgdx desktop backend 
+does not support multi touch. This is turn means that jvic on desktop does not support
+the joystick movement and fire simultaneously, which is rather annoying. For this reason
+it is recommended that the physical keyboard controls are used instead, rather than the
+onscreen joystick control, in fact a future version may choose to hide those controls in
+the desktop version. This mainly affects devices such as Microsoft Surface tablets and
+laptops that provide a hybrid touch screen and physical keyboard.
+
+NOTE 2: Regarding the above, multi touch does work on "desktop", if you are using the web
+version of jvic on a desktop machine. The web browser supports multitouch on desktop devices
+such as Microsoft Surface tablets without any issue, so using the jvic web version is a 
+workaround. Same physical machine different behaviour. The issue is that LWJGL hasn't yet
+implemented multitouch support and its a feature that has been pending for many years, so
+unlikely to be supported any time soon.

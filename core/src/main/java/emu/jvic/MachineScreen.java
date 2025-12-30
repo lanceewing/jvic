@@ -623,7 +623,7 @@ public class MachineScreen implements Screen {
         int direction = 0;
         
         if (distance > 0.3) {
-            // Convert heading to an AGI direction.
+            // Convert heading to an VIC direction.
             if (heading == 0) {
                 // Right
                 direction = 3;
