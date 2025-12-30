@@ -318,19 +318,19 @@ public class MachineInputProcessor extends InputAdapter {
                             } else if (touchXY.x < 112) {
                                 keyboardClicked = true;
                             }
-                        } else if ((touchXY.y > (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 100) &&
-                                   (touchXY.y < (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) + 26)) {
+                        } else if ((touchXY.y > (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 74) &&
+                                   (touchXY.y < (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) + 42)) {
                             if (touchXY.x > (viewportManager.getWidth() - 112)) {
                                 screenSizeClicked = true;
                             } else if (touchXY.x < 112) {
                                 pausePlayClicked = true;
                             }
-                        } else if ((touchXY.y > (viewportManager.getHeight() / 6) - 42) &&
-                                (touchXY.y < (viewportManager.getHeight() / 6) + 84)) {
+                        } else if ((touchXY.y > (viewportManager.getHeight() / 3) - 42) &&
+                                (touchXY.y < (viewportManager.getHeight() / 3) + 74)) {
                              if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                 // Free slot.
-                             } else if (touchXY.x < 112) {
                                  joystickClicked = true;
+                             } else if (touchXY.x < 112) {
+                                 // Free slot.
                              }
                          }
                     }

@@ -454,12 +454,12 @@ public class MachineScreen implements Screen {
                 } else {
                     // Normal landscape.
                     batch.draw(speakerIcon,   16, viewportManager.getHeight() - 112);
-                    batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
-                    batch.draw(joystickIcon,  16, (viewportManager.getHeight() / 6) - 16);
-                    batch.draw(keyboardIcon,  16, 16);
-                    batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, viewportManager.getHeight() - 112);
-                    batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
+                    batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
                     // Free slot.
+                    batch.draw(keyboardIcon,  16, 0);
+                    batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, viewportManager.getHeight() - 112);
+                    batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
+                    batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
                     batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
                 }
             } else if (cameraXOffset > 0) {
