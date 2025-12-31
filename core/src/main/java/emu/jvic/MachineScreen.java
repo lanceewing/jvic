@@ -586,8 +586,8 @@ public class MachineScreen implements Screen {
         @Override
         public void clicked(InputEvent event, float x, float y) {
             KeyboardMatrix keyboardMatrix = jvicRunner.getKeyboardMatrix();
-            keyboardMatrix.keyDown(Keys.INSERT);
-            keyboardMatrix.keyUp(Keys.INSERT);
+            keyboardMatrix.vicKeyDown(VicKeys.JOYSTICK_FIRE);
+            keyboardMatrix.vicKeyUp(VicKeys.JOYSTICK_FIRE);
         }
     };
     
