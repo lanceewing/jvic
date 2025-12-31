@@ -485,16 +485,35 @@ public class MachineScreen implements Screen {
             float joyX = 0;
             float joyY = 0;
             if (viewportManager.isPortrait()) {
-                // Top of keyboard is: 765 + 135 = 900.
+                // Top of keyboard is: 756 + 135 = 891.
                 int joyWidth = 200;
+                int topOfButtons = KeyboardType.PORTRAIT.getRenderOffset();
+                int topOfKeyboard = topOfButtons + (int)KeyboardType.PORTRAIT.getHeight();
                 int vicScreenBase = viewportManager.getVICScreenBase();
-                int midBetweenKeybAndPic = ((vicScreenBase + 900) / 2);
+                int gapForJoystick = 0;
+                int joystickBase = 0;
+                int midBetweenKeybAndPic = ((vicScreenBase + 891) / 2);
+                if (keyboardType.equals(KeyboardType.OFF)) {
+                    gapForJoystick = vicScreenBase - topOfButtons;
+                    joystickBase = ((vicScreenBase + topOfButtons) / 2) - (joyWidth / 2);
+                } else {
+                    gapForJoystick = vicScreenBase - topOfKeyboard;
+                    if (gapForJoystick >= joyWidth) {
+                        joystickBase = midBetweenKeybAndPic - (joyWidth / 2);
+                    } else {
+                        joystickBase = topOfKeyboard + 16;
+                    }
+                }
                 portraitTouchpad.setVisible(true);
                 portraitTouchpad.setSize(joyWidth, joyWidth);
-                portraitTouchpad.setY(midBetweenKeybAndPic - (joyWidth / 2));
-                portraitFireButton.setVisible(true);
-                portraitFireButton.setSize(joyWidth, joyWidth);
-                portraitFireButton.setY(midBetweenKeybAndPic - (joyWidth / 2));
+                portraitTouchpad.setY(joystickBase);
+                if (gapForJoystick >= joyWidth) {
+                    portraitFireButton.setVisible(true);
+                    portraitFireButton.setSize(joyWidth, joyWidth);
+                    portraitFireButton.setY(joystickBase);
+                } else {
+                    portraitFireButton.setVisible(false);
+                }
                 switch (joystickAlignment) {
                     case OFF:
                         break;
