@@ -14,6 +14,7 @@ import emu.jvic.KeyboardMatrix;
 import emu.jvic.KeyboardType;
 import emu.jvic.MachineScreen;
 import emu.jvic.MachineType;
+import emu.jvic.VicKeys;
 
 /**
  * InputProcessor for the MachineScreen.
@@ -446,8 +447,8 @@ public class MachineInputProcessor extends InputAdapter {
                 if (!(backArrowClicked || fullScreenClicked || pausePlayClicked || screenSizeClicked || 
                         speakerClicked || joystickClicked || keyboardClicked)) {
                     KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
-                    keyboardMatrix.keyDown(Keys.INSERT);
-                    keyboardMatrix.keyUp(Keys.INSERT);
+                    keyboardMatrix.vicKeyDown(VicKeys.JOYSTICK_FIRE);
+                    keyboardMatrix.vicKeyUp(VicKeys.JOYSTICK_FIRE);
                 }
             }
         }
