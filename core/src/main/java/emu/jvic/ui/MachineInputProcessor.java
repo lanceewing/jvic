@@ -527,8 +527,6 @@ public class MachineInputProcessor extends InputAdapter {
         Vector2 touchXY = viewportManager.unproject(screenX, screenY);
         
         // TODO: Do we really need drag support for the keyboard? Doesn't seem useful.
-        
-        // TODO: Extend drag handle to experiment with joystick mechanism.
 
         // Update the touch info for this pointer.
         TouchInfo touchInfo = null;
