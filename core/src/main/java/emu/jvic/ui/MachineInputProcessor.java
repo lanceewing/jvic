@@ -428,6 +428,8 @@ public class MachineInputProcessor extends InputAdapter {
                     switchOutOfFullScreen();
                 }
                 
+                machineScreen.getJvicRunner().pause();
+                
                 dialogHandler.confirm("Are you sure you want to quit the game?", 
                         new ConfirmResponseHandler() {
                     @Override
@@ -438,6 +440,7 @@ public class MachineInputProcessor extends InputAdapter {
                     @Override
                     public void no() {
                         // Nothing to do.
+                        machineScreen.getJvicRunner().resume();
                     }
                 });
             }
@@ -513,7 +516,7 @@ public class MachineInputProcessor extends InputAdapter {
      * saved width and height.
      */
     public void switchOutOfFullScreen() {
-        if (screenWidthBeforeFullScreen > (screenHeightBeforeFullScreen * 1.25f)) {
+        if (screenWidthBeforeFullScreen > (screenHeightBeforeFullScreen * 1.33f)) {
             keyboardType = KeyboardType.OFF;
         }
         Gdx.graphics.setWindowedMode(screenWidthBeforeFullScreen, screenHeightBeforeFullScreen);
