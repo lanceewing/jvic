@@ -441,11 +441,14 @@ public class MachineInputProcessor extends InputAdapter {
                 });
             }
             
-            if (!(backArrowClicked || fullScreenClicked || pausePlayClicked || screenSizeClicked || 
-                    speakerClicked || joystickClicked || keyboardClicked)) {
-                KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
-                keyboardMatrix.keyDown(Keys.INSERT);
-                keyboardMatrix.keyUp(Keys.INSERT);
+            // If joystick is ON, and the click didn't land on anything else, then treat as fire button.
+            if (!joystickAlignment.equals(JoystickAlignment.OFF)) {
+                if (!(backArrowClicked || fullScreenClicked || pausePlayClicked || screenSizeClicked || 
+                        speakerClicked || joystickClicked || keyboardClicked)) {
+                    KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
+                    keyboardMatrix.keyDown(Keys.INSERT);
+                    keyboardMatrix.keyUp(Keys.INSERT);
+                }
             }
         }
 
