@@ -113,7 +113,7 @@ public interface VicKeys {
      * Mapping between typed characters and the equivalent VIC keyboard key combinations.
      */
     public static final int[][] VIC_CHAR_MAP = new int[][] {
-        // NOTE 1: Only include SHIFT if physical keyboard SHIFT is now down but VIC SHIFT should be.
+        // NOTE 1: Only include SHIFT if physical keyboard SHIFT is not down but VIC SHIFT should be.
         // NOTE 2: Include NO_SHIFT if physical keyboard SHIFT is down but VIC SHIFT shouldn't be.
         { '`', VicKeys.LEFT_ARROW },
         { '1', VicKeys.ONE },
