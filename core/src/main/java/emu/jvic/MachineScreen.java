@@ -452,14 +452,18 @@ public class MachineScreen implements Screen {
                     batch.draw(joystickIcon,   ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 96) - leftAdjustment, 16);
                     batch.draw(backIcon,       ((viewportManager.getWidth() - ((viewportManager.getWidth() * 0 ) / 12)) - 96) - leftAdjustment, 16);
                 } else {
-                    // Normal landscape.
+                    // Normal landscape. Icons both sides.
                     batch.draw(speakerIcon,   16, viewportManager.getHeight() - 112);
                     batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    // Free slot.
+                    if (joystickAlignment.equals(JoystickAlignment.RIGHT)) { 
+                        batch.draw(joystickIcon,  16, (viewportManager.getHeight() / 3) - 32);
+                    }
                     batch.draw(keyboardIcon,  16, 0);
                     batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, viewportManager.getHeight() - 112);
                     batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
+                    if (!joystickAlignment.equals(JoystickAlignment.RIGHT)) {
+                        batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
+                    }
                     batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
                 }
             } else if (cameraXOffset > 0) {
@@ -483,8 +487,8 @@ public class MachineScreen implements Screen {
             if (viewportManager.isPortrait()) {
                 // Top of keyboard is: 765 + 135 = 900.
                 int joyWidth = 200;
-                int agiScreenBase = viewportManager.getVICScreenBase();
-                int midBetweenKeybAndPic = ((agiScreenBase + 900) / 2);
+                int vicScreenBase = viewportManager.getVICScreenBase();
+                int midBetweenKeybAndPic = ((vicScreenBase + 900) / 2);
                 portraitTouchpad.setVisible(true);
                 portraitTouchpad.setSize(joyWidth, joyWidth);
                 portraitTouchpad.setY(midBetweenKeybAndPic - (joyWidth / 2));
@@ -516,29 +520,23 @@ public class MachineScreen implements Screen {
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
-                    landscapeTouchpad.setY(viewportManager.getHeight() - 16 - 200);
-                    landscapeFireButton.setVisible(true);
-                    landscapeFireButton.setSize(joyWidth, joyWidth);
-                    landscapeFireButton.setY(viewportManager.getHeight() - 16 - 200);
+                    landscapeTouchpad.setY(0);
+                    landscapeFireButton.setVisible(false);
                     switch (joystickAlignment) {
                         case OFF:
                             break;
                         case RIGHT:
                             if (sidePaddingWidth < 64) {
-                                landscapeTouchpad.setX(1920 - joyWidth - sidePaddingWidth - 16);
-                                landscapeFireButton.setX(sidePaddingWidth + 16);
+                                landscapeTouchpad.setX(1920 - joyWidth);
                             } else {
-                                landscapeTouchpad.setX(viewportManager.getWidth() - joyWidth - 16 - 128);
-                                landscapeFireButton.setX(16);
+                                machineInputProcessor.setJoystickAlignment(JoystickAlignment.LEFT);
                             }
                             break;
                         case LEFT:
                             if (sidePaddingWidth < 64) {
-                                landscapeTouchpad.setX(sidePaddingWidth + 16);
-                                landscapeFireButton.setX(1920 - joyWidth - sidePaddingWidth - 16);
+                                landscapeTouchpad.setX(0);
                             } else {
-                                landscapeTouchpad.setX(16);
-                                landscapeFireButton.setX(viewportManager.getWidth() - joyWidth - 16 - 128);
+                                landscapeTouchpad.setX(0);
                             }
                             break;
                     }
@@ -553,20 +551,16 @@ public class MachineScreen implements Screen {
                     landscapeTouchpad.setSize(joyWidth, joyWidth);
                     landscapeTouchpad.getStyle().knob.setMinHeight(joyWidth * 0.6f);
                     landscapeTouchpad.getStyle().knob.setMinWidth(joyWidth * 0.6f);
-                    landscapeTouchpad.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
-                    landscapeFireButton.setVisible(true);
-                    landscapeFireButton.setSize(joyWidth, joyWidth);
-                    landscapeFireButton.setY(viewportManager.getHeight() - (viewportManager.getHeight() / 2) - (joyWidth / 2));
+                    landscapeTouchpad.setY((viewportManager.getHeight() / 3) - (joyWidth / 2));
+                    landscapeFireButton.setVisible(false);
                     switch (joystickAlignment) {
                         case OFF:
                             break;
                         case RIGHT:
                             landscapeTouchpad.setX(1920 - joyWidth - 0);
-                            landscapeFireButton.setX(0);
                             break;
                         case LEFT:
                             landscapeTouchpad.setX(4);
-                            landscapeFireButton.setX(1920 - joyWidth - 0);
                             break;
                     }
                     landscapeStage.act(delta);

@@ -305,7 +305,7 @@ public class MachineInputProcessor extends InputAdapter {
                             }
                         }
                     } else {
-                        // Screen in middle.
+                        // Screen in middle, buttons either side.
                         if (touchXY.y > (screenTop - 104)) {
                             if (touchXY.x < 112) {
                                 speakerClicked = true;
@@ -328,9 +328,13 @@ public class MachineInputProcessor extends InputAdapter {
                         } else if ((touchXY.y > (viewportManager.getHeight() / 3) - 42) &&
                                 (touchXY.y < (viewportManager.getHeight() / 3) + 74)) {
                              if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                 joystickClicked = true;
+                                 if (!joystickAlignment.equals(JoystickAlignment.RIGHT)) {
+                                     joystickClicked = true;
+                                 }
                              } else if (touchXY.x < 112) {
-                                 // Free slot.
+                                 if (joystickAlignment.equals(JoystickAlignment.RIGHT)) {
+                                     joystickClicked = true;
+                                 }
                              }
                          }
                     }
@@ -383,6 +387,11 @@ public class MachineInputProcessor extends InputAdapter {
             if (joystickClicked) {
                 // Rotate the joystick screen alignment.
                 joystickAlignment = joystickAlignment.rotateValue();
+                if (viewportManager.isLandscape() && ((cameraXOffset != 0))) {
+                    if (joystickAlignment.equals(JoystickAlignment.RIGHT)) {
+                        joystickAlignment = joystickAlignment.rotateValue();
+                    }
+                }
             }
             
             if (speakerClicked) {
