@@ -818,502 +818,502 @@ public class Cpu6502 extends BaseChip {
         memory.forceWrite(address, trap.originalByte);
     }
   
-  /**
-   * Executes the current instruction, using the data just loaded if applicable.
-   * Input data is contained in the inputDataLatch instance variable, and data
-   * to be output will be stored in the dataBusBuffer after completion of this
-   * method class.
-   */
-  public void executeInstruction() {
-    int tmp = 0, op1 = 0, op2 = 0;
+    /**
+     * Executes the current instruction, using the data just loaded if applicable.
+     * Input data is contained in the inputDataLatch instance variable, and data
+     * to be output will be stored in the dataBusBuffer after completion of this
+     * method class.
+     */
+    public void executeInstruction() {
+        int tmp = 0, op1 = 0, op2 = 0;
     
-    switch(instructionSteps[0]) {
-      case ADC:
-        op1 = accumulator;
-        op2 = inputDataLatch;
-        if (decimalModeFlag) {
-          int lo, hi;
-          lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
-          if ((lo & 0xff) > 9) lo += 6;
-          hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
-          if ((hi & 0xff) > 9) hi += 6;
-          tmp = (hi << 4) | (lo & 0x0f);
-          accumulator = tmp & 0xff;
-          carryFlag = (hi > 15);
-          zeroResultFlag = (accumulator == 0);
-          overflowFlag = false;       // BCD never sets overflow flag
-          negativeResultFlag = false; // BCD is never negative on NMOS 6502
-        }
-        else {       // binary mode
-          tmp = op1 + op2 + (carryFlag ? 1 : 0);
-          accumulator = tmp & 0xFF;
-          overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
-          setFlagCarry(tmp);
-          setNZ(accumulator);
-        }
-        break;
-
-      case AND:
-        accumulator = accumulator & inputDataLatch;
-        setNZ(accumulator);
-        break;
-
-      case ASL:
-        carryFlag = ((inputDataLatch & 0x80) != 0);
-        dataBusBuffer = ((inputDataLatch << 1) & 0xFF);
-        setNZ(dataBusBuffer);
-        break;
-
-      case BCC:
-        branchFlag = !carryFlag;
-        break;
-
-      case BCS:
-        branchFlag = carryFlag;
-        break;
-
-      case BEQ:
-        branchFlag = zeroResultFlag;
-        break;
-
-      case BNE:
-        branchFlag = !zeroResultFlag;
-        break;
-
-      case BMI:
-        branchFlag = negativeResultFlag;
-        break;
-
-      case BPL:
-        branchFlag = !negativeResultFlag;
-        break;
-
-      case BVS:
-        branchFlag = overflowFlag;
-        break;
-
-      case BVC:
-        branchFlag = !overflowFlag;
-        break;
-
-      case BIT:
-        overflowFlag = (inputDataLatch & 0x40) != 0;
-        negativeResultFlag = (inputDataLatch & 0x80) != 0;
-        zeroResultFlag = (inputDataLatch & accumulator) == 0;
-        break;
-
-      case BRK:
-        interruptDisableFlag = true;
-        programCounter = (effectiveAddressHigh | effectiveAddressLow);
-        break;
-
-      case CLC:
-        carryFlag = false;
-        break;
-
-      case CLD:
-        decimalModeFlag = false;
-        break;
-
-      case CLI:
-        interruptDisableFlag = false;
-        break;
-
-      case CLV:
-        overflowFlag = false;
-        break;
-
-      case CMP:
-        tmp = accumulator - inputDataLatch;
-        setFlagBorrow(tmp);
-        setNZ(tmp);
-        break;
-
-      case CPX:
-        tmp = indexRegisterX - inputDataLatch;
-        setFlagBorrow(tmp);
-        setNZ(tmp);
-        break;
-
-      case CPY:
-        tmp = indexRegisterY - inputDataLatch;
-        setFlagBorrow(tmp);
-        setNZ(tmp);
-        break;
-
-      case DEC:
-        dataBusBuffer = ((inputDataLatch - 1) & 0xFF);
-        setNZ(dataBusBuffer);
-        break;
-
-      case DEX:
-        indexRegisterX = ((indexRegisterX - 1) & 0xFF);
-        setNZ(indexRegisterX);
-        break;
-
-      case DEY:
-        indexRegisterY = ((indexRegisterY - 1) & 0xFF);
-        setNZ(indexRegisterY);
-        break;
-
-      case EOR:
-        accumulator = accumulator ^ inputDataLatch;
-        setNZ(accumulator);
-        break;
-
-      case INC:
-        dataBusBuffer = ((inputDataLatch + 1) & 0xFF);
-        setNZ(dataBusBuffer);
-        break;
-
-      case INX:
-        indexRegisterX = ((indexRegisterX + 1) & 0xFF);
-        setNZ(indexRegisterX);
-        break;
-
-      case INY:
-        indexRegisterY = ((indexRegisterY + 1) & 0xFF);
-        setNZ(indexRegisterY);
-        break;
-
-      case JMP:
-        programCounter = (effectiveAddressHigh | effectiveAddressLow);
-        break;
-
-      case JSR:
-        programCounter = (effectiveAddressHigh | effectiveAddressLow);
-        break;
-
-      case LDA:
-        accumulator = inputDataLatch;
-        setNZ(accumulator);
-        break;
-
-      case LDX:
-        indexRegisterX = inputDataLatch;
-        setNZ(indexRegisterX);
-        break;
-
-      case LDY:
-        indexRegisterY = inputDataLatch;
-        setNZ(indexRegisterY);
-        break;
-
-      case LSR:
-        carryFlag = (inputDataLatch & 1) != 0;
-        dataBusBuffer = inputDataLatch >> 1;
-        setNZ(dataBusBuffer);
-        break;
-
-      case NOP:
-        break;
-
-      case ORA:
-        accumulator = accumulator | inputDataLatch;
-        setNZ(accumulator);
-        break;
-
-      case PHA:
-        dataBusBuffer = accumulator;
-        break;
-
-      case PHP:
-        // PHP pushes with B flag bit set, just like BRK does. Note B flag does not physically exist in PSR.
-        packPSR();
-        dataBusBuffer = processorStatusRegister | 0x10;
-        break;
-
-      case PLA:
-        accumulator = inputDataLatch;
-        setNZ(accumulator);
-        break;
-
-      case PLP:
-        processorStatusRegister = inputDataLatch;
-        unpackPSR();
-        break;
-
-      case ROL:
-        tmp = (inputDataLatch & 0x80);
-        dataBusBuffer = (((inputDataLatch << 1) | (carryFlag ? 1 : 0)) & 0xFF);
-        carryFlag = (tmp != 0);
-        setNZ(dataBusBuffer);
-        break;
-
-      case ROR:
-        tmp = (inputDataLatch & 1);
-        dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
-        carryFlag = (tmp != 0);
-        setNZ(dataBusBuffer);
-        break;
-
-      case RTI:
-        // Nothing left to do. PC was popped in last cycle.
-        break;
-
-      case RTS:
-        // Nothing left to do.
-        break;
-
-      case SBC:
-        op1 = accumulator;
-        op2 = inputDataLatch;
-        if (decimalModeFlag) {
-          int lo, hi;
-          lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
-          if ((lo & 0x10) != 0) lo -= 6;
-          hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
-          if ((hi & 0x10) != 0) hi -= 6;
-          tmp = (hi << 4) | (lo & 0x0F);
-          accumulator = tmp & 0xFF;
-          carryFlag = ((hi & 0xFF) < 15);
-          zeroResultFlag = (accumulator == 0);
-          overflowFlag = false;       // BCD never sets overflow flag
-          negativeResultFlag = false; // BCD is never negative on NMOS 6502
-          
-        } else {  // binary mode
-          tmp = op1 - op2 - (carryFlag ? 0 : 1);
-          accumulator = tmp & 0xFF;
-          overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
-          setFlagBorrow(tmp);
-          setNZ(accumulator);
-        }
-        break;
-
-      case SEC:
-        carryFlag = true;
-        break;
-
-      case SED:
-        decimalModeFlag = true;
-        break;
-
-      case SEI:
-        interruptDisableFlag = true;
-        break;
-
-      case STA:
-        dataBusBuffer = accumulator;
-        break;
-
-      case STX:
-        dataBusBuffer = indexRegisterX;
-        break;
-
-      case STY:
-        dataBusBuffer = indexRegisterY;
-        break;
-
-      case TAX:
-        indexRegisterX = accumulator;
-        setNZ(indexRegisterX);
-        break;
-
-      case TAY:
-        indexRegisterY = accumulator;
-        setNZ(indexRegisterY);
-        break;
-
-      case TSX:
-        indexRegisterX = stackPointer;
-        setNZ(indexRegisterX);
-        break;
-
-      case TXA:
-        accumulator = indexRegisterX;
-        setNZ(accumulator);
-        break;
-
-      case TXS:
-        stackPointer = indexRegisterX;
-        // Does not affect the PSR.
-        break;
-
-      case TYA:
-        accumulator = indexRegisterY;
-        setNZ(accumulator);
-        break;
-
-      case ASL_A:
-        carryFlag = ((accumulator & 0x80) != 0);
-        accumulator = ((accumulator << 1) & 0xFF);
-        setNZ(accumulator);
-        break;
-
-      case LSR_A:
-        carryFlag = (accumulator & 1) != 0;
-        accumulator = accumulator >> 1;
-        setNZ(accumulator);
-        break;
-
-      case ROL_A:
-        tmp = (accumulator << 1) | (carryFlag ? 1 : 0);
-        accumulator = (tmp & 0xFF);
-        //setFlagCarry(tmp);
-        carryFlag = ((tmp & 0x100) != 0);
-        setNZ(accumulator);
-        break;
-
-      case ROR_A:
-        tmp = accumulator | (carryFlag ? 0x100 : 0);
-        carryFlag = (accumulator & 1) != 0;
-        accumulator = (tmp >> 1);
-        setNZ(accumulator);
-        break;
-
-      /* These are not instructions but this engine treats them as such */
-      case NMI:
-        interruptDisableFlag = true;
-        programCounter = (effectiveAddressHigh | effectiveAddressLow);
-        // NMI signals occur on the negative transition only, so we need to reset.
-        interruptStatus &= ~S_NMI;
-        break;
-
-      case IRQ:
-        // This flag should be set 3 cycles ago, but it shouldn't matter too much, because its
-        // only checked on instruction completion, so setting it partway through IRQ steps is fine.
-        interruptDisableFlag = true;
-        programCounter = (effectiveAddressHigh | effectiveAddressLow);
-        // IRQ signals occur on a low level, so it is the responsibility of
-        // the external hardware device to reset it.
-        break;
-
-      case SLO:
-        // Shift left one bit in memory, then OR accumulator with memory.
-        carryFlag = ((inputDataLatch & 0x80) != 0);
-        dataBusBuffer = ((inputDataLatch << 1) & 0xFF);
-        accumulator = accumulator | dataBusBuffer;
-        setNZ(accumulator);
-        break;
-        
-      case SAX:
-        // ANDs the contents of the A and X registers (without changing the 
-        // contents of either register) and stores the result in memory.
-        // AXS does not affect any flags in the processor status register.
-        dataBusBuffer = (accumulator & indexRegisterX);
-        break;
-        
-      case ANC:
-        // AND byte with accumulator. If result is negative then carry is set.
-        accumulator = accumulator & inputDataLatch;
-        setNZ(accumulator);
-        carryFlag = negativeResultFlag;
-        break;
-        
-      case LAX:
-        // M -> A -> X
-        accumulator = inputDataLatch;
-        indexRegisterX = inputDataLatch;
-        setNZ(indexRegisterX);
-        break;
-        
-      case ISC:
-        // M + 1 -> M, A - M - C -> A
-        // INC oper + SBC oper
-        // Increase memory by one, then subtract memory from accumulator (with borrow).
-        // Status flags: N,V,Z,C
-        // TODO: Test this. There are demos that use it.
-        dataBusBuffer = ((inputDataLatch + 1) & 0xFF);
-        op1 = accumulator;
-        //op2 = inputDataLatch;
-        op2 = dataBusBuffer;
-        if (decimalModeFlag) {
-            int lo, hi;
-            lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
-            if ((lo & 0x10) != 0) lo -= 6;
-            hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
-            if ((hi & 0x10) != 0) hi -= 6;
-            tmp = (hi << 4) | (lo & 0x0F);
-            accumulator = tmp & 0xFF;
-            carryFlag = ((hi & 0xFF) < 15);
-            zeroResultFlag = (accumulator == 0);
-            overflowFlag = false;       // BCD never sets overflow flag
-            negativeResultFlag = false; // BCD is never negative on NMOS 6502
-            
-        } else {  // binary mode
-            tmp = op1 - op2 - (carryFlag ? 0 : 1);
-            accumulator = tmp & 0xFF;
-            overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
-            setFlagBorrow(tmp);
-            setNZ(accumulator);
-        }
-        break;
-        
-      case RRA:
-        // M = C -> [76543210] -> C, A + M + C -> A, C
-        // Rotate one bit right in memory, then add memory to accumulator (with
-        // carry).
-        tmp = (inputDataLatch & 1);
-        dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
-        //carryFlag = (tmp != 0);
-        //setNZ(dataBusBuffer);
-        op1 = accumulator;
-        //op2 = inputDataLatch;
-        op2 = dataBusBuffer;
-        if (decimalModeFlag) {
-            int lo, hi;
-            lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
-            if ((lo & 0xff) > 9) lo += 6;
-            hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
-            if ((hi & 0xff) > 9) hi += 6;
-            tmp = (hi << 4) | (lo & 0x0f);
-            accumulator = tmp & 0xff;
-            carryFlag = (hi > 15);
-            zeroResultFlag = (accumulator == 0);
-            overflowFlag = false;       // BCD never sets overflow flag
-            negativeResultFlag = false; // BCD is never negative on NMOS 6502
-        }
-        else {       // binary mode
-            tmp = op1 + op2 + (carryFlag ? 1 : 0);
-            accumulator = tmp & 0xFF;
-            overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
-            setFlagCarry(tmp);
-            setNZ(accumulator);
-        }
-        break;
-        
-      case ARR:
-          // AND oper + ROR
-          // A AND oper, C -> [76543210] -> C
-          // V-flag is set according to (A AND oper) + oper
-          // The carry is not set, but bit 7 (sign) is exchanged with the carry
-          // AND byte with accumulator, then rotate one bit right in accumulator and
-          // check bit 5 and 6:
-          // If both bits are 1: set C, clear V.
-          // If both bits are 0: clear C and V.
-          // If only bit 5 is 1: set V, clear C.
-          // If only bit 6 is 1: set C and V.
-          // Status flags: N,V,Z,C
-          
-          accumulator = accumulator & inputDataLatch;
-          //setNZ(accumulator);
-          
-          tmp = accumulator | (carryFlag ? 0x100 : 0);
-          carryFlag = (accumulator & 1) != 0;
-          accumulator = (tmp >> 1);
-          setNZ(accumulator);
-          
-          break;
-        
-      case TRAP:
-        // A Trap pretends to be 6502 subroutine, allowing the emulator to hook non-standard features into the emulation.
-        Trap trap = traps.get(programCounter - 1);
-        if (trap != null) {
-          try {
-            Integer newPC = trap.trapRoutine.call();
-            if (newPC != null) {
-              programCounter = newPC;
+        switch(instructionSteps[0]) {
+          case ADC:
+            op1 = accumulator;
+            op2 = inputDataLatch;
+            if (decimalModeFlag) {
+              int lo, hi;
+              lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
+              if ((lo & 0xff) > 9) lo += 6;
+              hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
+              if ((hi & 0xff) > 9) hi += 6;
+              tmp = (hi << 4) | (lo & 0x0f);
+              accumulator = tmp & 0xff;
+              carryFlag = (hi > 15);
+              zeroResultFlag = (accumulator == 0);
+              overflowFlag = false;       // BCD never sets overflow flag
+              negativeResultFlag = false; // BCD is never negative on NMOS 6502
             }
-          } catch (Exception e) { /* Will never happen. It's part of the Callable interface so has to be caught. */ }
-        } else {
-          System.err.print("Failed to run trap routine. No routine matches PC value of: " + programCounter);
+            else {       // binary mode
+              tmp = op1 + op2 + (carryFlag ? 1 : 0);
+              accumulator = tmp & 0xFF;
+              overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
+              setFlagCarry(tmp);
+              setNZ(accumulator);
+            }
+            break;
+    
+          case AND:
+            accumulator = accumulator & inputDataLatch;
+            setNZ(accumulator);
+            break;
+    
+          case ASL:
+            carryFlag = ((inputDataLatch & 0x80) != 0);
+            dataBusBuffer = ((inputDataLatch << 1) & 0xFF);
+            setNZ(dataBusBuffer);
+            break;
+    
+          case BCC:
+            branchFlag = !carryFlag;
+            break;
+    
+          case BCS:
+            branchFlag = carryFlag;
+            break;
+    
+          case BEQ:
+            branchFlag = zeroResultFlag;
+            break;
+    
+          case BNE:
+            branchFlag = !zeroResultFlag;
+            break;
+    
+          case BMI:
+            branchFlag = negativeResultFlag;
+            break;
+    
+          case BPL:
+            branchFlag = !negativeResultFlag;
+            break;
+    
+          case BVS:
+            branchFlag = overflowFlag;
+            break;
+    
+          case BVC:
+            branchFlag = !overflowFlag;
+            break;
+    
+          case BIT:
+            overflowFlag = (inputDataLatch & 0x40) != 0;
+            negativeResultFlag = (inputDataLatch & 0x80) != 0;
+            zeroResultFlag = (inputDataLatch & accumulator) == 0;
+            break;
+    
+          case BRK:
+            interruptDisableFlag = true;
+            programCounter = (effectiveAddressHigh | effectiveAddressLow);
+            break;
+    
+          case CLC:
+            carryFlag = false;
+            break;
+    
+          case CLD:
+            decimalModeFlag = false;
+            break;
+    
+          case CLI:
+            interruptDisableFlag = false;
+            break;
+    
+          case CLV:
+            overflowFlag = false;
+            break;
+    
+          case CMP:
+            tmp = accumulator - inputDataLatch;
+            setFlagBorrow(tmp);
+            setNZ(tmp);
+            break;
+    
+          case CPX:
+            tmp = indexRegisterX - inputDataLatch;
+            setFlagBorrow(tmp);
+            setNZ(tmp);
+            break;
+    
+          case CPY:
+            tmp = indexRegisterY - inputDataLatch;
+            setFlagBorrow(tmp);
+            setNZ(tmp);
+            break;
+    
+          case DEC:
+            dataBusBuffer = ((inputDataLatch - 1) & 0xFF);
+            setNZ(dataBusBuffer);
+            break;
+    
+          case DEX:
+            indexRegisterX = ((indexRegisterX - 1) & 0xFF);
+            setNZ(indexRegisterX);
+            break;
+    
+          case DEY:
+            indexRegisterY = ((indexRegisterY - 1) & 0xFF);
+            setNZ(indexRegisterY);
+            break;
+    
+          case EOR:
+            accumulator = accumulator ^ inputDataLatch;
+            setNZ(accumulator);
+            break;
+    
+          case INC:
+            dataBusBuffer = ((inputDataLatch + 1) & 0xFF);
+            setNZ(dataBusBuffer);
+            break;
+    
+          case INX:
+            indexRegisterX = ((indexRegisterX + 1) & 0xFF);
+            setNZ(indexRegisterX);
+            break;
+    
+          case INY:
+            indexRegisterY = ((indexRegisterY + 1) & 0xFF);
+            setNZ(indexRegisterY);
+            break;
+    
+          case JMP:
+            programCounter = (effectiveAddressHigh | effectiveAddressLow);
+            break;
+    
+          case JSR:
+            programCounter = (effectiveAddressHigh | effectiveAddressLow);
+            break;
+    
+          case LDA:
+            accumulator = inputDataLatch;
+            setNZ(accumulator);
+            break;
+    
+          case LDX:
+            indexRegisterX = inputDataLatch;
+            setNZ(indexRegisterX);
+            break;
+    
+          case LDY:
+            indexRegisterY = inputDataLatch;
+            setNZ(indexRegisterY);
+            break;
+    
+          case LSR:
+            carryFlag = (inputDataLatch & 1) != 0;
+            dataBusBuffer = inputDataLatch >> 1;
+            setNZ(dataBusBuffer);
+            break;
+    
+          case NOP:
+            break;
+    
+          case ORA:
+            accumulator = accumulator | inputDataLatch;
+            setNZ(accumulator);
+            break;
+    
+          case PHA:
+            dataBusBuffer = accumulator;
+            break;
+    
+          case PHP:
+            // PHP pushes with B flag bit set, just like BRK does. Note B flag does not physically exist in PSR.
+            packPSR();
+            dataBusBuffer = processorStatusRegister | 0x10;
+            break;
+    
+          case PLA:
+            accumulator = inputDataLatch;
+            setNZ(accumulator);
+            break;
+    
+          case PLP:
+            processorStatusRegister = inputDataLatch;
+            unpackPSR();
+            break;
+    
+          case ROL:
+            tmp = (inputDataLatch & 0x80);
+            dataBusBuffer = (((inputDataLatch << 1) | (carryFlag ? 1 : 0)) & 0xFF);
+            carryFlag = (tmp != 0);
+            setNZ(dataBusBuffer);
+            break;
+    
+          case ROR:
+            tmp = (inputDataLatch & 1);
+            dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
+            carryFlag = (tmp != 0);
+            setNZ(dataBusBuffer);
+            break;
+    
+          case RTI:
+            // Nothing left to do. PC was popped in last cycle.
+            break;
+    
+          case RTS:
+            // Nothing left to do.
+            break;
+    
+          case SBC:
+            op1 = accumulator;
+            op2 = inputDataLatch;
+            if (decimalModeFlag) {
+              int lo, hi;
+              lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
+              if ((lo & 0x10) != 0) lo -= 6;
+              hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
+              if ((hi & 0x10) != 0) hi -= 6;
+              tmp = (hi << 4) | (lo & 0x0F);
+              accumulator = tmp & 0xFF;
+              carryFlag = ((hi & 0xFF) < 15);
+              zeroResultFlag = (accumulator == 0);
+              overflowFlag = false;       // BCD never sets overflow flag
+              negativeResultFlag = false; // BCD is never negative on NMOS 6502
+              
+            } else {  // binary mode
+              tmp = op1 - op2 - (carryFlag ? 0 : 1);
+              accumulator = tmp & 0xFF;
+              overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
+              setFlagBorrow(tmp);
+              setNZ(accumulator);
+            }
+            break;
+    
+          case SEC:
+            carryFlag = true;
+            break;
+    
+          case SED:
+            decimalModeFlag = true;
+            break;
+    
+          case SEI:
+            interruptDisableFlag = true;
+            break;
+    
+          case STA:
+            dataBusBuffer = accumulator;
+            break;
+    
+          case STX:
+            dataBusBuffer = indexRegisterX;
+            break;
+    
+          case STY:
+            dataBusBuffer = indexRegisterY;
+            break;
+    
+          case TAX:
+            indexRegisterX = accumulator;
+            setNZ(indexRegisterX);
+            break;
+    
+          case TAY:
+            indexRegisterY = accumulator;
+            setNZ(indexRegisterY);
+            break;
+    
+          case TSX:
+            indexRegisterX = stackPointer;
+            setNZ(indexRegisterX);
+            break;
+    
+          case TXA:
+            accumulator = indexRegisterX;
+            setNZ(accumulator);
+            break;
+    
+          case TXS:
+            stackPointer = indexRegisterX;
+            // Does not affect the PSR.
+            break;
+    
+          case TYA:
+            accumulator = indexRegisterY;
+            setNZ(accumulator);
+            break;
+    
+          case ASL_A:
+            carryFlag = ((accumulator & 0x80) != 0);
+            accumulator = ((accumulator << 1) & 0xFF);
+            setNZ(accumulator);
+            break;
+    
+          case LSR_A:
+            carryFlag = (accumulator & 1) != 0;
+            accumulator = accumulator >> 1;
+            setNZ(accumulator);
+            break;
+    
+          case ROL_A:
+            tmp = (accumulator << 1) | (carryFlag ? 1 : 0);
+            accumulator = (tmp & 0xFF);
+            //setFlagCarry(tmp);
+            carryFlag = ((tmp & 0x100) != 0);
+            setNZ(accumulator);
+            break;
+    
+          case ROR_A:
+            tmp = accumulator | (carryFlag ? 0x100 : 0);
+            carryFlag = (accumulator & 1) != 0;
+            accumulator = (tmp >> 1);
+            setNZ(accumulator);
+            break;
+    
+          /* These are not instructions but this engine treats them as such */
+          case NMI:
+            interruptDisableFlag = true;
+            programCounter = (effectiveAddressHigh | effectiveAddressLow);
+            // NMI signals occur on the negative transition only, so we need to reset.
+            interruptStatus &= ~S_NMI;
+            break;
+    
+          case IRQ:
+            // This flag should be set 3 cycles ago, but it shouldn't matter too much, because its
+            // only checked on instruction completion, so setting it partway through IRQ steps is fine.
+            interruptDisableFlag = true;
+            programCounter = (effectiveAddressHigh | effectiveAddressLow);
+            // IRQ signals occur on a low level, so it is the responsibility of
+            // the external hardware device to reset it.
+            break;
+    
+          case SLO:
+            // Shift left one bit in memory, then OR accumulator with memory.
+            carryFlag = ((inputDataLatch & 0x80) != 0);
+            dataBusBuffer = ((inputDataLatch << 1) & 0xFF);
+            accumulator = accumulator | dataBusBuffer;
+            setNZ(accumulator);
+            break;
+            
+          case SAX:
+            // ANDs the contents of the A and X registers (without changing the 
+            // contents of either register) and stores the result in memory.
+            // AXS does not affect any flags in the processor status register.
+            dataBusBuffer = (accumulator & indexRegisterX);
+            break;
+            
+          case ANC:
+            // AND byte with accumulator. If result is negative then carry is set.
+            accumulator = accumulator & inputDataLatch;
+            setNZ(accumulator);
+            carryFlag = negativeResultFlag;
+            break;
+            
+          case LAX:
+            // M -> A -> X
+            accumulator = inputDataLatch;
+            indexRegisterX = inputDataLatch;
+            setNZ(indexRegisterX);
+            break;
+            
+          case ISC:
+            // M + 1 -> M, A - M - C -> A
+            // INC oper + SBC oper
+            // Increase memory by one, then subtract memory from accumulator (with borrow).
+            // Status flags: N,V,Z,C
+            // TODO: Test this. There are demos that use it.
+            dataBusBuffer = ((inputDataLatch + 1) & 0xFF);
+            op1 = accumulator;
+            //op2 = inputDataLatch;
+            op2 = dataBusBuffer;
+            if (decimalModeFlag) {
+                int lo, hi;
+                lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
+                if ((lo & 0x10) != 0) lo -= 6;
+                hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
+                if ((hi & 0x10) != 0) hi -= 6;
+                tmp = (hi << 4) | (lo & 0x0F);
+                accumulator = tmp & 0xFF;
+                carryFlag = ((hi & 0xFF) < 15);
+                zeroResultFlag = (accumulator == 0);
+                overflowFlag = false;       // BCD never sets overflow flag
+                negativeResultFlag = false; // BCD is never negative on NMOS 6502
+                
+            } else {  // binary mode
+                tmp = op1 - op2 - (carryFlag ? 0 : 1);
+                accumulator = tmp & 0xFF;
+                overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
+                setFlagBorrow(tmp);
+                setNZ(accumulator);
+            }
+            break;
+            
+          case RRA:
+            // M = C -> [76543210] -> C, A + M + C -> A, C
+            // Rotate one bit right in memory, then add memory to accumulator (with
+            // carry).
+            tmp = (inputDataLatch & 1);
+            dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
+            //carryFlag = (tmp != 0);
+            //setNZ(dataBusBuffer);
+            op1 = accumulator;
+            //op2 = inputDataLatch;
+            op2 = dataBusBuffer;
+            if (decimalModeFlag) {
+                int lo, hi;
+                lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
+                if ((lo & 0xff) > 9) lo += 6;
+                hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
+                if ((hi & 0xff) > 9) hi += 6;
+                tmp = (hi << 4) | (lo & 0x0f);
+                accumulator = tmp & 0xff;
+                carryFlag = (hi > 15);
+                zeroResultFlag = (accumulator == 0);
+                overflowFlag = false;       // BCD never sets overflow flag
+                negativeResultFlag = false; // BCD is never negative on NMOS 6502
+            }
+            else {       // binary mode
+                tmp = op1 + op2 + (carryFlag ? 1 : 0);
+                accumulator = tmp & 0xFF;
+                overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
+                setFlagCarry(tmp);
+                setNZ(accumulator);
+            }
+            break;
+            
+          case ARR:
+              // AND oper + ROR
+              // A AND oper, C -> [76543210] -> C
+              // V-flag is set according to (A AND oper) + oper
+              // The carry is not set, but bit 7 (sign) is exchanged with the carry
+              // AND byte with accumulator, then rotate one bit right in accumulator and
+              // check bit 5 and 6:
+              // If both bits are 1: set C, clear V.
+              // If both bits are 0: clear C and V.
+              // If only bit 5 is 1: set V, clear C.
+              // If only bit 6 is 1: set C and V.
+              // Status flags: N,V,Z,C
+              
+              accumulator = accumulator & inputDataLatch;
+              //setNZ(accumulator);
+              
+              tmp = accumulator | (carryFlag ? 0x100 : 0);
+              carryFlag = (accumulator & 1) != 0;
+              accumulator = (tmp >> 1);
+              setNZ(accumulator);
+              
+              break;
+            
+          case TRAP:
+            // A Trap pretends to be 6502 subroutine, allowing the emulator to hook non-standard features into the emulation.
+            Trap trap = traps.get(programCounter - 1);
+            if (trap != null) {
+              try {
+                Integer newPC = trap.trapRoutine.call();
+                if (newPC != null) {
+                  programCounter = newPC;
+                }
+              } catch (Exception e) { /* Will never happen. It's part of the Callable interface so has to be caught. */ }
+            } else {
+              System.err.print("Failed to run trap routine. No routine matches PC value of: " + programCounter);
+            }
+            break;
+             
+          default: // Unknown instruction.
+            break;
         }
-        break;
-         
-      default: // Unknown instruction.
-        break;
     }
-  }
 
     // Total number of cycles emulated since the machine began.
     private long totalCycles;
@@ -1349,435 +1349,431 @@ public class Cpu6502 extends BaseChip {
         }
     }
   
-  /**
-   * Emulates a machine cycle. There should be exactly one read or one write
-   * per cycle, even in scenarios where the fetched data is discarded.
-   */
-  public void emulateCycle() {
-    int action = 0;
+    /**
+     * Emulates a machine cycle. There should be exactly one read or one write per
+     * cycle, even in scenarios where the fetched data is discarded.
+     */
+    public void emulateCycle() {
+        int action = 0;
+
+        totalCycles++;
+
+        if (currentInstructionStep < numOfInstructionSteps) {
+            // Get the action for the current cycle of the instruction.
+            action = instructionSteps[currentInstructionStep];
+
+            // Execute instruction step.
+            switch (action) {
+                case BRANCH_DIS_NEXT:
+                    // Third step of a branch. Fetch next op code, and add offset.
+                    inputDataLatch = ((inputDataLatch & 0x80) == 0 ? inputDataLatch : inputDataLatch - 0x100);
+                    branchAddress = ((programCounter + inputDataLatch) & 0xFFFF);
+                    if ((programCounter & 0xFF00) == (branchAddress & 0xFF00)) {
+                        // Destination address within same page, so skip next instruction step.
+                        programCounter = branchAddress;
+                        currentInstructionStep++;
+                    } else {
+                        // Crossing page boundary, which means that delayed interrupt doesn't apply.
+                        delayInterruptOneCycle = false;
+                    }
+                    break;
     
-    totalCycles++;
+                case BRANCH_DIS_OFFSET:
+                    // Fourth step of a branch. Fetch bad op code, fix program counter.
+                    programCounter = branchAddress;
+                    break;
     
-    if (currentInstructionStep < numOfInstructionSteps) {
-      // Get the action for the current cycle of the instruction.
-      action = instructionSteps[currentInstructionStep];
-
-      // Execute instruction step.
-      switch (action) {
-        case BRANCH_DIS_NEXT:
-          // Third step of a branch. Fetch next op code, and add offset.
-          inputDataLatch = ((inputDataLatch & 0x80) == 0? inputDataLatch : inputDataLatch - 0x100);
-          branchAddress = ((programCounter + inputDataLatch) & 0xFFFF);
-          if ((programCounter & 0xFF00) == (branchAddress & 0xFF00)) {
-            // Destination address within same page, so skip next instruction step.
-            programCounter = branchAddress;
-            currentInstructionStep++;
-          } else {
-            // Crossing page boundary, which means that delayed interrupt doesn't apply.
-            delayInterruptOneCycle = false;
-          }
-          break;
-
-        case BRANCH_DIS_OFFSET:
-          // Fourth step of a branch. Fetch bad op code, fix program counter.
-          programCounter = branchAddress;
-          break;
-
-        case EXECUTE_BRANCH:
-          // Fetch offset
-          inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          // Execute the branch test.
-          executeInstruction();
-          // Skip next two instruction steps if branch is not taken.
-          if (!branchFlag) {
-            currentInstructionStep += 2;
-          } else {
-            // Delay pending interrupt by one cycle if branch is taken. Happens only when not 
-            // crossing page boundary (see BRANCH_DIS_NEXT for its reversal of this on such 
-            // boundary crossing). Note that this is an undocumented feature, but has been 
-            // discovered independently by different people in BBC, Atari, Commodrore, etc. 
-            // communities at different times over the years.
-            delayInterruptOneCycle = true;
-          }
-          break;
-
-        case EXECUTE_DIS:               // Execute (with fetch next op code then discard)
-          // Single byte instructions & PHP, PHA
-          executeInstruction();
-          break;
-
-        case EXECUTE_LAST:              // Execute (with fetch next op code)
-          // Execute previous instruction.
-          executeInstruction();
-          // Fetch next op code.
-          currentInstructionStep = 0;
-          if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
-            if (debug) {
-              displayCurrentInstruction();
+                case EXECUTE_BRANCH:
+                    // Fetch offset
+                    inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    // Execute the branch test.
+                    executeInstruction();
+                    // Skip next two instruction steps if branch is not taken.
+                    if (!branchFlag) {
+                        currentInstructionStep += 2;
+                    } else {
+                        // Delay pending interrupt by one cycle if branch is taken. Happens only when not
+                        // crossing page boundary (see BRANCH_DIS_NEXT for its reversal of this on such
+                        // boundary crossing). Note that this is an undocumented feature, but has been
+                        // discovered independently by different people in BBC, Atari, Commodrore, etc.
+                        // communities at different times over the years.
+                        delayInterruptOneCycle = true;
+                    }
+                    break;
+    
+                case EXECUTE_DIS: // Execute (with fetch next op code then discard)
+                    // Single byte instructions & PHP, PHA
+                    executeInstruction();
+                    break;
+    
+                case EXECUTE_LAST: // Execute (with fetch next op code)
+                    // Execute previous instruction.
+                    executeInstruction();
+                    // Fetch next op code.
+                    currentInstructionStep = 0;
+                    if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag)
+                            || delayInterruptOneCycle) {
+                        if (debug) {
+                            displayCurrentInstruction();
+                        }
+                        // No interrupts, so proceed to next instruction.
+                        instructionRegister = memoryMap[programCounter].readMemory(programCounter);
+                        programCounter++;
+                        instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+                        delayInterruptOneCycle = false;
+                    } else {
+                        // An interrupt occurred.
+                        instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+                    }
+                    numOfInstructionSteps = instructionSteps.length;
+                    break;
+    
+                case EXECUTE_MID_ADL: // Executes (does a write unmodified data at same time)
+                    // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page)
+                    mem[effectiveAddressLow] = inputDataLatch;
+                    executeInstruction();
+                    break;
+    
+                case EXECUTE_MID_BA:
+                    // Dummy write (ASL, LSR, ROL, ROR, DEC, INC - Absolute, X)
+                    memory.writeMemory(baseAddressHigh | baseAddressLow, inputDataLatch);
+                    executeInstruction();
+                    break;
+    
+                case EXECUTE_MID_BAL:
+                    // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page, X)
+                    mem[baseAddressLow] = inputDataLatch;
+                    executeInstruction();
+                    break;
+    
+                case EXECUTE_MID_EA:
+                    // Dummy write (ASL, LSR, ROL, ROR, DEC, INC - Absolute)
+                    memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, inputDataLatch);
+                    executeInstruction();
+                    break;
+    
+                case EXECUTE_STORE_ADL:
+                    // No I/O in pzge zero (STA, STX, STY - Zero Page)
+                    executeInstruction();
+                    mem[effectiveAddressLow] = dataBusBuffer;
+                    break;
+    
+                case EXECUTE_STORE_EA:
+                    // (STA, STX, STY - (Indirect, X) & Absolute)
+                    executeInstruction();
+                    memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, dataBusBuffer);
+                    break;
+    
+                case EXECUTE_STORE_BA:
+                    // (STA - Absolute, X & (Indirect),Y)
+                    executeInstruction();
+                    memory.writeMemory(baseAddressHigh | baseAddressLow, dataBusBuffer);
+                    break;
+    
+                case EXECUTE_STORE_BAL:
+                    // No I/O in page zero (STY, STA, STX - Zero Page, X & Y)
+                    executeInstruction();
+                    mem[baseAddressLow] = dataBusBuffer;
+                    break;
+    
+                case FETCH_ADH_BAL:
+                    // No I/O in page zero, so we can access memory directly.
+                    effectiveAddressHigh = (mem[baseAddressLow] << 8);
+                    break;
+    
+                case FETCH_ADH_FFFB:
+                    effectiveAddressHigh = (memoryMap[0xFFFB].readMemory(0xFFFB) << 8);
+                    break;
+    
+                case FETCH_ADH_FFFF:
+                    effectiveAddressHigh = (memoryMap[0xFFFF].readMemory(0xFFFF) << 8);
+                    break;
+    
+                case FETCH_ADH_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    effectiveAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    programCounter++;
+                    break;
+    
+                case FETCH_ADH_IA:
+                    // Only used by JMP, so not likely to have IO address involved.
+                    int indirectAddress = indirectAddressHigh | indirectAddressLow;
+                    effectiveAddressHigh = (memoryMap[indirectAddress].readMemory(indirectAddress) << 8);
+                    break;
+    
+                case FETCH_ADL_BAL:
+                    // No I/O in page zero, so we can access memory directly.
+                    effectiveAddressLow = mem[baseAddressLow];
+                    baseAddressLow = ((baseAddressLow + 1) & 0xFF);
+                    break;
+    
+                case FETCH_ADL_FFFA:
+                    effectiveAddressLow = memoryMap[0xFFFA].readMemory(0xFFFA);
+                    break;
+    
+                case FETCH_ADL_FFFE:
+                    effectiveAddressLow = memoryMap[0xFFFE].readMemory(0xFFFE);
+                    break;
+    
+                case FETCH_ADL_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    effectiveAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    break;
+    
+                case FETCH_ADL_IA:
+                    // Only used by JMP, so not likely to have IO address involved.
+                    indirectAddress = indirectAddressHigh | indirectAddressLow;
+                    effectiveAddressLow = memoryMap[indirectAddress].readMemory(indirectAddress);
+                    indirectAddressLow = ((indirectAddressLow + 1) & 0xFF); // Well known NMOS 6502 bug
+                    break;
+    
+                case FETCH_BAH_IAL:
+                    // No I/O in page zero.
+                    baseAddressHigh = (mem[indirectAddressLow] << 8);
+                    break;
+    
+                case FETCH_BAH_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    baseAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    programCounter++;
+                    break;
+    
+                case FETCH_BAL_IAL: // Increments IAL by 1 aswell (& 0xFF??)
+                    // No I/O in page zero.
+                    baseAddressLow = mem[indirectAddressLow];
+                    indirectAddressLow = ((indirectAddressLow + 1) & 0xFF);
+                    break;
+    
+                case FETCH_BAL_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    baseAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    break;
+    
+                case FETCH_DATA_ADL:
+                    // No I/O in page zero.
+                    inputDataLatch = mem[effectiveAddressLow];
+                    break;
+    
+                case FETCH_DATA_BA:
+                    inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
+                    break;
+    
+                case FETCH_DATA_BA_X:
+                    // (Absolute, X)
+                    baseAddressLow = baseAddressLow + indexRegisterX;
+                    if ((baseAddressLow & 0x100) != 0) {
+                        baseAddressLow = (baseAddressLow & 0xFF);
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                        baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
+                    } else {
+                        // Page boundary not crossed, so the data is okay.
+                        inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
+                        // Skip next step in instruction because it isn't needed.
+                        currentInstructionStep++;
+                    }
+                    break;
+    
+                case FETCH_DATA_BA_Y:
+                    // ((Indirect), Y & Absolute, Y)
+                    baseAddressLow = baseAddressLow + indexRegisterY;
+                    if ((baseAddressLow & 0x100) != 0) {
+                        baseAddressLow = (baseAddressLow & 0xFF);
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                        baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
+                    } else {
+                        // Page boundary not crossed, so the data is okay.
+                        inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
+                        // Skip next step in instruction because it isn't needed.
+                        currentInstructionStep++;
+                    }
+                    break;
+    
+                case FETCH_DATA_BAL:
+                    // No I/O in page zero
+                    inputDataLatch = mem[baseAddressLow];
+                    break;
+    
+                case FETCH_DATA_EA:
+                    inputDataLatch = memory.readMemory(effectiveAddressHigh | effectiveAddressLow);
+                    break;
+    
+                case FETCH_DATA_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    break;
+    
+                case FETCH_DATA_SP:
+                    // No I/O in the stack page (PLP, PLA)
+                    stackPointer = ((stackPointer + 1) & 0xFF);
+                    inputDataLatch = mem[stackPointer + 0x100];
+                    break;
+    
+                case FETCH_DIS_BA_X:
+                    // (ASL, ROL, LSR, ROR, STA, DEC, INC - Absolute, X)
+                    baseAddressLow = baseAddressLow + indexRegisterX;
+                    if ((baseAddressLow & 0x100) != 0) {
+                        baseAddressLow = (baseAddressLow & 0xFF);
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                        baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
+                    } else {
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                    }
+                    break;
+    
+                case FETCH_DIS_BA_Y:
+                    // (STA - Absolute, Y & (Indirect), Y)
+                    baseAddressLow = baseAddressLow + indexRegisterY;
+                    if ((baseAddressLow & 0x100) != 0) {
+                        baseAddressLow = (baseAddressLow & 0xFF);
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                        baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
+                    } else {
+                        memory.readMemory(baseAddressHigh | baseAddressLow);
+                    }
+                    break;
+    
+                case FETCH_DIS_BAL_X: // Fetch using BAL then discard. Add X to BAL.
+                    // No I/O in page zero ((Indirect, X) & Zero Page, X)
+                    baseAddressLow = ((baseAddressLow + indexRegisterX) & 0xFF);
+                    break;
+    
+                case FETCH_DIS_BAL_Y:
+                    // No I/O in page zero (STX, LDX - Zero Page, Y)
+                    baseAddressLow = ((baseAddressLow + indexRegisterY) & 0xFF);
+                    break;
+    
+                case FETCH_DIS_PC: // Fetches using PC but doesn't increment PC.
+                    // Program counter is highly unlikely to be pointing at I/O (PLA, PLP. RTS, RTI,
+                    // IRQ, NMI)
+                    // TODO: Apparently it does fetch data using PC, but having this here affects
+                    // the sound. ?!
+                    // memoryMap[programCounter].readMemory(programCounter);
+                    break;
+    
+                case FETCH_DIS_SP:
+                    // No I/O in stack page (PLA, PLP, JSR, RTS, RTI)
+                    break;
+    
+                case FETCH_IAH_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    indirectAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    programCounter++;
+                    break;
+    
+                case FETCH_IAL_PC:
+                    // Program counter is highly unlikely to be pointing at I/O
+                    indirectAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    break;
+    
+                case FETCH_INC_PC:
+                    // Fetch using PC, discard data, then increment PC.
+                    memoryMap[programCounter].readMemory(programCounter);
+                    programCounter++;
+                    break;
+    
+                case FETCH_P_SP:
+                    // No I/O in the stack page (RTI)
+                    stackPointer = ((stackPointer + 1) & 0xFF);
+                    processorStatusRegister = mem[stackPointer + 0x100];
+                    unpackPSR();
+                    break;
+    
+                case FETCH_PCH_SP:
+                    // No I/O in the stack page (RTS, RTI)
+                    stackPointer = ((stackPointer + 1) & 0xFF);
+                    programCounter = (programCounter | (mem[stackPointer + 0x100] << 8));
+                    break;
+    
+                case FETCH_PCL_SP:
+                    // No I/O in the stack page (RTS, RTI)
+                    stackPointer = ((stackPointer + 1) & 0xFF);
+                    programCounter = mem[stackPointer + 0x100];
+                    break;
+    
+                case STORE_DATA_ADL:
+                    // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page)
+                    mem[effectiveAddressLow] = dataBusBuffer;
+                    break;
+    
+                case STORE_DATA_BA:
+                    // (ASL, ROL, LSR, ROR, DEC, INC - Absolute, X)
+                    memory.writeMemory(baseAddressHigh | baseAddressLow, dataBusBuffer);
+                    break;
+    
+                case STORE_DATA_BAL:
+                    // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page, X)
+                    mem[baseAddressLow] = dataBusBuffer;
+                    break;
+    
+                case STORE_DATA_EA:
+                    // (ASL, ROL, LSR, ROR, DEC, INC - Absolute)
+                    memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, dataBusBuffer);
+                    break;
+    
+                case STORE_DATA_SP:
+                    // No I/O in the stack page (PHP, PHA)
+                    mem[stackPointer + 0x100] = dataBusBuffer;
+                    stackPointer = ((stackPointer - 1) & 0xFF);
+                    break;
+    
+                case STORE_P_SP:
+                    // No I/O in the stack page (BRK)
+                    packPSR();
+                    mem[stackPointer + 0x100] = (processorStatusRegister | (instructionRegister == 0 ? 0x10 : 0));
+                    // BRK flag only exists on the stack.
+                    stackPointer = ((stackPointer - 1) & 0xFF);
+                    break;
+    
+                case STORE_PCH_SP:
+                    // No I/O in the stack page (BRK, JSR)
+                    mem[stackPointer + 0x100] = (programCounter >> 8);
+                    stackPointer = ((stackPointer - 1) & 0xFF);
+                    break;
+    
+                case STORE_PCL_SP:
+                    // No I/O in the stack page (BRK, JSR)
+                    mem[stackPointer + 0x100] = (programCounter & 0xFF);
+                    stackPointer = ((stackPointer - 1) & 0xFF);
+                    break;
+    
+                default: // Action code not recognised.
+                    break;
             }
-            // No interrupts, so proceed to next instruction.
-            instructionRegister = memoryMap[programCounter].readMemory(programCounter);
-            programCounter++;
-            instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-            delayInterruptOneCycle = false;
-          }
-          else {
-            // An interrupt occurred.
-            instructionSteps = ((interruptStatus & S_NMI) == 0? IRQ_STEPS : NMI_STEPS);
-          }
-          numOfInstructionSteps = instructionSteps.length;
-          break;
 
-        case EXECUTE_MID_ADL:           // Executes (does a write unmodified data at same time)
-          // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page)
-          mem[effectiveAddressLow] = inputDataLatch;
-          executeInstruction();
-          break;
-
-        case EXECUTE_MID_BA:
-          // Dummy write (ASL, LSR, ROL, ROR, DEC, INC - Absolute, X)
-          memory.writeMemory(baseAddressHigh | baseAddressLow, inputDataLatch);
-          executeInstruction();
-          break;
-
-        case EXECUTE_MID_BAL:
-          // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page, X)
-          mem[baseAddressLow] = inputDataLatch;
-          executeInstruction();
-          break;
-
-        case EXECUTE_MID_EA:
-          // Dummy write (ASL, LSR, ROL, ROR, DEC, INC - Absolute)
-          memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, inputDataLatch);
-          executeInstruction();
-          break;
-
-        case EXECUTE_STORE_ADL:
-          // No I/O in pzge zero (STA, STX, STY - Zero Page)
-          executeInstruction();
-          mem[effectiveAddressLow] = dataBusBuffer;
-          break;
-
-        case EXECUTE_STORE_EA:
-          // (STA, STX, STY - (Indirect, X) & Absolute)
-          executeInstruction();
-          memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, dataBusBuffer);
-          break;
-
-        case EXECUTE_STORE_BA:
-          // (STA - Absolute, X & (Indirect),Y)
-          executeInstruction();
-          memory.writeMemory(baseAddressHigh | baseAddressLow, dataBusBuffer);
-          break;
-
-        case EXECUTE_STORE_BAL:
-          // No I/O in page zero (STY, STA, STX - Zero Page, X & Y)
-          executeInstruction();
-          mem[baseAddressLow] = dataBusBuffer;
-          break;
-
-
-        case FETCH_ADH_BAL:
-          // No I/O in page zero, so we can access memory directly.
-          effectiveAddressHigh = (mem[baseAddressLow] << 8);
-          break;
-
-        case FETCH_ADH_FFFB:
-          effectiveAddressHigh = (memoryMap[0xFFFB].readMemory(0xFFFB) << 8);
-          break;
-
-        case FETCH_ADH_FFFF:
-          effectiveAddressHigh = (memoryMap[0xFFFF].readMemory(0xFFFF) << 8);
-          break;
-
-        case FETCH_ADH_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          effectiveAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
-          programCounter++;
-          break;
-
-        case FETCH_ADH_IA:
-          // Only used by JMP, so not likely to have IO address involved.
-          int indirectAddress = indirectAddressHigh | indirectAddressLow;
-          effectiveAddressHigh = (memoryMap[indirectAddress].readMemory(indirectAddress) << 8);
-          break;
-
-        case FETCH_ADL_BAL:
-          // No I/O in page zero, so we can access memory directly.
-          effectiveAddressLow = mem[baseAddressLow];
-          baseAddressLow = ((baseAddressLow + 1) & 0xFF);
-          break;
-
-        case FETCH_ADL_FFFA:
-          effectiveAddressLow = memoryMap[0xFFFA].readMemory(0xFFFA);
-          break;
-
-        case FETCH_ADL_FFFE:
-          effectiveAddressLow = memoryMap[0xFFFE].readMemory(0xFFFE);
-          break;
-
-        case FETCH_ADL_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          effectiveAddressLow = memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          break;
-
-        case FETCH_ADL_IA:
-          // Only used by JMP, so not likely to have IO address involved.
-          indirectAddress = indirectAddressHigh | indirectAddressLow;
-          effectiveAddressLow = memoryMap[indirectAddress].readMemory(indirectAddress);
-          indirectAddressLow = ((indirectAddressLow + 1) & 0xFF); // Well known NMOS 6502 bug
-          break;
-
-        case FETCH_BAH_IAL:
-          // No I/O in page zero.
-          baseAddressHigh = (mem[indirectAddressLow] << 8);
-          break;
-
-        case FETCH_BAH_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          baseAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
-          programCounter++;
-          break;
-
-        case FETCH_BAL_IAL:             // Increments IAL by 1 aswell (& 0xFF??)
-          // No I/O in page zero.
-          baseAddressLow = mem[indirectAddressLow];
-          indirectAddressLow = ((indirectAddressLow + 1) & 0xFF);
-          break;
-
-        case FETCH_BAL_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          baseAddressLow = memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          break;
-
-        case FETCH_DATA_ADL:
-          // No I/O in page zero.
-          inputDataLatch = mem[effectiveAddressLow];
-          break;
-
-        case FETCH_DATA_BA:
-          inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
-          break;
-
-        case FETCH_DATA_BA_X:
-          // (Absolute, X)
-          baseAddressLow = baseAddressLow + indexRegisterX;
-          if ((baseAddressLow & 0x100) != 0) {
-            baseAddressLow = (baseAddressLow & 0xFF);
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-            baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
-          }
-          else {
-            // Page boundary not crossed, so the data is okay.
-            inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
-            // Skip next step in instruction because it isn't needed.
+            // Increment timing control.
             currentInstructionStep++;
-          }
-          break;
+            
+        } else {
+            // Set up next instruction.
+            currentInstructionStep = 1;
 
-        case FETCH_DATA_BA_Y:
-          // ((Indirect), Y & Absolute, Y)
-          baseAddressLow = baseAddressLow + indexRegisterY;
-          if ((baseAddressLow & 0x100) != 0) {
-            baseAddressLow = (baseAddressLow & 0xFF);
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-            baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
-          }
-          else {
-            // Page boundary not crossed, so the data is okay.
-            inputDataLatch = memory.readMemory(baseAddressHigh | baseAddressLow);
-            // Skip next step in instruction because it isn't needed.
-            currentInstructionStep++;
-          }
-          break;
+            if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
+                if (debug) {
+                    displayCurrentInstruction();
+                }
+                // No interrupts, so proceed to next instruction.
+                instructionRegister = memoryMap[programCounter].readMemory(programCounter);
+                programCounter++;
+                instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+                delayInterruptOneCycle = false;
+            } else {
+                // An interrupt occurred.
+                instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+            }
 
-        case FETCH_DATA_BAL:
-          // No I/O in page zero
-          inputDataLatch = mem[baseAddressLow];
-          break;
-
-        case FETCH_DATA_EA:
-          inputDataLatch = memory.readMemory(effectiveAddressHigh | effectiveAddressLow);
-          break;
-
-        case FETCH_DATA_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          break;
-
-        case FETCH_DATA_SP:
-          // No I/O in the stack page (PLP, PLA)
-          stackPointer = ((stackPointer + 1) & 0xFF);
-          inputDataLatch = mem[stackPointer + 0x100];
-          break;
-
-        case FETCH_DIS_BA_X:
-          // (ASL, ROL, LSR, ROR, STA, DEC, INC - Absolute, X)
-          baseAddressLow = baseAddressLow + indexRegisterX;
-          if ((baseAddressLow & 0x100) != 0) {
-            baseAddressLow = (baseAddressLow & 0xFF);
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-            baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
-          }
-          else {
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-          }
-          break;
-
-        case FETCH_DIS_BA_Y:
-          // (STA - Absolute, Y & (Indirect), Y)
-          baseAddressLow = baseAddressLow + indexRegisterY;
-          if ((baseAddressLow & 0x100) != 0) {
-            baseAddressLow = (baseAddressLow & 0xFF);
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-            baseAddressHigh = ((baseAddressHigh + 0x100) & 0xFF00);
-          }
-          else {
-            memory.readMemory(baseAddressHigh | baseAddressLow);
-          }
-          break;
-
-        case FETCH_DIS_BAL_X:           // Fetch using BAL then discard. Add X to BAL.
-          // No I/O in page zero ((Indirect, X) & Zero Page, X)
-          baseAddressLow = ((baseAddressLow + indexRegisterX) & 0xFF);
-          break;
-
-        case FETCH_DIS_BAL_Y:
-          // No I/O in page zero (STX, LDX - Zero Page, Y)
-          baseAddressLow = ((baseAddressLow + indexRegisterY) & 0xFF);
-          break;
-
-        case FETCH_DIS_PC:              // Fetches using PC but doesn't increment PC.
-          // Program counter is highly unlikely to be pointing at I/O (PLA, PLP. RTS, RTI, IRQ, NMI)
-          // TODO: Apparently it does fetch data using PC, but having this here affects the sound. ?!
-          //memoryMap[programCounter].readMemory(programCounter);
-          break;
-
-        case FETCH_DIS_SP:
-          // No I/O in stack page (PLA, PLP, JSR, RTS, RTI)
-          break;
-
-        case FETCH_IAH_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          indirectAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
-          programCounter++;
-          break;
-
-        case FETCH_IAL_PC:
-          // Program counter is highly unlikely to be pointing at I/O
-          indirectAddressLow = memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          break;
-          
-        case FETCH_INC_PC:
-          // Fetch using PC, discard data, then increment PC.
-          memoryMap[programCounter].readMemory(programCounter);
-          programCounter++;
-          break;
-          
-        case FETCH_P_SP:
-          // No I/O in the stack page (RTI)
-          stackPointer = ((stackPointer + 1) & 0xFF);
-          processorStatusRegister = mem[stackPointer + 0x100];
-          unpackPSR();
-          break;
-          
-        case FETCH_PCH_SP:
-          // No I/O in the stack page (RTS, RTI)
-          stackPointer = ((stackPointer + 1) & 0xFF);
-          programCounter = (programCounter | (mem[stackPointer + 0x100] << 8));
-          break;
-
-        case FETCH_PCL_SP:
-          // No I/O in the stack page (RTS, RTI)
-          stackPointer = ((stackPointer + 1) & 0xFF);
-          programCounter = mem[stackPointer + 0x100];
-          break;
-
-
-        case STORE_DATA_ADL:
-          // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page)
-          mem[effectiveAddressLow] = dataBusBuffer;
-          break;
-
-        case STORE_DATA_BA:
-          // (ASL, ROL, LSR, ROR, DEC, INC - Absolute, X)
-          memory.writeMemory(baseAddressHigh | baseAddressLow, dataBusBuffer);
-          break;
-
-        case STORE_DATA_BAL:
-          // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page, X)
-          mem[baseAddressLow] = dataBusBuffer;
-          break;
-
-        case STORE_DATA_EA:
-          // (ASL, ROL, LSR, ROR, DEC, INC - Absolute)
-          memory.writeMemory(effectiveAddressHigh | effectiveAddressLow, dataBusBuffer);
-          break;
-
-        case STORE_DATA_SP:
-          // No I/O in the stack page (PHP, PHA)
-          mem[stackPointer + 0x100] = dataBusBuffer;
-          stackPointer = ((stackPointer - 1) & 0xFF);
-          break;
-
-        case STORE_P_SP:
-          // No I/O in the stack page (BRK)
-          packPSR();
-          mem[stackPointer + 0x100] = (processorStatusRegister | (instructionRegister == 0? 0x10 : 0)); // BRK flag only exists on stack.
-          stackPointer = ((stackPointer - 1) & 0xFF);
-          break;
-
-        case STORE_PCH_SP:
-          // No I/O in the stack page (BRK, JSR)
-          mem[stackPointer + 0x100] = (programCounter >> 8);
-          stackPointer = ((stackPointer - 1) & 0xFF);
-          break;
-
-        case STORE_PCL_SP:
-          // No I/O in the stack page (BRK, JSR)
-          mem[stackPointer + 0x100] = (programCounter & 0xFF);
-          stackPointer = ((stackPointer - 1) & 0xFF);
-          break;
-
-        default: // Action code not recognised.
-          break;
-      }
-
-      // Increment timing control.
-      currentInstructionStep++;
-    }
-    else {
-      // Set up next instruction.
-      currentInstructionStep = 1;
-
-      if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
-        if (debug) {
-          displayCurrentInstruction();
+            numOfInstructionSteps = instructionSteps.length;
         }
-        // No interrupts, so proceed to next instruction.
-        instructionRegister = memoryMap[programCounter].readMemory(programCounter);
-        programCounter++;
-        instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-        delayInterruptOneCycle = false;
-      }
-      else {
-        // An interrupt occurred.
-        instructionSteps = ((interruptStatus & S_NMI) == 0? IRQ_STEPS : NMI_STEPS);
-      }
 
-      numOfInstructionSteps = instructionSteps.length;
+        if (instructionSteps.length == 0) {
+            if (instructionRegister != 114)
+                System.out.println(StringUtils.format("Unknown instruction: {0}", instructionRegister));
+        }
     }
-    
-    if (instructionSteps.length == 0) {
-        if (instructionRegister != 114)
-      System.out.println(StringUtils.format("Unknown instruction: {0}", instructionRegister));
-    }
-  }
   
     ///////////////////////////////// DEBUG /////////////////////////////////////////
     
