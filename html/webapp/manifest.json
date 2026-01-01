@@ -4,7 +4,7 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#fff",
+  "background_color": "#273B2D",
   "description": "JVic - The web-based VIC 20 emulator built with libGDX",
   "icons": [
     {
