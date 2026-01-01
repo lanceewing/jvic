@@ -132,7 +132,6 @@ public class MachineInputProcessor extends InputAdapter {
         
         if (altKeyDown) {
             switch (keycode) {
-                case Keys.D:
                 case Keys.ENTER:
                     handleFullScreenToggle();
                     return true;
