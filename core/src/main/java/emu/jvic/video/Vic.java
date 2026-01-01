@@ -186,14 +186,27 @@ public abstract class Vic extends MemoryMappedChip {
      * @param machineType The type of VIC 20 machine that is being emulated.
      */
     public void reset() {
-        horizontalCounter = 0;
+        prevHorizontalCounter = horizontalCounter = 0;
         verticalCounter = 0;
         pixelCounter = 0;
         horizontalCellCounter = 0;
         verticalCellCounter = 0;
         cellDepthCounter = 0;
         videoMatrixCounter = 0;
-        charData = 0;
+        videoMatrixLatch = 0;
+        halfLineCounter = 0;
+        cellIndex = 0;
+        borderColour = 0;
+        fetchState = FETCH_OUTSIDE_MATRIX;
+        charDataOffset = 0;
+        pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
+        hiresMode = false;
+        colourData = 0x08;
+        charData = charDataLatch = 0x55;
+        multiColourTable[0] = 0;
+        multiColourTable[1] = 0;
+        multiColourTable[2] = 0;
+        multiColourTable[3] = 0;
     }
 
     /**
