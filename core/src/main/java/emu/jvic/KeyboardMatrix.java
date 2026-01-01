@@ -312,6 +312,15 @@ public abstract class KeyboardMatrix extends InputAdapter {
     }
     
     /**
+     * Checks if the ALT key is currently down.
+     * 
+     * @return true if the ALT key is currently down; otherwise false.
+     */
+    public boolean isAltKeyDown() {
+        return altKeyDown;
+    }
+    
+    /**
      * Checks if there are any keys whose release processed has been delayed that
      * are now able to be processed due to the minimum release time having been
      * passed.

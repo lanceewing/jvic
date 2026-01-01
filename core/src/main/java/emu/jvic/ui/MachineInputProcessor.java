@@ -128,17 +128,19 @@ public class MachineInputProcessor extends InputAdapter {
      * @param keycode 
      */
     public boolean keyUp(int keycode) {
-        if (keycode == Keys.F6) {
-            if (!machineScreen.getJvicRunner().isWarpSpeed()) {
-                speakerOn = false;
-                machineScreen.getJvicRunner().changeSound(false);
+        boolean altKeyDown = getKeyboardMatrix().isAltKeyDown();
+        
+        if (altKeyDown) {
+            switch (keycode) {
+                case Keys.P:
+                    handlePauseToggle();
+                    return true;
+                case Keys.W:
+                    handleWarpSpeedToggle();
+                    return true;
+                default:
+                    return false;
             }
-            machineScreen.getJvicRunner().toggleWarpSpeed();
-            return true;
-        }
-        else if (keycode == Keys.F3) {
-            machineScreen.getJvicRunner().sendNmi();
-            return true;
         }
         else if (keycode == Keys.F11) {
             if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
@@ -377,27 +379,15 @@ public class MachineInputProcessor extends InputAdapter {
             }
             
             if (keyboardClicked) {
-                if (keyboardType.equals(KeyboardType.OFF)) {
-                    keyboardType = (viewportManager.isPortrait() ? KeyboardType.PORTRAIT : KeyboardType.LANDSCAPE);
-                    viewportManager.update();
-                } else {
-                    keyboardType = KeyboardType.OFF;
-                }
+                handleKeyboardToggle();
             }
             
             if (joystickClicked) {
-                // Rotate the joystick screen alignment.
-                joystickAlignment = joystickAlignment.rotateValue();
-                if (viewportManager.isLandscape() && ((cameraXOffset != 0))) {
-                    if (joystickAlignment.equals(JoystickAlignment.RIGHT)) {
-                        joystickAlignment = joystickAlignment.rotateValue();
-                    }
-                }
+                handleJoystickAlignment();
             }
             
             if (speakerClicked) {
-                speakerOn = !speakerOn;
-                machineScreen.getJvicRunner().changeSound(speakerOn);
+                handleSoundToggle();
             }
             
             if (screenSizeClicked) {
@@ -405,44 +395,15 @@ public class MachineInputProcessor extends InputAdapter {
             }
             
             if (pausePlayClicked) {
-                if (machineScreen.getJvicRunner().isPaused()) {
-                    machineScreen.getJvicRunner().resume();
-                } else {
-                    machineScreen.getJvicRunner().pause();
-                }
+                handlePauseToggle();
             }
             
             if (fullScreenClicked) {
-                Boolean fullScreen = Gdx.graphics.isFullscreen();
-                if (fullScreen == true) {
-                    switchOutOfFullScreen();
-                }
-                else {
-                    switchIntoFullScreen();
-                }
+                handleFullScreenToggle();
             }
             
             if (backArrowClicked) {
-                if (Gdx.app.getType().equals(ApplicationType.Desktop) && Gdx.graphics.isFullscreen()) {
-                    // Dialog won't show for desktop unless we exit full screen,
-                    switchOutOfFullScreen();
-                }
-                
-                machineScreen.getJvicRunner().pause();
-                
-                dialogHandler.confirm("Are you sure you want to quit the game?", 
-                        new ConfirmResponseHandler() {
-                    @Override
-                    public void yes() {
-                        machineScreen.getJvicRunner().stop();
-                    }
-                    
-                    @Override
-                    public void no() {
-                        // Nothing to do.
-                        machineScreen.getJvicRunner().resume();
-                    }
-                });
+                handleExitMachine();
             }
             
             // If joystick is ON, and the click didn't land on anything else, then treat as fire button.
@@ -457,6 +418,79 @@ public class MachineInputProcessor extends InputAdapter {
         }
 
         return true;
+    }
+    
+    private void handlePauseToggle() {
+        if (machineScreen.getJvicRunner().isPaused()) {
+            machineScreen.getJvicRunner().resume();
+        } else {
+            machineScreen.getJvicRunner().pause();
+        }
+    }
+    
+    private void handleFullScreenToggle() {
+        Boolean fullScreen = Gdx.graphics.isFullscreen();
+        if (fullScreen == true) {
+            switchOutOfFullScreen();
+        }
+        else {
+            switchIntoFullScreen();
+        }
+    }
+    
+    private void handleKeyboardToggle() {
+        if (keyboardType.equals(KeyboardType.OFF)) {
+            keyboardType = (viewportManager.isPortrait() ? KeyboardType.PORTRAIT : KeyboardType.LANDSCAPE);
+            viewportManager.update();
+        } else {
+            keyboardType = KeyboardType.OFF;
+        }
+    }
+    
+    private void handleJoystickAlignment() {
+        // Rotate the joystick screen alignment.
+        joystickAlignment = joystickAlignment.rotateValue();
+        if (viewportManager.isLandscape() && ((cameraXOffset != 0))) {
+            if (joystickAlignment.equals(JoystickAlignment.RIGHT)) {
+                joystickAlignment = joystickAlignment.rotateValue();
+            }
+        }
+    }
+    
+    private void handleSoundToggle() {
+        speakerOn = !speakerOn;
+        machineScreen.getJvicRunner().changeSound(speakerOn);
+    }
+    
+    private void handleExitMachine() {
+        if (Gdx.app.getType().equals(ApplicationType.Desktop) && Gdx.graphics.isFullscreen()) {
+            // Dialog won't show for desktop unless we exit full screen,
+            switchOutOfFullScreen();
+        }
+        
+        machineScreen.getJvicRunner().pause();
+        
+        dialogHandler.confirm("Are you sure you want to quit the game?", 
+                new ConfirmResponseHandler() {
+            @Override
+            public void yes() {
+                machineScreen.getJvicRunner().stop();
+            }
+            
+            @Override
+            public void no() {
+                // Nothing to do.
+                machineScreen.getJvicRunner().resume();
+            }
+        });
+    }
+    
+    private void handleWarpSpeedToggle() {
+        if (!machineScreen.getJvicRunner().isWarpSpeed()) {
+            speakerOn = false;
+            machineScreen.getJvicRunner().changeSound(false);
+        }
+        machineScreen.getJvicRunner().toggleWarpSpeed();
     }
 
     public void adjustWorldMinMax(int width, int height, MachineType machineType) {
