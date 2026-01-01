@@ -132,25 +132,40 @@ public class MachineInputProcessor extends InputAdapter {
         
         if (altKeyDown) {
             switch (keycode) {
+                case Keys.D:
+                case Keys.ENTER:
+                    handleFullScreenToggle();
+                    return true;
+                case Keys.J:
+                    handleJoystickAlignment();
+                    return true;
+                case Keys.K:
+                    handleKeyboardToggle();
+                    return true;
                 case Keys.P:
                     handlePauseToggle();
                     return true;
+                case Keys.S:
+                    handleSoundToggle();
+                    return true;
+                case Keys.Q:
+                case Keys.X:
+                    handleExitMachine();
+                    return true;
                 case Keys.W:
                     handleWarpSpeedToggle();
+                    return true;
+                case Keys.Z:
+                    rotateScreenSize();
                     return true;
                 default:
                     return false;
             }
         }
         else if (keycode == Keys.F11) {
+            // Web version handles F11 full screen itself, i.e. its a browser feature.
             if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
-                Boolean fullScreen = Gdx.graphics.isFullscreen();
-                if (fullScreen == true) {
-                    switchOutOfFullScreen();
-                }
-                else {
-                    switchIntoFullScreen();
-                }
+                handleFullScreenToggle();
             }
         }
         else if (keycode == Keys.F12) {
