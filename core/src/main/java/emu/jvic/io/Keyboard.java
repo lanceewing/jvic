@@ -80,6 +80,4 @@ public class Keyboard {
         //return (restoreKeyState & 0x01);
         return 0;
     }
-    
-    private int currentRestoreState;
 }

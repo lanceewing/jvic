@@ -22,7 +22,6 @@ public abstract class KeyboardMatrix extends InputAdapter {
     // The keyboard matrix data array is of size 513, in both desktop and html versions,
     // so all index values must be below this. 0-255 is reversed for the normal keys,
     // whereas the joystick keys and special keys (such as restore) use values above 255.
-    public static final int SHIFT_LOCK = 511;
     public static final int RUN_STOP = 510;
     public static final int RESTORE = 509;
     
@@ -214,11 +213,18 @@ public abstract class KeyboardMatrix extends InputAdapter {
         } else {
             // Special keycodes without direct mappings.
             switch (vicKey) {
-                case SHIFT_LOCK:
+                case VicKeys.SHIFT_LOCK:
+                    // Each press toggles shift key state.
                     shiftLockOn = !shiftLockOn;
                     if (shiftLockOn) {
+                        // Shift lock is physically wired such that when ON, it holds
+                        // the left shift key down. So the 8 and 2 used below are the
+                        // mappings for the LEFT_SHIFT key. The VIC 20 itself doesn't 
+                        // know the difference between SHIFT LOCK being used and the
+                        // LEFT SHIFT key.
                         setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
                     } else {
+                        // Clears left shift, so it isn't down.
                         setKeyMatrixRow(8, getKeyMatrixRow(8) & ~2);
                     }
                     break;
@@ -267,7 +273,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 }
                 
                 // If SHIFT LOCK is on, we override the left shift key.
-                if ((vicKey == Keys.SHIFT_LEFT) && shiftLockOn) {
+                if ((vicKey == VicKeys.LEFT_SHIFT) && shiftLockOn) {
                     setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
                 }
             }
@@ -276,6 +282,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
 
     public boolean keyTyped(char ch) {
         if (altKeyDown) return false;
+        checkCapsLock(ch);
         int[] vicKeys = charConvHashMap.get(ch);
         if (vicKeys != null) {
             for (int i=0; i<vicKeys.length; i++) {
@@ -291,6 +298,22 @@ public abstract class KeyboardMatrix extends InputAdapter {
             return true;
         } else {
             return false;
+        }
+    }
+    
+    /**
+     * Synchronises with the current CAPS LOCK state. Only required if CAPS LOCK was on when
+     * the emulator started up, since other state changes are handled by actual key presses.
+     * 
+     * @param ch The character to test.
+     */
+    private void checkCapsLock(char ch) {
+        if ((ch >= 'A') && (ch <= 'Z')) {
+            // If shift is not on, then shift lock must be ON.
+            if (((getKeyMatrixRow(8) & 2) == 0) && ((getKeyMatrixRow(16) & 64) == 0) && !shiftLockOn) {
+                setKeyMatrixRow(8, getKeyMatrixRow(8) | 2);
+                shiftLockOn = true;
+            }
         }
     }
     

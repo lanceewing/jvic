@@ -224,6 +224,7 @@ public interface VicKeys {
         { Keys.ENTER, VicKeys.RETURN },
         { Keys.SHIFT_LEFT, VicKeys.LEFT_SHIFT },
         { Keys.SHIFT_RIGHT, VicKeys.RIGHT_SHIFT },
+        { Keys.CAPS_LOCK, VicKeys.SHIFT_LOCK },
         { Keys.CONTROL_LEFT, VicKeys.CONTROL },
         { Keys.LEFT, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_RIGHT, VicKeys.JOYSTICK_LEFT },
         { Keys.UP, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.JOYSTICK_UP },
