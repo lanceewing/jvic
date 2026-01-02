@@ -168,7 +168,10 @@ public class MachineInputProcessor extends InputAdapter {
             }
         }
         else if (keycode == Keys.F12) {
-            machineScreen.saveScreenshot();
+            // Web version doesn't support screen shots.
+            if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
+                machineScreen.saveScreenshot();
+            }
         }
         return false;
     }
