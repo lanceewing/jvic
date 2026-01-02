@@ -95,6 +95,10 @@ public interface VicKeys {
     public static final int LEFT_ARROW = 63;
     public static final int ONE = 64;
     
+    // Special keys.
+    public static final int RESTORE = 88;
+    public static final int SHIFT_LOCK = 89;
+    
     // Joystick keys.
     public static final int JOYSTICK_FIRE = 90;
     public static final int JOYSTICK_LEFT = 91;
@@ -236,6 +240,8 @@ public interface VicKeys {
         { Keys.F6, VicKeys.LEFT_SHIFT, VicKeys.F5 },
         { Keys.F7, VicKeys.F7 },
         { Keys.F8, VicKeys.LEFT_SHIFT, VicKeys.F7 },
+        
+        { Keys.F12, VicKeys.RESTORE },
         
         { Keys.NUMPAD_0, VicKeys.JOYSTICK_FIRE },  // Fire button
         { Keys.NUMPAD_1, VicKeys.JOYSTICK_SW },  // SW

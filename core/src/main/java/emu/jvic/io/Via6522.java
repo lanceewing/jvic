@@ -869,12 +869,12 @@ public class Via6522 extends MemoryMappedChip {
   }
 
   // Template method for subclasses to provide new CA1 input. If not used, then never changes.
-  public int getCa1() {
+  protected int getCa1() {
     return ca1;
   }
   
   // Template method for subclasses to provide new CB1 input. IF not used, then never changes.
-  public int getCb1() {
+  protected int getCb1() {
     return cb1;
   }
   

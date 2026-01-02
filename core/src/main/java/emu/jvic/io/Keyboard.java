@@ -68,4 +68,18 @@ public class Keyboard {
         
         return ((~(rowData)) & 0xFF);
     }
+    
+    /**
+     * Gets the current restore key state.
+     * 
+     * @return The current restore key state.
+     */
+    public int getRestoreKeyState() {
+        int restoreKeyState = keyboardMatrix.getKeyMatrixRow(KeyboardMatrix.RESTORE);
+        // TODO: For some reason pressing the RESTORE key hangs the machine.
+        //return (restoreKeyState & 0x01);
+        return 0;
+    }
+    
+    private int currentRestoreState;
 }

@@ -1,13 +1,8 @@
 package emu.jvic;
 
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 
 import emu.jvic.ui.ViewportManager;
-
-import static emu.jvic.KeyboardMatrix.RESTORE;
-import static emu.jvic.KeyboardMatrix.RUN_STOP;
-import static emu.jvic.KeyboardMatrix.SHIFT_LOCK;
 
 /**
  * Enum representing the different types of keyboard available within JVic.
@@ -19,8 +14,8 @@ public enum KeyboardType {
       LANDSCAPE(
             new Integer[][] {
               { VicKeys.LEFT_ARROW, VicKeys.LEFT_ARROW, VicKeys.ONE, VicKeys.ONE, VicKeys.TWO, VicKeys.TWO, VicKeys.THREE, VicKeys.THREE, VicKeys.FOUR, VicKeys.FOUR, VicKeys.FIVE, VicKeys.FIVE, VicKeys.SIX, VicKeys.SIX, VicKeys.SEVEN, VicKeys.SEVEN, VicKeys.EIGHT, VicKeys.EIGHT, VicKeys.NINE, VicKeys.NINE, VicKeys.ZERO, VicKeys.ZERO, VicKeys.PLUS, VicKeys.PLUS, VicKeys.HYPHEN, VicKeys.HYPHEN, VicKeys.POUND, VicKeys.POUND, VicKeys.HOME, VicKeys.HOME, VicKeys.DELETE, VicKeys.DELETE },
-              { VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.Q, VicKeys.Q, VicKeys.W, VicKeys.W, VicKeys.E, VicKeys.E, VicKeys.R, VicKeys.R, VicKeys.T, VicKeys.T, VicKeys.Y, VicKeys.Y, VicKeys.U, VicKeys.U, VicKeys.I, VicKeys.I, VicKeys.O, VicKeys.O, VicKeys.P, VicKeys.P, VicKeys.AT, VicKeys.AT, VicKeys.ASTERISK, VicKeys.ASTERISK, VicKeys.UP_ARROW, VicKeys.UP_ARROW, RESTORE, RESTORE, RESTORE },
-              { VicKeys.RUN_STOP, VicKeys.RUN_STOP, SHIFT_LOCK, SHIFT_LOCK, VicKeys.A, VicKeys.A, VicKeys.S, VicKeys.S, VicKeys.D, VicKeys.D, VicKeys.F, VicKeys.F, VicKeys.G, VicKeys.G, VicKeys.H, VicKeys.H, VicKeys.J, VicKeys.J, VicKeys.K, VicKeys.K, VicKeys.L, VicKeys.L, VicKeys.COLON, VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.EQUALS, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN },
+              { VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.CONTROL, VicKeys.Q, VicKeys.Q, VicKeys.W, VicKeys.W, VicKeys.E, VicKeys.E, VicKeys.R, VicKeys.R, VicKeys.T, VicKeys.T, VicKeys.Y, VicKeys.Y, VicKeys.U, VicKeys.U, VicKeys.I, VicKeys.I, VicKeys.O, VicKeys.O, VicKeys.P, VicKeys.P, VicKeys.AT, VicKeys.AT, VicKeys.ASTERISK, VicKeys.ASTERISK, VicKeys.UP_ARROW, VicKeys.UP_ARROW, VicKeys.RESTORE, VicKeys.RESTORE, VicKeys.RESTORE },
+              { VicKeys.RUN_STOP, VicKeys.RUN_STOP, VicKeys.SHIFT_LOCK, VicKeys.SHIFT_LOCK, VicKeys.A, VicKeys.A, VicKeys.S, VicKeys.S, VicKeys.D, VicKeys.D, VicKeys.F, VicKeys.F, VicKeys.G, VicKeys.G, VicKeys.H, VicKeys.H, VicKeys.J, VicKeys.J, VicKeys.K, VicKeys.K, VicKeys.L, VicKeys.L, VicKeys.COLON, VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.EQUALS, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN, VicKeys.RETURN },
               { VicKeys.CBM, VicKeys.CBM, VicKeys.LEFT_SHIFT, VicKeys.LEFT_SHIFT, VicKeys.LEFT_SHIFT, VicKeys.Z, VicKeys.Z, VicKeys.X, VicKeys.X, VicKeys.C, VicKeys.C, VicKeys.V, VicKeys.V, VicKeys.B, VicKeys.B, VicKeys.N, VicKeys.N, VicKeys.M, VicKeys.M, VicKeys.COMMA, VicKeys.COMMA, VicKeys.PERIOD, VicKeys.PERIOD, VicKeys.FORWARD_SLASH, VicKeys.FORWARD_SLASH, VicKeys.RIGHT_SHIFT, VicKeys.RIGHT_SHIFT, VicKeys.RIGHT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_RIGHT, VicKeys.CURSOR_RIGHT },
               { VicKeys.F1, VicKeys.F1, VicKeys.F1, VicKeys.F3, VicKeys.F3, VicKeys.F3, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.F5, VicKeys.F5, VicKeys.F5, VicKeys.F7, VicKeys.F7, VicKeys.F7 }
             },
@@ -34,12 +29,12 @@ public enum KeyboardType {
       PORTRAIT(
             new Integer[][] {
               { VicKeys.CONTROL, VicKeys.LEFT_ARROW, VicKeys.UP_ARROW, VicKeys.F1, VicKeys.F3, VicKeys.F5, VicKeys.F7, VicKeys.POUND, VicKeys.HOME, VicKeys.DELETE },
-              { VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.AT, VicKeys.PLUS, VicKeys.HYPHEN, VicKeys.ASTERISK, VicKeys.FORWARD_SLASH, VicKeys.RUN_STOP, RESTORE },
+              { VicKeys.COLON, VicKeys.SEMI_COLON, VicKeys.EQUALS, VicKeys.AT, VicKeys.PLUS, VicKeys.HYPHEN, VicKeys.ASTERISK, VicKeys.FORWARD_SLASH, VicKeys.RUN_STOP, VicKeys.RESTORE },
               { VicKeys.ONE, VicKeys.TWO, VicKeys.THREE, VicKeys.FOUR, VicKeys.FIVE, VicKeys.SIX, VicKeys.SEVEN, VicKeys.EIGHT, VicKeys.NINE, VicKeys.ZERO },
               { VicKeys.Q, VicKeys.W, VicKeys.E, VicKeys.R, VicKeys.T, VicKeys.Y, VicKeys.U, VicKeys.I, VicKeys.O, VicKeys.P },
               { VicKeys.A, VicKeys.S, VicKeys.D, VicKeys.F, VicKeys.G, VicKeys.H, VicKeys.J, VicKeys.K, VicKeys.L, VicKeys.RETURN },
               { VicKeys.Z, VicKeys.X, VicKeys.C, VicKeys.V, VicKeys.B, VicKeys.N, VicKeys.M, VicKeys.COMMA, VicKeys.PERIOD, VicKeys.RETURN },
-              { VicKeys.CBM, SHIFT_LOCK, VicKeys.LEFT_SHIFT, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.RIGHT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_RIGHT }
+              { VicKeys.CBM, VicKeys.SHIFT_LOCK, VicKeys.LEFT_SHIFT, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.SPACE, VicKeys.RIGHT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.CURSOR_RIGHT }
             },
             "png/keyboard_portrait_10x7.png",
             1.0f,

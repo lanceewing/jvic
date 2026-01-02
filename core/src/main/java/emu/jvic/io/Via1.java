@@ -16,6 +16,11 @@ public class Via1 extends Via6522 {
      * The CPU that the VIC 20 is using. This is where VIA 1 IRQ signals will be sent.
      */
     private Cpu6502 cpu6502;
+    
+    /**
+     * The Keyboard from which we get the current keyboard state from.
+     */
+    private Keyboard keyboard;
 
     /**
      * The Joystick from which we get the current joystick state from.
@@ -31,13 +36,15 @@ public class Via1 extends Via6522 {
      * Constructor for Via1.
      * 
      * @param cpu6502   The CPU that the VIC 20 is using. This is where VIA 2 IRQ signals will be sent.
+     * @param keyboard  The Keyboard from which we get the current keyboard state from.
      * @param joystick  The Joystick from which the Via gets the current joystick state from.
      * @param serialBus The SerialBus that VIA 1 is connected to for Data IN, Clock IN and Atn OUT.
      * @param snapshot  Optional snapshot of the machine state to start with.
      */
-    public Via1(Cpu6502 cpu6502, Joystick joystick, SerialBus serialBus, Snapshot snapshot) {
+    public Via1(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, Snapshot snapshot) {
         super(false);
         this.cpu6502 = cpu6502;
+        this.keyboard = keyboard;
         this.joystick = joystick;
         this.serialBus = serialBus;
         if (snapshot != null) {
@@ -148,5 +155,9 @@ public class Via1 extends Via6522 {
         } else {
             cpu6502.clearInterrupt(Cpu6502.S_NMI);
         }
+    }
+    
+    protected int getCa1() {
+        return keyboard.getRestoreKeyState();
     }
 }

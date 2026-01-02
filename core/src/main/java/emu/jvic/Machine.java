@@ -144,7 +144,7 @@ public class Machine {
         c1541Drive = new C1541Drive(serialBus, dos1541Rom);
 
         // Create two instances of the VIA chip; one for VIA1 and one for VIA2.
-        via1 = new Via1(cpu, joystick, serialBus, snapshot);
+        via1 = new Via1(cpu, keyboard, joystick, serialBus, snapshot);
         via2 = new Via2(cpu, keyboard, joystick, serialBus, snapshot);
         
         // Now we create the memory, which will include mapping the VIC chip,

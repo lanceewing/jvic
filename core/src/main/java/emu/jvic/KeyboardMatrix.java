@@ -19,9 +19,13 @@ import com.badlogic.gdx.utils.TimeUtils;
  */
 public abstract class KeyboardMatrix extends InputAdapter {
     
+    // The keyboard matrix data array is of size 513, in both desktop and html versions,
+    // so all index values must be below this. 0-255 is reversed for the normal keys,
+    // whereas the joystick keys and special keys (such as restore) use values above 255.
     public static final int SHIFT_LOCK = 511;
     public static final int RUN_STOP = 510;
     public static final int RESTORE = 509;
+    
     public static final int JOYSTICK = 256;
     
     /**
@@ -110,17 +114,14 @@ public abstract class KeyboardMatrix extends InputAdapter {
         { VicKeys.JOYSTICK_SE,    JOYSTICK, 0x88 },  // SE
         { VicKeys.JOYSTICK_NW,    JOYSTICK, 0x14 },  // NW
         { VicKeys.JOYSTICK_NE,    JOYSTICK, 0x84 },  // NE
+        
+        { VicKeys.RESTORE, RESTORE, 0x01 },
     };
     
     /**
      * Whether the SHIFT LOCK is currently on or not (this is a toggle).
      */
     private boolean shiftLockOn;
-
-    /**
-     * Whether the RESTORE key is currently down or not.
-     */
-    private boolean restoreDown;
     
     /**
      * The ALT key is not directly mapped to the VIC keyboard, as there is no corresponding 
@@ -221,9 +222,6 @@ public abstract class KeyboardMatrix extends InputAdapter {
                         setKeyMatrixRow(8, getKeyMatrixRow(8) & ~2);
                     }
                     break;
-                case RESTORE:
-                    restoreDown = true;
-                    break;
                 default:
                     break;
             }
@@ -266,11 +264,6 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 if (keyDetails != null) {
                     int currentRowValue = getKeyMatrixRow(keyDetails[1]);
                     setKeyMatrixRow(keyDetails[1], currentRowValue & ~keyDetails[2]);
-                } else {
-                    // Special keycodes.
-                    if (vicKey == RESTORE) {
-                        restoreDown = false;
-                    }
                 }
                 
                 // If SHIFT LOCK is on, we override the left shift key.

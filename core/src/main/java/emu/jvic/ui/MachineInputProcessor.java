@@ -154,6 +154,12 @@ public class MachineInputProcessor extends InputAdapter {
                 case Keys.W:
                     handleWarpSpeedToggle();
                     return true;
+                case Keys.Y:
+                    // Web version doesn't support screen shots... yet.
+                    if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
+                        machineScreen.saveScreenshot();
+                    }
+                    return true;
                 case Keys.Z:
                     rotateScreenSize();
                     return true;
@@ -165,12 +171,6 @@ public class MachineInputProcessor extends InputAdapter {
             // Web version handles F11 full screen itself, i.e. its a browser feature.
             if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
                 handleFullScreenToggle();
-            }
-        }
-        else if (keycode == Keys.F12) {
-            // Web version doesn't support screen shots.
-            if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
-                machineScreen.saveScreenshot();
             }
         }
         return false;
