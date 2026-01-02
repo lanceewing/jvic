@@ -721,7 +721,7 @@ public class Cpu6502 extends BaseChip {
      * @param address the address of the word to get.
      */
     private int getWordFromMemory(int address) {
-        return (memoryMap[address].readMemory(address) | ((memoryMap[address + 1].readMemory(address + 1) << 8) & 0xFF00));
+        return (memory.readMemory(address) | ((memory.readMemory(address + 1) << 8) & 0xFF00));
     }
 
     /**
@@ -1385,7 +1385,7 @@ public class Cpu6502 extends BaseChip {
     
                 case EXECUTE_BRANCH:
                     // Fetch offset
-                    inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
+                    inputDataLatch = memory.readMemory(programCounter);
                     programCounter++;
                     // Execute the branch test.
                     executeInstruction();
@@ -1418,7 +1418,7 @@ public class Cpu6502 extends BaseChip {
                             displayCurrentInstruction();
                         }
                         // No interrupts, so proceed to next instruction.
-                        instructionRegister = memoryMap[programCounter].readMemory(programCounter);
+                        instructionRegister = memory.readMemory(programCounter);
                         programCounter++;
                         instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
                         delayInterruptOneCycle = false;
@@ -1483,23 +1483,23 @@ public class Cpu6502 extends BaseChip {
                     break;
     
                 case FETCH_ADH_FFFB:
-                    effectiveAddressHigh = (memoryMap[0xFFFB].readMemory(0xFFFB) << 8);
+                    effectiveAddressHigh = (memory.readMemory(0xFFFB) << 8);
                     break;
     
                 case FETCH_ADH_FFFF:
-                    effectiveAddressHigh = (memoryMap[0xFFFF].readMemory(0xFFFF) << 8);
+                    effectiveAddressHigh = (memory.readMemory(0xFFFF) << 8);
                     break;
     
                 case FETCH_ADH_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    effectiveAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    effectiveAddressHigh = (memory.readMemory(programCounter) << 8);
                     programCounter++;
                     break;
     
                 case FETCH_ADH_IA:
                     // Only used by JMP, so not likely to have IO address involved.
                     int indirectAddress = indirectAddressHigh | indirectAddressLow;
-                    effectiveAddressHigh = (memoryMap[indirectAddress].readMemory(indirectAddress) << 8);
+                    effectiveAddressHigh = (memory.readMemory(indirectAddress) << 8);
                     break;
     
                 case FETCH_ADL_BAL:
@@ -1509,23 +1509,23 @@ public class Cpu6502 extends BaseChip {
                     break;
     
                 case FETCH_ADL_FFFA:
-                    effectiveAddressLow = memoryMap[0xFFFA].readMemory(0xFFFA);
+                    effectiveAddressLow = memory.readMemory(0xFFFA);
                     break;
     
                 case FETCH_ADL_FFFE:
-                    effectiveAddressLow = memoryMap[0xFFFE].readMemory(0xFFFE);
+                    effectiveAddressLow = memory.readMemory(0xFFFE);
                     break;
     
                 case FETCH_ADL_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    effectiveAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    effectiveAddressLow = memory.readMemory(programCounter);
                     programCounter++;
                     break;
     
                 case FETCH_ADL_IA:
                     // Only used by JMP, so not likely to have IO address involved.
                     indirectAddress = indirectAddressHigh | indirectAddressLow;
-                    effectiveAddressLow = memoryMap[indirectAddress].readMemory(indirectAddress);
+                    effectiveAddressLow = memory.readMemory(indirectAddress);
                     indirectAddressLow = ((indirectAddressLow + 1) & 0xFF); // Well known NMOS 6502 bug
                     break;
     
@@ -1536,7 +1536,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_BAH_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    baseAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    baseAddressHigh = (memory.readMemory(programCounter) << 8);
                     programCounter++;
                     break;
     
@@ -1548,7 +1548,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_BAL_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    baseAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    baseAddressLow = memory.readMemory(programCounter);
                     programCounter++;
                     break;
     
@@ -1602,7 +1602,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_DATA_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    inputDataLatch = memoryMap[programCounter].readMemory(programCounter);
+                    inputDataLatch = memory.readMemory(programCounter);
                     programCounter++;
                     break;
     
@@ -1651,7 +1651,7 @@ public class Cpu6502 extends BaseChip {
                     // IRQ, NMI)
                     // TODO: Apparently it does fetch data using PC, but having this here affects
                     // the sound. ?!
-                    // memoryMap[programCounter].readMemory(programCounter);
+                    // memory.readMemory(programCounter);
                     break;
     
                 case FETCH_DIS_SP:
@@ -1660,19 +1660,19 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_IAH_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    indirectAddressHigh = (memoryMap[programCounter].readMemory(programCounter) << 8);
+                    indirectAddressHigh = (memory.readMemory(programCounter) << 8);
                     programCounter++;
                     break;
     
                 case FETCH_IAL_PC:
                     // Program counter is highly unlikely to be pointing at I/O
-                    indirectAddressLow = memoryMap[programCounter].readMemory(programCounter);
+                    indirectAddressLow = memory.readMemory(programCounter);
                     programCounter++;
                     break;
     
                 case FETCH_INC_PC:
                     // Fetch using PC, discard data, then increment PC.
-                    memoryMap[programCounter].readMemory(programCounter);
+                    memory.readMemory(programCounter);
                     programCounter++;
                     break;
     
@@ -1757,7 +1757,7 @@ public class Cpu6502 extends BaseChip {
                     displayCurrentInstruction();
                 }
                 // No interrupts, so proceed to next instruction.
-                instructionRegister = memoryMap[programCounter].readMemory(programCounter);
+                instructionRegister = memory.readMemory(programCounter);
                 programCounter++;
                 instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
                 delayInterruptOneCycle = false;
