@@ -154,8 +154,8 @@ public class C1541Drive {
         currentSector = disk.getSector(currentTrack, 0);
         
         if (warmup) {
-            // Run the 1541 drive for half a second to get it warmed up (needed for some games).
-            for (int i=0; i<500000; i++) {
+            // Run the 1541 drive for a second to get it warmed up (needed for some games).
+            for (int i=0; i<1000000; i++) {
                 emulateCycle();
             }
         }
