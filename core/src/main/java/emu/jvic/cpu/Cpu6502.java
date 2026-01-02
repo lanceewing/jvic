@@ -1431,7 +1431,7 @@ public class Cpu6502 extends BaseChip {
     
                 case EXECUTE_MID_ADL: // Executes (does a write unmodified data at same time)
                     // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page)
-                    mem[effectiveAddressLow] = inputDataLatch;
+                    memory.writeMemory(effectiveAddressLow, inputDataLatch);
                     executeInstruction();
                     break;
     
@@ -1443,7 +1443,7 @@ public class Cpu6502 extends BaseChip {
     
                 case EXECUTE_MID_BAL:
                     // Dummy write. No I/O in page zero (ASL, LSR, ROL, ROR, DEC, INC - Zero Page, X)
-                    mem[baseAddressLow] = inputDataLatch;
+                    memory.writeMemory(baseAddressLow, inputDataLatch);
                     executeInstruction();
                     break;
     
@@ -1456,7 +1456,7 @@ public class Cpu6502 extends BaseChip {
                 case EXECUTE_STORE_ADL:
                     // No I/O in pzge zero (STA, STX, STY - Zero Page)
                     executeInstruction();
-                    mem[effectiveAddressLow] = dataBusBuffer;
+                    memory.writeMemory(effectiveAddressLow, dataBusBuffer);
                     break;
     
                 case EXECUTE_STORE_EA:
@@ -1474,12 +1474,12 @@ public class Cpu6502 extends BaseChip {
                 case EXECUTE_STORE_BAL:
                     // No I/O in page zero (STY, STA, STX - Zero Page, X & Y)
                     executeInstruction();
-                    mem[baseAddressLow] = dataBusBuffer;
+                    memory.writeMemory(baseAddressLow, dataBusBuffer);
                     break;
     
                 case FETCH_ADH_BAL:
                     // No I/O in page zero, so we can access memory directly.
-                    effectiveAddressHigh = (mem[baseAddressLow] << 8);
+                    effectiveAddressHigh = (memory.readMemory(baseAddressLow) << 8);
                     break;
     
                 case FETCH_ADH_FFFB:
@@ -1504,7 +1504,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_ADL_BAL:
                     // No I/O in page zero, so we can access memory directly.
-                    effectiveAddressLow = mem[baseAddressLow];
+                    effectiveAddressLow = memory.readMemory(baseAddressLow);
                     baseAddressLow = ((baseAddressLow + 1) & 0xFF);
                     break;
     
@@ -1531,7 +1531,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_BAH_IAL:
                     // No I/O in page zero.
-                    baseAddressHigh = (mem[indirectAddressLow] << 8);
+                    baseAddressHigh = (memory.readMemory(indirectAddressLow) << 8);
                     break;
     
                 case FETCH_BAH_PC:
@@ -1542,7 +1542,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_BAL_IAL: // Increments IAL by 1 aswell (& 0xFF??)
                     // No I/O in page zero.
-                    baseAddressLow = mem[indirectAddressLow];
+                    baseAddressLow = memory.readMemory(indirectAddressLow);
                     indirectAddressLow = ((indirectAddressLow + 1) & 0xFF);
                     break;
     
@@ -1554,7 +1554,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_DATA_ADL:
                     // No I/O in page zero.
-                    inputDataLatch = mem[effectiveAddressLow];
+                    inputDataLatch = memory.readMemory(effectiveAddressLow);
                     break;
     
                 case FETCH_DATA_BA:
@@ -1593,7 +1593,7 @@ public class Cpu6502 extends BaseChip {
     
                 case FETCH_DATA_BAL:
                     // No I/O in page zero
-                    inputDataLatch = mem[baseAddressLow];
+                    inputDataLatch = memory.readMemory(baseAddressLow);
                     break;
     
                 case FETCH_DATA_EA:
@@ -1609,7 +1609,7 @@ public class Cpu6502 extends BaseChip {
                 case FETCH_DATA_SP:
                     // No I/O in the stack page (PLP, PLA)
                     stackPointer = ((stackPointer + 1) & 0xFF);
-                    inputDataLatch = mem[stackPointer + 0x100];
+                    inputDataLatch = memory.readMemory(stackPointer + 0x100);
                     break;
     
                 case FETCH_DIS_BA_X:
@@ -1679,25 +1679,25 @@ public class Cpu6502 extends BaseChip {
                 case FETCH_P_SP:
                     // No I/O in the stack page (RTI)
                     stackPointer = ((stackPointer + 1) & 0xFF);
-                    processorStatusRegister = mem[stackPointer + 0x100];
+                    processorStatusRegister = memory.readMemory(stackPointer + 0x100);
                     unpackPSR();
                     break;
     
                 case FETCH_PCH_SP:
                     // No I/O in the stack page (RTS, RTI)
                     stackPointer = ((stackPointer + 1) & 0xFF);
-                    programCounter = (programCounter | (mem[stackPointer + 0x100] << 8));
+                    programCounter = (programCounter | (memory.readMemory(stackPointer + 0x100) << 8));
                     break;
     
                 case FETCH_PCL_SP:
                     // No I/O in the stack page (RTS, RTI)
                     stackPointer = ((stackPointer + 1) & 0xFF);
-                    programCounter = mem[stackPointer + 0x100];
+                    programCounter = memory.readMemory(stackPointer + 0x100);
                     break;
     
                 case STORE_DATA_ADL:
                     // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page)
-                    mem[effectiveAddressLow] = dataBusBuffer;
+                    memory.writeMemory(effectiveAddressLow, dataBusBuffer);
                     break;
     
                 case STORE_DATA_BA:
@@ -1707,7 +1707,7 @@ public class Cpu6502 extends BaseChip {
     
                 case STORE_DATA_BAL:
                     // No I/O in zero page (ASL, ROL, LSR, ROR, DEC, INC - Zero Page, X)
-                    mem[baseAddressLow] = dataBusBuffer;
+                    memory.writeMemory(baseAddressLow, dataBusBuffer);
                     break;
     
                 case STORE_DATA_EA:
@@ -1717,27 +1717,27 @@ public class Cpu6502 extends BaseChip {
     
                 case STORE_DATA_SP:
                     // No I/O in the stack page (PHP, PHA)
-                    mem[stackPointer + 0x100] = dataBusBuffer;
+                    memory.writeMemory(stackPointer + 0x100, dataBusBuffer);
                     stackPointer = ((stackPointer - 1) & 0xFF);
                     break;
     
                 case STORE_P_SP:
                     // No I/O in the stack page (BRK)
                     packPSR();
-                    mem[stackPointer + 0x100] = (processorStatusRegister | (instructionRegister == 0 ? 0x10 : 0));
+                    memory.writeMemory(stackPointer + 0x100, (processorStatusRegister | (instructionRegister == 0 ? 0x10 : 0)));
                     // BRK flag only exists on the stack.
                     stackPointer = ((stackPointer - 1) & 0xFF);
                     break;
     
                 case STORE_PCH_SP:
                     // No I/O in the stack page (BRK, JSR)
-                    mem[stackPointer + 0x100] = (programCounter >> 8);
+                    memory.writeMemory(stackPointer + 0x100, (programCounter >> 8));
                     stackPointer = ((stackPointer - 1) & 0xFF);
                     break;
     
                 case STORE_PCL_SP:
                     // No I/O in the stack page (BRK, JSR)
-                    mem[stackPointer + 0x100] = (programCounter & 0xFF);
+                    memory.writeMemory(stackPointer + 0x100, (programCounter & 0xFF));
                     stackPointer = ((stackPointer - 1) & 0xFF);
                     break;
     
