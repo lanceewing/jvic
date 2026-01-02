@@ -164,13 +164,22 @@ public class Machine {
                 autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
                 // Insert the disk ready to be booted.
-                c1541Drive.insertDisk(programData);
+                c1541Drive.insertDisk(programData, true);
                 autoLoadRunnable = new Callable<Queue<char[]>>() {
                     public Queue<char[]> call() throws Exception {
-                        Queue<char[]> autoRunCmds = new LinkedList<char[]>();
-                        autoRunCmds.add(new char[] {'L','O','A','D','"','*','"',',','8'});
-                        autoRunCmds.add(new char[] {'R','U','N'});
-                        return autoRunCmds;
+                        String autoRunCmds = program.getAppConfigItem().getAutoRunCommand();
+                        Queue<char[]> autoRunCmdQueue = new LinkedList<char[]>();
+                        if (autoRunCmds != null) {
+                            String[] autoRunCmdArray = autoRunCmds.split("[|]");
+                            for (String autoRunCmd : autoRunCmdArray) {
+                                autoRunCmdQueue.add(autoRunCmd.toCharArray());
+                            }
+                        } else {
+                            // Default.
+                            autoRunCmdQueue.add(new char[] {'L','O','A','D','"','*','"',',','8'});
+                            autoRunCmdQueue.add(new char[] {'R','U','N'});
+                        }
+                        return autoRunCmdQueue;
                     }
                 };
             } else if ("PCV".equals(programType)) {
@@ -188,7 +197,7 @@ public class Machine {
     }
 
     /**
-     * Updates the state of the machine of the machine until a frame is complete
+     * Updates the state of the machine until a frame is complete
      */
     public void update() {
         boolean frameComplete = false;

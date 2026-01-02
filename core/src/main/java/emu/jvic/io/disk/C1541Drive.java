@@ -141,8 +141,9 @@ public class C1541Drive {
      * for the raw .d64 disk image.
      * 
      * @param diskData The draw .d64 disk image data to insert.
+     * @param warmup Whether or not to run emulation for half a second.
      */
-    public void insertDisk(byte[] diskData) {
+    public void insertDisk(byte[] diskData, boolean warmup) {
         disk = new GcrDiskImage(diskData);
 
         // There is no track 0. Tracks start at 1, sectors at 0.
@@ -151,6 +152,13 @@ public class C1541Drive {
         currentSectorOffset = -1;
         currentTrackSize = disk.getSectorCount(currentTrack);
         currentSector = disk.getSector(currentTrack, 0);
+        
+        if (warmup) {
+            // Run the 1541 drive for half a second to get it warmed up (needed for some games).
+            for (int i=0; i<500000; i++) {
+                emulateCycle();
+            }
+        }
     }
 
     /**
