@@ -749,28 +749,25 @@ public class Vic6561 extends Vic {
                                 multiColourTable[2] = (colourData & 0x07);
         
                                 // Calculate address within video memory and fetch cell index.
-                                // TODO: Implement unconnected memory check.
                                 int screenAddress = screen_mem_start + videoMatrixCounter;
                                 
-                                //switch ((screenAddress >> 10) & 0xF) {
-                                //    case 4:
-                                //    case 5:
-                                //    case 6:
-                                //    case 7:
-                                //    case 9:
-                                //    case 10:
-                                //    case 11:
-                                //        cellIndex = memory.getLastWrite();
-                                //        break;
-                                //        
-                                //    default:
-                                //        cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
-                                //        break;
-                                //}
+                                switch ((screenAddress >> 10) & 0xF) {
+                                    case 4:
+                                    case 5:
+                                    case 6:
+                                    case 7:
+                                    case 9:
+                                    case 10:
+                                    case 11:
+                                        // Unconnected memory, so VIC chip sees what CPU put on bus.
+                                        cellIndex = memory.getLastBusData();
+                                        break;
+                                        
+                                    default:
+                                        cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
+                                        break;
+                                }
                                 
-                                // TODO: Replace with unconnected memory version above.
-                                cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
-        
                                 // Due to the way the colour memory is wired up, the above fetch of the cell
                                 // index also happens to automatically fetch the foreground colour from the 
                                 // Colour Matrix via the top 4 lines of the data bus (DB8-DB11), which are 
@@ -809,25 +806,22 @@ public class Vic6561 extends Vic {
                                 // Calculate offset of data.
                                 charDataOffset = char_mem_start + (cellIndex << char_size_shift) + cellDepthCounter;
         
-                                // TODO: Add unconnected memory check here.
-                                //switch ((charDataOffset >> 10) & 0xF) {
-                                //    case 4:
-                                //    case 5:
-                                //    case 6:
-                                //    case 7:
-                                //    case 9:
-                                //    case 10:
-                                //    case 11:
-                                //        charDataLatch = memory.getLastWrite();
-                                //        break;
-                                //    default:
-                                //        // Adjust offset for memory wrap around.
-                                //        charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
-                                //        break;
-                                //}
-        
-                                // Fetch cell data, initially latched to the side until it is needed.
-                                charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
+                                switch ((charDataOffset >> 10) & 0xF) {
+                                    case 4:
+                                    case 5:
+                                    case 6:
+                                    case 7:
+                                    case 9:
+                                    case 10:
+                                    case 11:
+                                        // Unconnected memory, so VIC chip sees what CPU put on bus.
+                                        charDataLatch = memory.getLastBusData();
+                                        break;
+                                    default:
+                                        // Fetch cell data, initially latched to the side until it is needed.
+                                        charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
+                                        break;
+                                }
         
                                 // Determine next character pixels.
                                 if (hiresMode) {

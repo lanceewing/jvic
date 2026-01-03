@@ -76,7 +76,7 @@ public class Vic20Memory extends Memory {
     private void initVicMemory(Vic vic, Via6522 via1, Via6522 via2, byte[] basicRom, byte[] kernalRom, byte[] charRom) {
 
         // This 1K of RAM is always present.
-        mapChipToMemory(new RamChip(), 0x0000, 0x03FF);
+        mapChipToMemory(new VicBusRamChip(), 0x0000, 0x03FF);
 
         // The next 3K of memory may have RAM or may be unconnected.
         mapChipToMemory((ramExpansion & RAM_1) != 0 ? new RamChip() : new UnconnectedMemory(), 0x0400, 0x07FF);
@@ -84,14 +84,14 @@ public class Vic20Memory extends Memory {
         mapChipToMemory((ramExpansion & RAM_3) != 0 ? new RamChip() : new UnconnectedMemory(), 0x0C00, 0x0FFF);
 
         // This 4K of RAM is always present.
-        mapChipToMemory(new RamChip(), 0x1000, 0x1FFF);
+        mapChipToMemory(new VicBusRamChip(), 0x1000, 0x1FFF);
 
         // The next three 8K blocks may have RAM or may be unconnected.
         mapChipToMemory((ramExpansion & BLK_1) != 0 ? new RamChip() : new UnconnectedMemory(), 0x2000, 0x3FFF);
         mapChipToMemory((ramExpansion & BLK_2) != 0 ? new RamChip() : new UnconnectedMemory(), 0x4000, 0x5FFF);
         mapChipToMemory((ramExpansion & BLK_3) != 0 ? new RamChip() : new UnconnectedMemory(), 0x6000, 0x7FFF);
 
-        mapChipToMemory(new RomChip(), 0x8000, 0x8FFF, charRom);
+        mapChipToMemory(new VicBusRomChip(), 0x8000, 0x8FFF, charRom);
 
         // These are the standard locations for the VIC, VIA1 and VIA2 chips.
         mapChipToMemory(vic, 0x9000, 0x900F);

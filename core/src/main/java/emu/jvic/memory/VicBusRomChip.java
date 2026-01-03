@@ -1,11 +1,11 @@
 package emu.jvic.memory;
 
 /**
- * This class emulates a 4-bit RAM chip (nibble).
+ * This class emulates a ROM chip on the VIC bus.
  *
  * @author Lance Ewing
  */
-public class NibbleRamChip extends MemoryMappedChip {
+public class VicBusRomChip extends RomChip {
 
     /**
      * Reads the value of the given memory address.
@@ -27,7 +27,7 @@ public class NibbleRamChip extends MemoryMappedChip {
      * @param value   the value to write to the given address.
      */
     public void writeMemory(int address, int value) {
+        // Has no effect.
         memory.setLastBusData(value);
-        mem[address] = (value & 0x0F);
     }
 }

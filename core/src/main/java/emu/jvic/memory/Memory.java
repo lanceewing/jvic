@@ -29,9 +29,7 @@ public class Memory {
      */
     protected Cpu6502 cpu;
 
-    // TODO: To support VIC bus tricks.
-    protected int lastRead;
-    protected int lastWrite;
+    // To support VIC bus tricks.
     protected int lastBusData;
 
     /**
@@ -174,13 +172,9 @@ public class Memory {
     public int getLastBusData() {
         return lastBusData;
     }
-
-    public int getLastRead() {
-        return lastRead;
-    }
     
-    public int getLastWrite() {
-        return lastWrite;
+    public void setLastBusData(int lastBusData) {
+        this.lastBusData = lastBusData;
     }
 
     /**
@@ -200,8 +194,7 @@ public class Memory {
      * @return The contents of the memory address.
      */
     public int readMemory(int address) {
-        lastBusData = lastRead = memoryMap[address].readMemory(address);
-        return (lastBusData);
+        return memoryMap[address].readMemory(address);
     }
 
     /**
@@ -211,7 +204,6 @@ public class Memory {
      * @param value   The value to write to the given address.
      */
     public void writeMemory(int address, int value) {
-        lastBusData = lastWrite = value;
         memoryMap[address].writeMemory(address, value);
     }
 

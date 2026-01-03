@@ -183,6 +183,8 @@ public class Via6522 extends MemoryMappedChip {
    * @param value The byte to write into the address.
    */
   public void writeMemory(int address, int value) {
+    memory.setLastBusData(value);
+      
     switch (address & 0x000F) {
       case VIA_REG_0: // ORB/IRB
         outputRegisterB = value;
@@ -538,6 +540,8 @@ public class Via6522 extends MemoryMappedChip {
         break;
     }
 
+    memory.setLastBusData(value);
+    
     return value;
   }
 

@@ -291,6 +291,8 @@ public abstract class Vic extends MemoryMappedChip {
                 value = charData & 0xFF;
         }
 
+        memory.setLastBusData(value);
+        
         return value;
     }
 
@@ -301,6 +303,8 @@ public abstract class Vic extends MemoryMappedChip {
      * @param value   The value to write into the address.
      */
     public void writeMemory(int address, int value) {
+        memory.setLastBusData(value);
+        
         // This is how the VIC chip is mapped, i.e. each register to multiple addresses.
         address = address & 0xFF0F;
 
