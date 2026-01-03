@@ -210,7 +210,7 @@ public class DesktopProgramLoader extends ProgramLoader {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             StringBuilder loadAddress = new StringBuilder();
             for (String loadAddrKey : cartParts.keySet()) {
-                if (!loadAddress.isEmpty()) {
+                if (loadAddress.length() > 0) {
                     loadAddress.append("|");
                 }
                 loadAddress.append(loadAddrKey);

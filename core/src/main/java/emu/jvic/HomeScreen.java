@@ -323,7 +323,7 @@ public class HomeScreen extends InputAdapter implements Screen {
     public void show() {
         Gdx.input.setInputProcessor(portraitInputProcessor);
         if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
-            Gdx.graphics.setTitle("JVic");
+            Gdx.graphics.setTitle("JVic - " + version);
         }
     }
 
