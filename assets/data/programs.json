@@ -304,7 +304,7 @@
       "filePath": "https://vic20.games/programs?url=http://viznut.fi/demos/vic20/impo3.zip",
       "fileType": "DISK",
       "entryName": "impo3.d64",
-      "iconPath": "",
+      "iconPath": "screenshots/I/Impossiblator 3/Impossiblator_3.png",
       "machineType": "PAL",
       "ram": "RAM_UNEXPANDED"
     },
@@ -768,7 +768,7 @@
       "name": "Warning",
       "filePath": "https://vic20.games/programs?url=https://ftp.area536.com/mirrors/scene.org//parties/2014/assembly14/wild/warning_by_pwp.zip",
       "fileType": "PRG",
-      "iconPath": "",
+      "iconPath": "screenshots/W/Warning/Warning.png",
       "machineType": "PAL"
     },
     {
