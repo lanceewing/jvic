@@ -765,6 +765,7 @@ public class Vic6561 extends Vic {
                                         
                                     default:
                                         cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
+                                        memory.setLastBusData(cellIndex);
                                         break;
                                 }
                                 
@@ -820,6 +821,7 @@ public class Vic6561 extends Vic {
                                     default:
                                         // Fetch cell data, initially latched to the side until it is needed.
                                         charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
+                                        memory.setLastBusData(charDataLatch);
                                         break;
                                 }
         
