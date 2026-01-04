@@ -124,7 +124,6 @@ public class Vic6561 extends Vic {
         int char_size_shift = (3 + double_height_mode);
         int screen_mem_start = (((mem[VIC_REG_5] & 0xF0) << 6) | ((mem[VIC_REG_2] & 0x80) << 2));
         int char_mem_start = ((mem[VIC_REG_5] & 0x0F) << 10);
-        int colour_mem_start = (0x9400 | ((mem[VIC_REG_2] & 0x80) << 2));
 
         // VERTICAL TIMINGS:
         // Lines 1-9: Vertical blanking
@@ -773,7 +772,7 @@ public class Vic6561 extends Vic {
                                 // index also happens to automatically fetch the foreground colour from the 
                                 // Colour Matrix via the top 4 lines of the data bus (DB8-DB11), which are 
                                 // wired directly from colour RAM in to the VIC chip.
-                                colourData = mem[colour_mem_start + videoMatrixCounter];
+                                colourData = mem[0x9400 + (screenAddress & 0x3ff)];
         
                                 // Output the 1st pixel of next character. Note that this is not the character
                                 // that relates to the cell index and colour data fetched above.
