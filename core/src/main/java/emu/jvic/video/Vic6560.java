@@ -175,6 +175,11 @@ public class Vic6560 extends Vic {
                             // This is the line the video matrix starts on. As in the real chip, we use
                             // a different state for the first part of the first video matrix line.
                             fetchState = FETCH_IN_MATRIX_Y;
+                            
+                            // Screen origin X can match in the same cycle as Y.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
                         }
                         break;
                     case FETCH_IN_MATRIX_Y:
@@ -282,6 +287,11 @@ public class Vic6560 extends Vic {
                         // This is the line the video matrix starts on. As in the real chip, we use
                         // a different state for the first part of the first video matrix line.
                         fetchState = FETCH_IN_MATRIX_Y;
+                        
+                        // Screen origin X can match in the same cycle as Y.
+                        if (prevHorizontalCounter == screen_origin_x) {
+                            fetchState = FETCH_MATRIX_DLY_1;
+                        }
                     }
                 }
               
@@ -299,6 +309,11 @@ public class Vic6560 extends Vic {
                             // This is the line the video matrix starts on. As in the real chip, we use
                             // a different state for the first part of the first video matrix line.
                             fetchState = FETCH_IN_MATRIX_Y;
+                            
+                            // Screen origin X can match in the same cycle as Y.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
                         }
                         break;
                     case FETCH_IN_MATRIX_X:
@@ -347,6 +362,11 @@ public class Vic6560 extends Vic {
                             // This is the line the video matrix starts on. As in the real chip, we use
                             // a different state for the first part of the first video matrix line.
                             fetchState = FETCH_IN_MATRIX_Y;
+                            
+                            // Screen origin X can match in the same cycle as Y.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
                         }
                         break;
                     case FETCH_IN_MATRIX_Y:
@@ -487,6 +507,11 @@ public class Vic6560 extends Vic {
                             // This is the line the video matrix starts on. As in the real chip, we use
                             // a different state for the first part of the first video matrix line.
                             fetchState = FETCH_IN_MATRIX_Y;
+                            
+                            // Screen origin X can match in the same cycle as Y.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
                         }
                         break;
                     case FETCH_IN_MATRIX_Y:
@@ -520,6 +545,11 @@ public class Vic6560 extends Vic {
                             // This is the line the video matrix starts on. As in the real chip, we use
                             // a different state for the first part of the first video matrix line.
                             fetchState = FETCH_IN_MATRIX_Y;
+                            
+                            // Screen origin X can match in the same cycle as Y.
+                            if (prevHorizontalCounter == screen_origin_x) {
+                                fetchState = FETCH_MATRIX_DLY_1;
+                            }
                         }
                         break;
                     case FETCH_IN_MATRIX_Y:
@@ -624,6 +654,11 @@ public class Vic6560 extends Vic {
                                     // This is the line the video matrix starts on. As in the real chip, we use
                                     // a different state for the first part of the first video matrix line.
                                     fetchState = FETCH_IN_MATRIX_Y;
+                                    
+                                    // Screen origin X can match in the same cycle as Y.
+                                    if (prevHorizontalCounter == screen_origin_x) {
+                                        fetchState = FETCH_MATRIX_DLY_1;
+                                    }
                                 }
                                 break;
                             case FETCH_IN_MATRIX_Y:
@@ -670,6 +705,11 @@ public class Vic6560 extends Vic {
                                     // This is the line the video matrix starts on. As in the real chip, we use
                                     // a different state for the first part of the first video matrix line.
                                     fetchState = FETCH_IN_MATRIX_Y;
+                                    
+                                    // Screen origin X can match in the same cycle as Y.
+                                    if (prevHorizontalCounter == screen_origin_x) {
+                                        fetchState = FETCH_MATRIX_DLY_1;
+                                    }
                                 }
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
                                     borderColour = border_colour_index;
@@ -920,6 +960,11 @@ public class Vic6560 extends Vic {
                                 // This is the line the video matrix starts on. As in the real chip, we use
                                 // a different state for the first part of the first video matrix line.
                                 fetchState = FETCH_IN_MATRIX_Y;
+                                
+                                // Screen origin X can match in the same cycle as Y.
+                                if (prevHorizontalCounter == screen_origin_x) {
+                                    fetchState = FETCH_MATRIX_DLY_1;
+                                }
                             }
                             break;
                         case FETCH_IN_MATRIX_Y:
