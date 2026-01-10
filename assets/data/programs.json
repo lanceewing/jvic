@@ -644,6 +644,15 @@
       "ram": "RAM_16K"
     },
     {
+      "name": "Super VIC TT",
+      "displayName": "Super\nVIC TT",
+      "filePath": "https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=7859",
+      "fileType": "PRG",
+      "iconPath": "screenshots/S/Super VIC TT/Super_VIC_TT.png",
+      "machineType": "PAL",
+      "ram": "RAM_32K"
+    },
+    {
       "name": "Sword of Fargoal",
       "displayName": "Sword of\nFargoal",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FSword%20of%20Fargoal%20%281982%29%28Epyx%29%5B16k%5D.zip",
