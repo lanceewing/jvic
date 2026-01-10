@@ -75,12 +75,13 @@ public abstract class Vic extends MemoryMappedChip {
     protected static final int FETCH_IN_MATRIX_Y = 1;
     protected static final int FETCH_IN_MATRIX_X = 2;
     protected static final int FETCH_MATRIX_LINE = 3;
-    protected static final int FETCH_MATRIX_DLY_1 = 4;
-    protected static final int FETCH_MATRIX_DLY_2 = 5;
-    protected static final int FETCH_MATRIX_DLY_3 = 6;
-    protected static final int FETCH_SCREEN_CODE = 7;
-    protected static final int FETCH_CHAR_DATA = 8;
-    protected static final int FETCH_MATRIX_END = 9;
+    protected static final int FETCH_MATRIX_DLY_0 = 4;
+    protected static final int FETCH_MATRIX_DLY_1 = 5;
+    protected static final int FETCH_MATRIX_DLY_2 = 6;
+    protected static final int FETCH_MATRIX_DLY_3 = 7;
+    protected static final int FETCH_SCREEN_CODE = 8;
+    protected static final int FETCH_CHAR_DATA = 9;
+    protected static final int FETCH_MATRIX_END = 10;
     
     // These are to make it easier to copy the PIVIC code in an out.
     protected static final int CVBS_PIO = 0;
