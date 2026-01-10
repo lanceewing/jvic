@@ -196,11 +196,14 @@ public class Vic6560 extends Vic {
                         fetchState++;
                         break;
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
     
@@ -335,11 +338,14 @@ public class Vic6560 extends Vic {
                         break;
                     // In theory, the following states should not be possible at this point.
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
               
@@ -382,11 +388,14 @@ public class Vic6560 extends Vic {
                         break;
                     // In theory, the following states should not be possible at this point.
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
                 
@@ -526,11 +535,14 @@ public class Vic6560 extends Vic {
                         fetchState++;
                         break;
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
                 prevHorizontalCounter = horizontalCounter++;
@@ -564,11 +576,14 @@ public class Vic6560 extends Vic {
                         fetchState++;
                         break;
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 } 
 
@@ -675,7 +690,7 @@ public class Vic6560 extends Vic {
                                 break;
                                 
                             case FETCH_SCREEN_CODE:
-                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                                fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                                 break;
                           
                             case FETCH_CHAR_DATA:
@@ -686,6 +701,10 @@ public class Vic6560 extends Vic {
                                 videoMatrixCounter++;
                                 
                                 fetchState = FETCH_SCREEN_CODE;
+                                break;
+                                
+                            case FETCH_MATRIX_END:
+                                fetchState = FETCH_MATRIX_LINE;
                                 break;
                         }
     
@@ -979,11 +998,14 @@ public class Vic6560 extends Vic {
                             fetchState++;
                             break;
                         case FETCH_SCREEN_CODE:
-                            fetchState = ((horizontalCellCounter-- > 0)? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                            fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                             break;
                         case FETCH_CHAR_DATA:
                             videoMatrixCounter++;
                             fetchState = FETCH_SCREEN_CODE;
+                            break;
+                        case FETCH_MATRIX_END:
+                            fetchState = FETCH_MATRIX_LINE;
                             break;
                     }
 
