@@ -109,7 +109,7 @@ public class Vic6561 extends Vic {
      */
     public boolean emulateCycle() {
         boolean frameRenderComplete = false;
-
+        
         // Expressions to access different parts of control registers.
         int border_colour_index = (mem[VIC_REG_15] & 0x07);
         int background_colour_index = (mem[VIC_REG_15] >> 4);
@@ -140,7 +140,7 @@ public class Vic6561 extends Vic {
 
             // HC = 0 is handled in a single block for ALL lines.
             case 0:
-    
+                
                 // Reset pixel output buffer to be all border colour at start of line.
                 pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
                 hiresMode = false;
@@ -179,11 +179,14 @@ public class Vic6561 extends Vic {
                         fetchState++;
                         break;
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
     
@@ -383,11 +386,14 @@ public class Vic6561 extends Vic {
                         break;
                     // In theory, the following states should not be possible at this point.
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
     
@@ -430,11 +436,14 @@ public class Vic6561 extends Vic {
                         break;
                     // In theory, the following states should not be possible at this point.
                     case FETCH_SCREEN_CODE:
-                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                        fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                         break;
                     case FETCH_CHAR_DATA:
                         videoMatrixCounter++;
                         fetchState = FETCH_SCREEN_CODE;
+                        break;
+                    case FETCH_MATRIX_END:
+                        fetchState = FETCH_MATRIX_LINE;
                         break;
                 }
     
@@ -558,9 +567,10 @@ public class Vic6561 extends Vic {
                                 // The 4th pixel is partial before horiz blanking kicks in.
                                 pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[multiColourTable[pixel1]]);
                                 
-                                fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                                fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                                 break;
         
+                            case FETCH_MATRIX_END:
                             case FETCH_CHAR_DATA:
                                 // Look up latest background, border and auxiliary colours.
                                 multiColourTable[0] = background_colour_index;
@@ -579,9 +589,17 @@ public class Vic6561 extends Vic {
                                 // state, we need to keep incrementing the video matrix counter
                                 // until it is closed, which at the latest could be HC=1 on the
                                 // next line.
-                                videoMatrixCounter++;
-        
-                                fetchState = FETCH_SCREEN_CODE;
+                                
+                                if (fetchState == FETCH_MATRIX_END) {
+                                    // Leaving the matrix
+                                    fetchState = FETCH_MATRIX_LINE;
+                                } else {
+                                    // Increment the video matrix counter to next cell.
+                                    videoMatrixCounter++;
+                                    
+                                    // Toggle fetch state. For efficiency, HCC deliberately not checked here.
+                                    fetchState = FETCH_SCREEN_CODE;
+                                }
                                 break;
                         }
     
@@ -928,11 +946,14 @@ public class Vic6561 extends Vic {
                             fetchState++;
                             break;
                         case FETCH_SCREEN_CODE:
-                            fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_LINE);
+                            fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                             break;
                         case FETCH_CHAR_DATA:
                             videoMatrixCounter++;
                             fetchState = FETCH_SCREEN_CODE;
+                            break;
+                        case FETCH_MATRIX_END:
+                            fetchState = FETCH_MATRIX_LINE;
                             break;
                     }
     
