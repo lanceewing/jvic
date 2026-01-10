@@ -570,8 +570,8 @@ public class Vic6561 extends Vic {
                                 fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
                                 break;
         
-                            case FETCH_MATRIX_END:
                             case FETCH_CHAR_DATA:
+                            case FETCH_MATRIX_END:
                                 // Look up latest background, border and auxiliary colours.
                                 multiColourTable[0] = background_colour_index;
                                 multiColourTable[1] = border_colour_index;
