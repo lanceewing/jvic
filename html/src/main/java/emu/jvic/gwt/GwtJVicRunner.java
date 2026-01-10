@@ -1,6 +1,7 @@
 package emu.jvic.gwt;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.typedarrays.shared.ArrayBuffer;
 import com.google.gwt.typedarrays.shared.TypedArrays;
@@ -431,6 +432,11 @@ public class GwtJVicRunner extends JVicRunner {
         } else {
             worker.postObject("WarpSpeedOff", JavaScriptObject.createObject());
         }
+    }
+    
+    @Override
+    public void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem) {
+        // Not supported yet by the HTML5/GWT version.
     }
 
     public Worker getCurrentWorker() {

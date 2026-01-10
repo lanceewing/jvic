@@ -1,11 +1,8 @@
 package emu.jvic;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -15,8 +12,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
-//import com.badlogic.gdx.graphics.PixmapIO;
-//import com.badlogic.gdx.graphics.PixmapIO.PNG;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -28,7 +23,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad.TouchpadStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.utils.Base64Coder;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import emu.jvic.config.AppConfigItem;
@@ -712,52 +706,7 @@ public class MachineScreen implements Screen {
      * Saves a screenshot of the machine's current screen contents.
      */
     public void saveScreenshot() {
-        /*
-        String friendlyAppName = appConfigItem != null ? appConfigItem.getName().replaceAll("[ ,\n/\\:;*?\"<>|!]", "_")
-                : "shot";
-        if (Gdx.app.getType().equals(ApplicationType.Desktop)) {
-            try {
-                StringBuilder filePath = new StringBuilder("jvic_screens/");
-                filePath.append(friendlyAppName);
-                filePath.append("_");
-                filePath.append(System.currentTimeMillis());
-                filePath.append(".png");
-                
-                ScreenSize currentScreenSize = machineInputProcessor.getScreenSize();
-                int renderWidth = currentScreenSize.getRenderWidth(machineType);
-                int renderHeight = currentScreenSize.getRenderHeight(machineType);
-                Pixmap pixmap = new Pixmap(renderWidth, renderHeight, Pixmap.Format.RGBA8888);
-                pixmap.drawPixmap(
-                        screenPixmap, 
-                        machineType.getHorizontalOffset(), machineType.getVerticalOffset(),
-                        machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(),
-                        0, 0, renderWidth, renderHeight);
-                
-                // TODO: Move to platform specific code, as not supported by GWT/HTML5
-                PixmapIO.writePNG(Gdx.files.external(filePath.toString()), pixmap);
-            } catch (Exception e) {
-                // Ignore.
-            }
-        }
-        
-        // TODO: Move to platform specific code, as not supported by GWT/HTML5
-        if (appConfigItem != null) {
-            try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
-                try {
-                    writer.setFlipY(false);
-                    writer.write(out, screenPixmap);
-                } finally {
-                    writer.dispose();
-                }
-                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
-                jvic.getScreenshotStore().flush();
-            } catch (IOException ex) {
-                // Ignore.
-            }
-        }
-        */
+        jvicRunner.saveScreenshot(screenPixmap, appConfigItem);
     }
 
     @Override
@@ -874,6 +823,10 @@ public class MachineScreen implements Screen {
     
     public MachineType getMachineType() {
         return machineType;
+    }
+    
+    public JVic getJVic() {
+        return jvic;
     }
     
     /**

@@ -1,13 +1,21 @@
 package emu.jvic.lwjgl3;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 
+import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.PixmapIO.PNG;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Base64Coder;
 import com.badlogic.gdx.utils.TimeUtils;
 
+import emu.jvic.JVic;
 import emu.jvic.JVicRunner;
 import emu.jvic.KeyboardMatrix;
 import emu.jvic.Machine;
@@ -18,6 +26,7 @@ import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.memory.RamType;
 import emu.jvic.sound.SoundGenerator;
+import emu.jvic.ui.MachineInputProcessor.ScreenSize;
 
 public class DesktopJVicRunner extends JVicRunner {
 
@@ -242,6 +251,54 @@ public class DesktopJVicRunner extends JVicRunner {
     public void sendNmi() {
         if (machine != null) {
             machine.getCpu().setInterrupt(Cpu6502.S_NMI);
+        }
+    }
+
+    @Override
+    public void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem) {
+        String friendlyAppName = appConfigItem != null ? appConfigItem.getName().replaceAll("[ ,\n/\\:;*?\"<>|!]", "_")
+                : "shot";
+        if (Gdx.app.getType().equals(ApplicationType.Desktop)) {
+            try {
+                StringBuilder filePath = new StringBuilder("jvic_screens/");
+                filePath.append(friendlyAppName);
+                filePath.append("_");
+                filePath.append(System.currentTimeMillis());
+                filePath.append(".png");
+                
+                MachineType machineType = machineScreen.getMachineType();
+                ScreenSize currentScreenSize = machineScreen.getMachineInputProcessor().getScreenSize();
+                int renderWidth = currentScreenSize.getRenderWidth(machineType);
+                int renderHeight = currentScreenSize.getRenderHeight(machineType);
+                Pixmap pixmap = new Pixmap(renderWidth, renderHeight, Pixmap.Format.RGBA8888);
+                pixmap.drawPixmap(
+                        screenPixmap, 
+                        machineType.getHorizontalOffset(), machineType.getVerticalOffset(),
+                        machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(),
+                        0, 0, renderWidth, renderHeight);
+                
+                PixmapIO.writePNG(Gdx.files.external(filePath.toString()), pixmap);
+            } catch (Exception e) {
+                // Ignore.
+            }
+        }
+        
+        if (appConfigItem != null) {
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                PNG writer = new PNG((int) (screenPixmap.getWidth() * screenPixmap.getHeight() * 1.5f));
+                try {
+                    writer.setFlipY(false);
+                    writer.write(out, screenPixmap);
+                } finally {
+                    writer.dispose();
+                }
+                JVic jvic = machineScreen.getJVic();
+                jvic.getScreenshotStore().putString(friendlyAppName, new String(Base64Coder.encode(out.toByteArray())));
+                jvic.getScreenshotStore().flush();
+            } catch (IOException ex) {
+                // Ignore.
+            }
         }
     }
 }
