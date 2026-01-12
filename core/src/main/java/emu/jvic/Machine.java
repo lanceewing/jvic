@@ -12,6 +12,7 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
+import emu.jvic.io.tape.C1530Datasette;
 import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
@@ -42,6 +43,7 @@ public class Machine {
     private Joystick joystick;
     private SerialBus serialBus;
     private C1541Drive c1541Drive;
+    private C1530Datasette datasette;
 
     // Platform specific component.
     private KeyboardMatrix keyboardMatrix;
@@ -142,10 +144,11 @@ public class Machine {
         joystick = new Joystick(keyboardMatrix);
         serialBus = new SerialBus();
         c1541Drive = new C1541Drive(serialBus, dos1541Rom);
+        datasette = new C1530Datasette();
 
         // Create two instances of the VIA chip; one for VIA1 and one for VIA2.
-        via1 = new Via1(cpu, keyboard, joystick, serialBus, snapshot);
-        via2 = new Via2(cpu, keyboard, joystick, serialBus, snapshot);
+        via1 = new Via1(cpu, keyboard, joystick, serialBus, datasette, snapshot);
+        via2 = new Via2(cpu, keyboard, joystick, serialBus, datasette, snapshot);
         
         // Now we create the memory, which will include mapping the VIC chip,
         // the VIA chips, and the creation of RAM chips and ROM chips.

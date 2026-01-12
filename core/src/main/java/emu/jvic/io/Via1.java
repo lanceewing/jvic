@@ -1,6 +1,7 @@
 package emu.jvic.io;
 
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io.tape.C1530Datasette;
 import emu.jvic.snap.Snapshot;
 
 /**
@@ -31,6 +32,11 @@ public class Via1 extends Via6522 {
      * The SerialBus that VIA 1 is connected to for Data IN, Clock IN and Atn OUT.
      */
     private SerialBus serialBus;
+    
+    /**
+     * The datasette that VIA #1 is connected to for cassette switch sense.
+     */
+    private C1530Datasette datasette;
 
     /**
      * Constructor for Via1.
@@ -39,14 +45,16 @@ public class Via1 extends Via6522 {
      * @param keyboard  The Keyboard from which we get the current keyboard state from.
      * @param joystick  The Joystick from which the Via gets the current joystick state from.
      * @param serialBus The SerialBus that VIA 1 is connected to for Data IN, Clock IN and Atn OUT.
+     * @param datasette The datasette that VIA #1 is connected to for cassette switch sense.
      * @param snapshot  Optional snapshot of the machine state to start with.
      */
-    public Via1(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, Snapshot snapshot) {
+    public Via1(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, C1530Datasette datasette, Snapshot snapshot) {
         super(false);
         this.cpu6502 = cpu6502;
         this.keyboard = keyboard;
         this.joystick = joystick;
         this.serialBus = serialBus;
+        this.datasette = datasette;
         if (snapshot != null) {
             loadSnapshot(snapshot);
         }
@@ -120,7 +128,8 @@ public class Via1 extends Via6522 {
         // NOTE: The 1541 and VIC 20 differ in how the serial lines map to their VIA
         // port bits. In the 1541, there is an inverter between the IN and the VIA, bit 
         // in the VIC 20, there isn't.
-        int value = ((super.getPortAPins() & 0xC0) 
+        int value = ((super.getPortAPins() & 0x80)
+                | (datasette.getCassetteSwitchSense()? 0x40 : 0x00)
                 | (joystick.getJoystickState() & 0x3C)
                 | (serialBus.getData() ? 0x00 : 0x02) 
                 | (serialBus.getClock() ? 0x00 : 0x01));
@@ -143,6 +152,18 @@ public class Via1 extends Via6522 {
         }
     }
 
+    /**
+     * Update the external connections to the VIA 1 control lines.
+     */
+    protected void updateControlLines() {
+        if (ca2 == 1) {
+            datasette.setCassetteMotorControl(true);
+        } else {
+            // Active low, so this is turning on the motor.
+            datasette.setCassetteMotorControl(false);
+        }
+    }
+    
     /**
      * Notifies the 6502 of the change in the state of the IRQ pin. In this case it
      * is the 6502's NMI pin that this 6522 IRQ is connected to.

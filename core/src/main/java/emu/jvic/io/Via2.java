@@ -1,6 +1,7 @@
 package emu.jvic.io;
 
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io.tape.C1530Datasette;
 import emu.jvic.snap.Snapshot;
 
 /**
@@ -31,6 +32,11 @@ public class Via2 extends Via6522 {
      * The SerialBus that VIA 2 is connected to for Data OUT and Clock OUT.
      */
     private SerialBus serialBus;
+    
+    /**
+     * The datasette from which to read in tape data via CA1 (CASS READ).
+     */
+    private C1530Datasette datasette;
 
     /**
      * Constructor for Via2.
@@ -39,14 +45,16 @@ public class Via2 extends Via6522 {
      * @param keyboard  The Keyboard from which we get the current keyboard state from.
      * @param joystick  The Joystick from which the Via gets the current joystick state from.
      * @param serialBus The SerialBus that VIA 2 is connected to for Data OUT and Clock OUT.
+     * @param datasette The C1530Datasette from which to read in tape data.
      * @param snapshot  Optional snapshot of the machine state to start with.
      */
-    public Via2(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, Snapshot snapshot) {
+    public Via2(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, C1530Datasette datasette, Snapshot snapshot) {
         super(true);
         this.cpu6502 = cpu6502;
         this.keyboard = keyboard;
         this.joystick = joystick;
         this.serialBus = serialBus;
+        this.datasette = datasette;
         if (snapshot != null) {
             loadSnapshot(snapshot);
         }
@@ -55,8 +63,7 @@ public class Via2 extends Via6522 {
     /**
      * Initialises the VIA 2 chip with the state stored in the Snapshot.
      * 
-     * @param snapshot The Snapshot to load the initial state of the VIA 2 chip
-     *                 from.
+     * @param snapshot The Snapshot to load the initial state of the VIA 2 chip from.
      */
     private void loadSnapshot(Snapshot snapshot) {
         // Load Port B state.
@@ -154,6 +161,25 @@ public class Via2 extends Via6522 {
             cpu6502.setInterrupt(Cpu6502.S_IRQ);
         } else {
             cpu6502.clearInterrupt(Cpu6502.S_IRQ);
+        }
+    }
+    
+    /**
+     * CA1 on VIA #2 handles the incoming tape data. 
+     */
+    protected int getCa1() {
+        if (datasette.isMotorOn()) {
+            if (ca1 == 1) {
+                // CA1 is HIGH from previous pulse. Interrupt will already have been
+                // raised, so drop to LOW again to complete pulse.
+                return 0;
+            }
+            else {
+                // Check for next CA1 pulse.
+                return (datasette.getPulse()? 1 : 0);
+            }
+        } else {
+            return 0;
         }
     }
 }
