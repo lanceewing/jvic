@@ -123,6 +123,8 @@ public class Machine {
                 } else if ("DISK".equals(programType) && (ramType.equals(RamType.RAM_AUTO))) {
                     // TODO: May need to be more intelligent that this, e.g. use disk signatures.
                     ramType = RamType.RAM_35K;
+                } else if ("TAPE".equals(programType) && (ramType.equals(RamType.RAM_AUTO))) {
+                    ramType = RamType.RAM_32K;
                 }
             } catch (Exception e) {
                 // Continue with default behaviour, which is to boot in to BASIC.
@@ -182,6 +184,19 @@ public class Machine {
                             autoRunCmdQueue.add(new char[] {'L','O','A','D','"','*','"',',','8'});
                             autoRunCmdQueue.add(new char[] {'R','U','N'});
                         }
+                        return autoRunCmdQueue;
+                    }
+                };
+                
+            } else if ("TAPE".equals(programType)) {
+                // Insert tape ready to be loaded.
+                datasette.insertTape(programData);
+                autoLoadRunnable = new Callable<Queue<char[]>>() {
+                    public Queue<char[]> call() throws Exception {
+                        Queue<char[]> autoRunCmdQueue = new LinkedList<char[]>();
+                        autoRunCmdQueue.add(new char[] {'L','O','A','D'});
+                        autoRunCmdQueue.add(new char[] {'R','U','N'});
+                        datasette.play();
                         return autoRunCmdQueue;
                     }
                 };

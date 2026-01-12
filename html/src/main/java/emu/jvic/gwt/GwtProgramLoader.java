@@ -70,6 +70,11 @@ public class GwtProgramLoader extends ProgramLoader {
                                 entryName.equals(appConfigItem.getEntryName().toLowerCase()));
                         if (file != null) {
                             byte[] fileData = file.asUint8Array().toByteArray();
+                            if (isTapeFile(fileData) && entryMatch) {
+                                programData = fileData;
+                                appConfigItem.setFileType("TAPE");
+                                break;
+                            }
                             if (isDiskFile(fileData) && entryMatch) {
                                 programData = fileData;
                                 appConfigItem.setFileType("DISK");
@@ -98,6 +103,10 @@ public class GwtProgramLoader extends ProgramLoader {
                         }
                     }
                 }
+            }
+            else if (isTapeFile(data)) {
+                appConfigItem.setFileType("TAPE");
+                programData = data;
             }
             else if (isDiskFile(data)) {
                 appConfigItem.setFileType("DISK");

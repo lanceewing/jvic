@@ -80,6 +80,11 @@ public class DesktopProgramLoader extends ProgramLoader {
                                         entryName.endsWith("/" + appConfigItem.getEntryName().toLowerCase()));
                                 numOfEntries++;
                                 fileData = readBytesFromInputStream(zis);
+                                if (isTapeFile(fileData) && entryMatch) {
+                                    programData = fileData;
+                                    appConfigItem.setFileType("TAPE");
+                                    break;
+                                }
                                 if (isDiskFile(fileData) && entryMatch) {
                                     programData = fileData;
                                     appConfigItem.setFileType("DISK");
@@ -120,6 +125,10 @@ public class DesktopProgramLoader extends ProgramLoader {
                             break;
                         }
                     }
+                }
+                else if (isTapeFile(data)) {
+                    appConfigItem.setFileType("TAPE");
+                    programData = data;
                 }
                 else if (isDiskFile(data)) {
                     appConfigItem.setFileType("DISK");

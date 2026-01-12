@@ -36,6 +36,15 @@ public abstract class ProgramLoader {
         return ((data != null) && (data.length >= 174848));
     }
     
+    protected boolean isTapeFile(byte[] data) {
+        // .TAP file signature: 43 36 34 2D 54 41 50 45 2D 52 41 57
+        return ((data != null) && (data.length >= 12) && 
+                (data[0] == 0x43) && (data[1] == 0x36) && (data[2] == 0x34) && 
+                (data[3] == 0x2D) && (data[4] == 0x54) && (data[5] == 0x41) && 
+                (data[6] == 0x50) && (data[7] == 0x45) && (data[8] == 0x2D) && 
+                (data[9] == 0x52) && (data[10] == 0x41) && (data[11] == 0x57));
+    }
+    
     protected boolean isPcvSnapshot(byte[] data) {
         // PCVIC Signature : 50 43 56 49 43
         return ((data != null) && (data.length >= 5) && 
