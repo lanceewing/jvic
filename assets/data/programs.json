@@ -560,6 +560,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "R.I.P",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BTAP%5D%2FR.I.P.%20%281984%29%28Mastertronic%29.zip",
+      "fileType": "TAPE",
+      "iconPath": "screenshots/R/R.I.P/R.I.P.png",
+      "machineType": "PAL",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
       "name": "Robotic Liberation",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FRobotic%20Liberation%20%282003%29%28PWP%29%5Bassembly%202003%5D%5B16k%5D.zip",
       "fileType": "PRG",
