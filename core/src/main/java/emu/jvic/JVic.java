@@ -7,6 +7,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.memory.RamType;
 import emu.jvic.ui.DialogHandler;
 
 /**
@@ -97,7 +98,119 @@ public class JVic extends Game {
         setScreen(homeScreen);
         
         if (appConfigItem != null) {
+            applyConfigArgs(appConfigItem, args);
             homeScreen.processProgramSelection(appConfigItem);
+        }
+    }
+    
+    /**
+     * Checks for and applies any additional config that might be provided in the args Map.
+     * 
+     * @param adhocProgram
+     * @param args
+     */
+    private void applyConfigArgs(AppConfigItem appConfigItem, Map<String, String> args) {
+        applyRamConfig(appConfigItem, args.get("ram"));
+        applyTvConfig(appConfigItem, args.get("tv"));
+        applyProgramType(appConfigItem, args.get("type"));
+        if (args.containsKey("entry")) {
+            appConfigItem.setEntryName(args.get("entry"));
+        }
+        if (args.containsKey("addr")) {
+            appConfigItem.setLoadAddress(args.get("addr"));
+        }
+        if (args.containsKey("cmd")) {
+            appConfigItem.setAutoRunCommand(args.get("cmd"));
+        }
+    }
+    
+    /**
+     * Checks for and applies program type config that might be provided in the args Map.
+     * 
+     * @param appConfigItem
+     * @param tv One of TAPE, DISK, PRG, CART, PCV.
+     */
+    private void applyProgramType(AppConfigItem appConfigItem, String type) {
+        if (type != null) {
+            switch (type.toUpperCase()) {
+                case "TAPE":
+                    appConfigItem.setFileType("TAPE");
+                    break;
+                case "DISK":
+                    appConfigItem.setFileType("DISK");
+                    break;
+                case "PRG":
+                    appConfigItem.setFileType("PRG");
+                    break;
+                case "CART":
+                    appConfigItem.setFileType("CART");
+                    break;
+                case "PCV":
+                    appConfigItem.setFileType("PCV");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * Checks for and applies TV config that might be provided in the args Map.
+     * 
+     * @param appConfigItem
+     * @param tv Either "PAL" or "NTSC"; or null if not set.
+     */
+    private void applyTvConfig(AppConfigItem appConfigItem, String tv) {
+        if (tv != null) {
+            switch (tv.toUpperCase()) {
+                case "PAL":
+                    appConfigItem.setMachineType("PAL");
+                    break;
+                case "NTSC":
+                    appConfigItem.setMachineType("NTSC");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * Checks for and applies RAM config that might be provided in the args Map.
+     * 
+     * @param appConfigItem
+     * @param ram
+     */
+    private void applyRamConfig(AppConfigItem appConfigItem, String ram) {
+        if (ram != null) {
+            switch (ram.toUpperCase()) {
+                case "0K":
+                case "UNEXPANDED":
+                case "UNEXP":
+                    appConfigItem.setRam(RamType.RAM_UNEXPANDED.name());
+                    break;
+                case "3K":
+                    appConfigItem.setRam(RamType.RAM_3K.name());
+                    break;
+                case "8K":
+                    appConfigItem.setRam(RamType.RAM_8K.name());
+                    break;
+                case "16K":
+                    appConfigItem.setRam(RamType.RAM_16K.name());
+                    break;
+                case "24K": 
+                    appConfigItem.setRam(RamType.RAM_24K.name());
+                    break;
+                case "32K":
+                    appConfigItem.setRam(RamType.RAM_32K.name());
+                    break;
+                case "35K":
+                    appConfigItem.setRam(RamType.RAM_35K.name());
+                    break;
+                default:
+                    // Not recognised.
+                    break;
+            }
         }
     }
 

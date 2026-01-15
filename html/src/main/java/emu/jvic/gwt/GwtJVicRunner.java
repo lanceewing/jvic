@@ -81,9 +81,13 @@ public class GwtJVicRunner extends JVicRunner {
     
     @Override
     public void start(AppConfigItem appConfigItem) {
-        // Do not change the URL if jvic was invoked with "url" request param.
+        // Do not change the URL if jvic was invoked with "url" request param, or had
+        // a path part or query param in the hash.
         if ((Window.Location.getParameter("url") == null) && 
-            (!"Adhoc VIC 20 Program".equals(appConfigItem.getName()))) {
+            (!"Adhoc VIC 20 Program".equals(appConfigItem.getName())) && 
+            (Window.Location.getHash().indexOf('=') < 0) && 
+            (Window.Location.getHash().indexOf('/') < 0)) {
+            
             // The URL Builder doesn't add a / before the #, so we do this ourselves.
             String newURL = Window.Location.createUrlBuilder().setPath("/").setHash(null).buildString();
             if (newURL.endsWith("/")) {

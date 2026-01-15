@@ -42,7 +42,22 @@ public class GwtLauncher extends GwtApplication {
             if ((hash != null) && (hash.length() > 0)) {
                 if (hash.startsWith("#/")) {
                     String programId = hash.substring(2);
-                    argsMap.put("uri", programId);
+                    String queryString = "";
+                    int questionMarkIndex = programId.indexOf('?');
+                    if (questionMarkIndex > 1) {
+                        queryString = programId.substring(questionMarkIndex + 1);
+                        programId = programId.substring(0, questionMarkIndex);
+                        applyQueryString(queryString, argsMap);
+                    }
+                    if (programId.indexOf('/') >= 0) {
+                        String[] hashParts = programId.split("/");
+                        argsMap.put("uri", hashParts[0]);
+                        if (hashParts.length > 1) {
+                            applyHashPathParts(hashParts, argsMap);
+                        }
+                    } else {
+                        argsMap.put("uri", programId);
+                    }
                 }
             } else {
                 // JVic also supports loading from a provided URL.
@@ -60,6 +75,8 @@ public class GwtLauncher extends GwtApplication {
                     }
                 }
             }
+            
+            applyRequestParameters(argsMap);
         }
         
         GwtDialogHandler gwtDialogHandler = new GwtDialogHandler();
@@ -69,6 +86,72 @@ public class GwtLauncher extends GwtApplication {
         jvic = new JVic(jvicRunner, gwtDialogHandler, argsMap);
         registerFileDropEventHandler();
         return jvic;
+    }
+    
+    private void applyHashPathParts(String[] hashParts, Map<String, String> argsMap) {
+        if ((hashParts != null) && (hashParts.length > 1)) {
+            for (int i=1; i<hashParts.length; i++) {
+                String hashPart = hashParts[i].toUpperCase();
+                switch (hashPart) {
+                    case "0K":
+                    case "UNEXPANDED":
+                    case "UNEXP":
+                    case "3K":
+                    case "8K":
+                    case "16K":
+                    case "24K":
+                    case "32K":
+                    case "35K":
+                        argsMap.put("ram", hashPart);
+                        break;
+                    case "PAL":
+                    case "NTSC":
+                        argsMap.put("tv", hashPart);
+                        break;
+                    case "TAPE":
+                    case "DISK":
+                    case "CART":
+                    case "PRG":
+                    case "PCV":
+                        argsMap.put("type", hashPart);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+    
+    private void applyQueryString(String queryString, Map<String, String> argsMap) {
+        if ((queryString != null) && (queryString.trim().length() > 0)) {
+            String[] queryParams = queryString.trim().split("[&]");
+            for (String queryParam : queryParams) {
+                int equalsIndex = queryParam.indexOf('=');
+                if ((equalsIndex > 0) && (equalsIndex < (queryParam.length() - 1))) {
+                    String paramName = queryParam.substring(0, equalsIndex).trim();
+                    String paramValue = queryParam.substring(equalsIndex + 1).trim();
+                    if ((paramName.length() > 0) && (paramValue.length() > 0)) {
+                        argsMap.put(paramName, paramValue);
+                    }
+                }
+            }
+        }
+    }
+    
+    private void applyRequestParameters(Map<String, String> argsMap) {
+        mapParameterIfPresent("ram", argsMap);
+        mapParameterIfPresent("tv", argsMap);
+        mapParameterIfPresent("type", argsMap);
+        mapParameterIfPresent("entry", argsMap);
+        mapParameterIfPresent("addr", argsMap);
+        mapParameterIfPresent("cmd", argsMap);
+    }
+    
+    private void mapParameterIfPresent(String paramName, Map<String, String> argsMap) {
+        String paramValue = Window.Location.getParameter(paramName);
+        if ((paramValue != null) && (!paramValue.trim().equals(""))) {
+            argsMap.put(paramName, paramValue);
+        }
     }
     
     private native void registerFileDropEventHandler() /*-{
