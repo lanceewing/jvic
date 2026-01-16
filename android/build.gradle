@@ -1,51 +1,55 @@
-
-buildscript {
-  repositories {
-    mavenCentral()
-    google()
-  }
-}
 apply plugin: 'com.android.application'
 
+def version = rootProject.file('assets/data/version.txt').text.trim().substring(1);
 
 android {
-  namespace "emu.jvic"
-  compileSdk 35
+  compileSdk 29
   sourceSets {
     main {
       manifest.srcFile 'AndroidManifest.xml'
-      java.setSrcDirs(['src/main/java'])
-      aidl.setSrcDirs(['src/main/java'])
-      renderscript.setSrcDirs(['src/main/java'])
-      res.setSrcDirs(['res'])
-      assets.setSrcDirs(['../assets'])
-      jniLibs.setSrcDirs(['libs'])
+      java.srcDirs('src/main/java')
+      aidl.srcDirs('src/main/java')
+      renderscript.srcDirs('src/main/java')
+      res.srcDirs('res')
+      assets.srcDirs('../assets')
+      jniLibs.srcDirs('libs')
     }
   }
   packagingOptions {
-		resources {
-			excludes += ['META-INF/robovm/ios/robovm.xml', 'META-INF/DEPENDENCIES.txt', 'META-INF/DEPENDENCIES',
-                   'META-INF/dependencies.txt', '**/*.gwt.xml']
-			pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
-                     'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/notice.txt']
-		}
+    resources.with {
+      excludes += ['META-INF/robovm/ios/robovm.xml',
+        'META-INF/DEPENDENCIES.txt', 'META-INF/DEPENDENCIES', 'META-INF/dependencies.txt', '**/*.gwt.xml']
+      pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
+        'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/notice.txt']
+    }
   }
   defaultConfig {
     applicationId 'emu.jvic'
-    minSdkVersion 21
-    targetSdkVersion 35
+    minSdkVersion 29
+    targetSdkVersion 29
     versionCode 1
-    versionName "1.0"
+    versionName "${version}"
+    multiDexEnabled true
   }
+  namespace "emu.jvic"
   compileOptions {
     sourceCompatibility "8"
     targetCompatibility "8"
     coreLibraryDesugaringEnabled true
   }
+  signingConfigs {
+    release {
+      storeFile file("keystore.jks")
+      storePassword System.getenv("SIGNING_STORE_PASSWORD")
+      keyAlias System.getenv("SIGNING_KEY_ALIAS")
+      keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+    }
+  }
   buildTypes {
     release {
-      minifyEnabled true
+      minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+      signingConfig signingConfigs.release
     }
   }
 }
@@ -58,8 +62,9 @@ repositories {
 configurations { natives }
 
 dependencies {
-  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
   implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+  implementation 'com.github.HBiSoft:PickiT:2.0.5'
   implementation project(':core')
 
   natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
@@ -79,7 +84,7 @@ tasks.register('copyAndroidNatives') {
     file("libs/x86_64/").mkdirs()
     file("libs/x86/").mkdirs()
 
-    configurations.natives.copy().files.each { jar ->
+    configurations.named("natives").orNull.copy().files.each { jar ->
       def outputDir = null
       if(jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
       if(jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
@@ -95,7 +100,6 @@ tasks.register('copyAndroidNatives') {
     }
   }
 }
-
 tasks.matching { it.name.contains("merge") && it.name.contains("JniLibFolders") }.configureEach { packageTask ->
   packageTask.dependsOn 'copyAndroidNatives'
 }
