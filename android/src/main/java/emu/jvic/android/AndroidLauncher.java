@@ -40,7 +40,7 @@ public class AndroidLauncher extends AndroidApplication implements DialogHandler
         Map<String, String> argsMap = new HashMap<>();
         AndroidJVicRunner androidJVicRunner = new AndroidJVicRunner(
                 new AndroidKeyboardMatrix(), new AndroidPixelData(),
-                new AndroidSoundGenerator());
+                new AndroidSoundGenerator()
         );
         initialize(new JVic(androidJVicRunner, this, argsMap), configuration);
         pickiT = new PickiT(this, this, this);
