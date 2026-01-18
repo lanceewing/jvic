@@ -155,7 +155,7 @@ public class C1541Drive {
         
         if (warmup) {
             // Run the 1541 drive for a second to get it warmed up (needed for some games).
-            for (int i=0; i<1000000; i++) {
+            for (int i=0; i<1500000; i++) {
                 emulateCycle();
             }
         }
