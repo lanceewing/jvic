@@ -33,7 +33,9 @@ jobs:
         SIGNING_KEY_STORE_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
       run: |
           echo $ENCODED_STRING > keystore-b64.txt
+          echo "Current dir: `pwd`"
           base64 -d keystore-b64.txt > android/$SIGNING_KEY_STORE_PATH
+          echo "Keystore path: `ls -ltra android/$SIGNING_KEY_STORE_PATH`"
 
     # Configure Gradle for optimal use in GiHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
@@ -57,9 +59,9 @@ jobs:
           zip -r jvic-web-${{ github.ref_name }}.zip jvic-web-${{ github.ref_name }}
           cd ../..
           mv html/build/jvic-web-${{ github.ref_name }}.zip .
-          echo "About to build Desktop version..."
           ./gradlew lwjgl3:jar
           mv lwjgl3/build/lib/jvic-${VERSION}.jar jvic-desktop-${VERSION}.jar
+          echo "Keystore path: $SIGNING_KEY_STORE_PATH"
           ./gradlew android:assembleRelease
           mv android/build/outputs/apk/release/*.apk jvic-android-${VERSION}.apk
 
