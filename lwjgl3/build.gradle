@@ -32,6 +32,7 @@ dependencies {
   implementation project(':core')
 }
 
+def version = rootProject.file('assets/data/version.txt').text.trim().substring(1);
 def jarName = "${appName}-${version}.jar"
 def os = System.properties['os.name'].toLowerCase()
 
