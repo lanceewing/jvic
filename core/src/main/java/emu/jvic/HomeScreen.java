@@ -782,8 +782,9 @@ public class HomeScreen extends InputAdapter implements Screen {
                 "JVic " + version + "\n\n" + 
                 "To start, simply swipe or click to the right.\n\n" + 
                 (Gdx.app.getType().equals(ApplicationType.WebGL)?
-                "Or use the ?url= request parameter to point directly to a .d64 or .prg file.\n\n" + 
-                "Most games are available on archive.org.\n\n" : "") + 
+                "Or use the ?url= request parameter to point directly to a .d64, .prg, " +
+                ".tap, .crt or .zip file.\n\n" + 
+                "Many games are available on archive.org and sleepingelephant.com.\n\n" : "") + 
                 "Source code:\nhttps://github.com/lanceewing/jvic\n\n",
                 new TextInputResponseHandler() {
                     @Override
