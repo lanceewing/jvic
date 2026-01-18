@@ -1,4 +1,4 @@
-![](assets/png/jvic_title.png)
+![](assets/png/jvic_readme_title.png)
 
 ![](https://github.com/lanceewing/jvic/actions/workflows/gradle.yml/badge.svg)
 ![](https://img.shields.io/github/v/release/lanceewing/jvic?label=Version)
