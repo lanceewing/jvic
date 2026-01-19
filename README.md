@@ -29,7 +29,7 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
 - Support for games contained within ZIP files:
   - e.g. e.g. [https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc](https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc)
 - Support for loading games attached to forum posts:
-  - e.g. [https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=4946](https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946)
+  - e.g. [https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=4946](https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946) (you may need to URL encode the ? after file.php)
   - Being a PWA (Progressive Web App), it can be installed locally to your device!
 - And it also comes as a standalone Java app, for those who prefer Java.
 
