@@ -67,7 +67,7 @@ When a game is run, the machine screen is displayed. It shows the VIC 20 screen 
 
 The following two screen shots show the icons when running in Chrome on a Windows machine:
 
-![](img/jvic_game_1.png)           |![](img/jvic_game_2.png) 
+![](img/jvic_game_1.jpg)           |![](img/jvic_game_2.jpg) 
 :-------------------------:|:-------------------------:
 
 And the three below show the placement of the icons when running in Portrait mode as an installed PWA (Progressive Web App) on an Android phone:
