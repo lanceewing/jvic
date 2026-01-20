@@ -61,7 +61,14 @@ The JVic title screen also has an Open File icon in the bottom right corner. If 
 
 ### Drag and Drop
 As an alternative to using the Open File icon, you can instead simply drag and drop a VIC 20 program onto the JVic home screen. This will work for any VIC 20 .d64, .prg, .crt, .tap, or .zip file containing a .d64, .prg, .crt or .tap. The dropped program will be immediately run by the emulator.
-  
+
+### URL Parameters
+There are a handful of URL parameters that can be used when loading games. This is useful mainly when loading a program using the ?url= request parameter. Without using the following request parameters, JVic will attempt to make a best guess as to what settings to use, but sometimes it will get it wrong. This is when using these parameters will become useful, as it forces certain settings to be used:
+
+* ram: The amount of RAM to use (0, UNEXP, 3K, 8K, 16K, 24K, 32K, 35K)
+* tv: Selects between PAL and NTSC, e.g. tv=NTSC
+* type: Specifies the type of file being loaded, in case it isn't clear what it is (DISK, TAPE, CART, PRG)
+
 ## The Machine screen
 When a game is run, the machine screen is displayed. It shows the VIC 20 screen and various icons, which may be either at the bottom of the screen (for portrait) or to the sides (for landscape).
 
