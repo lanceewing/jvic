@@ -24,6 +24,7 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
   - Or into BASIC with different RAM and/or TV setting: [https://vic20.games/#/basic/16k/pal](https://vic20.games/#/basic/16k/pal)
 - Support for loading games via a ?url= request parameter:
   - e.g. [https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64](https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64)
+  - e.g. [http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip](http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip)
   - e.g. [https://vic20.games/?url=https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg](https://vic20.games/?url=https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg)
   - e.g. [https://vic20.games/?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64](https://vic20.games/?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64)
 - Support for games contained within ZIP files:
