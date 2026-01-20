@@ -20,6 +20,8 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
 
 - Support for direct URL path access to individual games:
   - e.g. [https://vic20.games/#/pitfall](https://vic20.games/#/pitfall)
+  - e.g. [https://vic20.games/#/datapop](https://vic20.games/#/datapop)
+  - e.g. [https://vic20.games/#/impossiblator-3](https://vic20.games/#/impossiblator-3)
   - Or into BASIC: [https://vic20.games/#/basic](https://vic20.games/#/basic)
   - Or into BASIC with different RAM and/or TV setting: [https://vic20.games/#/basic/16k/pal](https://vic20.games/#/basic/16k/pal)
 - Support for loading games via a ?url= request parameter:
@@ -31,7 +33,7 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
   - e.g. e.g. [https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc](https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc)
 - Support for loading games attached to forum posts:
   - e.g. [https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946](https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946) (you may need to URL encode the ? after file.php as shown)
-  - Being a PWA (Progressive Web App), it can be installed locally to your device!
+- Being a PWA (Progressive Web App), it can be installed locally to your device!
 - And it also comes as a standalone Java app, for those who prefer Java.
 
 ## How to run games from the Home screen
