@@ -20,17 +20,20 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
 
 - Support for direct URL path access to individual games:
   - e.g. [https://vic20.games/#/pitfall](https://vic20.games/#/pitfall)
+  - e.g. [https://vic20.games/#/datapop](https://vic20.games/#/datapop)
+  - e.g. [https://vic20.games/#/impossiblator-3](https://vic20.games/#/impossiblator-3)
   - Or into BASIC: [https://vic20.games/#/basic](https://vic20.games/#/basic)
   - Or into BASIC with different RAM and/or TV setting: [https://vic20.games/#/basic/16k/pal](https://vic20.games/#/basic/16k/pal)
 - Support for loading games via a ?url= request parameter:
   - e.g. [https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64](https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64)
+  - e.g. [http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip](http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip)
   - e.g. [https://vic20.games/?url=https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg](https://vic20.games/?url=https://ftp.area536.com/mirrors/scene.org/demos/groups/proxima/proxima_ppy.prg)
   - e.g. [https://vic20.games/?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64](https://vic20.games/?url=https://www.tokra.de/vic/vicmckracken/vic%20mckracken.d64)
 - Support for games contained within ZIP files:
   - e.g. e.g. [https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc](https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc)
 - Support for loading games attached to forum posts:
   - e.g. [https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946](https://vic20.games/?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php%3Fid=4946) (you may need to URL encode the ? after file.php as shown)
-  - Being a PWA (Progressive Web App), it can be installed locally to your device!
+- Being a PWA (Progressive Web App), it can be installed locally to your device!
 - And it also comes as a standalone Java app, for those who prefer Java.
 
 ## How to run games from the Home screen
@@ -61,7 +64,14 @@ The JVic title screen also has an Open File icon in the bottom right corner. If 
 
 ### Drag and Drop
 As an alternative to using the Open File icon, you can instead simply drag and drop a VIC 20 program onto the JVic home screen. This will work for any VIC 20 .d64, .prg, .crt, .tap, or .zip file containing a .d64, .prg, .crt or .tap. The dropped program will be immediately run by the emulator.
-  
+
+### URL Parameters
+There are a handful of URL parameters that can be used when loading games. This is useful mainly when loading a program using the ?url= request parameter. Without using the following request parameters, JVic will attempt to make a best guess as to what settings to use, but sometimes it will get it wrong. This is when using these parameters will become useful, as it forces certain settings to be used:
+
+* ram: The amount of RAM to use (0, UNEXP, 3K, 8K, 16K, 24K, 32K, 35K), e.g. ram=16K
+* tv: Selects between PAL and NTSC, e.g. tv=NTSC
+* type: Specifies the type of file being loaded, in case it isn't clear what it is (DISK, TAPE, CART, PRG), e.g. type=CART
+
 ## The Machine screen
 When a game is run, the machine screen is displayed. It shows the VIC 20 screen and various icons, which may be either at the bottom of the screen (for portrait) or to the sides (for landscape).
 
