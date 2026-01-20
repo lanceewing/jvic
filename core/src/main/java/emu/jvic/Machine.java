@@ -225,6 +225,7 @@ public class Machine {
             via1.emulateCycle();
             via2.emulateCycle();
             c1541Drive.emulateCycle();
+            soundGenerator.emulateCycle();
         } while (!frameComplete);
     }
 
