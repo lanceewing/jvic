@@ -860,7 +860,7 @@ public class HomeScreen extends InputAdapter implements Screen {
                     } else {
                         appConfigItem.setMachineType("PAL");
                     }
-                    appConfigItem.setRam("RAM_UNEXPANDED");
+                    appConfigItem.setRam("RAM_AUTO");
                     appConfigItem.setFileData(fileData);
                     
                     processProgramSelection(appConfigItem);
