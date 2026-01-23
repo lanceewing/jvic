@@ -132,9 +132,9 @@ public class DesktopDialogHandler implements DialogHandler {
                 } else {
                     jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
                 }
-                jfc.setDialogTitle("Select a tape, disk or ZIP file");
+                jfc.setDialogTitle("Select a d64, prg, crt, tap or zip file");
                 jfc.setAcceptAllFileFilterUsed(false);
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("TAP, DSK or ZIP files", "tap", "dsk", "zip");
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("D64, PRG, CRT, TAP or ZIP files", "d64", "prg", "crt", "tap", "zip");
                 jfc.addChoosableFileFilter(filter);
 
                 dialogOpen = true;

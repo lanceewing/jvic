@@ -78,7 +78,7 @@ public class GwtDialogHandler implements DialogHandler {
     private final native void showHtmlOpenFileDialog(GwtOpenFileResultsHandler resultsHandler)/*-{
         var fileInputElem = document.createElement('input');
         fileInputElem.type = 'file';
-        fileInputElem.accept = '.tap,.dsk,.zip,.rom';
+        fileInputElem.accept = '.d64,.prg,.crt,.tap,.zip';
         
         document.body.appendChild(fileInputElem);
         
