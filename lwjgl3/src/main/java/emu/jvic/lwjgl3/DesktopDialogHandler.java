@@ -141,7 +141,6 @@ public class DesktopDialogHandler implements DialogHandler {
                 int returnValue = jfc.showOpenDialog(null);
                 dialogOpen = false;
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    System.out.println(jfc.getSelectedFile().getPath());
                     openFileResponseHandler.openFileResult(true, jfc.getSelectedFile().getPath(), null);
                 } else {
                     openFileResponseHandler.openFileResult(false, null, null);
