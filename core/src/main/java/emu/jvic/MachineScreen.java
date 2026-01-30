@@ -156,6 +156,7 @@ public class MachineScreen implements Screen {
 
         createScreenResourcesForMachineType(MachineType.PAL);
         createScreenResourcesForMachineType(MachineType.NTSC);
+        createScreenResourcesForMachineType(MachineType.VIC44);
 
         warpSpeedIcon = new Texture("png/warp_speed_icon.png");
         cameraIcon = new Texture("png/camera_icon.png");

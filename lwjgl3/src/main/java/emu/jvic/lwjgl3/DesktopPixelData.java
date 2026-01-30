@@ -14,7 +14,7 @@ public class DesktopPixelData extends PixelData {
     
     @Override
     public void init(int width, int height) {
-        imageData = new byte[width * height * 4];
+        imageData = new byte[width * height * 4 * 2];
     }
 
     @Override

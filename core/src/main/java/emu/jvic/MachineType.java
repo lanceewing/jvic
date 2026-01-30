@@ -9,7 +9,9 @@ public enum MachineType {
 
     PAL(1108405, 284, 312, 220, 272, 55, 34, 50),
 
-    NTSC(1022727, 260, 263, 199, 252, 49, 8, 60);
+    NTSC(1022727, 260, 263, 199, 252, 49, 8, 60),
+    
+    VIC44(1108405, 568, 312, 440, 272, 103, 31, 50);
 
     private int cyclesPerSecond;
     private int totalScreenWidth;
@@ -140,5 +142,9 @@ public enum MachineType {
 
     public boolean isNTSC() {
         return equals(NTSC);
+    }
+    
+    public boolean isVIC44() {
+        return equals(VIC44);
     }
 }

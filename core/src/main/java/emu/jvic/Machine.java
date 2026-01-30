@@ -21,6 +21,8 @@ import emu.jvic.snap.Snapshot;
 import emu.jvic.sound.SoundGenerator;
 import emu.jvic.sound.libgdx.GdxSoundGenerator;
 import emu.jvic.video.Vic;
+import emu.jvic.video.Vic44;
+import emu.jvic.video.Vic44Orig;
 import emu.jvic.video.Vic6560;
 import emu.jvic.video.Vic6561;
 
@@ -135,7 +137,9 @@ public class Machine {
         cpu = new Cpu6502(snapshot);
 
         // Create the VIC chip and configure it as per the current TV type.
-        if (machineType.isNTSC()) {
+        if (machineType.isVIC44()) {
+            vic = new Vic44(pixelData, machineType, snapshot);
+        } else if (machineType.isNTSC()) {
             vic = new Vic6560(pixelData, machineType, snapshot);
         } else {
             vic = new Vic6561(pixelData, machineType, snapshot);
@@ -235,7 +239,7 @@ public class Machine {
      * @return true If the VIC chip has indicated that a frame should be rendered.
      */
     public boolean emulateCycle() {
-        boolean render = vic.emulateCycle(); 
+        boolean render = vic.emulateCycle();
         cpu.emulateCycle();
         via1.emulateCycle();
         via2.emulateCycle();
