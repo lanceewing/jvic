@@ -7,7 +7,7 @@ import emu.jvic.snap.Snapshot;
 /**
  * This class emulates the PAL VIC chip (6561).
  */
-public class Vic44 extends Vic {
+public class Vic44Short extends Vic {
     
     // Constants related to video timing for PAL.
     private static final int PAL_HBLANK_END = 12;
@@ -100,7 +100,7 @@ public class Vic44 extends Vic {
      * @param machineType The type of machine, PAL or NTSC.
      * @param snapshot    Optional snapshot of the machine state to start with.
      */
-    public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
+    public Vic44Short(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
         super(pixelData, machineType, snapshot);
     }
     
@@ -122,7 +122,7 @@ public class Vic44 extends Vic {
                 // front porch, back porch, etc., so we simply output transparent black.
                 int length = (pixel << 1);
                 for (int i = 0; i < length; i++) {
-                    pixelData.putPixel(pixelCounter++, 0x942741FF);
+                    pixelData.putPixel(pixelCounter++, 0);
                 }
             }
         }
@@ -585,9 +585,7 @@ public class Vic44 extends Vic {
                     }
                     
                     if (horizontalCounter >= PAL_HBLANK_END) {
-                        //if (horizontalCounter > PAL_HBLANK_END) {
-                            pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
-                        //}
+                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
                         pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
                     }
                     

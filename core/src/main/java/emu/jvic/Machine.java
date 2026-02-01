@@ -22,7 +22,6 @@ import emu.jvic.sound.SoundGenerator;
 import emu.jvic.sound.libgdx.GdxSoundGenerator;
 import emu.jvic.video.Vic;
 import emu.jvic.video.Vic44;
-import emu.jvic.video.Vic44Orig;
 import emu.jvic.video.Vic6560;
 import emu.jvic.video.Vic6561;
 
