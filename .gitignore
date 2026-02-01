@@ -168,4 +168,6 @@ Thumbs.db
 /assets/snaps/
 /assets/tapes/
 
+core/src/main/java/emu/jvic/video/Vic6561Exp.java 
+core/src/main/java/emu/jvic/video/Vic44Short.java
 
