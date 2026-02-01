@@ -5,7 +5,7 @@ import emu.jvic.PixelData;
 import emu.jvic.snap.Snapshot;
 
 /**
- * This class emulates the PAL VIC chip (6561).
+ * This class emulates a special PIVIC44 mode where the pixels are output at twice the speed.
  */
 public class Vic44 extends Vic {
     
@@ -32,19 +32,19 @@ public class Vic44 extends Vic {
     //
     // Visible pixels - From 12.75 to 70.915 Len: 58.165 cycles (232.66 pixels, i.e. approx. 233)
     
-    private static final int PAL_FRONTPORCH_1 = (4 << 0);      // From 0 to 10 
-    private static final int PAL_FRONTPORCH_2 = (3 << 0);      // From 1 to 1.75
-    private static final int PAL_HSYNC = (20 << 0);            // From 1.75 to 6.75
-    private static final int PAL_BREEZEWAY = (3 << 0);         // From 6.75 to 7.5
-    private static final int PAL_COLBURST_O = (17 << 0);       // From 7.5 to 11.75
-    private static final int PAL_COLBURST_E = (17 << 0);       // From 7.5 to 11.75
-    private static final int PAL_BACKPORCH = (4 << 0);         // From 11.75 to 12.75
+    private static final int PAL_FRONTPORCH_1 = (8 << 0);      // From 0 to 10 
+    private static final int PAL_FRONTPORCH_2 = (6 << 0);      // From 1 to 1.75
+    private static final int PAL_HSYNC = (40 << 0);            // From 1.75 to 6.75
+    private static final int PAL_BREEZEWAY = (6 << 0);         // From 6.75 to 7.5
+    private static final int PAL_COLBURST_O = (34 << 0);       // From 7.5 to 11.75
+    private static final int PAL_COLBURST_E = (34 << 0);       // From 7.5 to 11.75
+    private static final int PAL_BACKPORCH = (8 << 0);         // From 11.75 to 12.75
     
     // Vertical blanking and sync.
-    private static final int PAL_LONG_SYNC_L = (133 << 0);
-    private static final int PAL_LONG_SYNC_H = (9 << 0);
-    private static final int PAL_SHORT_SYNC_L = (9 << 0);
-    private static final int PAL_SHORT_SYNC_H = (133 << 0);
+    private static final int PAL_LONG_SYNC_L = (266 << 0);
+    private static final int PAL_LONG_SYNC_H = (18 << 0);
+    private static final int PAL_SHORT_SYNC_L = (18 << 0);
+    private static final int PAL_SHORT_SYNC_H = (266 << 0);
 
     private final static int palOddRGBA8888Colours[] = { 
             0x000000FF, // BLACK
@@ -100,30 +100,6 @@ public class Vic44 extends Vic {
      */
     public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
         super(pixelData, machineType, snapshot);
-    }
-    
-    /**
-     * Puts a pixel into the pixel data.
-     * 
-     * @param pio 
-     * @param sm 
-     * @param pixel 
-     */
-    protected void pio_sm_put(int pio, int sm, int pixel) {
-        // TODO: Fix this check. Is it needed?
-        if ((pixelCounter < 177216)) {
-            if ((pixel & 0xFF) == 0xFF) {
-                // If alpha channel is set to 0xFF, then its a normal colour.
-                pixelData.putPixel(pixelCounter++, pixel);
-            } else {
-                // Otherwise it is command that happens during blanking, e.g. hsync, col burst,
-                // front porch, back porch, etc., so we simply output transparent black.
-                int length = (pixel << 1);
-                for (int i = 0; i < length; i++) {
-                    pixelData.putPixel(pixelCounter++, 0);
-                }
-            }
-        }
     }
     
     /**
