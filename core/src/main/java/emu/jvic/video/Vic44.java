@@ -580,7 +580,6 @@ public class Vic44 extends Vic {
                                 pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[multiColourTable[pixel1]]);
                                 
                                 fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
-                                //break;
         
                             case FETCH_CHAR_DATA:
                             case FETCH_MATRIX_END:
