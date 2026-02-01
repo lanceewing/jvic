@@ -48,7 +48,7 @@ public class GwtPixelData extends PixelData {
     }-*/;
 
     private native Uint8ClampedArray createPixelArray(int width, int height)/*-{
-        var sharedArrayBuffer = new SharedArrayBuffer(width * height * 4);
+        var sharedArrayBuffer = new SharedArrayBuffer(width * height * 4 * 2);
         return new Uint8ClampedArray(sharedArrayBuffer);
     }-*/;
 

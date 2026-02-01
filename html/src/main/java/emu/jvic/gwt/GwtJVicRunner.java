@@ -112,12 +112,16 @@ public class GwtJVicRunner extends JVicRunner {
         int index = 0;
         
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
-        byte[] basicRom = Gdx.files.internal("roms/basic.rom").readBytes();
+        byte[] basicRom = (machineType.equals(MachineType.VIC44)?
+                Gdx.files.internal("roms/vic_44_basic.rom").readBytes() :
+                Gdx.files.internal("roms/basic.rom").readBytes());
         byte[] dos1541Rom = Gdx.files.internal("roms/dos1541.rom").readBytes();
         byte[] charRom = Gdx.files.internal("roms/char.rom").readBytes();
-        byte[] kernalRom = (machineType.equals(MachineType.NTSC)?
-                Gdx.files.internal("roms/kernal_ntsc.rom").readBytes() :
-                Gdx.files.internal("roms/kernal_pal.rom").readBytes());
+        byte[] kernalRom = (machineType.equals(MachineType.VIC44)?
+                Gdx.files.internal("roms/vic_44_kernal.rom").readBytes() :
+                (machineType.equals(MachineType.NTSC)?
+                 Gdx.files.internal("roms/kernal_ntsc.rom").readBytes() :
+                 Gdx.files.internal("roms/kernal_pal.rom").readBytes()));
         
         for (int i=0; i < basicRom.length; index++, i++) {
             programUint8Array.set(index, (basicRom[i] & 0xFF));
