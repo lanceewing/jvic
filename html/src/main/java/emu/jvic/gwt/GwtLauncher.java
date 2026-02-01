@@ -106,6 +106,7 @@ public class GwtLauncher extends GwtApplication {
                         break;
                     case "PAL":
                     case "NTSC":
+                    case "VIC44":
                         argsMap.put("tv", hashPart);
                         break;
                     case "TAPE":

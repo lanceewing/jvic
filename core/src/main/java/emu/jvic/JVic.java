@@ -169,6 +169,9 @@ public class JVic extends Game {
                 case "NTSC":
                     appConfigItem.setMachineType("NTSC");
                     break;
+                case "VIC44":
+                    appConfigItem.setMachineType("VIC44");
+                    break;
                 default:
                     break;
             }
