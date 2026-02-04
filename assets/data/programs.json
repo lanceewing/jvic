@@ -773,6 +773,15 @@
       "ram": "RAM_35K"
     },
     {
+      "name": "VIC44",
+      "displayName": "VIC 44",
+      "filePath": "",
+      "fileType": "ROM",
+      "iconPath": "screenshots/V/VIC44/VIC44.png",
+      "machineType": "VIC44",
+      "ram": "RAM_UNEXPANDED"
+    },
+    {
       "name": "Whack-E",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FWhack-E%20%282009%29%28McCrea%2C%20Steve%29.zip",
       "fileType": "PRG",
