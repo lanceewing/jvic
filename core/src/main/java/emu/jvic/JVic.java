@@ -172,6 +172,8 @@ public class JVic extends Game {
                 case "VIC44":
                     appConfigItem.setMachineType("VIC44");
                     break;
+                case "VIC44K":
+                    appConfigItem.setMachineType("VIC44K");
                 default:
                     break;
             }

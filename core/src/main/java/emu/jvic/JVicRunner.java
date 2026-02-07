@@ -192,6 +192,48 @@ public abstract class JVicRunner {
         return (machineScreen != null? machineScreen.getMachineInputProcessor() : null);
     }
     
+    public byte[] loadKernalRom(MachineType machineType) {
+        byte[] kernalRom = null;
+        
+        switch (machineType) {
+            case NTSC:
+                kernalRom = Gdx.files.internal("roms/kernal_ntsc.rom").readBytes();
+                break;
+            case PAL:
+                kernalRom = Gdx.files.internal("roms/kernal_pal.rom").readBytes();
+                break;
+            case VIC44:
+                kernalRom = Gdx.files.internal("roms/vic_44_kernal.rom").readBytes();
+                break;
+            case VIC44K:
+                kernalRom = Gdx.files.internal("roms/vic_44k_kernal.rom").readBytes();
+                break;
+        }
+        
+        return kernalRom;
+    }
+    
+    public byte[] loadBasicRom(MachineType machineType) {
+        byte[] basicRom = null;
+        
+        switch (machineType) {
+            case NTSC:
+                basicRom = Gdx.files.internal("roms/basic.rom").readBytes();
+                break;
+            case PAL:
+                basicRom = Gdx.files.internal("roms/basic.rom").readBytes();
+                break;
+            case VIC44:
+                basicRom = Gdx.files.internal("roms/vic_44_basic.rom").readBytes();
+                break;
+            case VIC44K:
+                basicRom = Gdx.files.internal("roms/vic_44k_basic.rom").readBytes();
+                break;
+        }
+        
+        return basicRom;
+    }
+    
     public abstract void start(AppConfigItem appConfigItem);
 
     public abstract void reset();

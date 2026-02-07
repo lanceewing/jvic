@@ -11,7 +11,9 @@ public enum MachineType {
 
     NTSC(1022727, 260, 263, 199, 252, 49, 8, 60),
     
-    VIC44(1108405, 568, 312, 440, 272, 103, 31, 50);
+    VIC44(1108405, 568, 312, 440, 272, 103, 31, 50),
+    
+    VIC44K(1108405, 568, 312, 440, 272, 103, 31, 50);
 
     private int cyclesPerSecond;
     private int totalScreenWidth;
@@ -146,5 +148,9 @@ public enum MachineType {
     
     public boolean isVIC44() {
         return equals(VIC44);
+    }
+    
+    public boolean isVIC44K() {
+        return equals(VIC44K);
     }
 }

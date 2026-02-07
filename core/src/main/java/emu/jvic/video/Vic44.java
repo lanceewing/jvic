@@ -91,6 +91,9 @@ public class Vic44 extends Vic {
     private int[] pal_palette = pal_palette_e;
     private int[] pal_trunc_palette = pal_palette;
     
+    private static final int VIC44_COLOUR_RAM_BASE_ADDRESS = 0x9400;
+    private int colourRamBaseAddress;
+    
     /**
      * Constructor for Vic44.
      * 
@@ -99,7 +102,20 @@ public class Vic44 extends Vic {
      * @param snapshot    Optional snapshot of the machine state to start with.
      */
     public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
+        this(pixelData, machineType, snapshot, VIC44_COLOUR_RAM_BASE_ADDRESS);
+    }
+    
+    /**
+     * Constructor for Vic44.
+     * 
+     * @param pixelData Interface to the platform specific mechanism for writing pixels.
+     * @param machineType The type of machine, PAL or NTSC.
+     * @param snapshot    Optional snapshot of the machine state to start with.
+     * @param colourRamBaseAddress The base address for colour RAM.
+     */
+    public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot, int colourRamBaseAddress) {
         super(pixelData, machineType, snapshot);
+        this.colourRamBaseAddress = colourRamBaseAddress;
     }
     
     /**
@@ -846,7 +862,7 @@ public class Vic44 extends Vic {
                                 // index also happens to automatically fetch the foreground colour from the 
                                 // Colour Matrix via the top 4 lines of the data bus (DB8-DB11), which are 
                                 // wired directly from colour RAM in to the VIC chip.
-                                colourData = mem[0x9400 + (screenAddress & 0x3ff)];
+                                colourData = mem[colourRamBaseAddress + (screenAddress & 0x3ff)];
         
                                 // Output the 1st pixel of next character. Note that this is not the character
                                 // that relates to the cell index and colour data fetched above.

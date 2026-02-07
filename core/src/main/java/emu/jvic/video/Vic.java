@@ -42,8 +42,8 @@ public abstract class Vic extends MemoryMappedChip {
     /**
      * A lookup table to map between the VIC chip's memory addresses and VIC 20 memory map.
      */
-    protected final static int[] VIC_MEM_TABLE = new int[0x4000];
-    {
+    protected final int[] VIC_MEM_TABLE = new int[0x4000];
+    private void buildMemTable() {
         for (int i=0; i<0x2000; i++) {
             VIC_MEM_TABLE[i] = 0x8000 + i;
         }
@@ -166,6 +166,7 @@ public abstract class Vic extends MemoryMappedChip {
         this.machineType = machineType;
 
         reset();
+        buildMemTable();
 
         if (snapshot != null) {
             loadSnapshot(snapshot);
