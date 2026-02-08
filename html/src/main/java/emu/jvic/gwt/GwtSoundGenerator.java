@@ -20,8 +20,8 @@ public class GwtSoundGenerator extends SoundGenerator {
     // Number of samples to queue before being output to the audio hardware.
     public static final int SAMPLE_LATENCY = 3072;
     
-    private static final int VIC_REG_10 = 0x900A;
-    private static final int VIC_REG_14 = 0x900E;
+    private int VIC_REG_10 = 0x900A;
+    private int VIC_REG_14 = 0x900E;
     
     private int cyclesPerSample;
     private AudioDevice audioDevice;
@@ -88,6 +88,11 @@ public class GwtSoundGenerator extends SoundGenerator {
         voiceCounters = new int[4];
         voiceShiftRegisters = new int[4];
         voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 };
+        
+        if (machineType.isVIC44K()) {
+            VIC_REG_10 = 0xBC0A;
+            VIC_REG_14 = 0xBC0E;
+        }
     }
 
     /**

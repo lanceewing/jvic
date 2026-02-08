@@ -53,22 +53,24 @@ public abstract class Vic extends MemoryMappedChip {
     }
             
     // VIC chip memory mapped registers.
-    protected static final int VIC_REG_0 = 0x9000;   // ABBBBBBB A=Interlace B=Screen Origin X (4 pixels granularity)
-    protected static final int VIC_REG_1 = 0x9001;   // CCCCCCCC C=Screen Origin Y (2 pixel granularity)
-    protected static final int VIC_REG_2 = 0x9002;   // HDDDDDDD D=Number of Columns
-    protected static final int VIC_REG_3 = 0x9003;   // GEEEEEEF E=Number of Rows F=Double Size Chars
-    protected static final int VIC_REG_4 = 0x9004;   // GGGGGGGG G=Raster Line
-    protected static final int VIC_REG_5 = 0x9005;   // HHHHIIII H=Screen Mem Addr I=Char Mem Addr
-    protected static final int VIC_REG_6 = 0x9006;   // JJJJJJJJ Light pen X
-    protected static final int VIC_REG_7 = 0x9007;   // KKKKKKKK Light pen Y
-    protected static final int VIC_REG_8 = 0x9008;   // LLLLLLLL Paddle X
-    protected static final int VIC_REG_9 = 0x9009;   // MMMMMMMM Paddle Y
-    protected static final int VIC_REG_10 = 0x900A;  // NRRRRRRR Sound voice 1
-    protected static final int VIC_REG_11 = 0x900B;  // OSSSSSSS Sound voice 2
-    protected static final int VIC_REG_12 = 0x900C;  // PTTTTTTT Sound voice 3
-    protected static final int VIC_REG_13 = 0x900D;  // QUUUUUUU Noise voice
-    protected static final int VIC_REG_14 = 0x900E;  // WWWWVVVV W=Auxiliary colour V=Volume control
-    protected static final int VIC_REG_15 = 0x900F;  // XXXXYZZZ X=Background colour Y=Reverse Z=Border colour
+    protected static final int VIC_REG_START_ADDR = 0x9000;
+    
+    protected int VIC_REG_0;   // ABBBBBBB A=Interlace B=Screen Origin X (4 pixels granularity)
+    protected int VIC_REG_1;   // CCCCCCCC C=Screen Origin Y (2 pixel granularity)
+    protected int VIC_REG_2;   // HDDDDDDD D=Number of Columns
+    protected int VIC_REG_3;   // GEEEEEEF E=Number of Rows F=Double Size Chars
+    protected int VIC_REG_4;   // GGGGGGGG G=Raster Line
+    protected int VIC_REG_5;   // HHHHIIII H=Screen Mem Addr I=Char Mem Addr
+    protected int VIC_REG_6;   // JJJJJJJJ Light pen X
+    protected int VIC_REG_7;   // KKKKKKKK Light pen Y
+    protected int VIC_REG_8;   // LLLLLLLL Paddle X
+    protected int VIC_REG_9;   // MMMMMMMM Paddle Y
+    protected int VIC_REG_10;  // NRRRRRRR Sound voice 1
+    protected int VIC_REG_11;  // OSSSSSSS Sound voice 2
+    protected int VIC_REG_12;  // PTTTTTTT Sound voice 3
+    protected int VIC_REG_13;  // QUUUUUUU Noise voice
+    protected int VIC_REG_14;  // WWWWVVVV W=Auxiliary colour V=Volume control
+    protected int VIC_REG_15;  // XXXXYZZZ X=Background colour Y=Reverse Z=Border colour
 
     // Constants for the fetch state of the vic_core1_loop.
     protected static final int FETCH_OUTSIDE_MATRIX = 0;
@@ -165,12 +167,41 @@ public abstract class Vic extends MemoryMappedChip {
         this.pixelData = pixelData;
         this.machineType = machineType;
 
-        reset();
         buildMemTable();
+        initRegNumbers();
+        reset();
 
         if (snapshot != null) {
             loadSnapshot(snapshot);
         }
+    }
+    
+    protected void initRegNumbers() {
+        initRegNumbers(VIC_REG_START_ADDR);
+    }
+    
+    /**
+     * Initialises the VIC register numbers based on the base address.
+     * 
+     * @param baseAddress
+     */
+    protected void initRegNumbers(int baseAddress) {
+        VIC_REG_0 = baseAddress + 0;
+        VIC_REG_1 = baseAddress + 1;
+        VIC_REG_2 = baseAddress + 2;
+        VIC_REG_3 = baseAddress + 3;
+        VIC_REG_4 = baseAddress + 4;
+        VIC_REG_5 = baseAddress + 5;
+        VIC_REG_6 = baseAddress + 6;
+        VIC_REG_7 = baseAddress + 7;
+        VIC_REG_8 = baseAddress + 8;
+        VIC_REG_9 = baseAddress + 9;
+        VIC_REG_10 = baseAddress + 10;
+        VIC_REG_11 = baseAddress + 11;
+        VIC_REG_12 = baseAddress + 12;
+        VIC_REG_13 = baseAddress + 13;
+        VIC_REG_14 = baseAddress + 14;
+        VIC_REG_15 = baseAddress + 15;
     }
 
     /**
@@ -223,76 +254,7 @@ public abstract class Vic extends MemoryMappedChip {
 
         // Handle all VIC chip memory address ranges, including undocumented ones.
         address = (address & 0xFF0F);
-
-        switch (address) {
-            case VIC_REG_0:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_1:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_2:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_3:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_4:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_5:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_6:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_7:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_8:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_9:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_10:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_11:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_12:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_13:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_14:
-                value = mem[address];
-                break;
-    
-            case VIC_REG_15:
-                value = mem[address];
-                break;
-    
-            default:
-                value = charData & 0xFF;
-        }
-
+        value = mem[address];
         memory.setLastBusData(value);
         
         return value;
@@ -310,63 +272,14 @@ public abstract class Vic extends MemoryMappedChip {
         // This is how the VIC chip is mapped, i.e. each register to multiple addresses.
         address = address & 0xFF0F;
 
-        switch (address) {
-            case VIC_REG_0: // $9000 Left margin, or horizontal origin (4 pixel granularity)
-                mem[address] = value;
+        switch (address & 0xF) {
+            case 4:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
                 break;
-    
-            case VIC_REG_1: // $9001 Top margin, or vertical origin (2 pixel granularity)
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_2: // $9002 Video Matrix Columns, Video and colour memory
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_3: // $9003 Video Matrix Rows, Character size
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_4: // $9004 Raster line counter (READ ONLY)
-                break;
-    
-            case VIC_REG_5: // $9005 Video matrix and char generator base address control
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_6: // $9006 Light pen X (READ ONLY)
-                break;
-    
-            case VIC_REG_7: // $9007 Light pen Y (READ ONLY)
-                break;
-    
-            case VIC_REG_8: // $9008 Paddle X (READ ONLY)
-                break;
-    
-            case VIC_REG_9: // $9009 Paddle Y (READ ONLY)
-                break;
-    
-            case VIC_REG_10: // $900A Bass sound switch and frequency
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_11: // $900B Alto sound switch and frequency
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_12: // $900C Soprano sound switch and frequency
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_13: // $900D Noise sound switch and frequency
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_14: // $900E Auxiliary Colour, Master Volume
-                mem[address] = value;
-                break;
-    
-            case VIC_REG_15: // $900F Screen and Border Colours, Reverse Video
+            default:
                 mem[address] = value;
                 break;
         }
@@ -383,6 +296,14 @@ public abstract class Vic extends MemoryMappedChip {
                 pixelData.putPixel(pixelCounter++, 0);
             }
         }
+    }
+    
+    /**
+     * Used by VIC44 modes.
+     * 
+     * @param charRom
+     */
+    public void setCharRom(byte[] charRom) {
     }
     
     /**
