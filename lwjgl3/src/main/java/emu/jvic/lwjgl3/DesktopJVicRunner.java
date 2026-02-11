@@ -69,16 +69,10 @@ public class DesktopJVicRunner extends JVicRunner {
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
         
         // Load the ROM files.
-        byte[] basicRom = (machineType.equals(MachineType.VIC44)?
-                Gdx.files.internal("roms/vic_44_basic.rom").readBytes() :
-                Gdx.files.internal("roms/basic.rom").readBytes());
+        byte[] basicRom = loadBasicRom(machineType);
         byte[] dos1541Rom = Gdx.files.internal("roms/dos1541.rom").readBytes();
         byte[] charRom = Gdx.files.internal("roms/char.rom").readBytes();
-        byte[] kernalRom = (machineType.equals(MachineType.VIC44)?
-                Gdx.files.internal("roms/vic_44_kernal.rom").readBytes() :
-                (machineType.equals(MachineType.NTSC)?
-                 Gdx.files.internal("roms/kernal_ntsc.rom").readBytes() :
-                 Gdx.files.internal("roms/kernal_pal.rom").readBytes()));
+        byte[] kernalRom = loadKernalRom(machineType);
         
         Queue<char[]> autoRunCmdQueue = null;
         Callable<Queue<char[]>> autoLoadProgram = machine.init(

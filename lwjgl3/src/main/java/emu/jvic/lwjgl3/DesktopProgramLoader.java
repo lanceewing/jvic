@@ -32,7 +32,11 @@ public class DesktopProgramLoader extends ProgramLoader {
         byte[] data = null;
         
         try {
-            if (!appConfigItem.getFilePath().startsWith("http")) {
+            if ((appConfigItem.getFilePath() == null) ||
+                (appConfigItem.getFilePath().trim().equals(""))) {
+                // Ignore. Nothing to load.
+            }
+            else if (!appConfigItem.getFilePath().startsWith("http")) {
                 FileHandle fileHandle = null;
                 if ("ABSOLUTE".equals(appConfigItem.getFileType())) {
                     fileHandle = Gdx.files.absolute(appConfigItem.getFilePath());

@@ -91,6 +91,12 @@ public class Vic44 extends Vic {
     private int[] pal_palette = pal_palette_e;
     private int[] pal_trunc_palette = pal_palette;
     
+    private static final int VIC44_COLOUR_RAM_BASE_ADDRESS = 0x9400;
+    private int colourRamBaseAddress;
+    
+    // PIVIC has the char ROM internally cached, so we simulate that.
+    private byte[] charRom;
+    
     /**
      * Constructor for Vic44.
      * 
@@ -99,7 +105,20 @@ public class Vic44 extends Vic {
      * @param snapshot    Optional snapshot of the machine state to start with.
      */
     public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
+        this(pixelData, machineType, snapshot, VIC44_COLOUR_RAM_BASE_ADDRESS);
+    }
+    
+    /**
+     * Constructor for Vic44.
+     * 
+     * @param pixelData Interface to the platform specific mechanism for writing pixels.
+     * @param machineType The type of machine, PAL or NTSC.
+     * @param snapshot    Optional snapshot of the machine state to start with.
+     * @param colourRamBaseAddress The base address for colour RAM.
+     */
+    public Vic44(PixelData pixelData, MachineType machineType, Snapshot snapshot, int colourRamBaseAddress) {
         super(pixelData, machineType, snapshot);
+        this.colourRamBaseAddress = colourRamBaseAddress;
     }
     
     /**
@@ -825,20 +844,16 @@ public class Vic44 extends Vic {
                                 int screenAddress = screen_mem_start + videoMatrixCounter;
                                 
                                 switch ((screenAddress >> 10) & 0xF) {
-                                    case 4:
-                                    case 5:
-                                    case 6:
-                                    case 7:
-                                    case 9:
-                                    case 10:
-                                    case 11:
-                                        // Unconnected memory, so VIC chip sees what CPU put on bus.
-                                        cellIndex = memory.getLastBusData();
+                                    case 0:
+                                    case 1:
+                                    case 2:
+                                    case 3:
+                                        // PIVIC has char ROM embedded. Not useful to have screen mem here though.
+                                        cellIndex = charRom[screenAddress];
                                         break;
-                                        
                                     default:
+                                        // All other VIC chip read address go to main memory.
                                         cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
-                                        memory.setLastBusData(cellIndex);
                                         break;
                                 }
                                 
@@ -846,7 +861,7 @@ public class Vic44 extends Vic {
                                 // index also happens to automatically fetch the foreground colour from the 
                                 // Colour Matrix via the top 4 lines of the data bus (DB8-DB11), which are 
                                 // wired directly from colour RAM in to the VIC chip.
-                                colourData = mem[0x9400 + (screenAddress & 0x3ff)];
+                                colourData = mem[colourRamBaseAddress + (screenAddress & 0x3ff)];
         
                                 // Output the 1st pixel of next character. Note that this is not the character
                                 // that relates to the cell index and colour data fetched above.
@@ -879,20 +894,16 @@ public class Vic44 extends Vic {
                                 charDataOffset = char_mem_start + (cellIndex << char_size_shift) + cellDepthCounter;
         
                                 switch ((charDataOffset >> 10) & 0xF) {
-                                    case 4:
-                                    case 5:
-                                    case 6:
-                                    case 7:
-                                    case 9:
-                                    case 10:
-                                    case 11:
-                                        // Unconnected memory, so VIC chip sees what CPU put on bus.
-                                        charDataLatch = memory.getLastBusData();
+                                    case 0:
+                                    case 1:
+                                    case 2:
+                                    case 3:
+                                        // PIVIC has char ROM embedded.
+                                        charDataLatch = charRom[charDataOffset];
                                         break;
                                     default:
                                         // Fetch cell data, initially latched to the side until it is needed.
                                         charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
-                                        memory.setLastBusData(charDataLatch);
                                         break;
                                 }
         
@@ -990,5 +1001,14 @@ public class Vic44 extends Vic {
         }
         
         return frameRenderComplete;
+    }
+    
+    /**
+     * For the VIC44 and VIC44K, the char ROM data is embedded and used directly.
+     * 
+     * @param charRom The content of the char ROM to use.
+     */
+    public void setCharRom(byte[] charRom) {
+        this.charRom = charRom;
     }
 }

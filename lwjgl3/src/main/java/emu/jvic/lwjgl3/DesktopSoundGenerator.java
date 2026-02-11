@@ -16,8 +16,8 @@ public class DesktopSoundGenerator extends SoundGenerator {
 
     private static final int SAMPLE_RATE = 22050;
     
-    private static final int VIC_REG_10 = 0x900A;
-    private static final int VIC_REG_14 = 0x900E;
+    private int VIC_REG_10 = 0x900A;
+    private int VIC_REG_14 = 0x900E;
     
     private int cyclesPerSample;
     private byte[] sampleBuffer;
@@ -54,6 +54,11 @@ public class DesktopSoundGenerator extends SoundGenerator {
         voiceCounters = new int[4];
         voiceShiftRegisters = new int[4];
         voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 };
+        
+        if (machineType.isVIC44K()) {
+            VIC_REG_10 = 0xBC0A;
+            VIC_REG_14 = 0xBC0E;
+        }
     }
 
     @Override

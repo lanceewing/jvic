@@ -22,6 +22,7 @@ import emu.jvic.sound.SoundGenerator;
 import emu.jvic.sound.libgdx.GdxSoundGenerator;
 import emu.jvic.video.Vic;
 import emu.jvic.video.Vic44;
+import emu.jvic.video.Vic44k;
 import emu.jvic.video.Vic6560;
 import emu.jvic.video.Vic6561;
 
@@ -138,6 +139,8 @@ public class Machine {
         // Create the VIC chip and configure it as per the current TV type.
         if (machineType.isVIC44()) {
             vic = new Vic44(pixelData, machineType, snapshot);
+        } else if (machineType.isVIC44K()) {
+            vic = new Vic44k(pixelData, machineType, snapshot);
         } else if (machineType.isNTSC()) {
             vic = new Vic6560(pixelData, machineType, snapshot);
         } else {
