@@ -63,6 +63,14 @@
       "ram": "RAM_16K"
     },
     {
+      "name": "Berzerk MMX+",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBerzerk-MMX%2B%20%282011%29%28Hurst%2C%20Robert%29%5BR10.30%5D%5B16k%5D.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/B/Berzerk MMX+/Berzerk_MMX+.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Block Buster",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BPRG%5D%2FBlock%20Buster%20%281984%29%28Romik%29.zip",
       "fileType": "PRG",
