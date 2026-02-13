@@ -651,6 +651,14 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Star Defence",
+      "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FStar%20Defence.zip",
+      "fileType": "PRG",
+      "iconPath": "screenshots/S/Star Defence/Star_Defence.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Super Starship Space Attack",
       "displayName": "Super Starship\nSpace Attack",
       "filePath": "https://web.archive.org/web/20160721222022/http://www.riimukivi.net/data/super_starship_space_attack.zip",
