@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.utils.TimeUtils;
 
@@ -140,12 +141,12 @@ public abstract class KeyboardMatrix extends InputAdapter {
     private long minKeyReleaseTimes[] = new long[512];
     
     /**
-     * Holds a queue of keycodes whose key release processing has been delayed. This is
+     * Holds a map of keycodes whose key release processing has been delayed. This is
      * supported primarily for use with the Android virtual keyboard on some devices, 
      * where the key pressed and release both get fired on release of the key, so have
      * virtually no time between them.
      */
-    private TreeMap<Long, Integer> delayedReleaseKeys = new TreeMap<Long, Integer>();
+    private TreeMap<Integer, Long> delayedReleaseKeys = new TreeMap<Integer, Long>();
     
     /**
      * Maps keypress characters to VIC keys.
@@ -156,6 +157,11 @@ public abstract class KeyboardMatrix extends InputAdapter {
      * Maps libgdx keycodes to VIC keys.
      */
     private HashMap<Integer, int[]> keycodeConvHashMap;
+    
+    /**
+     * Maps VIC keys to libgdx keycodes.
+     */
+    private HashMap<Integer, Integer> vicKeyToLibgdxKeyMap;
     
     /**
      * Constructor for KeyboardMatrix.
@@ -184,6 +190,14 @@ public abstract class KeyboardMatrix extends InputAdapter {
             int[] vicKeys = new int[vicKeyMapping.length - 1];
             System.arraycopy(vicKeyMapping, 1, vicKeys, 0, vicKeyMapping.length-1);
             keycodeConvHashMap.put(vicKeyMapping[0], vicKeys);
+        }
+        
+        // Converts VIC key to libgdx keycode.
+        vicKeyToLibgdxKeyMap = new HashMap<Integer, Integer>();
+        for (int i=0; i < VicKeys.VIC_KEY_TO_LIBGDX_KEY_MAP.length; i++) {
+            vicKeyToLibgdxKeyMap.put(
+                    VicKeys.VIC_KEY_TO_LIBGDX_KEY_MAP[i][0], 
+                    VicKeys.VIC_KEY_TO_LIBGDX_KEY_MAP[i][1]);
         }
     }
     
@@ -261,7 +275,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
                 // keyboard or something similar that doesn't reflect the actual time the key 
                 // is down), so let's add this keycode to the delayed release list.
                 synchronized(delayedReleaseKeys) {
-                    delayedReleaseKeys.put(minKeyReleaseTime, vicKey);
+                    delayedReleaseKeys.put(vicKey, minKeyReleaseTime);
                 }
                 
             } else {
@@ -344,13 +358,45 @@ public abstract class KeyboardMatrix extends InputAdapter {
     public void checkDelayedReleaseKeys() {
         if (!delayedReleaseKeys.isEmpty()) {
             synchronized (delayedReleaseKeys) {
-                List<Long> processedReleases = new ArrayList<Long>();
-                processedReleases.addAll(delayedReleaseKeys.headMap(TimeUtils.nanoTime()).keySet());
-                for (Long keyReleaseTime : processedReleases) {
-                    int delayedReleaseVicKey = delayedReleaseKeys.remove(keyReleaseTime);
-                    vicKeyUp(delayedReleaseVicKey);
+                // Identify the keys whose minimum release time has based.
+                long currentTime = TimeUtils.nanoTime();
+                List<Integer> releasesToProcess = new ArrayList<Integer>();
+                for (Integer vicKey : delayedReleaseKeys.keySet()) {
+                    if (currentTime >= delayedReleaseKeys.get(vicKey)) {
+                        releasesToProcess.add(vicKey);
+                    }
+                }
+                
+                // Now process the key releases.
+                for (Integer delayedReleaseVicKey : releasesToProcess) {
+                    // Only trigger vicKeyUp if the key is not still down.
+                    if (!isKeyCurrentlyDown(delayedReleaseVicKey)) {
+                        vicKeyUp(delayedReleaseVicKey);
+                        delayedReleaseKeys.remove(delayedReleaseVicKey);
+                    } else {
+                        // Key is still down.
+                    }
                 }
             }
+        }
+    }
+    
+    /**
+     * Checks if the given VIC key is down.
+     * 
+     * @param vicKey The VIC key to check.
+     * 
+     * @return true if the VIC key is down; otherwise false.
+     */
+    public boolean isKeyCurrentlyDown(int vicKey) {
+        if (vicKey != 0) {
+            if (vicKeyToLibgdxKeyMap.containsKey(vicKey)) {
+                return Gdx.input.isKeyPressed(vicKeyToLibgdxKeyMap.get(vicKey));
+            } else {
+                return false;
+            }
+        } else {
+            return false;
         }
     }
     
