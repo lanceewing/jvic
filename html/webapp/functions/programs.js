@@ -29,6 +29,7 @@ export async function onRequest(context) {
 			 targetUrl.startsWith("http://majikeyric.free.fr/") || 
 			 targetUrl.startsWith("https://web.archive.org/") ||
 			 targetUrl.startsWith("https://kollektivet.nu/") || 
+			 targetUrl.startsWith("https://www.the8bitguy.com/") || 
 			 targetUrl.startsWith("http://atebit.org/") || 
 			 targetUrl.startsWith("https://www.vic-20.it/") || 
 			 targetUrl.startsWith("https://files.vic20reloaded.com/") || 
