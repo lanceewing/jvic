@@ -57,14 +57,14 @@ public class Keyboard {
     public int scanKeyboardColumn(int selectedColumn) {
         int rowData = 0;
         
-        if ((selectedColumn & 0x80) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x80);
-        if ((selectedColumn & 0x40) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x40);
-        if ((selectedColumn & 0x20) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x20);
-        if ((selectedColumn & 0x10) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x10);
-        if ((selectedColumn & 0x08) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x08);
-        if ((selectedColumn & 0x04) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x04);
-        if ((selectedColumn & 0x02) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x02);
-        if ((selectedColumn & 0x01) != 0) rowData |= keyboardMatrix.getKeyMatrixRow(0x01);
+        if ((keyboardMatrix.getKeyMatrixRow(0x80) & selectedColumn) != 0) rowData |= 0x80;
+        if ((keyboardMatrix.getKeyMatrixRow(0x40) & selectedColumn) != 0) rowData |= 0x40;
+        if ((keyboardMatrix.getKeyMatrixRow(0x20) & selectedColumn) != 0) rowData |= 0x20;
+        if ((keyboardMatrix.getKeyMatrixRow(0x10) & selectedColumn) != 0) rowData |= 0x10;
+        if ((keyboardMatrix.getKeyMatrixRow(0x08) & selectedColumn) != 0) rowData |= 0x08;
+        if ((keyboardMatrix.getKeyMatrixRow(0x04) & selectedColumn) != 0) rowData |= 0x04;
+        if ((keyboardMatrix.getKeyMatrixRow(0x02) & selectedColumn) != 0) rowData |= 0x02;
+        if ((keyboardMatrix.getKeyMatrixRow(0x01) & selectedColumn) != 0) rowData |= 0x01;
         
         return ((~(rowData)) & 0xFF);
     }
