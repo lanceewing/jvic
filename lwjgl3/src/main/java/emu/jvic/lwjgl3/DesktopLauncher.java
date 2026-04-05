@@ -51,7 +51,7 @@ public class DesktopLauncher {
         //// useful for testing performance, but can also be very stressful to some hardware.
         //// You may also need to configure GPU drivers to fully disable Vsync; this can cause screen tearing.
         //configuration.setWindowedMode(540, 960);
-        configuration.setWindowedMode(960, 640);
+        configuration.setWindowedMode(1440, 960);
         configuration.setWindowIcon("jvic-128x128.png", "jvic-64x64.png", "jvic-32x32.png", "jvic-16x16.png");
         configuration.setWindowListener(new Lwjgl3WindowAdapter() {
             @Override
