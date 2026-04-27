@@ -147,7 +147,7 @@ public class GwtJVicRunner extends JVicRunner {
         // Convert program bytes to ArrayBuffer.
         ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem);
         
-        worker = Worker.create("/worker/worker.nocache.js");
+        worker = Worker.create("./worker/worker.nocache.js");
         
         final MessageHandler webWorkerMessageHandler = new MessageHandler() {
             @Override

@@ -96,7 +96,7 @@ public class PSGAudioWorklet {
             
                 console.log("Adding AudioWorkletProcessor module...");
             
-                that.audioContext.audioWorklet.addModule('/sound-renderer.js').then(function() {
+                that.audioContext.audioWorklet.addModule('./sound-renderer.js').then(function() {
                     that.audioWorkletNode = new AudioWorkletNode(
                         that.audioContext, 
                         "sound-renderer",
