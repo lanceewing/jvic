@@ -55,8 +55,8 @@ jobs:
           cd html/build/dist
           mkdir assets/games
           zip -r jvic-web-${{ github.ref_name }}.zip .
-          cd ../..
-          mv html/build/jvic-web-${{ github.ref_name }}.zip .
+          cd ../../..
+          mv html/build/dist/jvic-web-${{ github.ref_name }}.zip .
           ./gradlew lwjgl3:jar
           mv lwjgl3/build/lib/jvic-${VERSION}.jar jvic-desktop-${VERSION}.jar
           ./gradlew android:assembleRelease
