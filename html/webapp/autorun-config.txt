@@ -1,0 +1,20 @@
+# This is an autorun configuration file for JVIC.
+# Lines starting with a # are comment lines and are ignored by JVIC.
+# They are used to (briefly) document the effect of each option.
+
+#          program: The full path of the file containing the program (can be a zip)
+#               tv: The TV mode to use.
+#                   Possible values: pal, ntsc
+#             type: The type of program to run.
+#                   Possible values: prg, disk, tape, cart, pcv
+#              ram: The RAM expansion setting to use.
+#                   Possible values: 0k, 3k, 8k, 16k, 24k, 32k, 35k
+#            entry: If the program file is a zip, and the zip contains multiple files
+#                   then this option can specify which zip file entry to run.
+
+# Example:
+#
+# program=vvvvic.prg
+# type=prg
+# ram=24k
+# tv=ntsc
