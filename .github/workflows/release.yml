@@ -53,6 +53,7 @@ jobs:
           rm -rf html/build/dist/WEB-INF
           mv html/build/dist/functions html/build
           cd html/build/dist
+          echo '{ "apps": [] }' > assets/data/programs*.json
           zip -r jvic-web-${{ github.ref_name }}.zip .
           cd ../../..
           mv html/build/dist/jvic-web-${{ github.ref_name }}.zip .
