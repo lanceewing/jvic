@@ -1,12 +1,10 @@
 package emu.jvic;
 
-import java.util.LinkedList;
 import java.util.Map;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
-import com.badlogic.gdx.files.FileHandle;
 
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.memory.RamType;
@@ -95,10 +93,19 @@ public class JVic extends Game {
                 adhocProgram.setRam("RAM_AUTO");
                 appConfigItem = adhocProgram;
             }
-        }
-        
-        if (appConfigItem == null) {
-            appConfigItem = checkForInternalGame();
+            else if (args.containsKey("filePath")) {
+                String filePath = args.get("filePath");
+                AppConfigItem adhocProgram = new AppConfigItem();
+                adhocProgram.setName("Adhoc VIC Program");
+                adhocProgram.setFilePath(filePath);
+                if (filePath.toUpperCase().contains("NTSC")) {
+                    adhocProgram.setMachineType("NTSC");
+                } else {
+                    adhocProgram.setMachineType("PAL");
+                }
+                adhocProgram.setRam("RAM_AUTO");
+                appConfigItem = adhocProgram;
+            }
         }
         
         setScreen(homeScreen);
@@ -127,85 +134,6 @@ public class JVic extends Game {
         }
         if (args.containsKey("cmd")) {
             appConfigItem.setAutoRunCommand(args.get("cmd"));
-        }
-    }
-    
-    /**
-     * Checks if there is a program in the "games" folder under assets.
-     * 
-     * @return The AppConfigItem for the program if one exists under "games".
-     */
-    private AppConfigItem checkForInternalGame() {
-        AppConfigItem appConfigItem = null;
-        FileHandle gamesDir = Gdx.files.internal("games");
-        FileHandle programFile = null;
-        
-        if (gamesDir.exists() && gamesDir.isDirectory()) {
-            LinkedList<FileHandle> dirQueue = new LinkedList<>();
-            dirQueue.add(gamesDir);
-            
-            while (!dirQueue.isEmpty()) {
-                FileHandle dir = dirQueue.remove();
-                if (dir != null) {
-                    FileHandle[] fileList = dir.list();
-                    if ((fileList != null) && (fileList.length > 0)) {
-                        for (FileHandle file : fileList) {
-                            if (file.isDirectory()) {
-                                dirQueue.add(file);
-                            } else {
-                                // Found a program file.
-                                programFile = file;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (programFile != null) {
-            appConfigItem = new AppConfigItem();
-            appConfigItem.setFilePath(programFile.path());
-            appConfigItem.setName("Adhoc VIC Program");
-            String[] pathParts = programFile.parent().path().split("/");
-            applyPathParts(pathParts, appConfigItem);
-        }
-        
-        return appConfigItem;
-    }
-    
-    private void applyPathParts(String[] pathParts, AppConfigItem appConfigItem) {
-        if ((pathParts != null) && (pathParts.length > 1)) {
-            for (int i=1; i<pathParts.length; i++) {
-                String pathPart = pathParts[i].toUpperCase();
-                switch (pathPart) {
-                    case "0K":
-                    case "UNEXPANDED":
-                    case "UNEXP":
-                    case "3K":
-                    case "8K":
-                    case "16K":
-                    case "24K":
-                    case "32K":
-                    case "35K":
-                        applyRamConfig(appConfigItem, pathPart);
-                        break;
-                    case "PAL":
-                    case "NTSC":
-                    case "VIC44":
-                        applyTvConfig(appConfigItem, pathPart);
-                        break;
-                    case "TAPE":
-                    case "DISK":
-                    case "CART":
-                    case "PRG":
-                    case "PCV":
-                        applyProgramType(appConfigItem, pathPart);
-                        break;
-                    default:
-                        break;
-                }
-            }
         }
     }
     

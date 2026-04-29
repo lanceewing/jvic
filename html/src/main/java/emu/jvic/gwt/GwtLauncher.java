@@ -12,6 +12,7 @@ import com.google.gwt.user.client.Window;
 
 import emu.jvic.JVic;
 import emu.jvic.JVicRunner;
+import emu.jvic.config.AppConfigItem;
 
 /** Launches the GWT application. */
 public class GwtLauncher extends GwtApplication {
@@ -53,7 +54,7 @@ public class GwtLauncher extends GwtApplication {
                         String[] hashParts = programId.split("/");
                         argsMap.put("uri", hashParts[0]);
                         if (hashParts.length > 1) {
-                            applyHashPathParts(hashParts, argsMap);
+                            applyPathParts(hashParts, argsMap);
                         }
                     } else {
                         argsMap.put("uri", programId);
@@ -79,6 +80,10 @@ public class GwtLauncher extends GwtApplication {
             applyRequestParameters(argsMap);
         }
         
+        if (argsMap.isEmpty()) {
+            checkForAutorunConfig(argsMap);
+        }
+        
         GwtDialogHandler gwtDialogHandler = new GwtDialogHandler();
         JVicRunner jvicRunner = new GwtJVicRunner(
                 new GwtKeyboardMatrix(), 
@@ -88,11 +93,49 @@ public class GwtLauncher extends GwtApplication {
         return jvic;
     }
     
-    private void applyHashPathParts(String[] hashParts, Map<String, String> argsMap) {
-        if ((hashParts != null) && (hashParts.length > 1)) {
-            for (int i=1; i<hashParts.length; i++) {
-                String hashPart = hashParts[i].toUpperCase();
-                switch (hashPart) {
+    /**
+     * Checks if there is an autorun config file to apply.
+     * 
+     * @param argsMap The args map to add autorun game details to.
+     */
+    private void checkForAutorunConfig(Map<String, String> argsMap) {
+        String href = Window.Location.getHref();
+        // The optional removal of index.html (if its there) is mainly to support itch.io
+        String urlWithoutParams = href.split("[?]")[0].replace("/index.html", "/");
+        String autorunFilePath = urlWithoutParams + "/autorun-config.txt";
+        if (autorunFilePath != null) {
+            String fileContent = getBinaryResource(autorunFilePath);
+            if (fileContent != null) {
+                String[] configLines = fileContent.split("\n");
+                for (String configLine : configLines) {
+                    String[] nameAndValue = configLine.split("=");
+                    if (nameAndValue.length == 2) {
+                        String name = nameAndValue[0];
+                        String value = nameAndValue[1];
+                        if (name.equals("program")) {
+                            if (value.startsWith("/")) {
+                                argsMap.put("filePath", urlWithoutParams + value);
+                            } 
+                            else if (value.startsWith("./")) {
+                                argsMap.put("filePath", urlWithoutParams + value.substring(1));
+                            }
+                            else {
+                                argsMap.put("filePath", urlWithoutParams + "/" + value);
+                            }
+                        } else {
+                            argsMap.put(name, value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private void applyPathParts(String[] pathParts, Map<String, String> argsMap) {
+        if ((pathParts != null) && (pathParts.length > 1)) {
+            for (int i=1; i<pathParts.length; i++) {
+                String pathPart = pathParts[i].toUpperCase();
+                switch (pathPart) {
                     case "0K":
                     case "UNEXPANDED":
                     case "UNEXP":
@@ -102,19 +145,19 @@ public class GwtLauncher extends GwtApplication {
                     case "24K":
                     case "32K":
                     case "35K":
-                        argsMap.put("ram", hashPart);
+                        argsMap.put("ram", pathPart);
                         break;
                     case "PAL":
                     case "NTSC":
                     case "VIC44":
-                        argsMap.put("tv", hashPart);
+                        argsMap.put("tv", pathPart);
                         break;
                     case "TAPE":
                     case "DISK":
                     case "CART":
                     case "PRG":
                     case "PCV":
-                        argsMap.put("type", hashPart);
+                        argsMap.put("type", pathPart);
                         break;
                     default:
                         break;
@@ -215,6 +258,23 @@ public class GwtLauncher extends GwtApplication {
             return isURLValid(url);
         }
     }
+    
+    /**
+     * Fetches the given relative URL path as binary data returned in an ArrayBuffer.
+     * 
+     * @param url The relative URL path to fetch.
+     * 
+     * @return An ArrayBuffer containing the binary data of the resource.
+     */
+    private static native String getBinaryResource(String url) /*-{
+        var req = new XMLHttpRequest();
+        req.open("GET", url, false);  // The last parameter determines whether the request is asynchronous -> this case is sync.
+        req.overrideMimeType('text/plain; charset=x-user-defined');
+        req.send(null);
+        if (req.status == 200) {                    
+            return req.responseText;
+        } else return null
+    }-*/;
     
     private final native boolean isURLValid(String url)/*-{
         try {
