@@ -53,7 +53,6 @@ jobs:
           rm -rf html/build/dist/WEB-INF
           mv html/build/dist/functions html/build
           cd html/build/dist
-          mkdir assets/games
           zip -r jvic-web-${{ github.ref_name }}.zip .
           cd ../../..
           mv html/build/dist/jvic-web-${{ github.ref_name }}.zip .
