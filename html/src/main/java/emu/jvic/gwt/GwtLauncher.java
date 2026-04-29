@@ -108,10 +108,13 @@ public class GwtLauncher extends GwtApplication {
             if (fileContent != null) {
                 String[] configLines = fileContent.split("\n");
                 for (String configLine : configLines) {
-                    String[] nameAndValue = configLine.split("=");
+                    if (configLine.startsWith("#") || (configLine.trim().length() == 0)) {
+                        continue;
+                    }
+                    String[] nameAndValue = configLine.trim().split("=");
                     if (nameAndValue.length == 2) {
-                        String name = nameAndValue[0];
-                        String value = nameAndValue[1];
+                        String name = nameAndValue[0].trim();
+                        String value = nameAndValue[1].trim();
                         if (name.equals("program")) {
                             if (value.startsWith("/")) {
                                 argsMap.put("filePath", urlWithoutParams + value);
