@@ -264,9 +264,11 @@ public class GwtSoundGenerator extends SoundGenerator {
         
         // Increment total sample count, so that we can keep in sync with cycle count.
         sampleCount++;
+
+        sampleBufferOffset++;
         
         // If the sample buffer is full, write it out to the shared queue.
-        if ((sampleBufferOffset++) == sampleBuffer.length()) {
+        if (sampleBufferOffset == sampleBuffer.length()) {
             sampleSharedQueue.push(sampleBuffer);
             sampleBufferOffset = 0;
             
