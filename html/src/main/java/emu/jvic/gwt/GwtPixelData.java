@@ -5,6 +5,7 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.typedarrays.shared.ArrayBufferView;
 import com.google.gwt.typedarrays.shared.Uint8ClampedArray;
+import com.google.gwt.typedarrays.shared.Uint32Array;
 
 import emu.jvic.PixelData;
 
@@ -27,6 +28,8 @@ import emu.jvic.PixelData;
 public class GwtPixelData extends PixelData {
     
     private Uint8ClampedArray pixelArray;
+    private Uint32Array packedPixelArray;
+    private boolean packedPixelWritesSupported;
     
     /**
      * Constructor for GwtPixelData (used by UI thread)
@@ -41,10 +44,16 @@ public class GwtPixelData extends PixelData {
      */
     public GwtPixelData(JavaScriptObject sharedArrayBuffer) {
         pixelArray = createPixelArray(sharedArrayBuffer);
+        packedPixelArray = createPackedPixelArray(sharedArrayBuffer);
+        packedPixelWritesSupported = isLittleEndian();
     }
     
     private native Uint8ClampedArray createPixelArray(JavaScriptObject sharedArrayBuffer)/*-{
         return new Uint8ClampedArray(sharedArrayBuffer);
+    }-*/;
+
+    private native Uint32Array createPackedPixelArray(JavaScriptObject sharedArrayBuffer)/*-{
+        return new Uint32Array(sharedArrayBuffer);
     }-*/;
 
     private native Uint8ClampedArray createPixelArray(int width, int height)/*-{
@@ -62,23 +71,35 @@ public class GwtPixelData extends PixelData {
         // The actual pixel array is created using a SharedArrayBuffer, so we need
         // to use a native method to do this.
         pixelArray = createPixelArray(width, height);
+        packedPixelArray = createPackedPixelArray(getSharedArrayBuffer());
+        packedPixelWritesSupported = isLittleEndian();
     }
 
     @Override
     public void putPixel(int ulaIndex, int rgba8888Colour) {
-        int index = (ulaIndex << 2);
-        
-        // Adds RGBA8888 colour to byte array in expected R, G, B, A order.
-        pixelArray.set(index, (rgba8888Colour >> 24) & 0xFF);
-        pixelArray.set(index + 1, (rgba8888Colour >> 16) & 0xFF);
-        pixelArray.set(index + 2, (rgba8888Colour >> 8) & 0xFF);
-        pixelArray.set(index + 3, rgba8888Colour & 0xFF);
+        if (packedPixelWritesSupported) {
+            packedPixelArray.set(ulaIndex, convertRgba8888ToPackedPixel(rgba8888Colour));
+        } else {
+            int index = (ulaIndex << 2);
+
+            // Adds RGBA8888 colour to byte array in expected R, G, B, A order.
+            pixelArray.set(index, (rgba8888Colour >> 24) & 0xFF);
+            pixelArray.set(index + 1, (rgba8888Colour >> 16) & 0xFF);
+            pixelArray.set(index + 2, (rgba8888Colour >> 8) & 0xFF);
+            pixelArray.set(index + 3, rgba8888Colour & 0xFF);
+        }
     }
 
     @Override
     public void clearPixels() {
-        for (int index = 0; index < pixelArray.length(); index++) {
-            pixelArray.set(index, 0);
+        if (packedPixelWritesSupported) {
+            for (int index = 0; index < packedPixelArray.length(); index++) {
+                packedPixelArray.set(index, 0);
+            }
+        } else {
+            for (int index = 0; index < pixelArray.length(); index++) {
+                pixelArray.set(index, 0);
+            }
         }
     }
 
@@ -95,5 +116,20 @@ public class GwtPixelData extends PixelData {
             data[i] = pixels[i] & 0xff;
         }
         ctx.putImageData(imgData, 0, 0);
+    }-*/;
+
+    private int convertRgba8888ToPackedPixel(int rgba8888Colour) {
+        return ((rgba8888Colour & 0x000000FF) << 24)
+                | ((rgba8888Colour & 0x0000FF00) << 8)
+                | ((rgba8888Colour & 0x00FF0000) >>> 8)
+                | ((rgba8888Colour & 0xFF000000) >>> 24);
+    }
+
+    private native boolean isLittleEndian()/*-{
+        var buffer = new ArrayBuffer(4);
+        var uint32 = new Uint32Array(buffer);
+        var uint8 = new Uint8Array(buffer);
+        uint32[0] = 0x01020304;
+        return uint8[0] === 0x04;
     }-*/;
 }
