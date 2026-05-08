@@ -108,7 +108,7 @@ public class MachineScreen implements Screen {
     // FPS text font
     private BitmapFont font;
 
-    private boolean showFPS;
+    private boolean showFPS = true;
 
     /**
      * Details about the application currently running.
@@ -472,6 +472,21 @@ public class MachineScreen implements Screen {
                 batch.draw(keyboardIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 6) - 16);
                 batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
             }
+        }
+
+        if (showFPS) {
+            StringBuilder overlayText = new StringBuilder();
+            overlayText.append("FPS: ");
+            overlayText.append(Gdx.graphics.getFramesPerSecond());
+
+            String performanceStats = jvicRunner.getPerformanceStatsText();
+            if ((performanceStats != null) && !performanceStats.isEmpty()) {
+                overlayText.append('\n');
+                overlayText.append(performanceStats);
+            }
+
+            float overlayX = ((!viewportManager.isPortrait()) && (cameraXOffset == 0) ? 140 : 20);
+            font.draw(batch, overlayText, overlayX, viewportManager.getHeight() - 20);
         }
         
         batch.end();

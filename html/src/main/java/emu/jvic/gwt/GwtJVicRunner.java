@@ -27,6 +27,17 @@ import emu.jvic.worker.Worker;
  */
 public class GwtJVicRunner extends JVicRunner {
 
+    private double avgUnusedNanosPerCycle;
+    private double headroomFactor;
+    private double busyPercent;
+    private double avgBatchWorkMillis;
+    private double avgBatchCycles;
+    private int audioQueueSamples = -1;
+    private double audioQueueMillis = -1;
+    private double audioUnderrunCount;
+    private double audioUnderrunSampleCount;
+    private boolean performanceStatsAvailable;
+
     /**
      * The web worker that will execute the VIC 20 emulator in the background.
      */
@@ -144,6 +155,8 @@ public class GwtJVicRunner extends JVicRunner {
      * @param program Contains the raw data of the VIC 20 program to run.
      */
     public void createWorker(AppConfigItem appConfigItem, Program program) {
+        clearPerformanceStats();
+
         // Convert program bytes to ArrayBuffer.
         ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem);
         
@@ -159,6 +172,17 @@ public class GwtJVicRunner extends JVicRunner {
                         // This message is sent from the worker when the program has ended, usually
                         // due to the user quitting the program.
                         stop();
+                        break;
+
+                    case "PerformanceStats":
+                        updatePerformanceStats(
+                                getNestedDouble(eventObject, "avgUnusedNanosPerCycle"),
+                                getNestedDouble(eventObject, "headroomFactor"),
+                                getNestedDouble(eventObject, "busyPercent"),
+                                getNestedDouble(eventObject, "avgBatchWorkMillis"),
+                                getNestedDouble(eventObject, "avgBatchCycles"),
+                                getNestedInt(eventObject, "audioQueueSamples"),
+                                getNestedDouble(eventObject, "audioQueueMillis"));
                         break;
                         
                     default:
@@ -275,6 +299,10 @@ public class GwtJVicRunner extends JVicRunner {
     private native int getNestedInt(JavaScriptObject obj, String fieldName)/*-{
         return obj.object[fieldName];
     }-*/;
+
+    private native double getNestedDouble(JavaScriptObject obj, String fieldName)/*-{
+        return obj.object[fieldName];
+    }-*/;
     
     private static native void updateURLWithoutReloading(String newURL) /*-{
         $wnd.history.pushState(newURL, "", newURL);
@@ -304,6 +332,7 @@ public class GwtJVicRunner extends JVicRunner {
         paused = false;
         stopped = false;
         worker = null;
+        clearPerformanceStats();
         
         clearUrl();
         
@@ -441,8 +470,112 @@ public class GwtJVicRunner extends JVicRunner {
         // Not supported yet by the HTML5/GWT version.
     }
 
+    public void updatePerformanceStats(double avgUnusedNanosPerCycle, double headroomFactor,
+            double busyPercent, double avgBatchWorkMillis, double avgBatchCycles,
+            int audioQueueSamples, double audioQueueMillis) {
+        this.avgUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+        this.headroomFactor = headroomFactor;
+        this.busyPercent = busyPercent;
+        this.avgBatchWorkMillis = avgBatchWorkMillis;
+        this.avgBatchCycles = avgBatchCycles;
+        this.audioQueueSamples = audioQueueSamples;
+        this.audioQueueMillis = audioQueueMillis;
+        this.performanceStatsAvailable = true;
+    }
+
+    public void updateAudioProcessorStats(double underrunCount, double underrunSampleCount) {
+        this.audioUnderrunCount = underrunCount;
+        this.audioUnderrunSampleCount = underrunSampleCount;
+    }
+
+    @Override
+    public String getPerformanceStatsText() {
+        if (!performanceStatsAvailable) {
+            return isRunning() ? "Perf: waiting for worker stats" : "";
+        }
+
+        StringBuilder text = new StringBuilder();
+        text.append("Unused ns/cycle: ");
+        text.append(Math.round(avgUnusedNanosPerCycle));
+        text.append('\n');
+        text.append("Headroom: ");
+        text.append(formatDecimal(headroomFactor, 2));
+        text.append("x, busy ");
+        text.append(formatDecimal(busyPercent, 1));
+        text.append('%');
+        text.append('\n');
+        text.append("Worker batch: ");
+        text.append(formatDecimal(avgBatchWorkMillis, 2));
+        text.append(" ms, ");
+        text.append(Math.round(avgBatchCycles));
+        text.append(" cycles");
+        text.append('\n');
+
+        if (audioQueueSamples >= 0) {
+            text.append("Audio queue: ");
+            text.append(audioQueueSamples);
+            text.append(" samples, ");
+            text.append(formatDecimal(audioQueueMillis, 1));
+            text.append(" ms");
+        } else {
+            text.append("Audio queue: sound off");
+        }
+
+        text.append('\n');
+        text.append("Audio underruns: ");
+        text.append(Math.round(audioUnderrunCount));
+        text.append(" (");
+        text.append(Math.round(audioUnderrunSampleCount));
+        text.append(" samples)");
+        return text.toString();
+    }
+
     public Worker getCurrentWorker() {
         return worker;
+    }
+
+    private void clearPerformanceStats() {
+        avgUnusedNanosPerCycle = 0;
+        headroomFactor = 0;
+        busyPercent = 0;
+        avgBatchWorkMillis = 0;
+        avgBatchCycles = 0;
+        audioQueueSamples = -1;
+        audioQueueMillis = -1;
+        audioUnderrunCount = 0;
+        audioUnderrunSampleCount = 0;
+        performanceStatsAvailable = false;
+    }
+
+    private String formatDecimal(double value, int decimalPlaces) {
+        double scale = Math.pow(10, decimalPlaces);
+        double rounded = Math.round(value * scale) / scale;
+        String text = Double.toString(rounded);
+
+        if (decimalPlaces == 0) {
+            return Integer.toString((int)rounded);
+        }
+
+        int decimalIndex = text.indexOf('.');
+        if (decimalIndex < 0) {
+            StringBuilder padded = new StringBuilder(text);
+            padded.append('.');
+            for (int i = 0; i < decimalPlaces; i++) {
+                padded.append('0');
+            }
+            return padded.toString();
+        }
+
+        int fractionDigits = text.length() - decimalIndex - 1;
+        if (fractionDigits < decimalPlaces) {
+            StringBuilder padded = new StringBuilder(text);
+            for (int i = fractionDigits; i < decimalPlaces; i++) {
+                padded.append('0');
+            }
+            return padded.toString();
+        }
+
+        return text;
     }
 
     private final native void logToJSConsole(String message)/*-{

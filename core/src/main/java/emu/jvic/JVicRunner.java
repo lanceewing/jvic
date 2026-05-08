@@ -251,6 +251,10 @@ public abstract class JVicRunner {
     public abstract boolean isRunning();
     
     public abstract void sendNmi();
+
+    public String getPerformanceStatsText() {
+        return "";
+    }
     
     public abstract void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem);
 }

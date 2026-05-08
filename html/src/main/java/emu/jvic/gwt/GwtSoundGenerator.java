@@ -15,7 +15,7 @@ import emu.jvic.sound.SoundGenerator;
  */
 public class GwtSoundGenerator extends SoundGenerator {
     
-    private static final int SAMPLE_RATE = 22050;
+    public static final int SAMPLE_RATE = 22050;
 
     // Number of samples to queue before being output to the audio hardware.
     public static final int SAMPLE_LATENCY = 3072;

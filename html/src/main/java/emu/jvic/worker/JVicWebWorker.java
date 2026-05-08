@@ -24,6 +24,8 @@ import emu.jvic.memory.RamType;
  */
 public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageHandler {
 
+    private static final double PERFORMANCE_STATS_INTERVAL_MS = 500.0;
+
     private DedicatedWorkerGlobalScope scope;
 
     // The web worker has its own instance of each of these. It is not the same instance
@@ -70,6 +72,12 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     // Used by the current implementation.
     private double startTime = 0;
     private long cycleCount;
+
+    private double performanceWindowStartTime = -1;
+    private long performanceWindowCycles;
+    private double performanceWindowWorkMillis;
+    private double performanceWindowEmulatedMillis;
+    private long performanceWindowBatchCount;
     
     @Override
     public void onMessage(MessageEvent event) {
@@ -273,14 +281,66 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
             }
             
             // Emulate the required number of cycles.
+                double batchStartTime = getPerformanceNowTimestamp();
             do {
                 machine.emulateCycle();
                 cycleCount++;
             } while (cycleCount <= expectedCycleCount);
+
+                double batchEndTime = getPerformanceNowTimestamp();
+                int audioQueueSamples = (soundGenerator.isWriteSamplesEnabled() ?
+                    soundGenerator.getSampleSharedQueue().availableRead() : -1);
+                recordPerformanceStats(timestamp, cycleCount, batchEndTime - batchStartTime, audioQueueSamples);
         }
 
         requestNextAnimationFrame();
     }
+
+            private void recordPerformanceStats(double timestamp, long cyclesThisBatch,
+                double workMillis, int audioQueueSamples) {
+            if ((machine == null) || (cyclesThisBatch <= 0)) {
+                return;
+            }
+
+            if (performanceWindowStartTime < 0) {
+                performanceWindowStartTime = timestamp;
+            }
+
+            double emulatedMillis = (cyclesThisBatch * 1000.0) / machine.getMachineType().getCyclesPerSecond();
+
+            performanceWindowCycles += cyclesThisBatch;
+            performanceWindowWorkMillis += workMillis;
+            performanceWindowEmulatedMillis += emulatedMillis;
+            performanceWindowBatchCount++;
+
+            if ((timestamp - performanceWindowStartTime) >= PERFORMANCE_STATS_INTERVAL_MS) {
+                double avgUnusedNanosPerCycle = ((performanceWindowEmulatedMillis - performanceWindowWorkMillis)
+                    * 1000000.0) / performanceWindowCycles;
+                double headroomFactor = (performanceWindowWorkMillis > 0 ?
+                    performanceWindowEmulatedMillis / performanceWindowWorkMillis : 0);
+                double busyPercent = (performanceWindowEmulatedMillis > 0 ?
+                    (performanceWindowWorkMillis * 100.0) / performanceWindowEmulatedMillis : 0);
+                double avgBatchWorkMillis = performanceWindowWorkMillis / performanceWindowBatchCount;
+                double avgBatchCycles = ((double)performanceWindowCycles) / performanceWindowBatchCount;
+                double audioQueueMillis = (audioQueueSamples >= 0 ?
+                    (audioQueueSamples * 1000.0) / GwtSoundGenerator.SAMPLE_RATE : -1);
+
+                postObject("PerformanceStats", createPerformanceStatsObject(
+                    avgUnusedNanosPerCycle,
+                    headroomFactor,
+                    busyPercent,
+                    avgBatchWorkMillis,
+                    avgBatchCycles,
+                    audioQueueSamples,
+                    audioQueueMillis));
+
+                performanceWindowStartTime = timestamp;
+                performanceWindowCycles = 0;
+                performanceWindowWorkMillis = 0;
+                performanceWindowEmulatedMillis = 0;
+                performanceWindowBatchCount = 0;
+            }
+            }
     
     private void runNextBasicCommand(Queue<char[]> cmdQueue, int[] mem) {
         if ((cmdQueue != null) && (!cmdQueue.isEmpty())) {
@@ -326,6 +386,21 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
 
     private native ArrayBuffer getArrayBuffer(JavaScriptObject obj)/*-{
         return obj.buffer;
+    }-*/;
+
+    private native JavaScriptObject createPerformanceStatsObject(
+            double avgUnusedNanosPerCycle, double headroomFactor, double busyPercent,
+            double avgBatchWorkMillis, double avgBatchCycles, int audioQueueSamples,
+            double audioQueueMillis)/*-{
+        return {
+            avgUnusedNanosPerCycle: avgUnusedNanosPerCycle,
+            headroomFactor: headroomFactor,
+            busyPercent: busyPercent,
+            avgBatchWorkMillis: avgBatchWorkMillis,
+            avgBatchCycles: avgBatchCycles,
+            audioQueueSamples: audioQueueSamples,
+            audioQueueMillis: audioQueueMillis
+        };
     }-*/;
 
     protected final void postObject(String name, JavaScriptObject object) {

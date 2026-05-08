@@ -155,6 +155,12 @@ class SoundRenderer extends AudioWorkletProcessor {
     startTime = 0;
     
     deltaCount = 0;
+
+    underrunCount = 0;
+
+    underrunSampleCount = 0;
+
+    lastStatsPostTime = 0;
     
     /**
      * Constructor for SoundRenderer.
@@ -163,6 +169,7 @@ class SoundRenderer extends AudioWorkletProcessor {
         super();
         
         this.startTime = currentTime * 1000;
+        this.lastStatsPostTime = this.startTime;
         
         // Set to true after the SharedArrayBuffer is received.
         this.ready = false;
@@ -222,9 +229,22 @@ class SoundRenderer extends AudioWorkletProcessor {
             // This will read up to the length of the channel array, usually 128. If
             // there isn't that many samples, then it populates as much as it can and
             // leaves the rest at 0, which would be silence.
-            this.sampleSharedQueue.pop(outputs[0][0]);
+            let samplesRead = this.sampleSharedQueue.pop(outputs[0][0]);
+            if (samplesRead < outputs[0][0].length) {
+                this.underrunCount++;
+                this.underrunSampleCount += (outputs[0][0].length - samplesRead);
+            }
             
             this.deltaCount++;
+
+            if ((timeThisCall - this.lastStatsPostTime) >= 1000) {
+                this.lastStatsPostTime = timeThisCall;
+                this.port.postMessage({
+                    type: "AudioProcessorStats",
+                    underrunCount: this.underrunCount,
+                    underrunSampleCount: this.underrunSampleCount
+                });
+            }
             
             if (logDebugOutput) {
                 console.log("Available to read = " + this.sampleSharedQueue.availableRead() + 

@@ -107,11 +107,15 @@ public class PSGAudioWorklet {
                         }
                     );
                     
-                    that.audioWorkletNode.port.onmessage = function() {
-                        // There is only one message we can receive, which is ready.
-                        console.log("Received ready message from AudioWorkletProcessor.");
-                        that.@emu.jvic.gwt.PSGAudioWorklet::notifyAudioReady()();
-                        that.ready = true;
+                    that.audioWorkletNode.port.onmessage = function(event) {
+                        var message = event.data || {};
+                        if (message.ready) {
+                            console.log("Received ready message from AudioWorkletProcessor.");
+                            that.@emu.jvic.gwt.PSGAudioWorklet::notifyAudioReady()();
+                            that.ready = true;
+                        } else if (message.type === "AudioProcessorStats") {
+                            that.@emu.jvic.gwt.PSGAudioWorklet::updateAudioProcessorStats(DD)(message.underrunCount || 0, message.underrunSampleCount || 0);
+                        }
                     };
                     
                     console.log("Sending audio buffer SAB to AudioWorkletProcessor...");
@@ -182,6 +186,10 @@ public class PSGAudioWorklet {
             console.log("AudioContext is already " + this.audioContext.state);
         }
     }-*/;
+
+    public void updateAudioProcessorStats(double underrunCount, double underrunSampleCount) {
+        gwtJVicRunner.updateAudioProcessorStats(underrunCount, underrunSampleCount);
+    }
     
     /**
      * Suspends the output of audio.
