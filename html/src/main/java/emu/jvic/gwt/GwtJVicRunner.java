@@ -27,7 +27,18 @@ import emu.jvic.worker.Worker;
  */
 public class GwtJVicRunner extends JVicRunner {
 
-    private double avgUnusedNanosPerCycle;
+    private static final int UNUSED_NS_PER_CYCLE_ROLLING_AVERAGE_WINDOW = 20;
+
+    private double currentUnusedNanosPerCycle;
+    private double minUnusedNanosPerCycle;
+    private double maxUnusedNanosPerCycle;
+    private double meanUnusedNanosPerCycle;
+    private long unusedNanosPerCycleSampleCount;
+    private final double[] rollingUnusedNanosPerCycleSamples =
+            new double[UNUSED_NS_PER_CYCLE_ROLLING_AVERAGE_WINDOW];
+    private double rollingUnusedNanosPerCycleSum;
+    private int rollingUnusedNanosPerCycleIndex;
+    private int rollingUnusedNanosPerCycleCount;
     private double headroomFactor;
     private double busyPercent;
     private double avgBatchWorkMillis;
@@ -473,7 +484,29 @@ public class GwtJVicRunner extends JVicRunner {
     public void updatePerformanceStats(double avgUnusedNanosPerCycle, double headroomFactor,
             double busyPercent, double avgBatchWorkMillis, double avgBatchCycles,
             int audioQueueSamples, double audioQueueMillis) {
-        this.avgUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+        currentUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+        if (unusedNanosPerCycleSampleCount == 0) {
+            minUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+            maxUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+            meanUnusedNanosPerCycle = avgUnusedNanosPerCycle;
+        } else {
+            minUnusedNanosPerCycle = Math.min(minUnusedNanosPerCycle, avgUnusedNanosPerCycle);
+            maxUnusedNanosPerCycle = Math.max(maxUnusedNanosPerCycle, avgUnusedNanosPerCycle);
+            meanUnusedNanosPerCycle += (avgUnusedNanosPerCycle - meanUnusedNanosPerCycle)
+                    / (unusedNanosPerCycleSampleCount + 1);
+        }
+        unusedNanosPerCycleSampleCount++;
+
+        if (rollingUnusedNanosPerCycleCount == UNUSED_NS_PER_CYCLE_ROLLING_AVERAGE_WINDOW) {
+            rollingUnusedNanosPerCycleSum -= rollingUnusedNanosPerCycleSamples[rollingUnusedNanosPerCycleIndex];
+        } else {
+            rollingUnusedNanosPerCycleCount++;
+        }
+        rollingUnusedNanosPerCycleSamples[rollingUnusedNanosPerCycleIndex] = avgUnusedNanosPerCycle;
+        rollingUnusedNanosPerCycleSum += avgUnusedNanosPerCycle;
+        rollingUnusedNanosPerCycleIndex = (rollingUnusedNanosPerCycleIndex + 1)
+                % UNUSED_NS_PER_CYCLE_ROLLING_AVERAGE_WINDOW;
+
         this.headroomFactor = headroomFactor;
         this.busyPercent = busyPercent;
         this.avgBatchWorkMillis = avgBatchWorkMillis;
@@ -495,8 +528,21 @@ public class GwtJVicRunner extends JVicRunner {
         }
 
         StringBuilder text = new StringBuilder();
-        text.append("Unused ns/cycle: ");
-        text.append(Math.round(avgUnusedNanosPerCycle));
+        text.append("Unused ns/cycle:");
+        text.append('\n');
+        text.append("  cur ");
+        text.append(Math.round(currentUnusedNanosPerCycle));
+        text.append(", min ");
+        text.append(Math.round(minUnusedNanosPerCycle));
+        text.append(", max ");
+        text.append(Math.round(maxUnusedNanosPerCycle));
+        text.append('\n');
+        text.append("  avg ");
+        text.append(Math.round(meanUnusedNanosPerCycle));
+        text.append(", roll");
+        text.append(rollingUnusedNanosPerCycleCount);
+        text.append(' ');
+        text.append(Math.round(getRollingUnusedNanosPerCycleAverage()));
         text.append('\n');
         text.append("Headroom: ");
         text.append(formatDecimal(headroomFactor, 2));
@@ -535,7 +581,14 @@ public class GwtJVicRunner extends JVicRunner {
     }
 
     private void clearPerformanceStats() {
-        avgUnusedNanosPerCycle = 0;
+        currentUnusedNanosPerCycle = 0;
+        minUnusedNanosPerCycle = 0;
+        maxUnusedNanosPerCycle = 0;
+        meanUnusedNanosPerCycle = 0;
+        unusedNanosPerCycleSampleCount = 0;
+        rollingUnusedNanosPerCycleSum = 0;
+        rollingUnusedNanosPerCycleIndex = 0;
+        rollingUnusedNanosPerCycleCount = 0;
         headroomFactor = 0;
         busyPercent = 0;
         avgBatchWorkMillis = 0;
@@ -545,6 +598,14 @@ public class GwtJVicRunner extends JVicRunner {
         audioUnderrunCount = 0;
         audioUnderrunSampleCount = 0;
         performanceStatsAvailable = false;
+    }
+
+    private double getRollingUnusedNanosPerCycleAverage() {
+        if (rollingUnusedNanosPerCycleCount == 0) {
+            return 0;
+        }
+
+        return rollingUnusedNanosPerCycleSum / rollingUnusedNanosPerCycleCount;
     }
 
     private String formatDecimal(double value, int decimalPlaces) {

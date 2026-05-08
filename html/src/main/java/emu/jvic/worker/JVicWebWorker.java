@@ -111,6 +111,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 autoLoadProgram = machine.init(
                         basicRom, kernalRom, charRom, dos1541Rom, 
                         program, machineType, ramType);
+                resetPerformanceStatsWindow();
                 // TODO: lastTime = TimeUtils.nanoTime() - nanosPerFrame;
                 performAnimationFrame(0);
                 break;
@@ -281,23 +282,25 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
             }
             
             // Emulate the required number of cycles.
-                double batchStartTime = getPerformanceNowTimestamp();
+            long batchStartCycleCount = cycleCount;
+            double batchStartTime = getPerformanceNowTimestamp();
             do {
                 machine.emulateCycle();
                 cycleCount++;
             } while (cycleCount <= expectedCycleCount);
 
-                double batchEndTime = getPerformanceNowTimestamp();
-                int audioQueueSamples = (soundGenerator.isWriteSamplesEnabled() ?
+            double batchEndTime = getPerformanceNowTimestamp();
+            int audioQueueSamples = (soundGenerator.isWriteSamplesEnabled() ?
                     soundGenerator.getSampleSharedQueue().availableRead() : -1);
-                recordPerformanceStats(timestamp, cycleCount, batchEndTime - batchStartTime, audioQueueSamples);
+            recordPerformanceStats(timestamp, cycleCount - batchStartCycleCount,
+                    batchEndTime - batchStartTime, audioQueueSamples);
         }
 
         requestNextAnimationFrame();
     }
 
-            private void recordPerformanceStats(double timestamp, long cyclesThisBatch,
-                double workMillis, int audioQueueSamples) {
+    private void recordPerformanceStats(double timestamp, long cyclesThisBatch,
+            double workMillis, int audioQueueSamples) {
             if ((machine == null) || (cyclesThisBatch <= 0)) {
                 return;
             }
@@ -334,13 +337,18 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                     audioQueueSamples,
                     audioQueueMillis));
 
-                performanceWindowStartTime = timestamp;
-                performanceWindowCycles = 0;
-                performanceWindowWorkMillis = 0;
-                performanceWindowEmulatedMillis = 0;
-                performanceWindowBatchCount = 0;
-            }
-            }
+            resetPerformanceStatsWindow();
+            performanceWindowStartTime = timestamp;
+        }
+    }
+
+    private void resetPerformanceStatsWindow() {
+        performanceWindowStartTime = -1;
+        performanceWindowCycles = 0;
+        performanceWindowWorkMillis = 0;
+        performanceWindowEmulatedMillis = 0;
+        performanceWindowBatchCount = 0;
+    }
     
     private void runNextBasicCommand(Queue<char[]> cmdQueue, int[] mem) {
         if ((cmdQueue != null) && (!cmdQueue.isEmpty())) {
