@@ -159,6 +159,10 @@ public class MachineScreen implements Screen {
         createScreenResourcesForMachineType(MachineType.VIC44);
         createScreenResourcesForMachineType(MachineType.VIC44K);
 
+        // TeaVM can deliver resize callbacks before a program selection has bound the
+        // active machine resources, so keep a safe default viewport/camera/screen live.
+        activateScreenResources(MachineType.PAL);
+
         warpSpeedIcon = new Texture("png/warp_speed_icon.png");
         cameraIcon = new Texture("png/camera_icon.png");
         screenSizeIcon = new Texture("png/screen_icon.png");
@@ -247,14 +251,47 @@ public class MachineScreen implements Screen {
 
         // Switch libGDX screen resources used by the VIC screen to the size required
         // by the MachineType.
-        machineType = MachineType.valueOf(appConfigItem.getMachineType());
-        screenPixmap = machineTypePixmaps.get(machineType);
-        screens = machineTypeTextures.get(machineType);
-        camera = machineTypeCameras.get(machineType);
-        viewport = machineTypeViewports.get(machineType);
+        MachineType selectedMachineType = MachineType.valueOf(appConfigItem.getMachineType());
+        activateScreenResources(selectedMachineType);
+
+        // Reinitialise the platform pixel buffer to the active machine dimensions.
+        jvicRunner.init(this, selectedMachineType.getTotalScreenWidth(), selectedMachineType.getTotalScreenHeight());
 
         drawScreen = 1;
         updateScreen = 0;
+    }
+
+    private void activateScreenResources(MachineType machineType) {
+        this.machineType = machineType;
+        ensureScreenResources(machineType);
+    }
+
+    private void ensureActiveScreenResources() {
+        MachineType activeMachineType = (machineType != null ? machineType : MachineType.PAL);
+        if ((screenPixmap == null) || (screens == null) || (camera == null) || (viewport == null)) {
+            activateScreenResources(activeMachineType);
+        }
+        ensureScreenResources(activeMachineType);
+    }
+
+    private void ensureScreenResources(MachineType machineType) {
+        Pixmap activeScreenPixmap = machineTypePixmaps.get(machineType);
+        Texture[] activeScreens = machineTypeTextures.get(machineType);
+        Camera activeCamera = machineTypeCameras.get(machineType);
+        ExtendViewport activeViewport = machineTypeViewports.get(machineType);
+
+        if ((activeScreenPixmap == null) || (activeScreens == null) || (activeCamera == null) || (activeViewport == null)) {
+            createScreenResourcesForMachineType(machineType);
+            activeScreenPixmap = machineTypePixmaps.get(machineType);
+            activeScreens = machineTypeTextures.get(machineType);
+            activeCamera = machineTypeCameras.get(machineType);
+            activeViewport = machineTypeViewports.get(machineType);
+        }
+
+        this.screenPixmap = activeScreenPixmap;
+        this.screens = activeScreens;
+        this.camera = activeCamera;
+        this.viewport = activeViewport;
     }
 
     /**
@@ -329,6 +366,7 @@ public class MachineScreen implements Screen {
     }
     
     public boolean copyPixels() {
+        ensureActiveScreenResources();
         jvicRunner.updatePixmap(screenPixmap);
         screens[updateScreen].draw(screenPixmap, 0, 0);
         updateScreen = (updateScreen + 1) % 3;
@@ -728,6 +766,8 @@ public class MachineScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
+        ensureActiveScreenResources();
+
         if (viewportManager.isPortrait()) {
             Gdx.input.setInputProcessor(portraitInputProcessor);
             
@@ -835,6 +875,7 @@ public class MachineScreen implements Screen {
     }
     
     public ExtendViewport getViewport() {
+        ensureActiveScreenResources();
         return viewport;
     }
     

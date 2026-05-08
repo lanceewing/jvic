@@ -1,0 +1,26 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+dependencies {
+  implementation project(':core')
+  implementation "com.github.xpenatan.gdx-teavm:backend-web:$gdxTeaVMVersion"
+}
+
+tasks.register('buildTeaVM', JavaExec) {
+  group = 'build'
+  description = 'Builds the TeaVM web bootstrap into build/dist.'
+  dependsOn classes
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'emu.jvic.teavm.BuildTeaVMJVic'
+}
+
+tasks.register('dist') {
+  group = 'build'
+  description = 'Alias for the TeaVM dist build.'
+  dependsOn 'buildTeaVM'
+}
+
+tasks.named('build') {
+  dependsOn 'buildTeaVM'
+}
+
+eclipse.project.name = appName + '-teavm'
