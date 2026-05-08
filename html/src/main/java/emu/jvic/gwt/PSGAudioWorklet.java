@@ -190,6 +190,17 @@ public class PSGAudioWorklet {
     public void updateAudioProcessorStats(double underrunCount, double underrunSampleCount) {
         gwtJVicRunner.updateAudioProcessorStats(underrunCount, underrunSampleCount);
     }
+
+    public void resetStats() {
+        updateAudioProcessorStats(0, 0);
+        resetStatsNative();
+    }
+
+    private native void resetStatsNative()/*-{
+        if (this.audioWorkletNode) {
+            this.audioWorkletNode.port.postMessage({ type: "ResetStats" });
+        }
+    }-*/;
     
     /**
      * Suspends the output of audio.

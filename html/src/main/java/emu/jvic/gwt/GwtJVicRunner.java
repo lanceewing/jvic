@@ -28,6 +28,7 @@ import emu.jvic.worker.Worker;
 public class GwtJVicRunner extends JVicRunner {
 
     private static final int UNUSED_NS_PER_CYCLE_ROLLING_AVERAGE_WINDOW = 20;
+    private static final int AUDIO_QUEUE_MILLIS_ROLLING_AVERAGE_WINDOW = 20;
 
     private double currentUnusedNanosPerCycle;
     private double minUnusedNanosPerCycle;
@@ -45,6 +46,11 @@ public class GwtJVicRunner extends JVicRunner {
     private double avgBatchCycles;
     private int audioQueueSamples = -1;
     private double audioQueueMillis = -1;
+        private final double[] rollingAudioQueueMillisSamples =
+            new double[AUDIO_QUEUE_MILLIS_ROLLING_AVERAGE_WINDOW];
+        private double rollingAudioQueueMillisSum;
+        private int rollingAudioQueueMillisIndex;
+        private int rollingAudioQueueMillisCount;
     private double audioUnderrunCount;
     private double audioUnderrunSampleCount;
     private boolean performanceStatsAvailable;
@@ -513,6 +519,19 @@ public class GwtJVicRunner extends JVicRunner {
         this.avgBatchCycles = avgBatchCycles;
         this.audioQueueSamples = audioQueueSamples;
         this.audioQueueMillis = audioQueueMillis;
+
+        if (audioQueueMillis >= 0) {
+            if (rollingAudioQueueMillisCount == AUDIO_QUEUE_MILLIS_ROLLING_AVERAGE_WINDOW) {
+                rollingAudioQueueMillisSum -= rollingAudioQueueMillisSamples[rollingAudioQueueMillisIndex];
+            } else {
+                rollingAudioQueueMillisCount++;
+            }
+            rollingAudioQueueMillisSamples[rollingAudioQueueMillisIndex] = audioQueueMillis;
+            rollingAudioQueueMillisSum += audioQueueMillis;
+            rollingAudioQueueMillisIndex = (rollingAudioQueueMillisIndex + 1)
+                    % AUDIO_QUEUE_MILLIS_ROLLING_AVERAGE_WINDOW;
+        }
+
         this.performanceStatsAvailable = true;
     }
 
@@ -563,6 +582,13 @@ public class GwtJVicRunner extends JVicRunner {
             text.append(" samples, ");
             text.append(formatDecimal(audioQueueMillis, 1));
             text.append(" ms");
+            if (rollingAudioQueueMillisCount > 0) {
+                text.append(", roll");
+                text.append(rollingAudioQueueMillisCount);
+                text.append(' ');
+                text.append(formatDecimal(getRollingAudioQueueMillisAverage(), 1));
+                text.append(" ms");
+            }
         } else {
             text.append("Audio queue: sound off");
         }
@@ -595,6 +621,9 @@ public class GwtJVicRunner extends JVicRunner {
         avgBatchCycles = 0;
         audioQueueSamples = -1;
         audioQueueMillis = -1;
+        rollingAudioQueueMillisSum = 0;
+        rollingAudioQueueMillisIndex = 0;
+        rollingAudioQueueMillisCount = 0;
         audioUnderrunCount = 0;
         audioUnderrunSampleCount = 0;
         performanceStatsAvailable = false;
@@ -606,6 +635,14 @@ public class GwtJVicRunner extends JVicRunner {
         }
 
         return rollingUnusedNanosPerCycleSum / rollingUnusedNanosPerCycleCount;
+    }
+
+    private double getRollingAudioQueueMillisAverage() {
+        if (rollingAudioQueueMillisCount == 0) {
+            return 0;
+        }
+
+        return rollingAudioQueueMillisSum / rollingAudioQueueMillisCount;
     }
 
     private String formatDecimal(double value, int decimalPlaces) {

@@ -210,6 +210,7 @@ public class GwtSoundGenerator extends SoundGenerator {
             }
         }
         if (audioWorklet != null) {
+            audioWorklet.resetStats();
             logToJSConsole("Resuming PSGAudioWorker...");
             audioWorklet.resume();
             if (audioWorklet.isReady()) {

@@ -183,6 +183,21 @@ class SoundRenderer extends AudioWorkletProcessor {
      * @param {MessageEvent} event 
      */
     onmessage(event) {
+        if (event.data && event.data.type === "ResetStats") {
+            this.underrunCount = 0;
+            this.underrunSampleCount = 0;
+            this.callCount = 0;
+            this.deltaCount = 0;
+            this.startTime = currentTime * 1000;
+            this.lastStatsPostTime = this.startTime;
+            this.port.postMessage({
+                type: "AudioProcessorStats",
+                underrunCount: 0,
+                underrunSampleCount: 0
+            });
+            return;
+        }
+
         // Receive the SharedArrayBuffer from the UI thread.
         const { audioBufferSAB } = event.data;
         
