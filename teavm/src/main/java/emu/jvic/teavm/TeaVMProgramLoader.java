@@ -11,6 +11,8 @@ import java.util.zip.ZipInputStream;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import org.teavm.jso.typedarrays.ArrayBuffer;
+import org.teavm.jso.typedarrays.Uint8Array;
 
 import emu.jvic.Program;
 import emu.jvic.ProgramLoader;
@@ -20,28 +22,65 @@ public class TeaVMProgramLoader extends ProgramLoader {
 
     @Override
     public void fetchProgram(AppConfigItem appConfigItem, Consumer<Program> programConsumer) {
-        Program program = null;
-        byte[] data = null;
-
         try {
+            TeaVMBrowser.logToConsole("TeaVM loader: fetchProgram name=" + appConfigItem.getName()
+                    + ", path=" + appConfigItem.getFilePath()
+                    + ", entry=" + appConfigItem.getEntryName());
             if (appConfigItem.getFileData() != null) {
-                data = appConfigItem.getFileData();
+                byte[] data = appConfigItem.getFileData();
                 appConfigItem.setFileData(null);
+                processProgramData(appConfigItem, data, programConsumer);
+                return;
             } else if ((appConfigItem.getFilePath() == null) || appConfigItem.getFilePath().trim().isEmpty()) {
                 programConsumer.accept(null);
                 return;
             } else if (!appConfigItem.getFilePath().startsWith("http")) {
                 FileHandle fileHandle = Gdx.files.internal(appConfigItem.getFilePath());
                 if ((fileHandle != null) && fileHandle.exists()) {
-                    data = fileHandle.readBytes();
+                    byte[] data = fileHandle.readBytes();
+                    TeaVMBrowser.logToConsole("TeaVM loader: loaded local asset bytes=" + data.length);
+                    processProgramData(appConfigItem, data, programConsumer);
+                    return;
                 }
+                TeaVMBrowser.logToConsole("TeaVM loader: local asset not found: " + appConfigItem.getFilePath());
             } else {
-                String binaryStr = TeaVMBrowser.getBinaryResource(applyFilePathOverride(appConfigItem.getFilePath()));
-                if (binaryStr != null) {
-                    data = convertBinaryStringToBytes(binaryStr);
-                }
+                String resolvedFilePath = applyFilePathOverride(appConfigItem.getFilePath());
+                TeaVMBrowser.logToConsole("TeaVM loader: resolved remote path=" + resolvedFilePath);
+                TeaVMBrowser.getBinaryResourceArrayBuffer(resolvedFilePath,
+                        (arrayBuffer, status, responseUrl, errorMessage) -> {
+                            try {
+                                byte[] data = null;
+                                if (arrayBuffer != null) {
+                                    data = convertArrayBufferToBytes(arrayBuffer);
+                                    TeaVMBrowser.logToConsole("TeaVM loader: remote bytes=" + data.length);
+                                } else {
+                                    TeaVMBrowser.logToConsole("TeaVM loader: remote fetch returned null array buffer"
+                                            + ", status=" + status
+                                            + ", url=" + responseUrl
+                                            + (errorMessage != null ? ", error=" + errorMessage : ""));
+                                }
+                                processProgramData(appConfigItem, data, programConsumer);
+                            } catch (Exception e) {
+                                TeaVMBrowser.logToConsole(
+                                        "TeaVM loader: exception while handling remote response: " + e);
+                                programConsumer.accept(null);
+                            }
+                        });
+                return;
             }
+        } catch (Exception e) {
+            TeaVMBrowser.logToConsole("TeaVM loader: exception while loading program: " + e);
+            programConsumer.accept(null);
+            return;
+        }
 
+        processProgramData(appConfigItem, null, programConsumer);
+    }
+
+    private void processProgramData(AppConfigItem appConfigItem, byte[] data, Consumer<Program> programConsumer) {
+        Program program = null;
+
+        try {
             byte[] programData = null;
 
             if ((data != null) && (data.length >= 4)) {
@@ -128,10 +167,15 @@ public class TeaVMProgramLoader extends ProgramLoader {
             }
 
             if (programData != null) {
+                TeaVMBrowser.logToConsole("TeaVM loader: identified type=" + appConfigItem.getFileType()
+                        + ", program bytes=" + programData.length);
                 program = new Program(appConfigItem, programData);
+            } else {
+                TeaVMBrowser.logToConsole("TeaVM loader: no program data identified, fileType="
+                        + appConfigItem.getFileType());
             }
         } catch (Exception e) {
-            // Ignore. The caller will receive a null program.
+            TeaVMBrowser.logToConsole("TeaVM loader: exception while decoding program data: " + e);
         }
 
         programConsumer.accept(program);
@@ -140,6 +184,9 @@ public class TeaVMProgramLoader extends ProgramLoader {
     private String applyFilePathOverride(String filePath) {
         if ("localhost".equals(TeaVMBrowser.getHostName())) {
             String localHostBaseUrl = TeaVMBrowser.getProtocol() + "//" + TeaVMBrowser.getHost() + "/";
+            if (filePath.startsWith(localHostBaseUrl)) {
+                return filePath;
+            }
             if (filePath.startsWith("https://vic20.games/")) {
                 return filePath.replace("https://vic20.games/", localHostBaseUrl);
             }
@@ -147,12 +194,13 @@ public class TeaVMProgramLoader extends ProgramLoader {
         return filePath;
     }
 
-    private byte[] convertBinaryStringToBytes(String binaryStr) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        for (int i = 0; i < binaryStr.length(); i++) {
-            out.write(binaryStr.charAt(i) & 0xFF);
+    private byte[] convertArrayBufferToBytes(ArrayBuffer arrayBuffer) {
+        Uint8Array uint8Array = Uint8Array.create(arrayBuffer);
+        byte[] bytes = new byte[uint8Array.getLength()];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte)(uint8Array.get(i) & 0xFF);
         }
-        return out.toByteArray();
+        return bytes;
     }
 
     private byte[] loadFullCartProgramData(String entryName, byte[] data, ZipInputStream zis,

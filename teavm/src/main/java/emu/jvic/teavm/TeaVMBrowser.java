@@ -3,6 +3,7 @@ package emu.jvic.teavm;
 import org.teavm.jso.JSBody;
 import org.teavm.jso.JSFunctor;
 import org.teavm.jso.JSObject;
+import org.teavm.jso.typedarrays.ArrayBuffer;
 
 final class TeaVMBrowser {
 
@@ -22,6 +23,11 @@ final class TeaVMBrowser {
     @JSFunctor
     interface OpenFileBinaryCallback extends JSObject {
         void complete(boolean success, String fileName, String binaryData);
+    }
+
+    @JSFunctor
+    interface BinaryResourceArrayBufferCallback extends JSObject {
+        void complete(ArrayBuffer arrayBuffer, int status, String responseUrl, String errorMessage);
     }
 
     @JSBody(script = "return window.location.pathname || '';")
@@ -75,8 +81,14 @@ final class TeaVMBrowser {
     @JSBody(params = { "message" }, script = "window.alert(message);")
     static native void alert(String message);
 
+    @JSBody(params = "message", script = "console.log(message);")
+    static native void logToConsole(String message);
+
     @JSBody(params = { "url" }, script = "var req = new XMLHttpRequest(); req.open('GET', url, false); req.overrideMimeType('text/plain; charset=x-user-defined'); req.send(null); return req.status === 200 ? req.responseText : null;")
     static native String getBinaryResource(String url);
+
+    @JSBody(params = { "url", "callback" }, script = "var req = new XMLHttpRequest(); try { console.log('TeaVM loader: requesting ' + url); req.open('GET', url, true); req.responseType = 'arraybuffer'; req.onload = function() { var response = req.response; var byteLength = response ? response.byteLength : 0; console.log('TeaVM loader: response status=' + req.status + ', bytes=' + byteLength + ', url=' + (req.responseURL || url)); callback(req.status === 200 ? response : null, req.status, req.responseURL || url, null); }; req.onerror = function() { console.log('TeaVM loader: request failed for ' + url + ': network error'); callback(null, req.status || 0, req.responseURL || url, 'network error'); }; req.send(null); } catch (err) { console.log('TeaVM loader: request failed for ' + url + ': ' + err); callback(null, 0, url, String(err)); }")
+    static native void getBinaryResourceArrayBuffer(String url, BinaryResourceArrayBufferCallback callback);
 
         @JSBody(params = { "callback" }, script = "var input = document.createElement('input'); input.type = 'file'; input.accept = '.d64,.prg,.crt,.tap,.zip'; input.style.display = 'none'; document.body.appendChild(input);"
             + "var finish = function(success, fileName, binaryData) { if (input.parentNode) { input.parentNode.removeChild(input); } callback(success, fileName, binaryData); };"

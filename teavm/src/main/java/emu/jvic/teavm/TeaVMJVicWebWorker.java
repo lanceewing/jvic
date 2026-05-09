@@ -34,6 +34,8 @@ public final class TeaVMJVicWebWorker {
     private double performanceWindowWorkMillis;
     private double performanceWindowEmulatedMillis;
     private long performanceWindowBatchCount;
+    private int lastAutoLoadCursorState = -1;
+    private boolean autoLoadStateLogged;
 
     public static void main(String[] args) {
         new TeaVMJVicWebWorker().onWorkerLoad();
@@ -106,13 +108,19 @@ public final class TeaVMJVicWebWorker {
         if (program != null) {
             program.setAppConfigItem(appConfigItem);
         }
+        logProgramStart(appConfigItem, program);
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
         autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
+        TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: machine.init complete, autoLoadProgram="
+                + (autoLoadProgram != null ? "present" : "null"));
         paused = false;
         cycleCount = 0;
         startTime = 0;
+        autoRunCmdQueue = null;
+        lastAutoLoadCursorState = -1;
+        autoLoadStateLogged = false;
         resetPerformanceStatsWindow();
         TeaVMWorkerGlobalScope.requestAnimationFrame(this::performAnimationFrame);
     }
@@ -146,9 +154,15 @@ public final class TeaVMJVicWebWorker {
         appConfigItem.setFileType(TeaVMWorkerInterop.getNestedString(eventObject, "fileType"));
         appConfigItem.setMachineType(TeaVMWorkerInterop.getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(TeaVMWorkerInterop.getNestedString(eventObject, "ramType"));
-        appConfigItem.setAutoRunCommand(TeaVMWorkerInterop.getNestedString(eventObject, "autoRunCommand"));
-        appConfigItem.setLoadAddress(TeaVMWorkerInterop.getNestedString(eventObject, "loadAddress"));
+        appConfigItem.setAutoRunCommand(normalizeBlankToNull(
+                TeaVMWorkerInterop.getNestedString(eventObject, "autoRunCommand")));
+        appConfigItem.setLoadAddress(normalizeBlankToNull(
+                TeaVMWorkerInterop.getNestedString(eventObject, "loadAddress")));
         return appConfigItem;
+    }
+
+    private String normalizeBlankToNull(String value) {
+        return (value == null || value.trim().isEmpty()) ? null : value;
     }
 
     private void performAnimationFrame(double timestamp) {
@@ -196,26 +210,44 @@ public final class TeaVMJVicWebWorker {
     }
 
     private void handleAutoLoad() {
-        if ((autoLoadProgram == null) || (machine == null)) {
+        if ((machine == null)
+                || ((autoLoadProgram == null) && ((autoRunCmdQueue == null) || autoRunCmdQueue.isEmpty()))) {
             return;
         }
 
         int[] mem = machine.getMemory().getMemoryArray();
-        if (mem[0xD1] == 110) {
+        int cursorState = mem[0xD1];
+        int previousCursorState = lastAutoLoadCursorState;
+        if ((cursorState != previousCursorState)
+                && ((cursorState == 110) || (cursorState == 220) || !autoLoadStateLogged)) {
+            TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: auto-load cursor state=" + cursorState
+                    + ", queue=" + describeCommandQueue(autoRunCmdQueue)
+                    + ", autoLoadProgram=" + (autoLoadProgram != null ? "present" : "null"));
+            autoLoadStateLogged = true;
+        }
+        lastAutoLoadCursorState = cursorState;
+
+        if ((cursorState == 110) && (previousCursorState != 110)) {
             try {
-                autoRunCmdQueue = autoLoadProgram.call();
+                if (autoLoadProgram != null) {
+                    autoRunCmdQueue = autoLoadProgram.call();
+                    autoLoadProgram = null;
+                    TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: auto-load queue created: "
+                            + describeCommandQueue(autoRunCmdQueue));
+                }
             } catch (Exception e) {
                 autoRunCmdQueue = null;
+                autoLoadProgram = null;
+                TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: autoLoadProgram.call() failed: " + e.getMessage());
             }
             runNextBasicCommand(autoRunCmdQueue, mem);
-            if ((autoRunCmdQueue == null) || autoRunCmdQueue.isEmpty()) {
-                autoLoadProgram = null;
-            }
         }
 
-        if (mem[0xD1] == 220) {
+        if ((cursorState == 220) && (previousCursorState != 220)
+                && (autoRunCmdQueue != null) && !autoRunCmdQueue.isEmpty()) {
+            TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: issuing follow-up BASIC command: "
+                    + describeCommandQueue(autoRunCmdQueue));
             runNextBasicCommand(autoRunCmdQueue, mem);
-            autoLoadProgram = null;
         }
     }
 
@@ -271,15 +303,81 @@ public final class TeaVMJVicWebWorker {
 
     private void runNextBasicCommand(Queue<char[]> cmdQueue, int[] mem) {
         if ((cmdQueue == null) || cmdQueue.isEmpty()) {
+            TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: runNextBasicCommand skipped, queue empty");
             return;
         }
 
         char[] cmdChars = cmdQueue.remove();
+        TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: injecting BASIC command '"
+                + new String(cmdChars) + "'");
         int cmdCharPos = 0;
         for (; cmdCharPos < cmdChars.length; cmdCharPos++) {
             mem[631 + cmdCharPos] = cmdChars[cmdCharPos];
         }
         mem[631 + cmdCharPos] = 0x0D;
         mem[198] = cmdCharPos + 1;
+    }
+
+    private void logProgramStart(AppConfigItem appConfigItem, Program program) {
+        StringBuilder message = new StringBuilder();
+        message.append("TeaVM worker: start name=")
+                .append(appConfigItem.getName())
+                .append(", type=")
+                .append(appConfigItem.getFileType())
+                .append(", path=")
+                .append(appConfigItem.getFilePath())
+                .append(", autorun=")
+                .append(appConfigItem.getAutoRunCommand())
+                .append(", loadAddress=")
+                .append(appConfigItem.getLoadAddress());
+
+        if ((program != null) && (program.getProgramData() != null)) {
+            byte[] programData = program.getProgramData();
+            message.append(", bytes=")
+                    .append(programData.length)
+                    .append(", first16=")
+                    .append(formatBytes(programData, 16));
+        } else {
+            message.append(", program=null");
+        }
+
+        TeaVMWorkerGlobalScope.logToJSConsole(message.toString());
+    }
+
+    private String describeCommandQueue(Queue<char[]> cmdQueue) {
+        if (cmdQueue == null) {
+            return "null";
+        }
+        if (cmdQueue.isEmpty()) {
+            return "[]";
+        }
+
+        StringBuilder message = new StringBuilder("[");
+        boolean first = true;
+        for (char[] cmd : cmdQueue) {
+            if (!first) {
+                message.append(", ");
+            }
+            message.append('"').append(new String(cmd)).append('"');
+            first = false;
+        }
+        message.append(']');
+        return message.toString();
+    }
+
+    private String formatBytes(byte[] data, int maxLength) {
+        int length = Math.min(data.length, maxLength);
+        StringBuilder message = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            if (i > 0) {
+                message.append(' ');
+            }
+            int value = data[i] & 0xFF;
+            if (value < 0x10) {
+                message.append('0');
+            }
+            message.append(Integer.toHexString(value).toUpperCase());
+        }
+        return message.toString();
     }
 }
