@@ -13,9 +13,30 @@ tasks.register('buildTeaVM', JavaExec) {
   mainClass = 'emu.jvic.teavm.BuildTeaVMJVic'
   doLast {
     copy {
+      from('webapp') {
+        include 'index.html'
+      }
+      into "$buildDir/dist/webapp"
+    }
+    copy {
+      from '../html/webapp'
+      include 'dialog.js'
+      include 'favicon.ico'
+      include 'manifest.json'
+      include 'sound-renderer.js'
+      include '_headers'
+      include '.swshtaccess'
+      into "$buildDir/dist/webapp"
+    }
+    copy {
+      from '../html/webapp/icons'
+      into "$buildDir/dist/webapp/icons"
+    }
+    copy {
       from '../html/webapp/worker/.swshtaccess'
       into "$buildDir/dist/webapp/scripts"
     }
+    delete "$buildDir/dist/webapp/autorun-config.txt"
   }
 }
 
@@ -23,6 +44,26 @@ tasks.register('dist') {
   group = 'build'
   description = 'Alias for the TeaVM dist build.'
   dependsOn 'buildTeaVM'
+}
+
+tasks.register('distZip', Zip) {
+  group = 'build'
+  description = 'Packages the TeaVM dist output as a zip archive.'
+  dependsOn 'buildTeaVM'
+  from("$buildDir/dist/webapp")
+  archiveVersion = projectVersion
+  archiveBaseName.set("${appName}-teavm-web-dist")
+  destinationDirectory.set(file("build"))
+}
+
+tasks.register('serveTeaVM', JavaExec) {
+  group = 'application'
+  description = 'Builds and serves the TeaVM dist with COOP/COEP headers for SharedArrayBuffer support.'
+  dependsOn 'buildTeaVM'
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'emu.jvic.teavm.TeaVMDevServer'
+  args "$buildDir/dist/webapp", (findProperty('teavmPort') ?: '8081').toString()
+  standardInput = System.in
 }
 
 tasks.named('build') {

@@ -39,6 +39,9 @@ public class BuildTeaVMJVic {
         .setObfuscated(false)
         .build(workerDist);
 
+    deleteFileIfExists(Path.of(mainDist.getPath(), "webapp", "autorun-config.txt"));
+    copyFile(Path.of("webapp", "index.html"),
+        Path.of(mainDist.getPath(), "webapp", "index.html"));
     copyFile(Path.of("../html/webapp/sound-renderer.js"),
         Path.of(mainDist.getPath(), "webapp", "sound-renderer.js"));
     copyFile(Path.of("../html/webapp/_headers"),
@@ -59,6 +62,14 @@ public class BuildTeaVMJVic {
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
         throw new RuntimeException("Failed to copy " + source + " to " + target, e);
+    }
+    }
+
+    private static void deleteFileIfExists(Path target) {
+    try {
+        Files.deleteIfExists(target);
+    } catch (IOException e) {
+        throw new RuntimeException("Failed to delete " + target, e);
     }
     }
 

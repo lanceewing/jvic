@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <title>JVic - The TeaVM web-based VIC 20 emulator</title>
+  <meta name="description" content="Play VIC 20 games directly in your browser with JVic running on the experimental TeaVM web target." />
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta id="gameViewport" name="viewport" content="width=device-width initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="./favicon.ico">
+  <link rel="manifest" href="./manifest.json" crossorigin="use-credentials" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #embed-html {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    #canvas {
+      border: none;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body oncontextmenu="return false">
+<div id="embed-html">
+  <canvas id="canvas"></canvas>
+</div>
+<script type="text/javascript" src="./jvic.js"></script>
+<script>
+window.addEventListener("load", function() {
+  if (typeof main === "function") {
+    main();
+  }
+});
+</script>
+</body>
+</html>
