@@ -18,6 +18,7 @@ public class TeaVMLauncher {
         WebApplicationConfiguration config = new WebApplicationConfiguration();
         config.width = 0;
         config.height = 0;
+        config.usePhysicalPixels = true;
         config.showDownloadLogs = true;
         config.baseUrlProvider = createBaseUrlProvider();
 
