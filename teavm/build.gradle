@@ -11,6 +11,12 @@ tasks.register('buildTeaVM', JavaExec) {
   dependsOn classes
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'emu.jvic.teavm.BuildTeaVMJVic'
+  doLast {
+    copy {
+      from '../html/webapp/worker/.swshtaccess'
+      into "$buildDir/dist/webapp/scripts"
+    }
+  }
 }
 
 tasks.register('dist') {

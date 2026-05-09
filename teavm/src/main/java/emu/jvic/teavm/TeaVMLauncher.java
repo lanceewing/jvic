@@ -6,6 +6,7 @@ import java.util.Map;
 import com.badlogic.gdx.Gdx;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplication;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplicationConfiguration;
+import com.github.xpenatan.gdx.teavm.backends.web.utils.WebBaseUrlProvider;
 
 import emu.jvic.JVic;
 
@@ -18,6 +19,7 @@ public class TeaVMLauncher {
         config.width = 0;
         config.height = 0;
         config.showDownloadLogs = true;
+        config.baseUrlProvider = createBaseUrlProvider();
 
         Map<String, String> argsMap = createArgsMap();
         TeaVMJVicRunner jvicRunner = new TeaVMJVicRunner();
@@ -25,6 +27,39 @@ public class TeaVMLauncher {
         jvic = new JVic(jvicRunner, dialogHandler, argsMap);
         registerFileDropHandler();
         new WebApplication(jvic, config);
+    }
+
+    private static WebBaseUrlProvider createBaseUrlProvider() {
+        return () -> {
+            String href = TeaVMBrowser.getHref();
+            if ((href == null) || href.isEmpty()) {
+                return "";
+            }
+
+            int queryIndex = href.indexOf('?');
+            if (queryIndex >= 0) {
+                href = href.substring(0, queryIndex);
+            }
+
+            int hashIndex = href.indexOf('#');
+            if (hashIndex >= 0) {
+                href = href.substring(0, hashIndex);
+            }
+
+            if (href.endsWith("/index.html")) {
+                return href.substring(0, href.length() - "index.html".length());
+            }
+
+            if (!href.endsWith("/")) {
+                int lastSlashIndex = href.lastIndexOf('/');
+                if (lastSlashIndex >= 0) {
+                    return href.substring(0, lastSlashIndex + 1);
+                }
+                return href + "/";
+            }
+
+            return href;
+        };
     }
 
     private static void registerFileDropHandler() {

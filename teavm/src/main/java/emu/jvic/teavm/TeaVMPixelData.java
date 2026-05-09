@@ -1,37 +1,87 @@
 package emu.jvic.teavm;
 
-import java.util.Arrays;
-
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.utils.BufferUtils;
+import org.teavm.jso.JSBody;
+import org.teavm.jso.typedarrays.SharedArrayBuffer;
+import org.teavm.jso.typedarrays.Uint32Array;
+import org.teavm.jso.typedarrays.Uint8ClampedArray;
 
 import emu.jvic.PixelData;
 
 public class TeaVMPixelData extends PixelData {
 
+    private Uint8ClampedArray pixelArray;
+    private Uint32Array packedPixelArray;
+    private boolean packedPixelWritesSupported;
     private byte[] imageData;
+
+    public TeaVMPixelData() {
+    }
+
+    public TeaVMPixelData(SharedArrayBuffer sharedArrayBuffer) {
+        pixelArray = Uint8ClampedArray.create(sharedArrayBuffer);
+        packedPixelArray = new Uint32Array(sharedArrayBuffer);
+        packedPixelWritesSupported = isLittleEndian();
+        imageData = new byte[pixelArray.getLength()];
+    }
+
+    SharedArrayBuffer getSharedArrayBuffer() {
+        return (SharedArrayBuffer)pixelArray.getBuffer();
+    }
 
     @Override
     public void init(int width, int height) {
-        imageData = new byte[width * height * 4 * 2];
+        pixelArray = Uint8ClampedArray.create(createSharedArrayBuffer(width * height * 4 * 2));
+        packedPixelArray = new Uint32Array(getSharedArrayBuffer());
+        packedPixelWritesSupported = isLittleEndian();
+        imageData = new byte[pixelArray.getLength()];
     }
 
     @Override
     public void putPixel(int index, int rgba8888Colour) {
-        int offset = index << 2;
-        imageData[offset] = (byte)((rgba8888Colour >> 24) & 0xFF);
-        imageData[offset + 1] = (byte)((rgba8888Colour >> 16) & 0xFF);
-        imageData[offset + 2] = (byte)((rgba8888Colour >> 8) & 0xFF);
-        imageData[offset + 3] = (byte)(rgba8888Colour & 0xFF);
+        if (packedPixelWritesSupported) {
+            packedPixelArray.set(index, convertRgba8888ToPackedPixel(rgba8888Colour));
+        } else {
+            int offset = index << 2;
+            pixelArray.set(offset, (rgba8888Colour >> 24) & 0xFF);
+            pixelArray.set(offset + 1, (rgba8888Colour >> 16) & 0xFF);
+            pixelArray.set(offset + 2, (rgba8888Colour >> 8) & 0xFF);
+            pixelArray.set(offset + 3, rgba8888Colour & 0xFF);
+        }
     }
 
     @Override
     public void clearPixels() {
-        Arrays.fill(imageData, (byte)0);
+        if (packedPixelWritesSupported) {
+            for (int index = 0; index < packedPixelArray.getLength(); index++) {
+                packedPixelArray.set(index, 0);
+            }
+        } else {
+            for (int index = 0; index < pixelArray.getLength(); index++) {
+                pixelArray.set(index, 0);
+            }
+        }
     }
 
     @Override
     public void updatePixmap(Pixmap pixmap) {
-        BufferUtils.copy(imageData, 0, pixmap.getPixels(), pixmap.getPixels().remaining());
+        for (int index = 0; index < pixelArray.getLength(); index++) {
+            imageData[index] = (byte)(pixelArray.get(index) & 0xFF);
+        }
+        BufferUtils.copy(imageData, 0, pixmap.getPixels(), Math.min(imageData.length, pixmap.getPixels().remaining()));
     }
+
+    private int convertRgba8888ToPackedPixel(int rgba8888Colour) {
+        return ((rgba8888Colour & 0x000000FF) << 24)
+                | ((rgba8888Colour & 0x0000FF00) << 8)
+                | ((rgba8888Colour & 0x00FF0000) >>> 8)
+                | ((rgba8888Colour & 0xFF000000) >>> 24);
+    }
+
+    @JSBody(params = "byteLength", script = "return new SharedArrayBuffer(byteLength);")
+    private static native SharedArrayBuffer createSharedArrayBuffer(int byteLength);
+
+    @JSBody(script = "var buffer = new ArrayBuffer(4); var uint32 = new Uint32Array(buffer); var uint8 = new Uint8Array(buffer); uint32[0] = 0x01020304; return uint8[0] === 0x04;")
+    private static native boolean isLittleEndian();
 }
