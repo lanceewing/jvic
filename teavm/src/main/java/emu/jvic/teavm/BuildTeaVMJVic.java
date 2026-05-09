@@ -48,6 +48,8 @@ public class BuildTeaVMJVic {
         Path.of(mainDist.getPath(), "webapp", "_headers"));
     copyFile(Path.of("../html/webapp/.swshtaccess"),
         Path.of(mainDist.getPath(), "webapp", ".swshtaccess"));
+    copyFile(Path.of("../html/webapp/programs"),
+        Path.of(mainDist.getPath(), "webapp", "programs"));
     copyFile(Path.of("../html/webapp/worker/.swshtaccess"),
         Path.of(mainDist.getPath(), "webapp", "scripts", ".swshtaccess"));
     copyFile(Path.of(workerDist.getPath(), "webapp", "jvic-worker.js"),
