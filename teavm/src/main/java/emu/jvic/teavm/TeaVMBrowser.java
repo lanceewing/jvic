@@ -30,6 +30,21 @@ final class TeaVMBrowser {
         void complete(ArrayBuffer arrayBuffer, int status, String responseUrl, String errorMessage);
     }
 
+    @JSFunctor
+    interface DialogConfirmCallback extends JSObject {
+        void complete(boolean confirmed);
+    }
+
+    @JSFunctor
+    interface DialogPromptCallback extends JSObject {
+        void complete(boolean accepted, String value);
+    }
+
+    @JSFunctor
+    interface DialogAlertCallback extends JSObject {
+        void complete(boolean accepted, String value);
+    }
+
     @JSBody(script = "return window.location.pathname || '';")
     static native String getPath();
 
@@ -83,6 +98,19 @@ final class TeaVMBrowser {
 
     @JSBody(params = "message", script = "console.log(message);")
     static native void logToConsole(String message);
+
+        @JSBody(script = "if (!window.__jvicDialog && typeof window.Dialog === 'function') { window.__jvicDialog = new window.Dialog(); } return window.__jvicDialog || null;")
+        static native JSObject getDialogInstance();
+
+        @JSBody(params = { "dialog", "message", "callback" }, script = "if (!dialog || typeof dialog.confirm !== 'function') { callback(window.confirm(message)); return; } dialog.confirm(message).then(function(res) { callback(!!res); });")
+        static native void showDialogConfirm(JSObject dialog, String message, DialogConfirmCallback callback);
+
+        @JSBody(params = { "dialog", "message", "initialValue", "callback" }, script = "if (!dialog || typeof dialog.prompt !== 'function') { var result = window.prompt(message, initialValue != null ? initialValue : ''); callback(result != null, result); return; } dialog.prompt(message, initialValue != null ? initialValue : '').then(function(res) { if (res) { callback(true, res.prompt != null ? res.prompt : ''); } else { callback(false, null); } });")
+        static native void showDialogPrompt(JSObject dialog, String message, String initialValue,
+            DialogPromptCallback callback);
+
+        @JSBody(params = { "dialog", "message", "callback" }, script = "var html = String(message || '').replace(/(?:\\r\\n|\\r|\\n)/g, '<br>'); html = html.split('https://github.com/lanceewing/jvic').join(\"<a href='https://github.com/lanceewing/jvic' target='_blank'>https://github.com/lanceewing/jvic</a>\"); if (!dialog || typeof dialog.alert !== 'function') { window.alert(message); callback(true, 'OK'); return; } dialog.alert('', { showStateButtons: false, template: '<b>' + html + '</b>' }).then(function(res) { if (res) { callback(true, res === true ? 'OK' : String(res)); } else { callback(false, null); } });")
+        static native void showDialogAlert(JSObject dialog, String message, DialogAlertCallback callback);
 
     @JSBody(params = { "url" }, script = "var req = new XMLHttpRequest(); req.open('GET', url, false); req.overrideMimeType('text/plain; charset=x-user-defined'); req.send(null); return req.status === 200 ? req.responseText : null;")
     static native String getBinaryResource(String url);

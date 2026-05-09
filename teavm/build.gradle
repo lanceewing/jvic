@@ -24,6 +24,7 @@ tasks.register('buildTeaVM', JavaExec) {
       include 'favicon.ico'
       include 'manifest.json'
       include 'sound-renderer.js'
+      include 'styles.css'
       include '_headers'
       include '.swshtaccess'
       into "$buildDir/dist/webapp"

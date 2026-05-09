@@ -42,6 +42,8 @@ public class BuildTeaVMJVic {
     deleteFileIfExists(Path.of(mainDist.getPath(), "webapp", "autorun-config.txt"));
     copyFile(Path.of("webapp", "index.html"),
         Path.of(mainDist.getPath(), "webapp", "index.html"));
+    copyFile(Path.of("../html/webapp/styles.css"),
+        Path.of(mainDist.getPath(), "webapp", "styles.css"));
     copyFile(Path.of("../html/webapp/sound-renderer.js"),
         Path.of(mainDist.getPath(), "webapp", "sound-renderer.js"));
     copyFile(Path.of("../html/webapp/_headers"),
