@@ -290,9 +290,14 @@ public abstract class Vic extends MemoryMappedChip {
     }
 
     protected final void putBlankPixels(int count) {
-        for (int i = 0; i < count; i++) {
-            pixelData.putPixel(pixelCounter++, 0);
-        }
+        // JVIC doesn't need to write blanking pixels, so we skip this
+        // for efficient reasons, but we still need to update the pixel 
+        // counter as if we had written them, otherwise the timing of 
+        // the visible pixels will be wrong.
+        pixelCounter += count;
+        //for (int i = 0; i < count; i++) {
+        //    pixelData.putPixel(pixelCounter++, 0);
+        //}
     }
 
     protected void pio_sm_put(int pio, int sm, int pixel) {
