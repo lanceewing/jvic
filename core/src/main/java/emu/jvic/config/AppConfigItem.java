@@ -28,6 +28,8 @@ public class AppConfigItem {
     
     private String loadAddress;
 
+    private String textureFilter;
+
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
     private byte[] fileData;
@@ -213,5 +215,13 @@ public class AppConfigItem {
 
     public void setLoadAddress(String loadAddress) {
         this.loadAddress = loadAddress;
+    }
+
+    public String getTextureFilter() {
+        return textureFilter;
+    }
+
+    public void setTextureFilter(String textureFilter) {
+        this.textureFilter = textureFilter;
     }
 }

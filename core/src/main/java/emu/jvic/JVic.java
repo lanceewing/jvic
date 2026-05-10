@@ -135,6 +135,9 @@ public class JVic extends Game {
         if (args.containsKey("cmd")) {
             appConfigItem.setAutoRunCommand(args.get("cmd"));
         }
+        if (args.containsKey("filter")) {
+            appConfigItem.setTextureFilter(args.get("filter"));
+        }
     }
     
     /**

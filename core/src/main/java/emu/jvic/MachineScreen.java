@@ -74,6 +74,7 @@ public class MachineScreen implements Screen {
     private Texture[] screens;
     private int drawScreen = 1;
     private int updateScreen = 0;
+    private int textureOffset = 0;
 
     // Screen resources for each MachineType.
     private Map<MachineType, Pixmap> machineTypePixmaps;
@@ -259,6 +260,13 @@ public class MachineScreen implements Screen {
 
         drawScreen = 1;
         updateScreen = 0;
+
+        // Blur or sharp pixels.
+        if ("nearest".equalsIgnoreCase(appConfigItem.getTextureFilter())) {
+            textureOffset = 0;
+        } else {
+            textureOffset = 3;
+        }
     }
 
     private void activateScreenResources(MachineType machineType) {
@@ -304,14 +312,20 @@ public class MachineScreen implements Screen {
         // required by the MachineType.
         Pixmap screenPixmap = new Pixmap(machineType.getTotalScreenWidth(), machineType.getTotalScreenHeight(),
                 Pixmap.Format.RGBA8888);
-        Texture[] screens = new Texture[3];
+        Texture[] screens = new Texture[6];
         screens[0] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
         screens[0].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         screens[1] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
         screens[1].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         screens[2] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
         screens[2].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        
+        screens[3] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+        screens[3].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        screens[4] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+        screens[4].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        screens[5] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
+        screens[5].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+
         Camera camera = new OrthographicCamera();
         ExtendViewport viewport = new ExtendViewport(
                 (machineType.getVisibleScreenHeight() / 3) * 4,
@@ -369,7 +383,7 @@ public class MachineScreen implements Screen {
     public boolean copyPixels() {
         ensureActiveScreenResources();
         jvicRunner.updatePixmap(screenPixmap);
-        screens[updateScreen].draw(screenPixmap, 0, 0);
+        screens[updateScreen + textureOffset].draw(screenPixmap, 0, 0);
         updateScreen = (updateScreen + 1) % 3;
         drawScreen = (drawScreen + 1) % 3;
         return true;
@@ -441,7 +455,7 @@ public class MachineScreen implements Screen {
         
         // Texture isn't always drawn to match physical pixels.
         batch.draw(
-                screens[drawScreen], 
+                screens[drawScreen + textureOffset], 
                 0, 0, renderWidth, renderHeight,
                 machineType.getHorizontalOffset(), machineType.getVerticalOffset(), 
                 machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(), 
@@ -874,7 +888,19 @@ public class MachineScreen implements Screen {
             screens[0].dispose();
             screens[1].dispose();
             screens[2].dispose();
+            screens[3].dispose();
+            screens[4].dispose();
+            screens[5].dispose();
         }
+    }
+
+    /**
+     * Changes the blur mode, to either be on or off.
+     * 
+     * @param blurOn
+     */
+    public void changeBlur(boolean blurOn) {
+        textureOffset = (blurOn? 3 : 0);
     }
 
     /**
