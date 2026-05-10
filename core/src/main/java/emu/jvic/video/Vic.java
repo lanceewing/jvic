@@ -285,16 +285,24 @@ public abstract class Vic extends MemoryMappedChip {
         }
     }
 
+    protected final void putVisiblePixel(int pixel) {
+        pixelData.putPixel(pixelCounter++, pixel);
+    }
+
+    protected final void putBlankPixels(int count) {
+        for (int i = 0; i < count; i++) {
+            pixelData.putPixel(pixelCounter++, 0);
+        }
+    }
+
     protected void pio_sm_put(int pio, int sm, int pixel) {
         if ((pixel & 0xFF) == 0xFF) {
             // If alpha channel is set to 0xFF, then its a normal colour.
-            pixelData.putPixel(pixelCounter++, pixel);
+            putVisiblePixel(pixel);
         } else {
             // Otherwise it is command that happens during blanking, e.g. hsync, col burst,
             // front porch, back porch, etc., so we simply output transparent black.
-            for (int i = 0; i < pixel; i++) {
-                pixelData.putPixel(pixelCounter++, 0);
-            }
+            putBlankPixels(pixel);
         }
     }
     

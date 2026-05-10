@@ -263,19 +263,19 @@ public class Vic44 extends Vic {
                 if ((verticalCounter == 0) || (verticalCounter > PAL_VBLANK_END)) {
                     // In HC=1 for visible lines, we start with outputting the full sequence of CVBS
                     // commands for horizontal blanking, including the hsync and colour burst.
-                    pio_sm_put(CVBS_PIO, CVBS_SM, PAL_FRONTPORCH_2);
-                    pio_sm_put(CVBS_PIO, CVBS_SM, PAL_HSYNC);
-                    pio_sm_put(CVBS_PIO, CVBS_SM, PAL_BREEZEWAY);
+                    putBlankPixels(PAL_FRONTPORCH_2);
+                    putBlankPixels(PAL_HSYNC);
+                    putBlankPixels(PAL_BREEZEWAY);
                     if ((verticalCounter & 1) == 1) {
                         // Odd line. Switch colour palettes.
                         pal_trunc_palette = pal_palette = pal_palette_o;
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_COLBURST_O);
+                        putBlankPixels(PAL_COLBURST_O);
                     } else {
                         // Even line. Switch colour palettes.
                         pal_trunc_palette = pal_palette = pal_palette_e;
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_COLBURST_E);
+                        putBlankPixels(PAL_COLBURST_E);
                     }
-                    pio_sm_put(CVBS_PIO, CVBS_SM, PAL_BACKPORCH);
+                    putBlankPixels(PAL_BACKPORCH);
                 } else {
                     // Last line was 0, which is the end of the visible lines.
                     if (verticalCounter == 1) {
@@ -286,25 +286,25 @@ public class Vic44 extends Vic {
                     // Vertical blanking and sync - Lines 1-9.
                     if (verticalCounter < PAL_VSYNC_START) {
                         // Lines 1, 2, 3.
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_H);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_H);
+                        putBlankPixels(PAL_SHORT_SYNC_L);
+                        putBlankPixels(PAL_SHORT_SYNC_H);
+                        putBlankPixels(PAL_SHORT_SYNC_L);
+                        putBlankPixels(PAL_SHORT_SYNC_H);
                     } else if (verticalCounter <= PAL_VSYNC_END) {
                         // Vertical sync, lines 4, 5, 6.
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_LONG_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_LONG_SYNC_H);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_LONG_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_LONG_SYNC_H);
+                        putBlankPixels(PAL_LONG_SYNC_L);
+                        putBlankPixels(PAL_LONG_SYNC_H);
+                        putBlankPixels(PAL_LONG_SYNC_L);
+                        putBlankPixels(PAL_LONG_SYNC_H);
     
                         // Vertical sync is what resets the video matrix latch.
                         videoMatrixLatch = videoMatrixCounter = 0;
                     } else {
                         // Lines 7, 8, 9.
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_H);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_SHORT_SYNC_H);
+                        putBlankPixels(PAL_SHORT_SYNC_L);
+                        putBlankPixels(PAL_SHORT_SYNC_H);
+                        putBlankPixels(PAL_SHORT_SYNC_L);
+                        putBlankPixels(PAL_SHORT_SYNC_H);
                     }
                 }
     
@@ -504,14 +504,14 @@ public class Vic44 extends Vic {
                                     }
                                 }
                                 borderColour = border_colour_index;
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_trunc_palette[borderColour]);
                                 break;
                             
                             case FETCH_MATRIX_LINE:
@@ -520,14 +520,14 @@ public class Vic44 extends Vic {
                                 multiColourTable[1] = borderColour = border_colour_index;
                                 multiColourTable[3] = auxiliary_colour_index;
                                 
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[borderColour]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel2]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel3]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel4]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel5]]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_trunc_palette[borderColour]);
                                 break;
         
                             case FETCH_MATRIX_DLY_1:
@@ -536,14 +536,14 @@ public class Vic44 extends Vic {
                                 fetchState++;
                             case FETCH_IN_MATRIX_Y:
                                 borderColour = border_colour_index;
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_palette[borderColour]);
+                                putVisiblePixel(pal_trunc_palette[borderColour]);
                                 break;
         
                             case FETCH_SCREEN_CODE:
@@ -553,8 +553,8 @@ public class Vic44 extends Vic {
                                 multiColourTable[3] = auxiliary_colour_index;
         
                                 // First 3 whole pixels are from end of current character.
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel6]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel7]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel6]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel7]]);
                                 
                                 // We only need to calculate 8th & 1st pixel in this scenario. Hblanking is about to start.
                                 if (non_reverse_mode != 0) {
@@ -598,13 +598,13 @@ public class Vic44 extends Vic {
                                 }
                                 
                                 // The 3rd pixel is from the previous character with new reverse mode applied (see above).
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel8]]);
                                 
                                 // Look up foreground colour before outputting first pixel of new character.
                                 multiColourTable[2] = (colourData & 0x07);
                                 
                                 // The 4th pixel is partial before horiz blanking kicks in.
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[multiColourTable[pixel1]]);
+                                putVisiblePixel(pal_trunc_palette[multiColourTable[pixel1]]);
                                 
                                 fetchState = ((horizontalCellCounter-- > 0) ? FETCH_CHAR_DATA : FETCH_MATRIX_END);
         
@@ -616,12 +616,12 @@ public class Vic44 extends Vic {
                                 multiColourTable[3] = auxiliary_colour_index;
                                 
                                 // Output the three whole pixels.
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel2]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel3]]);
+                                putVisiblePixel(pal_palette[multiColourTable[pixel4]]);
                                 
                                 // The 4th pixel is a partial pixel before horizontal blanking kicks in.
-                                pio_sm_put(CVBS_PIO, CVBS_SM, pal_trunc_palette[multiColourTable[pixel5]]);
+                                putVisiblePixel(pal_trunc_palette[multiColourTable[pixel5]]);
                                 
                                 // If the matrix hasn't yet closed, then in the FETCH_CHAR_DATA
                                 // state, we need to keep incrementing the video matrix counter
@@ -642,7 +642,7 @@ public class Vic44 extends Vic {
                         }
     
                         // After the 3.66 visible pixels, we now output the start of horiz blanking.
-                        pio_sm_put(CVBS_PIO, CVBS_SM, PAL_FRONTPORCH_1);
+                        putBlankPixels(PAL_FRONTPORCH_1);
     
                         // Reset HC to start a new line.
                         prevHorizontalCounter = horizontalCounter;
@@ -671,15 +671,15 @@ public class Vic44 extends Vic {
                                     // are part of the horizontal blanking. Note that the third one is due
                                     // to the switch delay in hblank turning off.
                                     if (horizontalCounter > PAL_HBLANK_END) {
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
                                     }
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
+                                    putVisiblePixel(pal_palette[borderColour]);
+                                    putVisiblePixel(pal_palette[borderColour]);
                                 }
                                 break;
         
@@ -693,8 +693,8 @@ public class Vic44 extends Vic {
                                     multiColourTable[3] = auxiliary_colour_index;
                     
                                     if (horizontalCounter > PAL_HBLANK_END) {
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel6]]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel7]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel6]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel7]]);
                                     }
                     
                                     // Handle the last pixel of the last char of the current matrix row.
@@ -714,8 +714,8 @@ public class Vic44 extends Vic {
                                     pixel1 = ((charData >> 6) & 0x03);
                                     
                                     if (horizontalCounter > PAL_HBLANK_END) {
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel1]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel8]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel1]]);
                                     }
                                     
                                     pixel6 = pixel2 = pixel1;
@@ -723,11 +723,11 @@ public class Vic44 extends Vic {
                                     pixel8 = pixel1 = pixel2 = pixel3 = pixel4 = pixel5 = 1;
                                     
                                     if (horizontalCounter > PAL_HBLANK_END) {
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel2]]);
+                                        putVisiblePixel(pal_palette[multiColourTable[pixel3]]);
                                     }
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel4]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel5]]);
         
                                     if (prevHorizontalCounter == screen_origin_x) {
                                         fetchState = FETCH_MATRIX_DLY_1;
@@ -750,15 +750,15 @@ public class Vic44 extends Vic {
                                     // are part of the horizontal blanking. Note that the third one is due
                                     // to the switch delay in hblank turning off.
                                     if (horizontalCounter > PAL_HBLANK_END) {
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                        pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
+                                        putVisiblePixel(pal_palette[borderColour]);
                                     }
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[borderColour]);
+                                    putVisiblePixel(pal_palette[borderColour]);
+                                    putVisiblePixel(pal_palette[borderColour]);
                                 }
                                 else {
                                     pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
@@ -786,8 +786,8 @@ public class Vic44 extends Vic {
                                     // Note: These 3 pixels are not output for HC=12, as first three "pixels"
                                     // are part of the horizontal blanking. Note that the third one is due
                                     // to the switch delay in hblank turning off.
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel6]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel7]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel6]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel7]]);
                                 }
         
                                 // Note that when we first enter this state, these variables are primed
@@ -842,7 +842,7 @@ public class Vic44 extends Vic {
                                 }
                                 
                                 if (horizontalCounter > PAL_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel8]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel8]]);
                                 }
         
                                 // Look up foreground colour before outputting first pixel.
@@ -874,7 +874,7 @@ public class Vic44 extends Vic {
                                 // Output the 1st pixel of next character. Note that this is not the character
                                 // that relates to the cell index and colour data fetched above.
                                 if (horizontalCounter > PAL_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel1]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel1]]);
                                 }
         
                                 // Toggle fetch state. Close matrix if HCC hits zero.
@@ -894,8 +894,8 @@ public class Vic44 extends Vic {
                                 // to the switch delay in hblank turning off. This is why we skip these
                                 // pixels for HC=12.
                                 if (horizontalCounter > PAL_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel2]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel3]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel2]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel3]]);
                                 }
         
                                 // Calculate offset of data.
@@ -936,8 +936,8 @@ public class Vic44 extends Vic {
                                 }
                                 
                                 if (horizontalCounter >= PAL_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel4]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, pal_palette[multiColourTable[pixel5]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel4]]);
+                                    putVisiblePixel(pal_palette[multiColourTable[pixel5]]);
                                 }
                                 
                                 if (fetchState == FETCH_MATRIX_END) {

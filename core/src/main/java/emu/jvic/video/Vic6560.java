@@ -463,25 +463,25 @@ public class Vic6560 extends Vic {
     
                         if (verticalCounter < NTSC_VSYNC_START) {
                             // Lines 1, 2, 3.
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                            putBlankPixels(NTSC_SHORT_SYNC_L);
+                            putBlankPixels(NTSC_SHORT_SYNC_H);
+                            putBlankPixels(NTSC_SHORT_SYNC_L);
+                            putBlankPixels(NTSC_SHORT_SYNC_H);
                         } else if (verticalCounter <= NTSC_VSYNC_END) {
                             // Vertical sync, lines 4, 5, 6.
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+                            putBlankPixels(NTSC_LONG_SYNC_L);
+                            putBlankPixels(NTSC_LONG_SYNC_H);
+                            putBlankPixels(NTSC_LONG_SYNC_L);
+                            putBlankPixels(NTSC_LONG_SYNC_H);
     
                             // Vertical sync is what resets the video matrix latch.
                             videoMatrixLatch = videoMatrixCounter = 0;
                         } else {
                             // Lines 7, 8, 9.
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                            pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                            putBlankPixels(NTSC_SHORT_SYNC_L);
+                            putBlankPixels(NTSC_SHORT_SYNC_H);
+                            putBlankPixels(NTSC_SHORT_SYNC_L);
+                            putBlankPixels(NTSC_SHORT_SYNC_H);
                         }
                     } else {
                         vblanking = false;
@@ -492,19 +492,19 @@ public class Vic6560 extends Vic {
                 // then we continue horizontal blanking commands instead, including hsync and colour 
                 // burst. It will end at HC=9
                 if (!vblanking) {
-                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_FRONTPORCH_2);
-                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_HSYNC);
-                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BREEZEWAY);
+                    putBlankPixels(NTSC_FRONTPORCH_2);
+                    putBlankPixels(NTSC_HSYNC);
+                    putBlankPixels(NTSC_BREEZEWAY);
                     if (oddLine) {
                         // Odd line. Switch palette starting offset.
                         pIndex = 2;
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BURST_O);
+                        putBlankPixels(NTSC_BURST_O);
                     } else {
                         // Even line. Switch palette starting offset.
                         pIndex = 6;
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BURST_E);
+                        putBlankPixels(NTSC_BURST_E);
                     }
-                    pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_BACKPORCH);
+                    putBlankPixels(NTSC_BACKPORCH);
                 }
                 oddLine = !oddLine;
     
@@ -720,7 +720,7 @@ public class Vic6560 extends Vic {
                         // of HC=62, where a decision is then made as to whether it will be horizontal
                         // blanking or vertical blanking. This is why there is a part 1 and 2 of the front
                         // porch.
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_FRONTPORCH_1);
+                        putBlankPixels(NTSC_FRONTPORCH_1);
     
                         // Unlike PAL, for NTSC hblank starts 6 cycles before the HC reset, so we increment.
                         prevHorizontalCounter = horizontalCounter++;
@@ -740,10 +740,10 @@ public class Vic6560 extends Vic {
                                 }
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
                                     borderColour = border_colour_index;
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
                                 }
                                 // Nothing to do otherwise. Still in blanking if below 12.
                                 break;
@@ -757,8 +757,8 @@ public class Vic6560 extends Vic {
                                     multiColourTable[1] = border_colour_index;
                                     multiColourTable[3] = auxiliary_colour_index;
                                     
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
                                     
                                     // Handle the last pixel of the last char of the current matrix row.
                                     if (hiresMode) {
@@ -776,8 +776,8 @@ public class Vic6560 extends Vic {
                                     charData = charDataLatch = 0x55;
                                     pixel1 = ((charData >> 6) & 0x03);
                                     
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
                                     
                                     pixel6 = pixel2 = pixel1;
                                     pixel7 = pixel3 = ((charData >> 4) & 0x03);
@@ -800,10 +800,10 @@ public class Vic6560 extends Vic {
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
                                     // Output border pixels.
                                     borderColour = border_colour_index;
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][borderColour]);
                                 }
                                 else {
                                     pixel2 = pixel3 = pixel4 = pixel5 = pixel6 = pixel7 = pixel8 = 1;
@@ -828,8 +828,8 @@ public class Vic6560 extends Vic {
                                 // Output last 3 pixels of the last character. These had already left 
                                 // the shift register but in the delay path to the colour lookup.
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel6]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel7]]);
                                 }
                                 
                                 if (non_reverse_mode != 0) {
@@ -880,7 +880,7 @@ public class Vic6560 extends Vic {
                               
                                 // The 3rd pixel is from the previous character with new reverse mode applied (see above).
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel8]]);
                                 }
                                 
                                 // Look up foreground colour before outputting first pixel.
@@ -899,7 +899,7 @@ public class Vic6560 extends Vic {
                                 // Output the 1st pixel of next character. Note that this is not the character
                                 // that relates to the cell index and colour data fetched above.
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel1]]);
                                 }
 
                                 // Toggle fetch state. Close matrix if HCC hits zero.
@@ -915,8 +915,8 @@ public class Vic6560 extends Vic {
                                 multiColourTable[3] = auxiliary_colour_index;
                                 
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel2]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel3]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel2]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel3]]);
                                 }
                                 
                                 // Calculate offset of data.
@@ -954,8 +954,8 @@ public class Vic6560 extends Vic {
                                 
                                 // Pixels 4 & 5 have to be output after the pixel var calculations above.
                                 if (horizontalCounter >= NTSC_HBLANK_END) {
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel4]]);
-                                    pio_sm_put(CVBS_PIO, CVBS_SM, palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel4]]);
+                                    putVisiblePixel(palette[(pIndex++ & 0x7)][multiColourTable[pixel5]]);
                                 }
 
                                 if (fetchState == FETCH_MATRIX_END) {
@@ -1019,17 +1019,17 @@ public class Vic6560 extends Vic {
 
                     // Delayed FIFO put to avoid overrun
                     if (do_vblank == DO_VBLANK_LONG){
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_LONG_SYNC_H);
+                        putBlankPixels(NTSC_LONG_SYNC_L);
+                        putBlankPixels(NTSC_LONG_SYNC_H);
+                        putBlankPixels(NTSC_LONG_SYNC_L);
+                        putBlankPixels(NTSC_LONG_SYNC_H);
                         do_vblank = 0;
                     }
                     if (do_vblank == DO_VBLANK_SHORT){
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_L);
-                        pio_sm_put(CVBS_PIO, CVBS_SM, NTSC_SHORT_SYNC_H);
+                        putBlankPixels(NTSC_SHORT_SYNC_L);
+                        putBlankPixels(NTSC_SHORT_SYNC_H);
+                        putBlankPixels(NTSC_SHORT_SYNC_L);
+                        putBlankPixels(NTSC_SHORT_SYNC_H);
                         do_vblank = 0;
                     }
     
