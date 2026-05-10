@@ -14,6 +14,8 @@ public class TeaVMPixelData extends PixelData {
     private Uint8ClampedArray pixelArray;
     private Uint32Array packedPixelArray;
     private boolean packedPixelWritesSupported;
+    private int activePixelByteLength;
+    private int activePackedPixelLength;
     private byte[] imageData;
 
     public TeaVMPixelData() {
@@ -23,7 +25,7 @@ public class TeaVMPixelData extends PixelData {
         pixelArray = Uint8ClampedArray.create(sharedArrayBuffer);
         packedPixelArray = new Uint32Array(sharedArrayBuffer);
         packedPixelWritesSupported = isLittleEndian();
-        imageData = new byte[pixelArray.getLength()];
+        initialiseActivePixelLengths(pixelArray.getLength() / 2);
     }
 
     SharedArrayBuffer getSharedArrayBuffer() {
@@ -35,7 +37,7 @@ public class TeaVMPixelData extends PixelData {
         pixelArray = Uint8ClampedArray.create(createSharedArrayBuffer(width * height * 4 * 2));
         packedPixelArray = new Uint32Array(getSharedArrayBuffer());
         packedPixelWritesSupported = isLittleEndian();
-        imageData = new byte[pixelArray.getLength()];
+        initialiseActivePixelLengths(width * height * 4);
     }
 
     @Override
@@ -54,11 +56,11 @@ public class TeaVMPixelData extends PixelData {
     @Override
     public void clearPixels() {
         if (packedPixelWritesSupported) {
-            for (int index = 0; index < packedPixelArray.getLength(); index++) {
+            for (int index = 0; index < activePackedPixelLength; index++) {
                 packedPixelArray.set(index, 0);
             }
         } else {
-            for (int index = 0; index < pixelArray.getLength(); index++) {
+            for (int index = 0; index < activePixelByteLength; index++) {
                 pixelArray.set(index, 0);
             }
         }
@@ -66,10 +68,16 @@ public class TeaVMPixelData extends PixelData {
 
     @Override
     public void updatePixmap(Pixmap pixmap) {
-        for (int index = 0; index < pixelArray.getLength(); index++) {
+        for (int index = 0; index < activePixelByteLength; index++) {
             imageData[index] = (byte)(pixelArray.get(index) & 0xFF);
         }
-        BufferUtils.copy(imageData, 0, pixmap.getPixels(), Math.min(imageData.length, pixmap.getPixels().remaining()));
+        BufferUtils.copy(imageData, 0, pixmap.getPixels(), Math.min(activePixelByteLength, pixmap.getPixels().remaining()));
+    }
+
+    private void initialiseActivePixelLengths(int activePixelByteLength) {
+        this.activePixelByteLength = activePixelByteLength;
+        activePackedPixelLength = activePixelByteLength >> 2;
+        imageData = new byte[activePixelByteLength];
     }
 
     private int convertRgba8888ToPackedPixel(int rgba8888Colour) {
