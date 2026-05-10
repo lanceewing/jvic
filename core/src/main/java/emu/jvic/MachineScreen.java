@@ -306,11 +306,11 @@ public class MachineScreen implements Screen {
                 Pixmap.Format.RGBA8888);
         Texture[] screens = new Texture[3];
         screens[0] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-        screens[0].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        screens[0].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         screens[1] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-        screens[1].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        screens[1].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         screens[2] = new Texture(screenPixmap, Pixmap.Format.RGBA8888, false);
-        screens[2].setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        screens[2].setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         
         Camera camera = new OrthographicCamera();
         ExtendViewport viewport = new ExtendViewport(
@@ -421,7 +421,17 @@ public class MachineScreen implements Screen {
             resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
         lastScreenSize = currentScreenSize;
-        camera.position.set((renderWidth / 2) + cameraXOffset, (renderHeight / 2) - cameraYOffset, 0.0f);
+        float targetCameraX = (renderWidth / 2f) + cameraXOffset;
+        float targetCameraY = (renderHeight / 2f) - cameraYOffset;
+
+        if (!currentScreenSize.equals(ScreenSize.FIT)) {
+            // For non-FIT modes, snap camera to the viewport parity lattice (n or n+0.5)
+            // so nearest-neighbour scaling lands on consistent pixel rows/columns.
+            targetCameraX = snapCameraToViewportParity(targetCameraX, viewport.getWorldWidth());
+            targetCameraY = snapCameraToViewportParity(targetCameraY, viewport.getWorldHeight());
+        }
+
+        camera.position.set(targetCameraX, targetCameraY, 0.0f);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         batch.disableBlending();
@@ -649,6 +659,11 @@ public class MachineScreen implements Screen {
                 landscapeFireButton.setVisible(false);
             }
         }
+    }
+
+    private float snapCameraToViewportParity(float cameraValue, float viewportWorldSize) {
+        float desiredFraction = Math.abs((viewportWorldSize * 0.5f) % 1f);
+        return Math.round(cameraValue - desiredFraction) + desiredFraction;
     }
     
     public ClickListener fireButtonClickListener = new ClickListener() {
