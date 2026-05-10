@@ -128,21 +128,29 @@ public class Vic44 extends Vic {
      */
     public boolean emulateCycle() {
         boolean frameRenderComplete = false;
+
+        int reg0 = mem[VIC_REG_0];
+        int reg1 = mem[VIC_REG_1];
+        int reg2 = mem[VIC_REG_2];
+        int reg3 = mem[VIC_REG_3];
+        int reg5 = mem[VIC_REG_5];
+        int reg14 = mem[VIC_REG_14];
+        int reg15 = mem[VIC_REG_15];
         
         // Expressions to access different parts of control registers.
-        int border_colour_index = (mem[VIC_REG_15] & 0x07);
-        int background_colour_index = (mem[VIC_REG_15] >> 4);
-        int auxiliary_colour_index = (mem[VIC_REG_14] >> 4);
-        int non_reverse_mode = (mem[VIC_REG_15] & 0x08);
-        int screen_origin_x = ((mem[VIC_REG_0] & 0x7F));
-        int screen_origin_y = (mem[VIC_REG_1]);
-        int num_of_columns = (mem[VIC_REG_2] & 0x7F);
-        int num_of_rows = ((mem[VIC_REG_3] & 0x7E) >> 1);
-        int double_height_mode = (mem[VIC_REG_3] & 0x01);
+        int border_colour_index = (reg15 & 0x07);
+        int background_colour_index = (reg15 >> 4);
+        int auxiliary_colour_index = (reg14 >> 4);
+        int non_reverse_mode = (reg15 & 0x08);
+        int screen_origin_x = (reg0 & 0x7F);
+        int screen_origin_y = reg1;
+        int num_of_columns = (reg2 & 0x7F);
+        int num_of_rows = ((reg3 & 0x7E) >> 1);
+        int double_height_mode = (reg3 & 0x01);
         int last_line_of_cell = (7 | (double_height_mode << 3));
         int char_size_shift = (3 + double_height_mode);
-        int screen_mem_start = (((mem[VIC_REG_5] & 0xF0) << 6) | ((mem[VIC_REG_2] & 0x80) << 2));
-        int char_mem_start = ((mem[VIC_REG_5] & 0x0F) << 10);
+        int screen_mem_start = (((reg5 & 0xF0) << 6) | ((reg2 & 0x80) << 2));
+        int char_mem_start = ((reg5 & 0x0F) << 10);
 
         // VERTICAL TIMINGS:
         // Lines 1-9: Vertical blanking
