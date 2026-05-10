@@ -45,9 +45,12 @@ public class TeaVMJVicRunner extends JVicRunner {
 
     private JSObject worker;
     private boolean stopped;
+    private final TeaVMFrameCounter frameCounter;
+    private int lastConsumedFrameCount;
 
     public TeaVMJVicRunner() {
         super(new TeaVMKeyboardMatrix(), new TeaVMPixelData(), new TeaVMSoundGenerator());
+        frameCounter = new TeaVMFrameCounter();
         ((TeaVMSoundGenerator)soundGenerator).attachAudioWorklet(this);
         TeaVMBrowser.registerPopStateListener(this::onPopState);
     }
@@ -77,12 +80,16 @@ public class TeaVMJVicRunner extends JVicRunner {
         TeaVMPixelData teaVMPixelData = (TeaVMPixelData)pixelData;
         teaVMPixelData.clearPixels();
         TeaVMSoundGenerator teaVMSoundGenerator = (TeaVMSoundGenerator)soundGenerator;
+        frameCounter.reset();
+        lastConsumedFrameCount = 0;
         SharedArrayBuffer keyMatrixSAB = teaVMKeyboardMatrix.getSharedArrayBuffer();
         SharedArrayBuffer pixelDataSAB = teaVMPixelData.getSharedArrayBuffer();
         SharedArrayBuffer audioDataSAB = teaVMSoundGenerator.getSharedArrayBuffer();
+        SharedArrayBuffer frameCounterSAB = frameCounter.getSharedArrayBuffer();
 
         TeaVMWorkerInterop.postObject(worker, "Initialise",
-                TeaVMWorkerInterop.createInitialiseObject(keyMatrixSAB, pixelDataSAB, audioDataSAB));
+            TeaVMWorkerInterop.createInitialiseObject(keyMatrixSAB, pixelDataSAB,
+                audioDataSAB, frameCounterSAB));
         TeaVMWorkerInterop.postArrayBufferAndObject(worker, "Start", programArrayBuffer,
                 TeaVMWorkerInterop.createStartObject(appConfigItem.getName(),
                         appConfigItem.getFilePath(), appConfigItem.getFileType(),
@@ -188,10 +195,23 @@ public class TeaVMJVicRunner extends JVicRunner {
         exit = false;
         paused = false;
         stopped = false;
+        frameCounter.reset();
+        lastConsumedFrameCount = 0;
         TeaVMBrowser.replaceState(TeaVMBrowser.buildCleanUrl());
         worker = null;
         clearPerformanceStats();
         Gdx.graphics.setTitle("JVic - The web-based VIC 20 emulator built with libGDX");
+    }
+
+    @Override
+    public void updatePixmap(Pixmap pixmap) {
+        super.updatePixmap(pixmap);
+        lastConsumedFrameCount = frameCounter.get();
+    }
+
+    @Override
+    public boolean hasNewFrame() {
+        return frameCounter.get() != lastConsumedFrameCount;
     }
 
     @Override

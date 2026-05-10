@@ -127,6 +127,10 @@ public abstract class JVicRunner {
     public void updatePixmap(Pixmap pixmap) {
         pixelData.updatePixmap(pixmap);
     }
+
+    public boolean hasNewFrame() {
+        return true;
+    }
         
     /**
      * Toggles the current warp speed state.

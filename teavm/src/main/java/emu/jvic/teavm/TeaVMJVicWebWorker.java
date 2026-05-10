@@ -22,6 +22,7 @@ public final class TeaVMJVicWebWorker {
     private TeaVMKeyboardMatrix keyboardMatrix;
     private TeaVMPixelData pixelData;
     private TeaVMSoundGenerator soundGenerator;
+    private TeaVMFrameCounter frameCounter;
     private Machine machine;
     private boolean paused;
     private boolean warpSpeed;
@@ -51,9 +52,11 @@ public final class TeaVMJVicWebWorker {
                 SharedArrayBuffer keyMatrixSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "keyMatrixSAB");
                 SharedArrayBuffer pixelDataSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "pixelDataSAB");
                 SharedArrayBuffer audioDataSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "audioDataSAB");
+                SharedArrayBuffer frameCounterSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "frameCounterSAB");
                 keyboardMatrix = new TeaVMKeyboardMatrix(keyMatrixSAB);
                 pixelData = new TeaVMPixelData(pixelDataSAB);
                 soundGenerator = new TeaVMSoundGenerator(audioDataSAB);
+                frameCounter = new TeaVMFrameCounter(frameCounterSAB);
                 break;
 
             case "Start":
@@ -118,6 +121,9 @@ public final class TeaVMJVicWebWorker {
         paused = false;
         cycleCount = 0;
         startTime = 0;
+        if (frameCounter != null) {
+            frameCounter.reset();
+        }
         autoRunCmdQueue = null;
         lastAutoLoadCursorState = -1;
         autoLoadStateLogged = false;
@@ -194,7 +200,9 @@ public final class TeaVMJVicWebWorker {
             long batchStartCycleCount = cycleCount;
             double batchStartTime = TeaVMWorkerGlobalScope.getPerformanceNowTimestamp();
             do {
-                machine.emulateCycle();
+                if (machine.emulateCycle() && (frameCounter != null)) {
+                    frameCounter.increment();
+                }
                 cycleCount++;
             } while (cycleCount <= expectedCycleCount);
 

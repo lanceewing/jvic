@@ -350,8 +350,9 @@ public class MachineScreen implements Screen {
             draw = ((fps < 30) || ((renderCount % (fps / 30)) == 0));
 
         } else {
-            // TODO: See if we can check if there is a new frame ready before copying??
-            copyPixels();
+            if (jvicRunner.hasNewFrame()) {
+                copyPixels();
+            }
             draw = true;
         }
 

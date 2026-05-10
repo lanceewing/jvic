@@ -42,9 +42,10 @@ final class TeaVMWorkerInterop {
     @JSBody(script = "return {};")
     static native JSObject createEmptyObject();
 
-    @JSBody(params = { "keyMatrixSAB", "pixelDataSAB", "audioDataSAB" }, script = "return { keyMatrixSAB: keyMatrixSAB, pixelDataSAB: pixelDataSAB, audioDataSAB: audioDataSAB };")
+        @JSBody(params = { "keyMatrixSAB", "pixelDataSAB", "audioDataSAB", "frameCounterSAB" }, script = "return { keyMatrixSAB: keyMatrixSAB, pixelDataSAB: pixelDataSAB, audioDataSAB: audioDataSAB, frameCounterSAB: frameCounterSAB };")
     static native JSObject createInitialiseObject(SharedArrayBuffer keyMatrixSAB,
-            SharedArrayBuffer pixelDataSAB, SharedArrayBuffer audioDataSAB);
+            SharedArrayBuffer pixelDataSAB, SharedArrayBuffer audioDataSAB,
+            SharedArrayBuffer frameCounterSAB);
 
     @JSBody(params = { "name", "filePath", "fileType", "machineType", "ramType", "autoRunCommand", "loadAddress" }, script = "return { name: name, filePath: filePath, fileType: fileType, machineType: machineType, ramType: ramType, autoRunCommand: autoRunCommand, loadAddress: loadAddress };")
     static native JSObject createStartObject(String name, String filePath, String fileType,
