@@ -19,6 +19,11 @@ public class GwtSoundGenerator extends SoundGenerator {
 
     // Number of samples to queue before being output to the audio hardware.
     public static final int SAMPLE_LATENCY = 3072;
+
+    // Small baseline level that remains when voices are effectively silent.
+    // Rapid volume writes can modulate this into audible 4-bit digi output.
+    private static final int VOLUME_DAC_BIAS = 192;
+    private static final float HIGH_PASS_CUTOFF_HZ = 120.0f;
     
     private int VIC_REG_10 = 0x900A;
     private int VIC_REG_14 = 0x900E;
@@ -37,6 +42,11 @@ public class GwtSoundGenerator extends SoundGenerator {
     private int sampleBufferOffset = 0;
     private double cyclesToNextSample;
     private SharedQueue sampleSharedQueue;
+    private double accumulatedSample;
+    private int accumulatedCycles;
+    private float highPassAlpha;
+    private float highPassLastInput;
+    private float highPassLastOutput;
     
     // TODO: Remove these after debugging timing issue.
     private long cycleCount;
@@ -88,6 +98,13 @@ public class GwtSoundGenerator extends SoundGenerator {
         voiceCounters = new int[4];
         voiceShiftRegisters = new int[4];
         voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 };
+
+        float dt = 1.0f / SAMPLE_RATE;
+        float rc = (float)(1.0 / (2.0 * Math.PI * HIGH_PASS_CUTOFF_HZ));
+        highPassAlpha = rc / (rc + dt);
+        resetSampleAccumulator();
+        highPassLastInput = 0.0f;
+        highPassLastOutput = 0.0f;
         
         if (machineType.isVIC44K()) {
             VIC_REG_10 = 0xBC0A;
@@ -166,6 +183,9 @@ public class GwtSoundGenerator extends SoundGenerator {
             }
         }
 
+        accumulatedSample += getCurrentMixedOutput();
+        accumulatedCycles++;
+
         // If enough cycles have elapsed since the last sample, then output another.
         if (--cyclesToNextSample <= 0) {
             
@@ -174,6 +194,8 @@ public class GwtSoundGenerator extends SoundGenerator {
             // No point writing samples until we know that the AudioWorklet is ready.
             if (writeSamplesEnabled) {
                 writeSample();
+            } else {
+                resetSampleAccumulator();
             }
         }
     }
@@ -247,20 +269,26 @@ public class GwtSoundGenerator extends SoundGenerator {
      * SourceDataLine.
      */
     public void writeSample() {
-        int sample = 0;
+        float sample = 0.0f;
 
-        for (int i = 0; i < 4; i++) {
-            if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
-                // Voice enabled. First bit of SR goes out.
-                sample += ((voiceShiftRegisters[i] & 0x01) << 11);
-            }
+        if (accumulatedCycles > 0) {
+            sample = (float)(accumulatedSample / accumulatedCycles);
         }
 
-        // Apply master volume.
-        sample = (((sample >> 2) * (mem[VIC_REG_14] & 0x0F)) & 0x7FFF);
-        
+        resetSampleAccumulator();
+
+        // Model the output coupling capacitor with a one-pole high-pass filter,
+        // so fast volume-register changes become audible digi output.
+        float filtered = applyHighPass(sample);
+        float normalized = filtered / 16384.0f;
+        if (normalized > 1.0f) {
+            normalized = 1.0f;
+        } else if (normalized < -1.0f) {
+            normalized = -1.0f;
+        }
+
         // Conversion to -1.0 to 1.0, which is what the AudioWorkletProcessor needs.
-        sampleBuffer.set(sampleBufferOffset, ((sample - 16384.0f) / 16384.0f));
+        sampleBuffer.set(sampleBufferOffset, normalized);
         
         // Increment total sample count, so that we can keep in sync with cycle count.
         sampleCount++;
@@ -271,22 +299,6 @@ public class GwtSoundGenerator extends SoundGenerator {
         if (sampleBufferOffset == sampleBuffer.length()) {
             sampleSharedQueue.push(sampleBuffer);
             sampleBufferOffset = 0;
-            
-            //float elapsedTimeInSecs = (TimeUtils.millis() - this.startTime) / 1000.0f;
-            //float cyclesPerSecond = cycleCount / elapsedTimeInSecs;
-            
-            //this.frameCount += sampleBuffer.length();
-            //logToJSConsole("GwtAYPSG - Sample rate = " + (frameCount / elapsedTimeInSecs) + 
-            //        ", Cycle rate = " + cyclesPerSecond);
-            
-            //logToJSConsole("GwtAYPSG - elapsedTimeInSecs = " + elapsedTimeInSecs + 
-            //        ", cycle rate = " + cyclesPerSecond + 
-            //        ", audio time = " + sampleSharedQueue.getCurrentTime());
-            
-            //logToJSConsole("GwtAYPSG - volumeA: " + volumeA + 
-            //        ", volumeB: " + volumeB + ", volumeC: " + volumeC + 
-            //        ", cntA: " + cnt[A] + ", cntB: " + cnt[B] + 
-            //        ", cntC: " + cnt[C] + ", sample: " + sample);
         }
     }
 
@@ -305,7 +317,34 @@ public class GwtSoundGenerator extends SoundGenerator {
     private void initialiseAudioWorklet(GwtJVicRunner gwtJVicRunner) {
         this.audioWorklet = new PSGAudioWorklet(sampleSharedQueue, gwtJVicRunner);
     }
-    
+
+    private float getCurrentMixedOutput() {
+        int mixedVoices = 0;
+
+        for (int i = 0; i < 4; i++) {
+            if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
+                // Voice enabled. First bit of SR goes out.
+                mixedVoices += ((voiceShiftRegisters[i] & 0x01) << 11);
+            }
+        }
+
+        int masterVolume = (mem[VIC_REG_14] & 0x0F);
+        int sample = (((mixedVoices >> 2) + VOLUME_DAC_BIAS) * masterVolume);
+        return Math.min(sample, 0x7FFF);
+    }
+
+    private float applyHighPass(float input) {
+        float output = highPassAlpha * (highPassLastOutput + input - highPassLastInput);
+        highPassLastInput = input;
+        highPassLastOutput = output;
+        return output;
+    }
+
+    private void resetSampleAccumulator() {
+        accumulatedSample = 0.0;
+        accumulatedCycles = 0;
+    }
+
     private final native void logToJSConsole(String message)/*-{
         console.log(message);
     }-*/;

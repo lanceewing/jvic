@@ -10,6 +10,11 @@ public class TeaVMSoundGenerator extends SoundGenerator {
     public static final int SAMPLE_RATE = 22050;
     public static final int SAMPLE_LATENCY = 3072;
 
+    // Small baseline level that remains when voices are effectively silent.
+    // Rapid volume writes can modulate this into audible 4-bit digi output.
+    private static final int VOLUME_DAC_BIAS = 192;
+    private static final float HIGH_PASS_CUTOFF_HZ = 120.0f;
+
     private int vicReg10 = 0x900A;
     private int vicReg14 = 0x900E;
 
@@ -27,6 +32,11 @@ public class TeaVMSoundGenerator extends SoundGenerator {
     private int sampleBufferOffset;
     private double cyclesToNextSample;
     private TeaVMSharedQueue sampleSharedQueue;
+    private double accumulatedSample;
+    private int accumulatedCycles;
+    private float highPassAlpha;
+    private float highPassLastInput;
+    private float highPassLastOutput;
     private TeaVMPSGAudioWorklet audioWorklet;
     private TeaVMJVicRunner jvicRunner;
 
@@ -57,6 +67,13 @@ public class TeaVMSoundGenerator extends SoundGenerator {
         lastNoiseLfsr0 = 0x1;
         soundClockDividerCounter = 0;
         sampleBufferOffset = 0;
+
+        float dt = 1.0f / SAMPLE_RATE;
+        float rc = (float)(1.0 / (2.0 * Math.PI * HIGH_PASS_CUTOFF_HZ));
+        highPassAlpha = rc / (rc + dt);
+        resetSampleAccumulator();
+        highPassLastInput = 0.0f;
+        highPassLastOutput = 0.0f;
 
         vicReg10 = 0x900A;
         vicReg14 = 0x900E;
@@ -102,10 +119,15 @@ public class TeaVMSoundGenerator extends SoundGenerator {
             }
         }
 
+        accumulatedSample += getCurrentMixedOutput();
+        accumulatedCycles++;
+
         if (--cyclesToNextSample <= 0) {
             cyclesToNextSample += cyclesPerSample;
             if (writeSamplesEnabled) {
                 writeSample();
+            } else {
+                resetSampleAccumulator();
             }
         }
     }
@@ -180,16 +202,25 @@ public class TeaVMSoundGenerator extends SoundGenerator {
     }
 
     private void writeSample() {
-        int sample = 0;
+        float sample = 0.0f;
 
-        for (int index = 0; index < 4; index++) {
-            if ((mem[vicReg10 + index] & 0x80) > 0) {
-                sample += (voiceShiftRegisters[index] & 0x01) << 11;
-            }
+        if (accumulatedCycles > 0) {
+            sample = (float)(accumulatedSample / accumulatedCycles);
         }
 
-        sample = (((sample >> 2) * (mem[vicReg14] & 0x0F)) & 0x7FFF);
-        sampleBuffer.set(sampleBufferOffset, (float)((sample - 16384.0f) / 16384.0f));
+        resetSampleAccumulator();
+
+        // Model the output coupling capacitor with a one-pole high-pass filter,
+        // so fast volume-register changes become audible digi output.
+        float filtered = applyHighPass(sample);
+        float normalized = filtered / 16384.0f;
+        if (normalized > 1.0f) {
+            normalized = 1.0f;
+        } else if (normalized < -1.0f) {
+            normalized = -1.0f;
+        }
+
+        sampleBuffer.set(sampleBufferOffset, normalized);
         sampleBufferOffset++;
 
         if (sampleBufferOffset == sampleBuffer.getLength()) {
@@ -211,5 +242,32 @@ public class TeaVMSoundGenerator extends SoundGenerator {
 
         int silentSampleCount = SAMPLE_LATENCY - (SAMPLE_RATE / 60);
         sampleSharedQueue.push(Float32Array.create(silentSampleCount));
+    }
+
+    private float getCurrentMixedOutput() {
+        int mixedVoices = 0;
+
+        for (int index = 0; index < 4; index++) {
+            if ((mem[vicReg10 + index] & 0x80) > 0) {
+                // Voice enabled. First bit of SR goes out.
+                mixedVoices += (voiceShiftRegisters[index] & 0x01) << 11;
+            }
+        }
+
+        int masterVolume = (mem[vicReg14] & 0x0F);
+        int sample = ((mixedVoices >> 2) + VOLUME_DAC_BIAS) * masterVolume;
+        return Math.min(sample, 0x7FFF);
+    }
+
+    private float applyHighPass(float input) {
+        float output = highPassAlpha * (highPassLastOutput + input - highPassLastInput);
+        highPassLastInput = input;
+        highPassLastOutput = output;
+        return output;
+    }
+
+    private void resetSampleAccumulator() {
+        accumulatedSample = 0.0;
+        accumulatedCycles = 0;
     }
 }
