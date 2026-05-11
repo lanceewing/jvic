@@ -37,9 +37,9 @@ jobs:
     - name: Build with Gradle Wrapper
       run: |
           chmod u+x gradlew
-          ./gradlew html:dist
-          rm -rf html/build/dist/WEB-INF
-          mv html/build/dist/functions html/build
+          ./gradlew :teavm:buildTeaVM --console=plain --stacktrace
+          rm -rf teavm/build/dist/webapp/WEB-INF
+          mv teavm/build/dist/webapp/functions teavm/build/dist
 
     - name: Publish to Cloudflare Pages
       #uses: cloudflare/wrangler-action@v3
@@ -53,8 +53,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: 'jvic'
-          workingDirectory: html/build
-          directory: dist
+          workingDirectory: teavm/build/dist
+          directory: webapp
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           branch: master
           wranglerVersion: '3'
