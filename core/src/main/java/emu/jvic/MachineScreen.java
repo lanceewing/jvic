@@ -109,7 +109,7 @@ public class MachineScreen implements Screen {
     // FPS text font
     private BitmapFont font;
 
-    private boolean showFPS = true;
+    private boolean showFPS;
 
     /**
      * Details about the application currently running.
@@ -203,7 +203,10 @@ public class MachineScreen implements Screen {
         landscapeInputProcessor.addProcessor(landscapeStage);
         landscapeInputProcessor.addProcessor(machineInputProcessor);
 
-        // TODO: Review if this is needed.
+        // If the application is running on mobile web, then show FPS enabled, but
+        // for desktop web, turn off by default.
+        showFPS = jvicRunner.isMobile();
+
         // FPS font
         font = new BitmapFont(Gdx.files.internal("data/default.fnt"), false);
         font.setFixedWidthGlyphs(".  *"); // Note: The * and . are ignored, first and last. Only the space is fixed width.

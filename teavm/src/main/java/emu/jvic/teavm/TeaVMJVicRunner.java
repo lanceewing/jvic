@@ -3,6 +3,7 @@ package emu.jvic.teavm;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Pixmap;
+import org.teavm.jso.JSBody;
 import org.teavm.jso.JSObject;
 import org.teavm.jso.typedarrays.ArrayBuffer;
 import org.teavm.jso.typedarrays.SharedArrayBuffer;
@@ -226,8 +227,27 @@ public class TeaVMJVicRunner extends JVicRunner {
 
     @Override
     public boolean isMobile() {
-        return hasTouchScreen();
+        return isMobileHtml();
     }
+
+    @JSBody(script = "if (navigator.userAgentData) {"
+            + " return !!navigator.userAgentData.mobile;"
+            + "} else {"
+            + " var platform = navigator.platform || '';"
+            + " if (platform.indexOf('Win') !== -1) return false;"
+            + " if (platform.indexOf('Mac') !== -1) return false;"
+            + " if (platform.indexOf('Android') !== -1) return true;"
+            + " if (platform.indexOf('iPhone') !== -1) return true;"
+            + " if (platform.indexOf('iPad') !== -1) return true;"
+            + " if ('maxTouchPoints' in navigator) {"
+            + "   return navigator.maxTouchPoints > 0;"
+            + " } else if ('msMaxTouchPoints' in navigator) {"
+            + "   return navigator.msMaxTouchPoints > 0;"
+            + " } else {"
+            + "   return false;"
+            + " }"
+            + "}")
+    private static native boolean isMobileHtml();
 
     @Override
     public String slugify(String input) {

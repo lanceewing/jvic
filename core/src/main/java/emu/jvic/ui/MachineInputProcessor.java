@@ -133,7 +133,11 @@ public class MachineInputProcessor extends InputAdapter {
         if (altKeyDown) {
             switch (keycode) {
                 case Keys.ENTER:
+                case Keys.D:
                     handleFullScreenToggle();
+                    return true;
+                case Keys.B:
+                    handleShowFPSToggle();
                     return true;
                 case Keys.J:
                     handleJoystickAlignment();
@@ -501,7 +505,11 @@ public class MachineInputProcessor extends InputAdapter {
             }
         });
     }
-    
+
+    private void handleShowFPSToggle() {
+        machineScreen.toggleShowFPS();
+    }
+
     private void handleWarpSpeedToggle() {
         if (!machineScreen.getJvicRunner().isWarpSpeed()) {
             speakerOn = false;
