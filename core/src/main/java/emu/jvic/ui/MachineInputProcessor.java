@@ -712,13 +712,14 @@ public class MachineInputProcessor extends InputAdapter {
 
     public static enum ScreenSize {
         
-        FIT(363, 272,  335,  252),     // 1.33 / 1.33
-        X7(2420, 1904, 2400, 1764),    // 1.27 / 1.36
-        X6(2200, 1632, 2000, 1512),    // 1.35 / 1.32
-        X5(1760, 1360, 1600, 1260),    // 1.29 / 1.27
-        X4(1320, 1088, 1400, 1008),    // 1.21 / 1.39
-        X3(1100, 816,  1000, 756),     // 1.35 / 1.32
-        X2(660,  544,  600,  504)      // 1.21 / 1.19
+        FIT(363, 272,  312,  234),     // 1.33 / 1.33
+        X8(2860, 2176, 2388, 1872),    // 1.31 / 1.27
+        X7(2420, 1904, 2189, 1638),    // 1.27 / 1.33
+        X6(2200, 1632, 1791, 1404),    // 1.35 / 1.27
+        X5(1760, 1360, 1592, 1170),    // 1.29 / 1.36
+        X4(1320, 1088, 1194, 936),     // 1.21 / 1.27
+        X3(1100, 816,  995,  702),     // 1.35 / 1.41
+        X2(660,  544,  597,  468)      // 1.21 / 1.27
         ;
         
         int palRenderWidth;
@@ -734,7 +735,7 @@ public class MachineInputProcessor extends InputAdapter {
         }
         
         ScreenSize rotateValue() {
-            return values()[(ordinal() + 1) % 7];  // WAS 9
+            return values()[(ordinal() + 1) % 8];  // WAS 9
         }
         
         public int getRenderWidth(MachineType machineType) {
