@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -38,6 +39,47 @@ import emu.jvic.ui.MachineInputProcessor.ScreenSize;
  * @author Lance Ewing
  */
 public class MachineScreen implements Screen {
+
+    private enum ScreenFilterMode {
+        NEAREST,
+        SOFT,
+        LINEAR
+    }
+
+    private static final float SOFT_FILTER_BLEND = 0.4f;
+
+    private static final String SOFT_FILTER_VERTEX_SHADER = "attribute vec4 a_position;\n"
+            + "attribute vec4 a_color;\n"
+            + "attribute vec2 a_texCoord0;\n"
+            + "uniform mat4 u_projTrans;\n"
+            + "varying vec4 v_color;\n"
+            + "varying vec2 v_texCoords;\n"
+            + "\n"
+            + "void main() {\n"
+            + "    v_color = a_color;\n"
+            + "    v_texCoords = a_texCoord0;\n"
+            + "    gl_Position = u_projTrans * a_position;\n"
+            + "}\n";
+
+    private static final String SOFT_FILTER_FRAGMENT_SHADER = "#ifdef GL_ES\n"
+            + "precision mediump float;\n"
+            + "#endif\n"
+            + "\n"
+            + "varying vec4 v_color;\n"
+            + "varying vec2 v_texCoords;\n"
+            + "uniform sampler2D u_texture;\n"
+            + "uniform sampler2D u_textureLinear;\n"
+            + "uniform vec2 u_textureSize;\n"
+            + "uniform float u_softness;\n"
+            + "\n"
+            + "void main() {\n"
+            + "    vec2 texelSize = vec2(1.0) / u_textureSize;\n"
+            + "    vec2 nearestCoords = (floor(v_texCoords * u_textureSize) + 0.5) * texelSize;\n"
+            + "    nearestCoords = clamp(nearestCoords, texelSize * 0.5, vec2(1.0) - (texelSize * 0.5));\n"
+            + "    vec4 nearestColor = texture2D(u_texture, nearestCoords);\n"
+            + "    vec4 linearColor = texture2D(u_textureLinear, v_texCoords);\n"
+            + "    gl_FragColor = v_color * mix(nearestColor, linearColor, u_softness);\n"
+            + "}\n";
 
     /**
      * The Game object for JVic. Allows us to easily change screens.
@@ -72,9 +114,13 @@ public class MachineScreen implements Screen {
     private ExtendViewport viewport;
     private Camera camera;
     private Texture[] screens;
+
     private int drawScreen = 1;
     private int updateScreen = 0;
-    private int textureOffset = 0;
+    
+    private ScreenFilterMode screenFilterMode = ScreenFilterMode.NEAREST;
+    private float softFilterBlend = SOFT_FILTER_BLEND;
+    private ShaderProgram softFilterShader;
 
     // Screen resources for each MachineType.
     private Map<MachineType, Pixmap> machineTypePixmaps;
@@ -149,6 +195,7 @@ public class MachineScreen implements Screen {
         jvicRunner.init(this, machineType.getTotalScreenWidth(), machineType.getTotalScreenHeight());
         
         batch = new SpriteBatch();
+        softFilterShader = createSoftFilterShader();
 
         machineTypePixmaps = new HashMap<MachineType, Pixmap>();
         machineTypeTextures = new HashMap<MachineType, Texture[]>();
@@ -205,7 +252,7 @@ public class MachineScreen implements Screen {
 
         // If the application is running on mobile web, then show FPS enabled, but
         // for desktop web, turn off by default.
-        showFPS = jvicRunner.isMobile();
+        //showFPS = jvicRunner.isMobile();
 
         // FPS font
         font = new BitmapFont(Gdx.files.internal("data/default.fnt"), false);
@@ -264,12 +311,8 @@ public class MachineScreen implements Screen {
         drawScreen = 1;
         updateScreen = 0;
 
-        // Blur or sharp pixels.
-        if ("nearest".equalsIgnoreCase(appConfigItem.getTextureFilter())) {
-            textureOffset = 0;
-        } else {
-            textureOffset = 3;
-        }
+        setTextureFilterMode(appConfigItem.getTextureFilter());
+        clearActiveScreenBuffers();
     }
 
     private void activateScreenResources(MachineType machineType) {
@@ -386,10 +429,23 @@ public class MachineScreen implements Screen {
     public boolean copyPixels() {
         ensureActiveScreenResources();
         jvicRunner.updatePixmap(screenPixmap);
-        screens[updateScreen + textureOffset].draw(screenPixmap, 0, 0);
+        ScreenFilterMode activeFilterMode = getActiveScreenFilterMode();
+        screens[updateScreen + getTextureOffset(activeFilterMode)].draw(screenPixmap, 0, 0);
+        if (activeFilterMode == ScreenFilterMode.SOFT) {
+            screens[updateScreen + getTextureOffset(ScreenFilterMode.LINEAR)].draw(screenPixmap, 0, 0);
+        }
         updateScreen = (updateScreen + 1) % 3;
         drawScreen = (drawScreen + 1) % 3;
         return true;
+    }
+
+    private void clearActiveScreenBuffers() {
+        ensureActiveScreenResources();
+        screenPixmap.setColor(0, 0, 0, 1);
+        screenPixmap.fill();
+        for (Texture screen : screens) {
+            screen.draw(screenPixmap, 0, 0);
+        }
     }
     
     private void draw(float delta) {
@@ -452,18 +508,33 @@ public class MachineScreen implements Screen {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         batch.disableBlending();
+        ScreenFilterMode activeFilterMode = getActiveScreenFilterMode();
+        if (activeFilterMode == ScreenFilterMode.SOFT) {
+            batch.setShader(softFilterShader);
+        }
         batch.begin();
         Color c = batch.getColor();
         batch.setColor(c.r, c.g, c.b, 1f);
+        if (activeFilterMode == ScreenFilterMode.SOFT) {
+            Texture linearScreen = screens[drawScreen + getTextureOffset(ScreenFilterMode.LINEAR)];
+            linearScreen.bind(1);
+            softFilterShader.setUniformi("u_textureLinear", 1);
+            softFilterShader.setUniformf("u_textureSize", (float) linearScreen.getWidth(), (float) linearScreen.getHeight());
+            softFilterShader.setUniformf("u_softness", softFilterBlend);
+            Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+        }
         
         // Texture isn't always drawn to match physical pixels.
         batch.draw(
-                screens[drawScreen + textureOffset], 
+                screens[drawScreen + getTextureOffset(activeFilterMode)], 
                 0, 0, renderWidth, renderHeight,
                 machineType.getHorizontalOffset(), machineType.getVerticalOffset(), 
                 machineType.getVisibleScreenWidth(), machineType.getVisibleScreenHeight(), 
                 false, false);
         batch.end();
+        if (activeFilterMode == ScreenFilterMode.SOFT) {
+            batch.setShader(null);
+        }
 
         // Render the UI elements, e.g. the keyboard and joystick icons.
         viewportManager.getCurrentCamera().update();
@@ -542,9 +613,7 @@ public class MachineScreen implements Screen {
 
         if (showFPS) {
             StringBuilder overlayText = new StringBuilder();
-            overlayText.append("FPS: ");
-            overlayText.append(Gdx.graphics.getFramesPerSecond());
-
+            
             String performanceStats = jvicRunner.getPerformanceStatsText();
             if ((performanceStats != null) && !performanceStats.isEmpty()) {
                 overlayText.append('\n');
@@ -875,6 +944,9 @@ public class MachineScreen implements Screen {
         screenSizeIcon.dispose();
         warpSpeedIcon.dispose();
         cameraIcon.dispose();
+        if (softFilterShader != null) {
+            softFilterShader.dispose();
+        }
         batch.dispose();
         jvicRunner.stop();
         disposeScreens();
@@ -903,7 +975,65 @@ public class MachineScreen implements Screen {
      * @param blurOn
      */
     public void changeBlur(boolean blurOn) {
-        textureOffset = (blurOn? 3 : 0);
+        setTextureFilterMode(blurOn ? "linear" : "nearest");
+    }
+
+    public void changeTextureFilter(String textureFilter) {
+        setTextureFilterMode(textureFilter);
+    }
+
+    private void setTextureFilterMode(String textureFilter) {
+        if (textureFilter == null) {
+            screenFilterMode = ScreenFilterMode.SOFT;
+            softFilterBlend = SOFT_FILTER_BLEND;
+            return;
+        }
+
+        String normalizedFilter = textureFilter.trim();
+        Float numericBlend = parseSoftFilterBlend(normalizedFilter);
+        if (numericBlend != null) {
+            screenFilterMode = ScreenFilterMode.SOFT;
+            softFilterBlend = numericBlend;
+        } else if ("nearest".equalsIgnoreCase(normalizedFilter)) {
+            screenFilterMode = ScreenFilterMode.NEAREST;
+            softFilterBlend = SOFT_FILTER_BLEND;
+        } else {
+            screenFilterMode = ScreenFilterMode.SOFT;
+            softFilterBlend = SOFT_FILTER_BLEND;
+        }
+    }
+
+    private Float parseSoftFilterBlend(String textureFilter) {
+        try {
+            float blend = Float.parseFloat(textureFilter);
+            if ((blend >= 0.0f) && (blend <= 1.0f)) {
+                return blend;
+            }
+        } catch (NumberFormatException ignored) {
+            // Not a numeric blend value; fall back to named filter modes.
+        }
+        return null;
+    }
+
+    private ScreenFilterMode getActiveScreenFilterMode() {
+        if ((screenFilterMode == ScreenFilterMode.SOFT) && (softFilterShader == null)) {
+            return ScreenFilterMode.LINEAR;
+        }
+        return screenFilterMode;
+    }
+
+    private int getTextureOffset(ScreenFilterMode filterMode) {
+        return (filterMode == ScreenFilterMode.LINEAR) ? 3 : 0;
+    }
+
+    private ShaderProgram createSoftFilterShader() {
+        ShaderProgram shader = new ShaderProgram(SOFT_FILTER_VERTEX_SHADER, SOFT_FILTER_FRAGMENT_SHADER);
+        if (!shader.isCompiled()) {
+            Gdx.app.error("MachineScreen", "Unable to compile soft filter shader: " + shader.getLog());
+            shader.dispose();
+            return null;
+        }
+        return shader;
     }
 
     /**
