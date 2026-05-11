@@ -15,6 +15,8 @@ import emu.jvic.sound.SoundGenerator;
 public class GdxSoundGenerator extends SoundGenerator {
 
     private static final int SAMPLE_RATE = 22050;
+    private static final int VOLUME_DAC_BIAS = 192;
+    private static final float HIGH_PASS_CUTOFF_HZ = 120.0f;
     
     private static final int VIC_REG_10 = 0x900A;
     private static final int VIC_REG_14 = 0x900E;
@@ -31,6 +33,11 @@ public class GdxSoundGenerator extends SoundGenerator {
     private int[] voiceShiftRegisters;
     private int noiseLFSR = 0xFFFF;
     private int lastNoiseLFSR0 = 0x1;
+    private double accumulatedSample;
+    private int accumulatedCycles;
+    private float highPassAlpha;
+    private float highPassLastInput;
+    private float highPassLastOutput;
     
     @Override
     public void initSound(MachineType machineType) {
@@ -51,6 +58,13 @@ public class GdxSoundGenerator extends SoundGenerator {
         voiceCounters = new int[4];
         voiceShiftRegisters = new int[4];
         voiceClockDividerTriggers = new int[] { 0xF, 0x7, 0x3, 0x1 };
+
+        float dt = 1.0f / SAMPLE_RATE;
+        float rc = (float)(1.0 / (2.0 * Math.PI * HIGH_PASS_CUTOFF_HZ));
+        highPassAlpha = rc / (rc + dt);
+        resetSampleAccumulator();
+        highPassLastInput = 0.0f;
+        highPassLastOutput = 0.0f;
     }
 
     @Override
@@ -96,6 +110,9 @@ public class GdxSoundGenerator extends SoundGenerator {
             }
         }
 
+        accumulatedSample += getCurrentMixedOutput();
+        accumulatedCycles++;
+
         // If enough cycles have elapsed since the last sample, then output another.
         if (--cyclesToNextSample <= 0) {
             writeSample();
@@ -108,19 +125,23 @@ public class GdxSoundGenerator extends SoundGenerator {
      * writing the sample, then the whole buffer is written out.
      */
     public void writeSample() {
-        short sample = 0;
-        int masterVolume = (mem[VIC_REG_14] & 0x0F);
+        float sample = 0.0f;
 
-        for (int i = 0; i < 4; i++) {
-            if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
-                // Voice enabled. First bit of SR goes out.
-                // sample += ((voiceShiftRegisters[i] & 0x01) * 2500); // TODO: Try shifting to
-                // multiply by 2048
-                sample += ((voiceShiftRegisters[i] & 0x01) << 11);
-            }
+        if (accumulatedCycles > 0) {
+            sample = (float)(accumulatedSample / accumulatedCycles);
         }
 
-        sampleBuffer[sampleBufferOffset + 0] = (short) (((sample >> 2) * masterVolume) & 0x7FFF); // TODO: Try shifting.
+        resetSampleAccumulator();
+
+        float filtered = applyHighPass(sample);
+        int filteredSample = Math.round(filtered);
+        if (filteredSample > 32767) {
+            filteredSample = 32767;
+        } else if (filteredSample < -32768) {
+            filteredSample = -32768;
+        }
+
+        sampleBuffer[sampleBufferOffset + 0] = (short)filteredSample;
 
         // If the sample buffer is full, write it out to the audio line.
         if ((sampleBufferOffset += 1) == sampleBuffer.length) {
@@ -134,6 +155,33 @@ public class GdxSoundGenerator extends SoundGenerator {
             }
             sampleBufferOffset = 0;
         }
+    }
+
+    private int getCurrentMixedOutput() {
+        int mixedVoices = 0;
+
+        for (int i = 0; i < 4; i++) {
+            if ((mem[VIC_REG_10 + i] & 0x80) > 0) {
+                // Voice enabled. First bit of SR goes out.
+                mixedVoices += ((voiceShiftRegisters[i] & 0x01) << 11);
+            }
+        }
+
+        int masterVolume = (mem[VIC_REG_14] & 0x0F);
+        int sample = (((mixedVoices >> 2) + VOLUME_DAC_BIAS) * masterVolume);
+        return Math.min(sample, 0x7FFF);
+    }
+
+    private float applyHighPass(float input) {
+        float output = highPassAlpha * (highPassLastOutput + input - highPassLastInput);
+        highPassLastInput = input;
+        highPassLastOutput = output;
+        return output;
+    }
+
+    private void resetSampleAccumulator() {
+        accumulatedSample = 0.0;
+        accumulatedCycles = 0;
     }
     
     @Override
