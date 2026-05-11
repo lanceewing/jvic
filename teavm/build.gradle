@@ -20,14 +20,20 @@ tasks.register('buildTeaVM', JavaExec) {
     }
     copy {
       from '../html/webapp'
+      include '.htaccess'
       include 'dialog.js'
       include 'favicon.ico'
       include 'manifest.json'
       include 'sound-renderer.js'
       include 'styles.css'
+      include 'autorun-config.txt'
       include '_headers'
       include '.swshtaccess'
       into "$buildDir/dist/webapp"
+    }
+    copy {
+      from '../html/webapp/functions'
+      into "$buildDir/dist/webapp/functions"
     }
     copy {
       from '../html/webapp/icons'
@@ -37,7 +43,6 @@ tasks.register('buildTeaVM', JavaExec) {
       from '../html/webapp/worker/.swshtaccess'
       into "$buildDir/dist/webapp/scripts"
     }
-    delete "$buildDir/dist/webapp/autorun-config.txt"
   }
 }
 
