@@ -107,6 +107,25 @@ It is important to note that if you have accessed JVic directly via a game URL (
 
 If instead you have started a game by clicking on the game's thumbnail image from JVic's game list screen, then sound will be unmuted automatically.
 
+### Keyboard shortcuts
+When the machine screen is active, the following physical keyboard shortcuts are supported:
+
+Shortcut                          | Action
+:---------------------------------|:-----------------------------------------------
+ALT-D                             | Toggles full screen mode.
+ALT-ENTER                         | Also toggles full screen mode.
+F11                               | Also toggles full screen mode.
+ALT-J                             | Changes the joystick alignment.
+ALT-K                             | Toggles the on-screen keyboard.
+ALT-P                             | Toggles pause/resume.
+ALT-S                             | Toggles sound on or off.
+ALT-Q/X                           | Opens the quit confirmation dialog.
+ALT-W                             | Toggles warp speed (mainly for Desktop)
+ALT-Y                             | Saves a screenshot on non-web targets.
+ALT-Z                             | Rotates through screen sizes.
+
+These shortcuts are handled by JVic itself rather than being passed through to the emulated VIC-20 keyboard.
+
 ## Installing the web app on your device.
 JVic follows the PWA (Progressive Web App) spec and can therefore be installed on your device. When you go to the https://vic20.games web site, and you haven't previously installed JVic, then the browser may promote it to you for installation. In Chrome, one of the ways it does this is to show a little installation icon at the end of the browser location field, as indicated by the yellow arrow in the screenshot below. Clicking on that icon will install JVic as if it were a standalone app on your device.
 
