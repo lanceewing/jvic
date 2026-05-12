@@ -95,7 +95,8 @@ public class TeaVMJVicRunner extends JVicRunner {
                 TeaVMWorkerInterop.createStartObject(appConfigItem.getName(),
                         appConfigItem.getFilePath(), appConfigItem.getFileType(),
                         appConfigItem.getMachineType(), appConfigItem.getRam(),
-                        appConfigItem.getAutoRunCommand(), appConfigItem.getLoadAddress()));
+                appConfigItem.getPalette(), appConfigItem.getAutoRunCommand(),
+                appConfigItem.getLoadAddress()));
 
         stopped = false;
         paused = false;

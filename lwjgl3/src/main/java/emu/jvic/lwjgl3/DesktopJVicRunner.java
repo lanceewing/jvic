@@ -76,7 +76,8 @@ public class DesktopJVicRunner extends JVicRunner {
         
         Queue<char[]> autoRunCmdQueue = null;
         Callable<Queue<char[]>> autoLoadProgram = machine.init(
-                basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
+                basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType,
+                appConfigItem.getPalette());
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         

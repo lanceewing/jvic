@@ -84,8 +84,28 @@ public class Vic6561 extends Vic {
             0xFFF2C2FF  // LIGHT YELLOW
     };
 
+    private final static int palMidRGBA8888Colours[] = {
+        0x000000FF, // BLACK
+        0xFFFFFFFF, // WHITE
+        0x962A2CFF, // RED
+        0x6CDFDAFF, // CYAN
+        0xAB3CBCFF, // PURPLE
+        0x5EDA56FF, // GREEN
+        0x3E34B4FF, // BLUE
+        0xD8E646FF, // YELLOW
+        0xB96A24FF, // ORANGE
+        0xDEB999FF, // LIGHT ORANGE
+        0xD7A3A7FF, // PINK
+        0xBBF4EEFF, // LIGHT CYAN
+        0xDCA7E6FF, // LIGHT PURPLE
+        0xB3F2B0FF, // LIGHT GREEN
+        0xA79EE0FF, // LIGHT BLUE
+        0xF3F8C0FF  // LIGHT YELLOW
+    };
+
     private int[] pal_palette_o = palOddRGBA8888Colours;
     private int[] pal_palette_e = palEvenRGBA8888Colours;
+    private int[] pal_palette_m = palMidRGBA8888Colours;
     
     // Reference that alternates on each line between even and odd PAL palettes.
     private int[] pal_palette = pal_palette_e;
@@ -100,6 +120,20 @@ public class Vic6561 extends Vic {
      */
     public Vic6561(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
         super(pixelData, machineType, snapshot);
+    }
+
+    public void setPalette(String palette) {
+        if ((palette != null) && "mid".equalsIgnoreCase(palette.trim())) {
+            pal_palette_o = pal_palette_m;
+            pal_palette_e = pal_palette_m;
+        } else {
+            pal_palette_o = palOddRGBA8888Colours;
+            pal_palette_e = palEvenRGBA8888Colours;
+        }
+
+        // Keep active palette references aligned with configured mode.
+        pal_palette = pal_palette_e;
+        pal_trunc_palette = pal_palette;
     }
     
     /**

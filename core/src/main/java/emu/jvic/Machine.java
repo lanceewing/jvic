@@ -87,7 +87,7 @@ public class Machine {
      */
     public Callable<Queue<char[]>> init(
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
-            Program program, MachineType machineType, RamType ramType) {
+            Program program, MachineType machineType, RamType ramType, String palette) {
         
         byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
@@ -145,6 +145,7 @@ public class Machine {
             vic = new Vic6560(pixelData, machineType, snapshot);
         } else {
             vic = new Vic6561(pixelData, machineType, snapshot);
+            ((Vic6561)vic).setPalette(palette);
         }
 
         // Create the peripherals.

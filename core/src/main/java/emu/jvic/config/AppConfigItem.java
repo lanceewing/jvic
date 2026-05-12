@@ -30,6 +30,8 @@ public class AppConfigItem {
 
     private String textureFilter;
 
+    private String palette;
+
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
     private byte[] fileData;
@@ -223,5 +225,13 @@ public class AppConfigItem {
 
     public void setTextureFilter(String textureFilter) {
         this.textureFilter = textureFilter;
+    }
+
+    public String getPalette() {
+        return palette;
+    }
+
+    public void setPalette(String palette) {
+        this.palette = palette;
     }
 }

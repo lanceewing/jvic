@@ -243,6 +243,7 @@ public class GwtJVicRunner extends JVicRunner {
                         appConfigItem.getFileType(),
                         appConfigItem.getMachineType(),
                         appConfigItem.getRam(),
+                        appConfigItem.getPalette(),
                         appConfigItem.getAutoRunCommand(),
                         appConfigItem.getLoadAddress())
                 );
@@ -281,6 +282,7 @@ public class GwtJVicRunner extends JVicRunner {
      * @param fileType
      * @param machineType
      * @param ramType
+     * @param palette
      * @param autoRunCommand
      * @param loadAddress
      * 
@@ -288,7 +290,7 @@ public class GwtJVicRunner extends JVicRunner {
      */
     private native JavaScriptObject createStartObject(
             String name, String filePath, String fileType, String machineType, 
-            String ramType, String autoRunCommand, String loadAddress
+            String ramType, String palette, String autoRunCommand, String loadAddress
             )/*-{
         return {
             name: name,
@@ -296,6 +298,7 @@ public class GwtJVicRunner extends JVicRunner {
             fileType: fileType,
             machineType: machineType,
             ramType: ramType,
+            pal: palette,
             autoRunCommand: autoRunCommand,
             loadAddress: loadAddress
         };

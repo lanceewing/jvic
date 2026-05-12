@@ -138,6 +138,9 @@ public class JVic extends Game {
         if (args.containsKey("filter")) {
             appConfigItem.setTextureFilter(args.get("filter"));
         }
+        if (args.containsKey("pal")) {
+            appConfigItem.setPalette(args.get("pal"));
+        }
     }
     
     /**

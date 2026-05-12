@@ -110,9 +110,8 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
                 autoLoadProgram = machine.init(
                         basicRom, kernalRom, charRom, dos1541Rom, 
-                        program, machineType, ramType);
+                        program, machineType, ramType, appConfigItem.getPalette());
                 resetPerformanceStatsWindow();
-                // TODO: lastTime = TimeUtils.nanoTime() - nanosPerFrame;
                 performAnimationFrame(0);
                 break;
                 
@@ -186,6 +185,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         appConfigItem.setFileType(getNestedString(eventObject, "fileType"));
         appConfigItem.setMachineType(getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(getNestedString(eventObject, "ramType"));
+        appConfigItem.setPalette(getNestedString(eventObject, "pal"));
         appConfigItem.setAutoRunCommand(getNestedString(eventObject, "autoRunCommand"));
         appConfigItem.setLoadAddress(getNestedString(eventObject, "loadAddress"));
         return appConfigItem;

@@ -115,7 +115,7 @@ public final class TeaVMJVicWebWorker {
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
-        autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType);
+        autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType, appConfigItem.getPalette());
         TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: machine.init complete, autoLoadProgram="
                 + (autoLoadProgram != null ? "present" : "null"));
         paused = false;
@@ -160,6 +160,7 @@ public final class TeaVMJVicWebWorker {
         appConfigItem.setFileType(TeaVMWorkerInterop.getNestedString(eventObject, "fileType"));
         appConfigItem.setMachineType(TeaVMWorkerInterop.getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(TeaVMWorkerInterop.getNestedString(eventObject, "ramType"));
+        appConfigItem.setPalette(TeaVMWorkerInterop.getNestedString(eventObject, "pal"));
         appConfigItem.setAutoRunCommand(normalizeBlankToNull(
                 TeaVMWorkerInterop.getNestedString(eventObject, "autoRunCommand")));
         appConfigItem.setLoadAddress(normalizeBlankToNull(
