@@ -160,7 +160,7 @@ public final class TeaVMJVicWebWorker {
         appConfigItem.setFileType(TeaVMWorkerInterop.getNestedString(eventObject, "fileType"));
         appConfigItem.setMachineType(TeaVMWorkerInterop.getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(TeaVMWorkerInterop.getNestedString(eventObject, "ramType"));
-        appConfigItem.setPalette(TeaVMWorkerInterop.getNestedString(eventObject, "pal"));
+        appConfigItem.setPalette(TeaVMWorkerInterop.getNestedString(eventObject, "palette"));
         appConfigItem.setAutoRunCommand(normalizeBlankToNull(
                 TeaVMWorkerInterop.getNestedString(eventObject, "autoRunCommand")));
         appConfigItem.setLoadAddress(normalizeBlankToNull(

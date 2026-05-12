@@ -298,7 +298,7 @@ public class GwtJVicRunner extends JVicRunner {
             fileType: fileType,
             machineType: machineType,
             ramType: ramType,
-            pal: palette,
+            palette: palette,
             autoRunCommand: autoRunCommand,
             loadAddress: loadAddress
         };

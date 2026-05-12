@@ -194,7 +194,7 @@ public class TeaVMLauncher {
                         argsMap.put("type", pathPart);
                         break;
                     case "MID":
-                        argsMap.put("pal", pathPart);
+                        argsMap.put("palette", pathPart);
                         break;
                     default:
                         break;
@@ -226,7 +226,7 @@ public class TeaVMLauncher {
         mapParameterIfPresent("entry", argsMap);
         mapParameterIfPresent("addr", argsMap);
         mapParameterIfPresent("cmd", argsMap);
-        mapParameterIfPresent("pal", argsMap);
+        mapParameterIfPresent("palette", argsMap);
         mapParameterIfPresent("filter", argsMap);
     }
 
