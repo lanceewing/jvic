@@ -24,6 +24,7 @@ The UI of JVic has been designed primarily with mobile devices in mind, so give 
   - e.g. [https://vic20.games/#/impossiblator-3](https://vic20.games/#/impossiblator-3)
   - Or into BASIC: [https://vic20.games/#/basic](https://vic20.games/#/basic)
   - Or into BASIC with different RAM and/or TV setting: [https://vic20.games/#/basic/16k/pal](https://vic20.games/#/basic/16k/pal)
+  - Or into BASIC with the midpoint PAL palette: [https://vic20.games/#/basic/16k/pal/mid](https://vic20.games/#/basic/16k/pal/mid)
 - Support for loading games via a ?url= request parameter:
   - e.g. [https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64](https://vic20.games/?url=https://raw.githubusercontent.com/raspberrypioneer/VicBoulderDash/refs/heads/main/d64/Vic20%20Boulder%20Dash.d64)
   - e.g. [http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip](http://vic20.games/?url=https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FGorf.zip)
@@ -71,6 +72,13 @@ There are a handful of URL parameters that can be used when loading games. This 
 * ram: The amount of RAM to use (0, UNEXP, 3K, 8K, 16K, 24K, 32K, 35K), e.g. ram=16K
 * tv: Selects between PAL and NTSC, e.g. tv=NTSC
 * type: Specifies the type of file being loaded, in case it isn't clear what it is (DISK, TAPE, CART, PRG), e.g. type=CART
+* filter: Selects the screen filtering mode. Use filter=nearest for sharp nearest-neighbour scaling, filter=linear for standard linear filtering, or a number between 0.0 and 1.0 for the soft filter blend amount, e.g. filter=0.35
+* palette: Selects the PAL palette mode. Currently palette=MID uses a midpoint palette instead of alternating the odd and even PAL palettes
+
+Examples:
+
+* [https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc&filter=nearest](https://vic20.games/?url=https://www.gamesthatwerent.com/wp-content/uploads/2021/04/Game_Moonsweeper-1983ImagicA000.zip&tv=ntsc&filter=nearest)
+* [https://vic20.games/#/basic?tv=pal&palette=mid](https://vic20.games/#/basic?tv=pal&palette=mid)
 
 ## The Machine screen
 When a game is run, the machine screen is displayed. It shows the VIC 20 screen and various icons, which may be either at the bottom of the screen (for portrait) or to the sides (for landscape).
@@ -162,6 +170,36 @@ They mostly do the same thing, which is to add the "Cross-Origin-Opener-Policy" 
 
 The Simple Web Server is an Electron app, so not really designed to be used as a full web server. The theory can be applied to any web server though. All you need to do is configure those same features. For example, the vic20.games web site is hosted by Cloudflare Pages, and so it uses a Cloudflare _headers config file to apply those HTTP response headers. This file is also included in the repo, if you are interested in seeing what it does.
 
+## Using autorun-config.txt for embedded deployments
+If you want a JVic deployment to boot straight into a bundled game instead of showing the home screen, then place an autorun-config.txt file next to index.html. This is useful when packaging a single game together with JVic for deployment on services such as itch.io, where you want the emulator to start running immediately inside an embedded page.
+
+JVic will read autorun-config.txt automatically on startup, but only when no explicit hash path or URL parameters have been supplied. This means you can still override the default startup behaviour later by launching JVic with the usual URL options.
+
+The file format is one key=value pair per line. Blank lines are ignored, and any line starting with # is treated as a comment.
+
+Supported settings include:
+
+* program: The bundled VIC-20 program to start automatically. This can be a .prg, .d64, .crt, .tap, or .zip file. Paths such as game.prg, ./game.prg, or /game.prg are all resolved relative to the deployed JVic folder.
+* ram: The amount of RAM to use (0, UNEXP, 3K, 8K, 16K, 24K, 32K, 35K)
+* tv: Selects between PAL and NTSC
+* type: Specifies the program type (DISK, TAPE, CART, PRG)
+* filter: Selects the screen filtering mode. Use nearest, linear, or a number between 0.0 and 1.0 for the soft filter blend amount
+* palette: Selects the PAL palette mode. Default PAL behaviour is to alternative between the odd and even line palettes. Specifying MID for the palette uses a palette that is the mid point between the odd and even palettes. Ignored for NTSC.
+
+For example, the following autorun-config.txt file would boot directly into a bundled PRG with explicit machine settings:
+
+```
+# Boot straight into the packaged game
+program=games/mygame.prg
+ram=24k
+type=prg
+tv=pal
+filter=0.25
+palette=mid
+```
+
+With that file in place, you can deploy the whole JVic build plus your game file to a static host or embedded web game platform, and JVic will start directly in that program when the page loads.
+
 ## Credits and Acknowledgements
 This project would not have been possible without the following projects and their authors:
 
@@ -171,6 +209,7 @@ This project would not have been possible without the following projects and the
 - [gwt-jszip](https://github.com/ainslec/GWTJSZip): Originally written by Aki Miyazaki, extended by Chris Ainsley.
 - [jszip](https://github.com/Stuk/jszip): Written by Stuart Knightley. Used by JVIC to unzip imported games.
 - [GWT](https://www.gwtproject.org): Google Web Toolkit, used by libgdx to transpile the JVIC Java code to JavaScript.
+- [TeaVM](https://teavm.org): Used by JVic to transpile the TeaVM target to JavaScript.
 - [ringbuf.js](https://github.com/padenot/ringbuf.js/blob/main/js/ringbuf.js): Written by Paul Adenot. Used for the keyboard matrix, audio queue and pixel array in JVIC.
 - [dialog.js](https://css-tricks.com/replace-javascript-dialogs-html-dialog-element/): Written by Mads Stoumann. Used for most of the dialogs.
 
