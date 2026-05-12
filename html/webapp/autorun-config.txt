@@ -11,10 +11,17 @@
 #                   Possible values: 0k, 3k, 8k, 16k, 24k, 32k, 35k
 #            entry: If the program file is a zip, and the zip contains multiple files
 #                   then this option can specify which zip file entry to run.
+#          palette: When using pal tv type, if this is set to mid, then the PAL VIC 
+#                   chip emulation will not alternate palette per line but rather use a 
+#                   palette midway between the odd and even palette.
+#           filter: The type of filter to apply to the screen.
+#                   Possible values: nearest, liner, or any value between 0.0 and 1.0.
 
 # Example:
 #
 # program=vvvvic.prg
 # type=prg
 # ram=24k
-# tv=ntsc
+# tv=pal
+# filter=0.25
+# palette=mid
