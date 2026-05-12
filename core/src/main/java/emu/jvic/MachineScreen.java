@@ -432,6 +432,9 @@ public class MachineScreen implements Screen {
         ScreenFilterMode activeFilterMode = getActiveScreenFilterMode();
         screens[updateScreen + getTextureOffset(activeFilterMode)].draw(screenPixmap, 0, 0);
         if (activeFilterMode == ScreenFilterMode.SOFT) {
+            // The SOFT filter mode is a blend between the NEAREST and LINEAR filter 
+            // modes, so we need to update both the NEAREST and LINEAR textures with 
+            // the new screen pixels. The percentage value then determines the blend.
             screens[updateScreen + getTextureOffset(ScreenFilterMode.LINEAR)].draw(screenPixmap, 0, 0);
         }
         updateScreen = (updateScreen + 1) % 3;
@@ -994,6 +997,9 @@ public class MachineScreen implements Screen {
         if (numericBlend != null) {
             screenFilterMode = ScreenFilterMode.SOFT;
             softFilterBlend = numericBlend;
+        } else if ("linear".equalsIgnoreCase(normalizedFilter)) {
+            screenFilterMode = ScreenFilterMode.LINEAR;
+            softFilterBlend = SOFT_FILTER_BLEND;
         } else if ("nearest".equalsIgnoreCase(normalizedFilter)) {
             screenFilterMode = ScreenFilterMode.NEAREST;
             softFilterBlend = SOFT_FILTER_BLEND;
