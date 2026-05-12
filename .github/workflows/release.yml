@@ -49,14 +49,14 @@ jobs:
       run: |
           echo ${{ github.ref_name }} > assets/data/version.txt
           chmod u+x gradlew
-          ./gradlew html:dist
-          rm -rf html/build/dist/WEB-INF
-          mv html/build/dist/functions html/build
-          cd html/build/dist
+          ./gradlew :teavm:buildTeaVM --console=plain --stacktrace
+          rm -rf teavm/build/dist/webapp/WEB-INF
+          mv teavm/build/dist/webapp/functions teavm/build/dist
+          cd teavm/build/dist/webapp
           echo '{ "apps": [] }' > assets/data/programs*.json
           zip -r jvic-web-${{ github.ref_name }}.zip .
-          cd ../../..
-          mv html/build/dist/jvic-web-${{ github.ref_name }}.zip .
+          cd ../../../..
+          mv teavm/build/dist/webapp/jvic-web-${{ github.ref_name }}.zip .
           ./gradlew lwjgl3:jar
           mv lwjgl3/build/lib/jvic-${VERSION}.jar jvic-desktop-${VERSION}.jar
           ./gradlew android:assembleRelease
