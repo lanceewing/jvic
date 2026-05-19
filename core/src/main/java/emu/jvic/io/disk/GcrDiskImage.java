@@ -57,6 +57,16 @@ public class GcrDiskImage {
    * length of the tail gap is variable and doesn't matter as long as it is at least 4 bytes).
    */
   public final static int GCR_SECTOR_SIZE = 5 + 10 + 9 + 5 + 325 + 8;
+
+  /**
+   * Offset of the encoded data block within a sector.
+   */
+  public final static int DATA_BLOCK_OFFSET = 29;
+
+  /**
+   * Length of the encoded data block within a sector.
+   */
+  public final static int DATA_BLOCK_LENGTH = 325;
   
   /**
    * An array containing the number of sectors in each track, and the byte offset and 
@@ -349,6 +359,31 @@ public class GcrDiskImage {
     }
     return (b1 ^ b2 ^ b3 ^ b4);
   }
+
+  /**
+   * Decodes 5 bytes of GCR data into the 4 original unencoded bytes.
+   * 
+   * @param gcrEncodedData The GCR encoded source buffer.
+   * @param pos The position in the source buffer to decode from.
+   * 
+   * @return The 4 decoded bytes.
+   */
+  private int[] gcrDecode4Bytes(int[] gcrEncodedData, int pos) {
+    long gcrCodes = 0;
+    int[] decodedBytes = new int[4];
+
+    for (int i = 0; i < 5; i++) {
+      gcrCodes = (gcrCodes << 8) | (gcrEncodedData[pos + i] & 0xff);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      int highNibble = GCR_REV[(int)((gcrCodes >> (35 - (i * 10))) & 0x1f)];
+      int lowNibble = GCR_REV[(int)((gcrCodes >> (30 - (i * 10))) & 0x1f)];
+      decodedBytes[i] = (highNibble << 4) | lowNibble;
+    }
+
+    return decodedBytes;
+  }
   
   /**
    * Gets the Sector for the given track and sector.
@@ -401,7 +436,34 @@ public class GcrDiskImage {
       int value = gcrData[sectorPos];
       return value;
     }
-    
+
+    /**
+     * Decodes the current GCR data back into the raw sector bytes and updates the backing
+     * raw disk image. The GCR sector is then rebuilt from the decoded raw bytes so that
+     * subsequent reads see a canonical sector layout.
+     */
+    public void commitWrites() {
+      int rawDataPos = 0;
+
+      int[] firstDecodedBytes = gcrDecode4Bytes(gcrData, DATA_BLOCK_OFFSET);
+      for (int i = 1; i < 4; i++) {
+        rawData[rawDataPos++] = firstDecodedBytes[i];
+      }
+
+      for (int pos = DATA_BLOCK_OFFSET + 5; pos < (DATA_BLOCK_OFFSET + DATA_BLOCK_LENGTH - 5); pos += 5) {
+        int[] decodedBytes = gcrDecode4Bytes(gcrData, pos);
+        for (int i = 0; i < 4; i++) {
+          rawData[rawDataPos++] = decodedBytes[i];
+        }
+      }
+
+      int[] finalDecodedBytes = gcrDecode4Bytes(gcrData, DATA_BLOCK_OFFSET + DATA_BLOCK_LENGTH - 5);
+      rawData[rawDataPos++] = finalDecodedBytes[0];
+
+      System.arraycopy(rawData, 0, rawImage, rawDataOffset, sectorSize);
+      gcrData = buildGCRSectorData(trackNum, sectorNum, rawData);
+    }
+
     /**
      * Writes a byte to the given position of this Sector. The position is an index into 
      * the GCR encoded sector data.

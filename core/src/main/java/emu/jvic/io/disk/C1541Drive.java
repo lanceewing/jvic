@@ -107,6 +107,11 @@ public class C1541Drive {
     private boolean motorOn;
 
     /**
+     * Whether the currently inserted disk is write protected.
+     */
+    private boolean writeProtected;
+
+    /**
      * The cycle count at which we will next move the head forward one byte.
      */
     private long nextMoveForward;
@@ -152,10 +157,11 @@ public class C1541Drive {
         currentSectorOffset = -1;
         currentTrackSize = disk.getSectorCount(currentTrack);
         currentSector = disk.getSector(currentTrack, 0);
-        
+        writeProtected = false;
+
         if (warmup) {
             // Run the 1541 drive for a second to get it warmed up (needed for some games).
-            for (int i=0; i<1500000; i++) {
+            for (int i = 0; i < 1500000; i++) {
                 emulateCycle();
             }
         }
@@ -176,11 +182,12 @@ public class C1541Drive {
             // CB2 of VIA#2 is used in Manual output mode and determines disk R/W mode (0 =
             // W, 1 = R)
             diskModeWrite = (via2.getCb2() == 0);
-            if (!diskModeWrite)
+            if (!diskModeWrite) {
                 currentByte = -1;
+            }
 
             // "Set Overflow" patch. Always fake a 'byte ready' for fast read.
-            if (byteReady && (via2.getCa2() == 1)) { // VIA2 CA2 is Set Overflow Enable (SEO)
+            if (byteReady && (via2.getCa2() == 1)) {
                 cpu.setOverflowFlag(true);
                 byteReady = false;
             }
@@ -204,7 +211,7 @@ public class C1541Drive {
      * @param cpu        The 6502 CPU that runs the 1541 disk drive unit.
      * @param via1       The first 6522 VIA that handles the serial communication with the serial port.
      * @param via2       The second 6522 VIA that handles the CPU R/W and motor control logic.
-     * @param dos1541Rom
+     * @param dos1541Rom Byte array containing the DOS 1541 ROM.
      * 
      * @return The created Memory.
      */
@@ -218,10 +225,10 @@ public class C1541Drive {
                 mapChipToMemory(ram, 0x0000, 0x07FF, 0x6000);
 
                 // UC3 is a 6522 Versatile Interface Adapter (VIA). Port B signals (PB0-PB7)
-                // control the serial interface driver ICs (UB1 and UA1). CLK and DATA signals 
+                // control the serial interface driver ICs (UB1 and UA1). CLK and DATA signals
                 // are bidirectional signals connected to pins 4 and 5 of P2 and P3. ANT (Attention)
-                // is an input on pin 3 of P2 and P3 that is sensed at PB7 and CA1 of UC3 after 
-                // being inverted by UA1. ATNA (Attention Acknowledge) is an output from PB4 of 
+                // is an input on pin 3 of P2 and P3 that is sensed at PB7 and CA1 of UC3 after
+                // being inverted by UA1. ATNA (Attention Acknowledge) is an output from PB4 of
                 // UC3 which is sensed on the data line pin 5 of P2 and P4 after being exclusively
                 // "ORed" by UD3 and inverted by UB1. UC3 resides at memory locations $1800-$180F.
                 mapChipToMemory(via1, 0x1800, 0x180F, 0x63F0);
@@ -233,15 +240,15 @@ public class C1541Drive {
                 // parallel PLA output by reading Port A of UC2 when BYTE READY on pin 39 goes
                 // "low." The stepper motor is controlled by two outputs on port B of UC2 (STP0,
                 // and STP1). The Spindle motor is controlled by the output MTR of UC2. UC2 pin
-                // 14 is an input that monitors the state of the write protect sensor, and pin 
-                // 13 is an output that controls the activity light (RED LED). UC2 resides at 
+                // 14 is an input that monitors the state of the write protect sensor, and pin
+                // 13 is an output that controls the activity light (RED LED). UC2 resides at
                 // memory locations $1C00-$1C0F.
                 mapChipToMemory(via2, 0x1C00, 0x1C0F, 0x63F0);
 
                 // UB3 and UB4 are 8192 x 8 bit ROMS that store the Disk Operating System (DOS).
-                // UB3 resides at memory locations $C000-$DFFF. UB4 resides at memory locations 
+                // UB3 resides at memory locations $C000-$DFFF. UB4 resides at memory locations
                 // $E000-$FFFF. UC5 and UC6 decodes the addresses output from the microprocessor
-                // when selecting these ROMS. However, it isn't fully decoded, so also mirrors 
+                // when selecting these ROMS. However, it isn't fully decoded, so also mirrors
                 // from $8000-$9FFF and $A000-$BFFF.
                 mapChipToMemory(new RomChip(), 0x8000, 0xBFFF, 0x4000, dos1541Rom);
 
@@ -263,8 +270,7 @@ public class C1541Drive {
      */
     private void flushWrites() {
         if (bytesWritten > 0) {
-            // TODO: Flush out written bytes, i.e. convert sector to raw unencoded data and
-            // set into disk image.
+            currentSector.commitWrites();
         }
         bytesWritten = 0;
     }
@@ -305,11 +311,14 @@ public class C1541Drive {
      */
     private void moveForwardOneByte() {
         // If we're in write mode, and a byte has been written, then update GCR sector buffer.
-        if (diskModeWrite && (via2.getDataDirectionRegisterA() == 0xff) && 
-                (currentByte != -1) && (currentSectorOffset >= 0)) {
+        if (diskModeWrite && (via2.getDataDirectionRegisterA() == 0xff)
+                && (currentByte != -1) && (currentSectorOffset >= 0)) {
+            int writeSectorOffset = currentSectorOffset + 1;
+            if (writeSectorOffset >= GcrDiskImage.GCR_SECTOR_SIZE) {
+                writeSectorOffset = 0;
+            }
             bytesWritten++;
-            // Should this be written a byte "backwards"??
-            currentSector.write(currentSectorOffset, currentByte);
+            currentSector.write(writeSectorOffset, currentByte);
         }
 
         // Move forward one byte.
@@ -340,7 +349,9 @@ public class C1541Drive {
      * Moves the head out one half track.
      */
     private void moveHeadOut() {
-        if (currentHalfTrack > 2) currentHalfTrack--;
+        if (currentHalfTrack > 2) {
+            currentHalfTrack--;
+        }
         updateCurrentTrack();
     }
 
@@ -349,7 +360,9 @@ public class C1541Drive {
      */
     private void moveHeadIn() {
         // TODO: This only handles 35 track disks.
-        if (currentHalfTrack < 70) currentHalfTrack++;
+        if (currentHalfTrack < 70) {
+            currentHalfTrack++;
+        }
         updateCurrentTrack();
     }
 
@@ -376,7 +389,9 @@ public class C1541Drive {
      * @return The byte read from disk.
      */
     private int readByteFromDisk() {
-        if (currentSectorOffset == -1) return 0;
+        if (currentSectorOffset == -1) {
+            return 0;
+        }
         return currentSector.read(currentSectorOffset);
     }
 
@@ -404,10 +419,8 @@ public class C1541Drive {
                 // PB7: Atn IN
 
                 // Work out current read state of the serial bus.
-                int value = ((super.getPortBPins() & 0x1A) | (serialBus.getAtn() ? 0x80 : 0x00)
+                return ((super.getPortBPins() & 0x1A) | (serialBus.getAtn() ? 0x80 : 0x00)
                         | (serialBus.getData() ? 0x01 : 0x00) | (serialBus.getClock() ? 0x04 : 0x00));
-
-                return value;
             }
 
             /**
@@ -473,7 +486,7 @@ public class C1541Drive {
              * Notifies the 6502 of the change in the state of the IRQ pin. In this case it
              * is the 6502's IRQ pin that this 6522 IRQ is connected to.
              * 
-             * @param The current state of this VIA chip's IRQ pin (1 or 0).
+             * @param pinState The current state of this VIA chip's IRQ pin (1 or 0).
              */
             protected void updateIrqPin(int pinState) {
                 if (pinState == 1) {
@@ -515,14 +528,16 @@ public class C1541Drive {
                 // PB7: Sync (in) - LOW means it is at sync mark.
 
                 // NOTE: The Sync mark is a special identifying mark that is used to know where
-                // to begin reading or writing bits. It is a string of at least 10 1s in a row. 
-                // The GCR code is designed such that the actual data will produce no more than 
-                // 8 1s in a row, making the sync mark distinctive. The DOS actually writes 5 
+                // to begin reading or writing bits. It is a string of at least 10 1s in a row.
+                // The GCR code is designed such that the actual data will produce no more than
+                // 8 1s in a row, making the sync mark distinctive. The DOS actually writes 5
                 // 0xFF bytes for a sync mark, and they're aligned.
 
-                // TODO: Write protection logic. Seems low on the priority list at the moment.
-
-                int value = ((super.getPortBPins() & 0x6F) | (atSyncMark() ? 0x00 : 0x80));
+                int value = (super.getPortBPins() & 0x6F);
+                if (!writeProtected) {
+                    value |= 0x10;
+                }
+                value |= (atSyncMark() ? 0x00 : 0x80);
 
                 return value;
             }
@@ -581,7 +596,7 @@ public class C1541Drive {
              * Notifies the 6502 of the change in the state of the IRQ pin. In this case it
              * is the 6502's IRQ pin that this 6522 IRQ is connected to.
              * 
-             * @param The current state of this VIA chip's IRQ pin (1 or 0).
+             * @param pinState The current state of this VIA chip's IRQ pin (1 or 0).
              */
             protected void updateIrqPin(int pinState) {
                 if (pinState == 1) {
