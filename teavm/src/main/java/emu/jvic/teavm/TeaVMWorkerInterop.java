@@ -47,10 +47,10 @@ final class TeaVMWorkerInterop {
             SharedArrayBuffer pixelDataSAB, SharedArrayBuffer audioDataSAB,
             SharedArrayBuffer frameCounterSAB);
 
-        @JSBody(params = { "name", "filePath", "fileType", "machineType", "ramType", "palette", "autoRunCommand", "loadAddress" }, script = "return { name: name, filePath: filePath, fileType: fileType, machineType: machineType, ramType: ramType, palette: palette, autoRunCommand: autoRunCommand, loadAddress: loadAddress };")
-    static native JSObject createStartObject(String name, String filePath, String fileType,
-            String machineType, String ramType, String palette, String autoRunCommand,
-            String loadAddress);
+        @JSBody(params = { "name", "gameId", "filePath", "fileType", "entryName", "machineType", "ramType", "palette", "autoRunCommand", "loadAddress" }, script = "return { name: name, gameId: gameId, filePath: filePath, fileType: fileType, entryName: entryName, machineType: machineType, ramType: ramType, palette: palette, autoRunCommand: autoRunCommand, loadAddress: loadAddress };")
+    static native JSObject createStartObject(String name, String gameId, String filePath,
+            String fileType, String entryName, String machineType, String ramType,
+            String palette, String autoRunCommand, String loadAddress);
 
     @JSBody(params = { "avgUnusedNanosPerCycle", "headroomFactor", "busyPercent", "avgBatchWorkMillis", "avgBatchCycles", "audioQueueSamples", "audioQueueMillis" }, script = "return { avgUnusedNanosPerCycle: avgUnusedNanosPerCycle, headroomFactor: headroomFactor, busyPercent: busyPercent, avgBatchWorkMillis: avgBatchWorkMillis, avgBatchCycles: avgBatchCycles, audioQueueSamples: audioQueueSamples, audioQueueMillis: audioQueueMillis };")
     static native JSObject createPerformanceStatsObject(double avgUnusedNanosPerCycle,

@@ -92,9 +92,10 @@ public class TeaVMJVicRunner extends JVicRunner {
             TeaVMWorkerInterop.createInitialiseObject(keyMatrixSAB, pixelDataSAB,
                 audioDataSAB, frameCounterSAB));
         TeaVMWorkerInterop.postArrayBufferAndObject(worker, "Start", programArrayBuffer,
-                TeaVMWorkerInterop.createStartObject(appConfigItem.getName(),
-                        appConfigItem.getFilePath(), appConfigItem.getFileType(),
-                        appConfigItem.getMachineType(), appConfigItem.getRam(),
+            TeaVMWorkerInterop.createStartObject(appConfigItem.getName(),
+                appConfigItem.getGameId(), appConfigItem.getFilePath(),
+                appConfigItem.getFileType(), appConfigItem.getEntryName(),
+                appConfigItem.getMachineType(), appConfigItem.getRam(),
                 appConfigItem.getPalette(), appConfigItem.getAutoRunCommand(),
                 appConfigItem.getLoadAddress()));
 

@@ -12,6 +12,8 @@ import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
+import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
+import emu.jvic.io.disk.persistence.NoOpDiskImagePersistenceSession;
 import emu.jvic.io.tape.C1530Datasette;
 import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamType;
@@ -88,7 +90,18 @@ public class Machine {
     public Callable<Queue<char[]>> init(
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
             Program program, MachineType machineType, RamType ramType, String palette) {
-        
+        return init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType,
+            palette, null);
+    }
+
+    /**
+     * Initialises the machine using an optional pre-resolved disk persistence session.
+     */
+    public Callable<Queue<char[]>> init(
+            byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
+            Program program, MachineType machineType, RamType ramType, String palette,
+            DiskImagePersistenceSession diskImagePersistenceSession) {
+    
         byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
         Callable<Queue<char[]>> autoLoadRunnable = null;
@@ -175,8 +188,13 @@ public class Machine {
             } else if ("PRG".equals(programType)) {
                 autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
+                DiskImagePersistenceSession persistenceSession = diskImagePersistenceSession;
+                if (persistenceSession == null) {
+                    persistenceSession = new NoOpDiskImagePersistenceSession(programData);
+                }
+                byte[] startupDiskImage = persistenceSession.getStartupDiskImage();
                 // Insert the disk ready to be booted.
-                c1541Drive.insertDisk(programData, true);
+                c1541Drive.insertDisk(startupDiskImage, true, persistenceSession);
                 autoLoadRunnable = new Callable<Queue<char[]>>() {
                     public Queue<char[]> call() throws Exception {
                         String autoRunCmds = program.getAppConfigItem().getAutoRunCommand();

@@ -13,7 +13,11 @@ import emu.jvic.MachineType;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io.disk.persistence.DiskImagePersistence;
+import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
+import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
 import emu.jvic.memory.RamType;
+import emu.jvic.teavm.disk.TeaVMOpfsDiskImagePersistence;
 
 public final class TeaVMJVicWebWorker {
 
@@ -114,21 +118,14 @@ public final class TeaVMJVicWebWorker {
         logProgramStart(appConfigItem, program);
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
-        machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
-        autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType, appConfigItem.getPalette());
-        TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: machine.init complete, autoLoadProgram="
-                + (autoLoadProgram != null ? "present" : "null"));
-        paused = false;
-        cycleCount = 0;
-        startTime = 0;
-        if (frameCounter != null) {
-            frameCounter.reset();
-        }
-        autoRunCmdQueue = null;
-        lastAutoLoadCursorState = -1;
-        autoLoadStateLogged = false;
-        resetPerformanceStatsWindow();
-        TeaVMWorkerGlobalScope.requestAnimationFrame(this::performAnimationFrame);
+        DiskImagePersistence diskImagePersistence = "DISK".equals(appConfigItem.getFileType())
+            ? new TeaVMOpfsDiskImagePersistence()
+            : new NoOpDiskImagePersistence();
+        byte[] originalDiskImage = (program != null) ? program.getProgramData() : null;
+        diskImagePersistence.resolve(appConfigItem, originalDiskImage,
+            persistenceSession -> finishStartMachine(basicRom, kernalRom, charRom,
+                dos1541Rom, program, machineType, ramType, appConfigItem,
+                persistenceSession));
     }
 
     private byte[] extractBytesFromArrayBuffer(ArrayBuffer programDataBuffer, int offset, int length) {
@@ -156,8 +153,11 @@ public final class TeaVMJVicWebWorker {
     private AppConfigItem buildAppConfigItemFromEventObject(JSObject eventObject) {
         AppConfigItem appConfigItem = new AppConfigItem();
         appConfigItem.setName(TeaVMWorkerInterop.getNestedString(eventObject, "name"));
+        appConfigItem.setGameId(TeaVMWorkerInterop.getNestedString(eventObject, "gameId"));
         appConfigItem.setFilePath(TeaVMWorkerInterop.getNestedString(eventObject, "filePath"));
         appConfigItem.setFileType(TeaVMWorkerInterop.getNestedString(eventObject, "fileType"));
+        appConfigItem.setEntryName(normalizeBlankToNull(
+            TeaVMWorkerInterop.getNestedString(eventObject, "entryName")));
         appConfigItem.setMachineType(TeaVMWorkerInterop.getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(TeaVMWorkerInterop.getNestedString(eventObject, "ramType"));
         appConfigItem.setPalette(TeaVMWorkerInterop.getNestedString(eventObject, "palette"));
@@ -166,6 +166,28 @@ public final class TeaVMJVicWebWorker {
         appConfigItem.setLoadAddress(normalizeBlankToNull(
                 TeaVMWorkerInterop.getNestedString(eventObject, "loadAddress")));
         return appConfigItem;
+    }
+
+    private void finishStartMachine(byte[] basicRom, byte[] kernalRom, byte[] charRom,
+            byte[] dos1541Rom, Program program, MachineType machineType, RamType ramType,
+            AppConfigItem appConfigItem, DiskImagePersistenceSession persistenceSession) {
+        machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
+        autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom,
+                program, machineType, ramType, appConfigItem.getPalette(),
+                persistenceSession);
+        TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: machine.init complete, autoLoadProgram="
+                + (autoLoadProgram != null ? "present" : "null"));
+        paused = false;
+        cycleCount = 0;
+        startTime = 0;
+        if (frameCounter != null) {
+            frameCounter.reset();
+        }
+        autoRunCmdQueue = null;
+        lastAutoLoadCursorState = -1;
+        autoLoadStateLogged = false;
+        resetPerformanceStatsWindow();
+        TeaVMWorkerGlobalScope.requestAnimationFrame(this::performAnimationFrame);
     }
 
     private String normalizeBlankToNull(String value) {

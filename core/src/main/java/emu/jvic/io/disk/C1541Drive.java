@@ -4,6 +4,7 @@ import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.Via6522;
 import emu.jvic.io.disk.GcrDiskImage.Sector;
+import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamChip;
 import emu.jvic.memory.RomChip;
@@ -127,6 +128,11 @@ public class C1541Drive {
     private SerialBus serialBus;
 
     /**
+     * Persistence session for the currently inserted disk image.
+     */
+    private DiskImagePersistenceSession diskPersistenceSession;
+
+    /**
      * Constructor for C1541Drive.
      * 
      * @param serialBus  The SerialBus that the 1541 disk drive is connected to.
@@ -148,8 +154,14 @@ public class C1541Drive {
      * @param diskData The draw .d64 disk image data to insert.
      * @param warmup Whether or not to run emulation for half a second.
      */
-    public void insertDisk(byte[] diskData, boolean warmup) {
+    public void insertDisk(byte[] diskData, boolean warmup,
+            DiskImagePersistenceSession diskPersistenceSession) {
+        if (this.diskPersistenceSession != null) {
+            this.diskPersistenceSession.close();
+        }
+
         disk = new GcrDiskImage(diskData);
+        this.diskPersistenceSession = diskPersistenceSession;
 
         // There is no track 0. Tracks start at 1, sectors at 0.
         currentTrack = 1;
@@ -171,6 +183,10 @@ public class C1541Drive {
      * Acts as if the disk has been ejected.
      */
     public void ejectDisk() {
+        if (diskPersistenceSession != null) {
+            diskPersistenceSession.close();
+            diskPersistenceSession = null;
+        }
         disk = null;
     }
 
@@ -271,6 +287,9 @@ public class C1541Drive {
     private void flushWrites() {
         if (bytesWritten > 0) {
             currentSector.commitWrites();
+            if (diskPersistenceSession != null) {
+                diskPersistenceSession.onDiskChanged(disk.copyRawImage());
+            }
         }
         bytesWritten = 0;
     }

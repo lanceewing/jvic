@@ -17,6 +17,10 @@ import emu.jvic.cpu.Cpu6502;
 import emu.jvic.gwt.GwtSoundGenerator;
 import emu.jvic.gwt.GwtKeyboardMatrix;
 import emu.jvic.gwt.GwtPixelData;
+import emu.jvic.gwt.disk.GwtOpfsDiskImagePersistence;
+import emu.jvic.io.disk.persistence.DiskImagePersistence;
+import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
+import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
 import emu.jvic.memory.RamType;
 
 /**
@@ -107,12 +111,14 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
                 RamType ramType = RamType.valueOf(appConfigItem.getRam());
                 nanosPerFrame = (1000000000 / machineType.getFramesPerSecond());
-                machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
-                autoLoadProgram = machine.init(
-                        basicRom, kernalRom, charRom, dos1541Rom, 
-                        program, machineType, ramType, appConfigItem.getPalette());
-                resetPerformanceStatsWindow();
-                performAnimationFrame(0);
+                DiskImagePersistence diskImagePersistence = "DISK".equals(appConfigItem.getFileType())
+                    ? new GwtOpfsDiskImagePersistence()
+                    : new NoOpDiskImagePersistence();
+                byte[] originalDiskImage = (program != null) ? program.getProgramData() : null;
+                diskImagePersistence.resolve(appConfigItem, originalDiskImage,
+                    persistenceSession -> startMachine(basicRom, kernalRom, charRom,
+                        dos1541Rom, program, machineType, ramType, appConfigItem,
+                        persistenceSession));
                 break;
                 
             case "AudioWorkletReady":
@@ -181,14 +187,27 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
     private AppConfigItem buildAppConfigItemFromEventObject(JavaScriptObject eventObject) {
         AppConfigItem appConfigItem = new AppConfigItem();
         appConfigItem.setName(getNestedString(eventObject, "name"));
+        appConfigItem.setGameId(getNestedString(eventObject, "gameId"));
         appConfigItem.setFilePath(getNestedString(eventObject, "filePath"));
         appConfigItem.setFileType(getNestedString(eventObject, "fileType"));
+        appConfigItem.setEntryName(getNestedString(eventObject, "entryName"));
         appConfigItem.setMachineType(getNestedString(eventObject, "machineType"));
         appConfigItem.setRam(getNestedString(eventObject, "ramType"));
         appConfigItem.setPalette(getNestedString(eventObject, "palette"));
         appConfigItem.setAutoRunCommand(getNestedString(eventObject, "autoRunCommand"));
         appConfigItem.setLoadAddress(getNestedString(eventObject, "loadAddress"));
         return appConfigItem;
+    }
+
+    private void startMachine(byte[] basicRom, byte[] kernalRom, byte[] charRom,
+            byte[] dos1541Rom, Program program, MachineType machineType, RamType ramType,
+            AppConfigItem appConfigItem, DiskImagePersistenceSession persistenceSession) {
+        machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
+        autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom,
+                program, machineType, ramType, appConfigItem.getPalette(),
+                persistenceSession);
+        resetPerformanceStatsWindow();
+        performAnimationFrame(0);
     }
     
     /**

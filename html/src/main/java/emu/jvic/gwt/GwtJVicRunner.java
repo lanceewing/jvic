@@ -239,8 +239,10 @@ public class GwtJVicRunner extends JVicRunner {
                 programArrayBuffer,
                 createStartObject(
                         appConfigItem.getName(),
+                        appConfigItem.getGameId(),
                         appConfigItem.getFilePath(),
                         appConfigItem.getFileType(),
+                        appConfigItem.getEntryName(),
                         appConfigItem.getMachineType(),
                         appConfigItem.getRam(),
                         appConfigItem.getPalette(),
@@ -278,8 +280,10 @@ public class GwtJVicRunner extends JVicRunner {
      * message to the web worker.
      * 
      * @param name
+     * @param gameId
      * @param filePath
      * @param fileType
+     * @param entryName
      * @param machineType
      * @param ramType
      * @param palette
@@ -289,13 +293,16 @@ public class GwtJVicRunner extends JVicRunner {
      * @return
      */
     private native JavaScriptObject createStartObject(
-            String name, String filePath, String fileType, String machineType, 
-            String ramType, String palette, String autoRunCommand, String loadAddress
+            String name, String gameId, String filePath, String fileType, String entryName,
+            String machineType, String ramType, String palette, String autoRunCommand,
+            String loadAddress
             )/*-{
         return {
             name: name,
+            gameId: gameId,
             filePath: filePath,
             fileType: fileType,
+            entryName: entryName,
             machineType: machineType,
             ramType: ramType,
             palette: palette,

@@ -407,6 +407,19 @@ public class GcrDiskImage {
   public int getSectorCount(int track) {
     return TRACK_OFFSETS[track][0];
   }
+
+  /**
+   * Returns a copy of the current raw .d64 disk image bytes.
+   * 
+   * @return a copy of the raw disk image.
+   */
+  public byte[] copyRawImage() {
+    byte[] copy = new byte[rawImage.length];
+    for (int i = 0; i < rawImage.length; i++) {
+      copy[i] = (byte)(rawImage[i] & 0xff);
+    }
+    return copy;
+  }
   
   /**
    * This class represents a Sector within the GCR disk image. It stores details such as the
