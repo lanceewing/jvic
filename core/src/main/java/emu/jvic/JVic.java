@@ -7,6 +7,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.config.AppConfigItem.FileLocation;
 import emu.jvic.memory.RamType;
 import emu.jvic.ui.DialogHandler;
 
@@ -85,6 +86,7 @@ public class JVic extends Game {
                 AppConfigItem adhocProgram = new AppConfigItem();
                 adhocProgram.setName("Adhoc VIC Program");
                 adhocProgram.setFilePath(getFilePathForProgramUrl(programUrl));
+                adhocProgram.setFileLocation(FileLocation.EXTERNAL);
                 if (programUrl.toUpperCase().contains("NTSC")) {
                     adhocProgram.setMachineType("NTSC");
                 } else {
@@ -98,6 +100,7 @@ public class JVic extends Game {
                 AppConfigItem adhocProgram = new AppConfigItem();
                 adhocProgram.setName("Adhoc VIC Program");
                 adhocProgram.setFilePath(filePath);
+                adhocProgram.setFileLocation(FileLocation.ABSOLUTE);
                 if (filePath.toUpperCase().contains("NTSC")) {
                     adhocProgram.setMachineType("NTSC");
                 } else {
@@ -333,7 +336,7 @@ public class JVic extends Game {
             AppConfigItem appConfigItem = new AppConfigItem();
             appConfigItem.setName("Adhoc VIC Program");
             appConfigItem.setFilePath(filePath);
-            appConfigItem.setFileType("ABSOLUTE");
+            appConfigItem.setFileLocation(FileLocation.LOCAL);
             if (filePath.toUpperCase().contains("NTSC")) {
                 appConfigItem.setMachineType("NTSC");
             } else {

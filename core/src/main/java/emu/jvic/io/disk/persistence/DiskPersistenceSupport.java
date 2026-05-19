@@ -14,16 +14,31 @@ public final class DiskPersistenceSupport {
     }
 
     public static DiskPersistenceKey createKey(AppConfigItem appConfigItem, byte[] originalDiskImage) {
-        String programIdSource = getProgramIdSource(appConfigItem);
-        String readablePrefix = buildReadablePrefix(appConfigItem, programIdSource);
-        String identityHash = stableHashHex(buildIdentityString(appConfigItem));
+        return createKey(appConfigItem, originalDiskImage, null);
+    }
+
+    public static DiskPersistenceKey createKey(AppConfigItem appConfigItem,
+            byte[] originalDiskImage, String normalizedPathOverride) {
+        String programIdSource = getProgramIdSource(appConfigItem, normalizedPathOverride);
+        String readablePrefix = buildReadablePrefix(appConfigItem, programIdSource,
+                normalizedPathOverride);
+        String identityHash = stableHashHex(buildIdentityString(appConfigItem,
+                normalizedPathOverride));
         String originalDiskHash = stableHashHex(originalDiskImage);
         return new DiskPersistenceKey(readablePrefix + "--" + identityHash, originalDiskHash);
     }
 
     public static String getProgramIdSource(AppConfigItem appConfigItem) {
+        return getProgramIdSource(appConfigItem, null);
+    }
+
+    public static String getProgramIdSource(AppConfigItem appConfigItem,
+            String normalizedPathOverride) {
         if (!isBlank(appConfigItem.getGameId())) {
             return "gameId";
+        }
+        if (!isBlank(normalizedPathOverride)) {
+            return "filePath";
         }
         if (!isBlank(appConfigItem.getFilePath())) {
             return "filePath";
@@ -56,12 +71,15 @@ public final class DiskPersistenceSupport {
         return toPaddedHex(hash);
     }
 
-    private static String buildReadablePrefix(AppConfigItem appConfigItem, String programIdSource) {
+    private static String buildReadablePrefix(AppConfigItem appConfigItem,
+            String programIdSource, String normalizedPathOverride) {
         if ("gameId".equals(programIdSource)) {
             return "gid-" + slugify(appConfigItem.getGameId());
         }
         if ("filePath".equals(programIdSource)) {
-            return "path-" + slugify(appConfigItem.getFilePath());
+            return "path-" + slugify(!isBlank(normalizedPathOverride)
+                    ? normalizedPathOverride
+                    : appConfigItem.getFilePath());
         }
         if ("name".equals(programIdSource)) {
             return "name-" + slugify(appConfigItem.getName());
@@ -69,10 +87,13 @@ public final class DiskPersistenceSupport {
         return "program";
     }
 
-    private static String buildIdentityString(AppConfigItem appConfigItem) {
+    private static String buildIdentityString(AppConfigItem appConfigItem,
+            String normalizedPathOverride) {
         StringBuilder value = new StringBuilder(128);
         appendPart(value, appConfigItem.getGameId());
-        appendPart(value, appConfigItem.getFilePath());
+        appendPart(value, !isBlank(normalizedPathOverride)
+                ? normalizedPathOverride
+                : appConfigItem.getFilePath());
         appendPart(value, appConfigItem.getEntryName());
         appendPart(value, appConfigItem.getFileType());
         return value.toString();

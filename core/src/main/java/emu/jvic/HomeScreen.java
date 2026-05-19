@@ -40,6 +40,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import emu.jvic.config.AppConfig;
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.config.AppConfigItem.FileLocation;
 import emu.jvic.ui.ConfirmHandler;
 import emu.jvic.ui.ConfirmResponseHandler;
 import emu.jvic.ui.DialogHandler;
@@ -854,7 +855,7 @@ public class HomeScreen extends InputAdapter implements Screen {
                     AppConfigItem appConfigItem = new AppConfigItem();
                     appConfigItem.setName("Adhoc VIC Program");
                     appConfigItem.setFilePath(filePath);
-                    appConfigItem.setFileType("ABSOLUTE");
+                    appConfigItem.setFileLocation(FileLocation.LOCAL);
                     if (filePath.toUpperCase().contains("NTSC")) {
                         appConfigItem.setMachineType("NTSC");
                     } else {

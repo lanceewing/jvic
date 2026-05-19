@@ -24,6 +24,9 @@ import emu.jvic.PixelData;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io.disk.persistence.DiskImagePersistence;
+import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
+import emu.jvic.lwjgl3.disk.DesktopDiskImagePersistence;
 import emu.jvic.memory.RamType;
 import emu.jvic.sound.SoundGenerator;
 import emu.jvic.ui.MachineInputProcessor.ScreenSize;
@@ -33,9 +36,12 @@ public class DesktopJVicRunner extends JVicRunner {
     private Thread machineThread;
     
     private Machine machine;
+
+    private final DiskImagePersistence diskImagePersistence;
     
     public DesktopJVicRunner(KeyboardMatrix keyboardMatrix, PixelData pixelData, SoundGenerator soundGenerator) {
         super(keyboardMatrix, pixelData, soundGenerator);
+        this.diskImagePersistence = new DesktopDiskImagePersistence();
     }
 
     @Override
@@ -62,6 +68,18 @@ public class DesktopJVicRunner extends JVicRunner {
     }
     
     private void runProgram(AppConfigItem appConfigItem, Program program) {
+        if ((program != null) && "DISK".equals(program.getProgramType())) {
+            diskImagePersistence.resolve(appConfigItem, program.getProgramData(),
+                persistenceSession -> runProgram(appConfigItem, program,
+                    persistenceSession));
+            return;
+        }
+
+        runProgram(appConfigItem, program, null);
+    }
+
+    private void runProgram(AppConfigItem appConfigItem, Program program,
+            DiskImagePersistenceSession persistenceSession) {
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         
@@ -77,7 +95,7 @@ public class DesktopJVicRunner extends JVicRunner {
         Queue<char[]> autoRunCmdQueue = null;
         Callable<Queue<char[]>> autoLoadProgram = machine.init(
                 basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType,
-                appConfigItem.getPalette());
+                appConfigItem.getPalette(), persistenceSession);
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         

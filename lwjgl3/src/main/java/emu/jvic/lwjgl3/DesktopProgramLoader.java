@@ -19,6 +19,7 @@ import emu.jvic.PixelData;
 import emu.jvic.Program;
 import emu.jvic.ProgramLoader;
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.config.AppConfigItem.FileLocation;
 
 public class DesktopProgramLoader extends ProgramLoader {
 
@@ -37,12 +38,7 @@ public class DesktopProgramLoader extends ProgramLoader {
                 // Ignore. Nothing to load.
             }
             else if (!appConfigItem.getFilePath().startsWith("http")) {
-                FileHandle fileHandle = null;
-                if ("ABSOLUTE".equals(appConfigItem.getFileType())) {
-                    fileHandle = Gdx.files.absolute(appConfigItem.getFilePath());
-                } else {
-                    fileHandle = Gdx.files.internal(appConfigItem.getFilePath());
-                }
+                FileHandle fileHandle = resolveFileHandle(appConfigItem);
                 if (fileHandle != null) {
                     if (fileHandle.exists()) {
                         data = fileHandle.readBytes();
@@ -177,6 +173,14 @@ public class DesktopProgramLoader extends ProgramLoader {
         }
         
         programConsumer.accept(program);
+    }
+
+    private FileHandle resolveFileHandle(AppConfigItem appConfigItem) {
+        FileLocation fileLocation = appConfigItem.getFileLocation();
+        if ((fileLocation == FileLocation.ABSOLUTE) || (fileLocation == FileLocation.LOCAL)) {
+            return Gdx.files.absolute(appConfigItem.getFilePath());
+        }
+        return Gdx.files.internal(appConfigItem.getFilePath());
     }
 
     private byte[] loadFullCartProgramData(String entryName, byte[] data, ZipInputStream zis, 
