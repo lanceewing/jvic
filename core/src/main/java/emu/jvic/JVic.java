@@ -128,6 +128,7 @@ public class JVic extends Game {
     private void applyConfigArgs(AppConfigItem appConfigItem, Map<String, String> args) {
         applyRamConfig(appConfigItem, args.get("ram"));
         applyTvConfig(appConfigItem, args.get("tv"));
+        applyDiskWriteConfig(appConfigItem, args.get("dskwrt"));
         applyProgramType(appConfigItem, args.get("type"));
         if (args.containsKey("entry")) {
             appConfigItem.setEntryName(args.get("entry"));
@@ -233,6 +234,31 @@ public class JVic extends Game {
                     break;
                 case "35K":
                     appConfigItem.setRam(RamType.RAM_35K.name());
+                    break;
+                default:
+                    // Not recognised.
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Checks for and applies disk write config that might be provided in the args Map.
+     *
+     * @param appConfigItem
+     * @param diskWrite Either "off", "temp", or "persist"; or null if not set.
+     */
+    private void applyDiskWriteConfig(AppConfigItem appConfigItem, String diskWrite) {
+        if (diskWrite != null) {
+            switch (diskWrite.toUpperCase()) {
+                case "OFF":
+                    appConfigItem.setDiskWrite("off");
+                    break;
+                case "TEMP":
+                    appConfigItem.setDiskWrite("temp");
+                    break;
+                case "PERSIST":
+                    appConfigItem.setDiskWrite("persist");
                     break;
                 default:
                     // Not recognised.

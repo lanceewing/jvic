@@ -222,6 +222,7 @@ public class TeaVMLauncher {
     private static void applyRequestParameters(Map<String, String> argsMap) {
         mapParameterIfPresent("ram", argsMap);
         mapParameterIfPresent("tv", argsMap);
+        mapParameterIfPresent("dskwrt", argsMap);
         mapParameterIfPresent("type", argsMap);
         mapParameterIfPresent("entry", argsMap);
         mapParameterIfPresent("addr", argsMap);
