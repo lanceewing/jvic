@@ -132,10 +132,14 @@ public class GwtJVicRunner extends JVicRunner {
         programLoader.fetchProgram(appConfigItem, p -> createWorker(appConfigItem, p));
     }
 
-    private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem) {
+    private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
         int programDataLength = (program != null? program.getProgramData().length : 0);
+        int mountedDiskImageDataLength = (mountedDiskImageData != null)
+            ? mountedDiskImageData.length
+            : 0;
         ArrayBuffer programArrayBuffer = TypedArrays.createArrayBuffer(
-                programDataLength + 8192 + 16384 + 4096 + 8192);
+            programDataLength + mountedDiskImageDataLength + 8192 + 16384 + 4096 + 8192);
         Uint8Array programUint8Array = TypedArrays.createUint8Array(programArrayBuffer);
         int index = 0;
         
@@ -163,7 +167,25 @@ public class GwtJVicRunner extends JVicRunner {
                 programUint8Array.set(index, (program.getProgramData()[i] & 0xFF));
             }
         }
+
+        if (mountedDiskImageData != null) {
+            for (int i=0; i < mountedDiskImageDataLength; index++, i++) {
+                programUint8Array.set(index, (mountedDiskImageData[i] & 0xFF));
+            }
+        }
         return programArrayBuffer;
+    }
+
+    private byte[] resolveMountedDiskImageData(AppConfigItem appConfigItem, Program program) {
+        if (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.DEFAULT) {
+            return null;
+        }
+
+        if ((program != null) && "DISK".equals(program.getProgramType())) {
+            return null;
+        }
+
+        return loadBlankDiskImage();
     }
     
     /**
@@ -174,8 +196,15 @@ public class GwtJVicRunner extends JVicRunner {
     public void createWorker(AppConfigItem appConfigItem, Program program) {
         clearPerformanceStats();
 
+        byte[] mountedDiskImageData = resolveMountedDiskImageData(appConfigItem, program);
+        int programDataLength = (program != null) ? program.getProgramData().length : 0;
+        int mountedDiskImageDataLength = (mountedDiskImageData != null)
+            ? mountedDiskImageData.length
+            : 0;
+
         // Convert program bytes to ArrayBuffer.
-        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem);
+        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem,
+            mountedDiskImageData);
         
         worker = Worker.create("./worker/worker.nocache.js");
         
@@ -248,7 +277,9 @@ public class GwtJVicRunner extends JVicRunner {
                         appConfigItem.getRam(),
                         appConfigItem.getPalette(),
                         appConfigItem.getAutoRunCommand(),
-                        appConfigItem.getLoadAddress())
+                        appConfigItem.getLoadAddress(),
+                        programDataLength,
+                        mountedDiskImageDataLength)
                 );
         
         // Resume sound output whenever a new instance of JVic is starting up.
@@ -291,13 +322,16 @@ public class GwtJVicRunner extends JVicRunner {
      * @param palette
      * @param autoRunCommand
      * @param loadAddress
+     * @param programDataLength
+     * @param mountedDiskImageDataLength
      * 
      * @return
      */
     private native JavaScriptObject createStartObject(
             String name, String gameId, String diskWrite, String filePath,
             String fileType, String entryName, String machineType, String ramType,
-            String palette, String autoRunCommand, String loadAddress
+            String palette, String autoRunCommand, String loadAddress,
+            int programDataLength, int mountedDiskImageDataLength
             )/*-{
         return {
             name: name,
@@ -310,7 +344,9 @@ public class GwtJVicRunner extends JVicRunner {
             ramType: ramType,
             palette: palette,
             autoRunCommand: autoRunCommand,
-            loadAddress: loadAddress
+            loadAddress: loadAddress,
+            programDataLength: programDataLength,
+            mountedDiskImageDataLength: mountedDiskImageDataLength
         };
     }-*/;
     

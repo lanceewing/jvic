@@ -72,7 +72,14 @@ public class TeaVMJVicRunner extends JVicRunner {
     private void createWorker(AppConfigItem appConfigItem, Program program) {
         clearPerformanceStats();
 
-        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem);
+        byte[] mountedDiskImageData = resolveMountedDiskImageData(appConfigItem, program);
+        int programDataLength = (program != null) ? program.getProgramData().length : 0;
+        int mountedDiskImageDataLength = (mountedDiskImageData != null)
+            ? mountedDiskImageData.length
+            : 0;
+
+        ArrayBuffer programArrayBuffer = convertProgramToArrayBuffer(program, appConfigItem,
+            mountedDiskImageData);
         worker = TeaVMWorkerInterop.createWorker("./scripts/jvic-worker.js");
         TeaVMWorkerInterop.setOnMessage(worker, this::handleWorkerMessage);
         TeaVMWorkerInterop.setOnError(worker, this::handleWorkerError);
@@ -98,16 +105,22 @@ public class TeaVMJVicRunner extends JVicRunner {
                 appConfigItem.getFileType(), appConfigItem.getEntryName(),
                 appConfigItem.getMachineType(), appConfigItem.getRam(),
                 appConfigItem.getPalette(), appConfigItem.getAutoRunCommand(),
-                appConfigItem.getLoadAddress()));
+                appConfigItem.getLoadAddress(), programDataLength,
+                mountedDiskImageDataLength));
 
         stopped = false;
         paused = false;
         soundGenerator.resumeSound();
     }
 
-    private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem) {
+    private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
         int programDataLength = (program != null) ? program.getProgramData().length : 0;
-        ArrayBuffer programArrayBuffer = ArrayBuffer.create(programDataLength + 8192 + 16384 + 4096 + 8192);
+        int mountedDiskImageDataLength = (mountedDiskImageData != null)
+            ? mountedDiskImageData.length
+            : 0;
+        ArrayBuffer programArrayBuffer = ArrayBuffer.create(programDataLength
+            + mountedDiskImageDataLength + 8192 + 16384 + 4096 + 8192);
         Uint8Array programUint8Array = Uint8Array.create(programArrayBuffer);
         int index = 0;
 
@@ -136,7 +149,25 @@ public class TeaVMJVicRunner extends JVicRunner {
             }
         }
 
+        if (mountedDiskImageData != null) {
+            for (byte diskByte : mountedDiskImageData) {
+                programUint8Array.set(index++, (short)(diskByte & 0xFF));
+            }
+        }
+
         return programArrayBuffer;
+    }
+
+    private byte[] resolveMountedDiskImageData(AppConfigItem appConfigItem, Program program) {
+        if (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.DEFAULT) {
+            return null;
+        }
+
+        if ((program != null) && "DISK".equals(program.getProgramType())) {
+            return null;
+        }
+
+        return loadBlankDiskImage();
     }
 
     private void handleWorkerMessage(JSObject eventObject) {

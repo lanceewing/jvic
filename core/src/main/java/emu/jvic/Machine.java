@@ -102,17 +102,30 @@ public class Machine {
             byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
             Program program, MachineType machineType, RamType ramType, String palette,
             DiskImagePersistenceSession diskImagePersistenceSession) {
+        AppConfigItem appConfigItem = (program != null) ? program.getAppConfigItem() : null;
+        return init(basicRom, kernalRom, charRom, dos1541Rom, program, appConfigItem,
+                null, machineType, ramType, palette, diskImagePersistenceSession);
+    }
+
+    /**
+     * Initialises the machine using the supplied launch config and optional mounted disk.
+     */
+    public Callable<Queue<char[]>> init(
+            byte[] basicRom, byte[] kernalRom, byte[] charRom, byte[] dos1541Rom,
+            Program program, AppConfigItem appConfigItem, byte[] mountedDiskImageData,
+            MachineType machineType, RamType ramType, String palette,
+            DiskImagePersistenceSession diskImagePersistenceSession) {
     
         byte[] programData = (program != null? program.getProgramData() : null);
         Snapshot snapshot = null;
         Callable<Queue<char[]>> autoLoadRunnable = null;
+        String programType = resolveProgramType(program, appConfigItem);
 
         this.machineType = machineType;
 
         // If we've been given the path to a program to load, we load the data prior to all
         // other initialisation. Primarily this is to work out what expansion we need.
         if ((programData != null) && (programData.length > 0)) {
-            String programType = program.getProgramType();
             try {
                 if ("PRG".equals(programType) && (programData != null) && (programData.length > 2)
                         && (ramType.equals(RamType.RAM_AUTO))) {
@@ -180,29 +193,32 @@ public class Machine {
 
         // Initialise the sound generator.
         soundGenerator.init(memory.getMemoryArray(), machineType);
+
+        if (shouldMountDisk(programType, appConfigItem, mountedDiskImageData)) {
+            AppConfigItem.DiskWriteMode diskWriteMode = (appConfigItem != null)
+                    ? appConfigItem.getDiskWriteMode()
+                    : AppConfigItem.DiskWriteMode.DEFAULT;
+            boolean writeProtected = (diskWriteMode == AppConfigItem.DiskWriteMode.OFF);
+            DiskImagePersistenceSession persistenceSession = diskImagePersistenceSession;
+            if (persistenceSession == null) {
+                persistenceSession = new NoOpDiskImagePersistenceSession(mountedDiskImageData);
+            }
+            byte[] startupDiskImage = persistenceSession.getStartupDiskImage();
+            c1541Drive.insertDisk(startupDiskImage, true, persistenceSession, writeProtected);
+        }
         
         // Check if the resource parameters have been set.
         if ((programData != null) && (programData.length > 0)) {
-            String programType = program.getProgramType();
             if ("CART".equals(programType)) {
-                memory.loadCart(programData, program.getAppConfigItem());
+                memory.loadCart(programData, appConfigItem);
             } else if ("PRG".equals(programType)) {
                 autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
-                AppConfigItem.DiskWriteMode diskWriteMode = program.getAppConfigItem()
-                        .getDiskWriteMode();
-                boolean writeProtected = (diskWriteMode == AppConfigItem.DiskWriteMode.OFF);
-                DiskImagePersistenceSession persistenceSession = diskImagePersistenceSession;
-                if (persistenceSession == null) {
-                    persistenceSession = new NoOpDiskImagePersistenceSession(programData);
-                }
-                byte[] startupDiskImage = persistenceSession.getStartupDiskImage();
-                // Insert the disk ready to be booted.
-                c1541Drive.insertDisk(startupDiskImage, true, persistenceSession,
-                        writeProtected);
                 autoLoadRunnable = new Callable<Queue<char[]>>() {
                     public Queue<char[]> call() throws Exception {
-                        String autoRunCmds = program.getAppConfigItem().getAutoRunCommand();
+                        String autoRunCmds = (appConfigItem != null)
+                                ? appConfigItem.getAutoRunCommand()
+                                : null;
                         Queue<char[]> autoRunCmdQueue = new LinkedList<char[]>();
                         if (autoRunCmds != null) {
                             String[] autoRunCmdArray = autoRunCmds.split("[|]");
@@ -242,6 +258,25 @@ public class Machine {
         }
         
         return autoLoadRunnable;
+    }
+
+    private String resolveProgramType(Program program, AppConfigItem appConfigItem) {
+        if (program != null) {
+            return program.getProgramType();
+        }
+
+        return (appConfigItem != null) ? appConfigItem.getFileType() : null;
+    }
+
+    private boolean shouldMountDisk(String programType, AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
+        if ((mountedDiskImageData == null) || (mountedDiskImageData.length == 0)) {
+            return false;
+        }
+
+        return "DISK".equals(programType)
+                || ((appConfigItem != null)
+                        && (appConfigItem.getDiskWriteMode() != AppConfigItem.DiskWriteMode.DEFAULT));
     }
 
     /**

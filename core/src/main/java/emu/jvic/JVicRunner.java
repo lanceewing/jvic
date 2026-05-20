@@ -237,6 +237,10 @@ public abstract class JVicRunner {
         
         return basicRom;
     }
+
+    public byte[] loadBlankDiskImage() {
+        return Gdx.files.internal("data/blank.d64").readBytes();
+    }
     
     public abstract void start(AppConfigItem appConfigItem);
 

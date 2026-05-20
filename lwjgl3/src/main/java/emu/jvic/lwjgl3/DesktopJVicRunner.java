@@ -66,15 +66,16 @@ public class DesktopJVicRunner extends JVicRunner {
     }
     
     private void runProgram(AppConfigItem appConfigItem, Program program) {
-        if ((program != null) && "DISK".equals(program.getProgramType())) {
+        byte[] mountedDiskImageData = resolveMountedDiskImageData(appConfigItem, program);
+        if (mountedDiskImageData != null) {
             DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem);
-            diskImagePersistence.resolve(appConfigItem, program.getProgramData(),
+            diskImagePersistence.resolve(appConfigItem, mountedDiskImageData,
                 persistenceSession -> runProgram(appConfigItem, program,
-                    persistenceSession));
+                    persistenceSession, mountedDiskImageData));
             return;
         }
 
-        runProgram(appConfigItem, program, null);
+        runProgram(appConfigItem, program, null, null);
     }
 
     private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem) {
@@ -90,7 +91,7 @@ public class DesktopJVicRunner extends JVicRunner {
     }
 
     private void runProgram(AppConfigItem appConfigItem, Program program,
-            DiskImagePersistenceSession persistenceSession) {
+            DiskImagePersistenceSession persistenceSession, byte[] mountedDiskImageData) {
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         
@@ -105,8 +106,9 @@ public class DesktopJVicRunner extends JVicRunner {
         
         Queue<char[]> autoRunCmdQueue = null;
         Callable<Queue<char[]>> autoLoadProgram = machine.init(
-                basicRom, kernalRom, charRom, dos1541Rom, program, machineType, ramType,
-                appConfigItem.getPalette(), persistenceSession);
+            basicRom, kernalRom, charRom, dos1541Rom, program, appConfigItem,
+            mountedDiskImageData, machineType, ramType, appConfigItem.getPalette(),
+            persistenceSession);
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         
@@ -182,6 +184,18 @@ public class DesktopJVicRunner extends JVicRunner {
         }
         
         machine = null;
+    }
+
+    private byte[] resolveMountedDiskImageData(AppConfigItem appConfigItem, Program program) {
+        if ((program != null) && "DISK".equals(program.getProgramType())) {
+            return program.getProgramData();
+        }
+
+        if (appConfigItem.getDiskWriteMode() != AppConfigItem.DiskWriteMode.DEFAULT) {
+            return loadBlankDiskImage();
+        }
+
+        return null;
     }
     
     private void runNextBasicCommand(Queue<char[]> cmdQueue, int[] mem) {

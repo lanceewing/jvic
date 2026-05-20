@@ -100,23 +100,30 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
             case "Start":
                 AppConfigItem appConfigItem = buildAppConfigItemFromEventObject(eventObject); 
                 ArrayBuffer programArrayBuffer = getArrayBuffer(eventObject);
+                int programDataLength = getNestedInt(eventObject, "programDataLength");
+                int mountedDiskImageDataLength = getNestedInt(eventObject,
+                    "mountedDiskImageDataLength");
                 byte[] basicRom = extractBytesFromArrayBuffer(programArrayBuffer, 0, 8192);
                 byte[] kernalRom = extractBytesFromArrayBuffer(programArrayBuffer, 8192, 8192);
                 byte[] charRom = extractBytesFromArrayBuffer(programArrayBuffer, 16384, 4096);
                 byte[] dos1541Rom = extractBytesFromArrayBuffer(programArrayBuffer, 20480, 16384);
-                Program program = extractProgram(programArrayBuffer);
+                Program program = extractProgram(programArrayBuffer, programDataLength);
+                byte[] mountedDiskImageData = extractMountedDiskImage(programArrayBuffer,
+                    programDataLength, mountedDiskImageDataLength);
                 if (program != null) {
                     program.setAppConfigItem(appConfigItem);
                 }
                 MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
                 RamType ramType = RamType.valueOf(appConfigItem.getRam());
                 nanosPerFrame = (1000000000 / machineType.getFramesPerSecond());
-                DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem);
-                byte[] originalDiskImage = (program != null) ? program.getProgramData() : null;
+                DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem,
+                    mountedDiskImageData);
+                byte[] originalDiskImage = resolveOriginalDiskImage(appConfigItem, program,
+                    mountedDiskImageData);
                 diskImagePersistence.resolve(appConfigItem, originalDiskImage,
                     persistenceSession -> startMachine(basicRom, kernalRom, charRom,
                         dos1541Rom, program, machineType, ramType, appConfigItem,
-                        persistenceSession));
+                        persistenceSession, originalDiskImage));
                 break;
                 
             case "AudioWorkletReady":
@@ -168,18 +175,27 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         return data;
     }
     
-    private Program extractProgram(ArrayBuffer programDataBuffer) {
+    private Program extractProgram(ArrayBuffer programDataBuffer, int programLength) {
         Program program = null;
         int programOffset = 8192 + 16384 + 4096 + 8192;   // Allow for ROMs (basic, dos, char, kernal)
-        int totalDataLength = programDataBuffer.byteLength();
-        if (totalDataLength > programOffset) {
-            int programLength = (totalDataLength - programOffset);
+        if (programLength > 0) {
             byte[] programData = extractBytesFromArrayBuffer(programDataBuffer,
                     programOffset, programLength);
             program = new Program();
             program.setProgramData(programData);
         }
         return program;
+    }
+
+    private byte[] extractMountedDiskImage(ArrayBuffer programDataBuffer, int programLength,
+            int mountedDiskImageDataLength) {
+        if (mountedDiskImageDataLength <= 0) {
+            return null;
+        }
+
+        int programOffset = 8192 + 16384 + 4096 + 8192;
+        return extractBytesFromArrayBuffer(programDataBuffer, programOffset + programLength,
+                mountedDiskImageDataLength);
     }
 
     private AppConfigItem buildAppConfigItemFromEventObject(JavaScriptObject eventObject) {
@@ -198,8 +214,9 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         return appConfigItem;
     }
 
-    private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem) {
-        if (!"DISK".equals(appConfigItem.getFileType())) {
+    private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
+        if (!shouldMountDisk(appConfigItem, mountedDiskImageData)) {
             return new NoOpDiskImagePersistence();
         }
 
@@ -214,16 +231,38 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         }
     }
 
+    private boolean shouldMountDisk(AppConfigItem appConfigItem, byte[] mountedDiskImageData) {
+        return "DISK".equals(appConfigItem.getFileType()) || (mountedDiskImageData != null);
+    }
+
+    private byte[] resolveOriginalDiskImage(AppConfigItem appConfigItem, Program program,
+            byte[] mountedDiskImageData) {
+        if (mountedDiskImageData != null) {
+            return mountedDiskImageData;
+        }
+
+        if ((program != null) && "DISK".equals(appConfigItem.getFileType())) {
+            return program.getProgramData();
+        }
+
+        return null;
+    }
+
     private void startMachine(byte[] basicRom, byte[] kernalRom, byte[] charRom,
             byte[] dos1541Rom, Program program, MachineType machineType, RamType ramType,
-            AppConfigItem appConfigItem, DiskImagePersistenceSession persistenceSession) {
+            AppConfigItem appConfigItem, DiskImagePersistenceSession persistenceSession,
+            byte[] mountedDiskImageData) {
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
         autoLoadProgram = machine.init(basicRom, kernalRom, charRom, dos1541Rom,
-                program, machineType, ramType, appConfigItem.getPalette(),
-                persistenceSession);
+                program, appConfigItem, mountedDiskImageData, machineType, ramType,
+                appConfigItem.getPalette(), persistenceSession);
         resetPerformanceStatsWindow();
         performAnimationFrame(0);
     }
+
+    private native int getNestedInt(JavaScriptObject obj, String fieldName)/*-{
+        return obj.object[fieldName] || 0;
+    }-*/;
     
     /**
      * This method is the main emulator loop that is run for each animation frame. The

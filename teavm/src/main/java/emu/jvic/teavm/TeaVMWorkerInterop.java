@@ -42,15 +42,16 @@ final class TeaVMWorkerInterop {
     @JSBody(script = "return {};")
     static native JSObject createEmptyObject();
 
-        @JSBody(params = { "keyMatrixSAB", "pixelDataSAB", "audioDataSAB", "frameCounterSAB" }, script = "return { keyMatrixSAB: keyMatrixSAB, pixelDataSAB: pixelDataSAB, audioDataSAB: audioDataSAB, frameCounterSAB: frameCounterSAB };")
+    @JSBody(params = { "keyMatrixSAB", "pixelDataSAB", "audioDataSAB", "frameCounterSAB" }, script = "return { keyMatrixSAB: keyMatrixSAB, pixelDataSAB: pixelDataSAB, audioDataSAB: audioDataSAB, frameCounterSAB: frameCounterSAB };")
     static native JSObject createInitialiseObject(SharedArrayBuffer keyMatrixSAB,
             SharedArrayBuffer pixelDataSAB, SharedArrayBuffer audioDataSAB,
             SharedArrayBuffer frameCounterSAB);
 
-        @JSBody(params = { "name", "gameId", "diskWrite", "filePath", "fileType", "entryName", "machineType", "ramType", "palette", "autoRunCommand", "loadAddress" }, script = "return { name: name, gameId: gameId, diskWrite: diskWrite, filePath: filePath, fileType: fileType, entryName: entryName, machineType: machineType, ramType: ramType, palette: palette, autoRunCommand: autoRunCommand, loadAddress: loadAddress };")
+    @JSBody(params = { "name", "gameId", "diskWrite", "filePath", "fileType", "entryName", "machineType", "ramType", "palette", "autoRunCommand", "loadAddress", "programDataLength", "mountedDiskImageDataLength" }, script = "return { name: name, gameId: gameId, diskWrite: diskWrite, filePath: filePath, fileType: fileType, entryName: entryName, machineType: machineType, ramType: ramType, palette: palette, autoRunCommand: autoRunCommand, loadAddress: loadAddress, programDataLength: programDataLength, mountedDiskImageDataLength: mountedDiskImageDataLength };")
     static native JSObject createStartObject(String name, String gameId, String diskWrite,
             String filePath, String fileType, String entryName, String machineType,
-            String ramType, String palette, String autoRunCommand, String loadAddress);
+            String ramType, String palette, String autoRunCommand, String loadAddress,
+            int programDataLength, int mountedDiskImageDataLength);
 
     @JSBody(params = { "avgUnusedNanosPerCycle", "headroomFactor", "busyPercent", "avgBatchWorkMillis", "avgBatchCycles", "audioQueueSamples", "audioQueueMillis" }, script = "return { avgUnusedNanosPerCycle: avgUnusedNanosPerCycle, headroomFactor: headroomFactor, busyPercent: busyPercent, avgBatchWorkMillis: avgBatchWorkMillis, avgBatchCycles: avgBatchCycles, audioQueueSamples: audioQueueSamples, audioQueueMillis: audioQueueMillis };")
     static native JSObject createPerformanceStatsObject(double avgUnusedNanosPerCycle,
