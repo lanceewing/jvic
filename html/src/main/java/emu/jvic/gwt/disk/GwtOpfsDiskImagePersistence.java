@@ -23,6 +23,10 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
         void onResolved(ArrayBuffer startupDiskImage, boolean persistent);
     }
 
+    private interface WriteCallback {
+        void onComplete(boolean success);
+    }
+
     @Override
     public void resolve(AppConfigItem appConfigItem, byte[] originalDiskImage,
             Consumer<DiskImagePersistenceSession> onResolved) {
@@ -36,11 +40,41 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
                         byte[] resolvedDiskImage = (startupDiskImage != null)
                                 ? toByteArray(startupDiskImage)
                                 : originalDiskImage;
+                        if (!persistent
+                            && (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.PERSIST)) {
+                            createInitialPersistentDisk(state, key.getProgramKey(),
+                                key.getOriginalDiskHash(), toArrayBuffer(originalDiskImage),
+                                createMetadataJson(appConfigItem, key, programIdSource,
+                                    originalDiskImage, originalDiskImage),
+                                new WriteCallback() {
+                                @Override
+                                public void onComplete(boolean success) {
+                                    onResolved.accept(new GwtOpfsDiskImagePersistenceSession(state,
+                                        appConfigItem, key, programIdSource,
+                                        originalDiskImage, originalDiskImage,
+                                        success));
+                                }
+                                });
+                            return;
+                        }
+
                         onResolved.accept(new GwtOpfsDiskImagePersistenceSession(state,
-                                appConfigItem, key, programIdSource, originalDiskImage,
-                                resolvedDiskImage, persistent));
+                            appConfigItem, key, programIdSource, originalDiskImage,
+                            resolvedDiskImage, persistent));
                     }
                 });
+    }
+
+    private String createMetadataJson(AppConfigItem appConfigItem, DiskPersistenceKey key,
+            String programIdSource, byte[] originalDiskImage, byte[] persistedDiskImage) {
+        long now = System.currentTimeMillis();
+        DiskPersistenceMetadata metadata = new DiskPersistenceMetadata(appConfigItem, key,
+            programIdSource, (originalDiskImage != null) ? originalDiskImage.length : 0);
+        metadata.setCreatedAtEpochMs(now);
+        metadata.setUpdatedAtEpochMs(now);
+        metadata.setPersistenceActivatedAtEpochMs(now);
+        metadata.setPersistedDiskHash(DiskPersistenceSupport.stableHashHex(persistedDiskImage));
+        return metadata.toJson();
     }
 
     private byte[] toByteArray(ArrayBuffer arrayBuffer) {
@@ -196,6 +230,60 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
             })
             ['catch'](function(error) {
                 console.error('JVic GWT OPFS write failed', error);
+            });
+    }-*/;
+
+    private native void createInitialPersistentDisk(JavaScriptObject state, String programKey,
+            String originalDiskHash, ArrayBuffer diskImageData, String metadataJson,
+            WriteCallback callback) /*-{
+        var ensureDir = function(parent, name) {
+            return parent.getDirectoryHandle(name, {create: true});
+        };
+        var writeFile = function(fileHandle, contents) {
+            return fileHandle.createWritable().then(function(writable) {
+                return writable.write(contents).then(function() {
+                    return writable.close();
+                }, function(error) {
+                    writable.abort();
+                    throw error;
+                });
+            });
+        };
+
+        self.navigator.storage.getDirectory()
+            .then(function(root) {
+                return ensureDir(root, 'JVic');
+            })
+            .then(function(jvicDir) {
+                return ensureDir(jvicDir, 'Disk Images');
+            })
+            .then(function(diskImagesDir) {
+                return ensureDir(diskImagesDir, 'v1');
+            })
+            .then(function(versionDir) {
+                return ensureDir(versionDir, programKey);
+            })
+            .then(function(programDir) {
+                return ensureDir(programDir, originalDiskHash);
+            })
+            .then(function(imageDir) {
+                return Promise.all([
+                    imageDir.getFileHandle('disk.d64', {create: true}),
+                    imageDir.getFileHandle('meta.json', {create: true})
+                ]);
+            })
+            .then(function(handles) {
+                return Promise.all([
+                    writeFile(handles[0], diskImageData),
+                    writeFile(handles[1], metadataJson)
+                ]);
+            })
+            .then(function() {
+                callback.@emu.jvic.gwt.disk.GwtOpfsDiskImagePersistence.WriteCallback::onComplete(Z)(true);
+            })
+            ['catch'](function(error) {
+                console.error('JVic GWT OPFS initial persist failed', error);
+                callback.@emu.jvic.gwt.disk.GwtOpfsDiskImagePersistence.WriteCallback::onComplete(Z)(false);
             });
     }-*/;
 

@@ -60,9 +60,15 @@ public class DesktopDiskImagePersistence implements DiskImagePersistence {
             persistent = false;
         }
 
-        onResolved.accept(new DesktopDiskImagePersistenceSession(appConfigItem, key,
+        DesktopDiskImagePersistenceSession session = new DesktopDiskImagePersistenceSession(appConfigItem, key,
                 persistencePaths, startupDiskImage, persistent,
-                originalDiskImage.length, programIdSource));
+                originalDiskImage.length, programIdSource);
+
+        if (!persistent && (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.PERSIST)) {
+            session.onDiskChanged(originalDiskImage);
+        }
+
+        onResolved.accept(session);
     }
 
     private String normalizeIdentityPath(AppConfigItem appConfigItem) {

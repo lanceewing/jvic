@@ -93,7 +93,8 @@ public class TeaVMJVicRunner extends JVicRunner {
                 audioDataSAB, frameCounterSAB));
         TeaVMWorkerInterop.postArrayBufferAndObject(worker, "Start", programArrayBuffer,
             TeaVMWorkerInterop.createStartObject(appConfigItem.getName(),
-                appConfigItem.getGameId(), appConfigItem.getFilePath(),
+                appConfigItem.getGameId(), appConfigItem.getDiskWrite(),
+                appConfigItem.getFilePath(),
                 appConfigItem.getFileType(), appConfigItem.getEntryName(),
                 appConfigItem.getMachineType(), appConfigItem.getRam(),
                 appConfigItem.getPalette(), appConfigItem.getAutoRunCommand(),

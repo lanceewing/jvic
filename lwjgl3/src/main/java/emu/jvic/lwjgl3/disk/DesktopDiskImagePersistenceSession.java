@@ -61,16 +61,22 @@ public class DesktopDiskImagePersistenceSession implements DiskImagePersistenceS
     @Override
     public void onDiskChanged(byte[] diskImageBytes) {
         long now = System.currentTimeMillis();
-        if (!persistent) {
-            persistent = true;
-            createdAtEpochMs = now;
-            persistenceActivatedAtEpochMs = now;
-        }
+        boolean activatingPersistence = !persistent;
+        long nextCreatedAtEpochMs = activatingPersistence ? now : createdAtEpochMs;
+        long nextPersistenceActivatedAtEpochMs = activatingPersistence
+                ? now
+                : persistenceActivatedAtEpochMs;
 
         try {
             ensureDirectories();
             writeDiskImage(diskImageBytes);
-            writeMetadata(diskImageBytes, now);
+            writeMetadata(diskImageBytes, now, nextCreatedAtEpochMs,
+                    nextPersistenceActivatedAtEpochMs);
+            if (activatingPersistence) {
+                createdAtEpochMs = nextCreatedAtEpochMs;
+                persistenceActivatedAtEpochMs = nextPersistenceActivatedAtEpochMs;
+                persistent = true;
+            }
         } catch (IOException e) {
             // Ignore persistence errors and keep the emulator running on desktop.
         }
@@ -88,7 +94,8 @@ public class DesktopDiskImagePersistenceSession implements DiskImagePersistenceS
         atomicWrite(persistencePaths.getDiskImageFile(key), diskImageBytes);
     }
 
-    private void writeMetadata(byte[] diskImageBytes, long now) throws IOException {
+    private void writeMetadata(byte[] diskImageBytes, long now,
+            long createdAtEpochMs, long persistenceActivatedAtEpochMs) throws IOException {
         DiskPersistenceMetadata metadata = new DiskPersistenceMetadata(appConfigItem, key,
                 programIdSource, originalDiskSize);
         metadata.setCreatedAtEpochMs(createdAtEpochMs);

@@ -26,6 +26,7 @@ import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
+import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
 import emu.jvic.lwjgl3.disk.DesktopDiskImagePersistence;
 import emu.jvic.memory.RamType;
 import emu.jvic.sound.SoundGenerator;
@@ -37,11 +38,8 @@ public class DesktopJVicRunner extends JVicRunner {
     
     private Machine machine;
 
-    private final DiskImagePersistence diskImagePersistence;
-    
     public DesktopJVicRunner(KeyboardMatrix keyboardMatrix, PixelData pixelData, SoundGenerator soundGenerator) {
         super(keyboardMatrix, pixelData, soundGenerator);
-        this.diskImagePersistence = new DesktopDiskImagePersistence();
     }
 
     @Override
@@ -69,6 +67,7 @@ public class DesktopJVicRunner extends JVicRunner {
     
     private void runProgram(AppConfigItem appConfigItem, Program program) {
         if ((program != null) && "DISK".equals(program.getProgramType())) {
+            DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem);
             diskImagePersistence.resolve(appConfigItem, program.getProgramData(),
                 persistenceSession -> runProgram(appConfigItem, program,
                     persistenceSession));
@@ -76,6 +75,18 @@ public class DesktopJVicRunner extends JVicRunner {
         }
 
         runProgram(appConfigItem, program, null);
+    }
+
+    private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem) {
+        switch (appConfigItem.getDiskWriteMode()) {
+            case OFF:
+            case TEMP:
+                return new NoOpDiskImagePersistence();
+            case DEFAULT:
+            case PERSIST:
+            default:
+                return new DesktopDiskImagePersistence();
+        }
     }
 
     private void runProgram(AppConfigItem appConfigItem, Program program,

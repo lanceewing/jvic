@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 
+import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
@@ -188,13 +189,17 @@ public class Machine {
             } else if ("PRG".equals(programType)) {
                 autoLoadRunnable = memory.loadBasicProgram(programData, true);
             } else if ("DISK".equals(programType)) {
+                AppConfigItem.DiskWriteMode diskWriteMode = program.getAppConfigItem()
+                        .getDiskWriteMode();
+                boolean writeProtected = (diskWriteMode == AppConfigItem.DiskWriteMode.OFF);
                 DiskImagePersistenceSession persistenceSession = diskImagePersistenceSession;
                 if (persistenceSession == null) {
                     persistenceSession = new NoOpDiskImagePersistenceSession(programData);
                 }
                 byte[] startupDiskImage = persistenceSession.getStartupDiskImage();
                 // Insert the disk ready to be booted.
-                c1541Drive.insertDisk(startupDiskImage, true, persistenceSession);
+                c1541Drive.insertDisk(startupDiskImage, true, persistenceSession,
+                        writeProtected);
                 autoLoadRunnable = new Callable<Queue<char[]>>() {
                     public Queue<char[]> call() throws Exception {
                         String autoRunCmds = program.getAppConfigItem().getAutoRunCommand();

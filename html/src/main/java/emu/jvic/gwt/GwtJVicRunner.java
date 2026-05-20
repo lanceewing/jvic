@@ -240,6 +240,7 @@ public class GwtJVicRunner extends JVicRunner {
                 createStartObject(
                         appConfigItem.getName(),
                         appConfigItem.getGameId(),
+                        appConfigItem.getDiskWrite(),
                         appConfigItem.getFilePath(),
                         appConfigItem.getFileType(),
                         appConfigItem.getEntryName(),
@@ -281,6 +282,7 @@ public class GwtJVicRunner extends JVicRunner {
      * 
      * @param name
      * @param gameId
+     * @param diskWrite
      * @param filePath
      * @param fileType
      * @param entryName
@@ -293,13 +295,14 @@ public class GwtJVicRunner extends JVicRunner {
      * @return
      */
     private native JavaScriptObject createStartObject(
-            String name, String gameId, String filePath, String fileType, String entryName,
-            String machineType, String ramType, String palette, String autoRunCommand,
-            String loadAddress
+            String name, String gameId, String diskWrite, String filePath,
+            String fileType, String entryName, String machineType, String ramType,
+            String palette, String autoRunCommand, String loadAddress
             )/*-{
         return {
             name: name,
             gameId: gameId,
+            diskWrite: diskWrite,
             filePath: filePath,
             fileType: fileType,
             entryName: entryName,

@@ -118,9 +118,7 @@ public final class TeaVMJVicWebWorker {
         logProgramStart(appConfigItem, program);
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
-        DiskImagePersistence diskImagePersistence = "DISK".equals(appConfigItem.getFileType())
-            ? new TeaVMOpfsDiskImagePersistence()
-            : new NoOpDiskImagePersistence();
+        DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem);
         byte[] originalDiskImage = (program != null) ? program.getProgramData() : null;
         diskImagePersistence.resolve(appConfigItem, originalDiskImage,
             persistenceSession -> finishStartMachine(basicRom, kernalRom, charRom,
@@ -154,6 +152,8 @@ public final class TeaVMJVicWebWorker {
         AppConfigItem appConfigItem = new AppConfigItem();
         appConfigItem.setName(TeaVMWorkerInterop.getNestedString(eventObject, "name"));
         appConfigItem.setGameId(TeaVMWorkerInterop.getNestedString(eventObject, "gameId"));
+        appConfigItem.setDiskWrite(normalizeBlankToNull(
+            TeaVMWorkerInterop.getNestedString(eventObject, "diskWrite")));
         appConfigItem.setFilePath(TeaVMWorkerInterop.getNestedString(eventObject, "filePath"));
         appConfigItem.setFileType(TeaVMWorkerInterop.getNestedString(eventObject, "fileType"));
         appConfigItem.setEntryName(normalizeBlankToNull(
@@ -166,6 +166,22 @@ public final class TeaVMJVicWebWorker {
         appConfigItem.setLoadAddress(normalizeBlankToNull(
                 TeaVMWorkerInterop.getNestedString(eventObject, "loadAddress")));
         return appConfigItem;
+    }
+
+    private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem) {
+        if (!"DISK".equals(appConfigItem.getFileType())) {
+            return new NoOpDiskImagePersistence();
+        }
+
+        switch (appConfigItem.getDiskWriteMode()) {
+            case OFF:
+            case TEMP:
+                return new NoOpDiskImagePersistence();
+            case DEFAULT:
+            case PERSIST:
+            default:
+                return new TeaVMOpfsDiskImagePersistence();
+        }
     }
 
     private void finishStartMachine(byte[] basicRom, byte[] kernalRom, byte[] charRom,

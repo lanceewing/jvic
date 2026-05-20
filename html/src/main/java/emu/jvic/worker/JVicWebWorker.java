@@ -111,9 +111,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                 MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
                 RamType ramType = RamType.valueOf(appConfigItem.getRam());
                 nanosPerFrame = (1000000000 / machineType.getFramesPerSecond());
-                DiskImagePersistence diskImagePersistence = "DISK".equals(appConfigItem.getFileType())
-                    ? new GwtOpfsDiskImagePersistence()
-                    : new NoOpDiskImagePersistence();
+                DiskImagePersistence diskImagePersistence = createDiskImagePersistence(appConfigItem);
                 byte[] originalDiskImage = (program != null) ? program.getProgramData() : null;
                 diskImagePersistence.resolve(appConfigItem, originalDiskImage,
                     persistenceSession -> startMachine(basicRom, kernalRom, charRom,
@@ -188,6 +186,7 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         AppConfigItem appConfigItem = new AppConfigItem();
         appConfigItem.setName(getNestedString(eventObject, "name"));
         appConfigItem.setGameId(getNestedString(eventObject, "gameId"));
+        appConfigItem.setDiskWrite(getNestedString(eventObject, "diskWrite"));
         appConfigItem.setFilePath(getNestedString(eventObject, "filePath"));
         appConfigItem.setFileType(getNestedString(eventObject, "fileType"));
         appConfigItem.setEntryName(getNestedString(eventObject, "entryName"));
@@ -197,6 +196,22 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
         appConfigItem.setAutoRunCommand(getNestedString(eventObject, "autoRunCommand"));
         appConfigItem.setLoadAddress(getNestedString(eventObject, "loadAddress"));
         return appConfigItem;
+    }
+
+    private DiskImagePersistence createDiskImagePersistence(AppConfigItem appConfigItem) {
+        if (!"DISK".equals(appConfigItem.getFileType())) {
+            return new NoOpDiskImagePersistence();
+        }
+
+        switch (appConfigItem.getDiskWriteMode()) {
+            case OFF:
+            case TEMP:
+                return new NoOpDiskImagePersistence();
+            case DEFAULT:
+            case PERSIST:
+            default:
+                return new GwtOpfsDiskImagePersistence();
+        }
     }
 
     private void startMachine(byte[] basicRom, byte[] kernalRom, byte[] charRom,

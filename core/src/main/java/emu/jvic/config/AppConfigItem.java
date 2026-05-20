@@ -22,6 +22,8 @@ public class AppConfigItem {
 
     private String status = "WORKING";
     
+    private String diskWrite;
+
     private String autoRunCommand;
     
     private String entryName;
@@ -38,6 +40,10 @@ public class AppConfigItem {
     
     public enum FileLocation {
         INTERNAL, EXTERNAL, ABSOLUTE, CLASSPATH, LOCAL
+    };
+
+    public enum DiskWriteMode {
+        DEFAULT, OFF, TEMP, PERSIST
     };
     
     /**
@@ -185,6 +191,31 @@ public class AppConfigItem {
      */
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getDiskWrite() {
+        return diskWrite;
+    }
+
+    public void setDiskWrite(String diskWrite) {
+        this.diskWrite = diskWrite;
+    }
+
+    public DiskWriteMode getDiskWriteMode() {
+        if ((diskWrite == null) || diskWrite.trim().isEmpty()) {
+            return DiskWriteMode.DEFAULT;
+        }
+
+        switch (diskWrite.trim().toLowerCase()) {
+            case "off":
+                return DiskWriteMode.OFF;
+            case "temp":
+                return DiskWriteMode.TEMP;
+            case "persist":
+                return DiskWriteMode.PERSIST;
+            default:
+                return DiskWriteMode.DEFAULT;
+        }
     }
     
     public byte[] getFileData() {

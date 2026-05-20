@@ -155,7 +155,8 @@ public class C1541Drive {
      * @param warmup Whether or not to run emulation for half a second.
      */
     public void insertDisk(byte[] diskData, boolean warmup,
-            DiskImagePersistenceSession diskPersistenceSession) {
+            DiskImagePersistenceSession diskPersistenceSession,
+            boolean writeProtected) {
         if (this.diskPersistenceSession != null) {
             this.diskPersistenceSession.close();
         }
@@ -169,7 +170,7 @@ public class C1541Drive {
         currentSectorOffset = -1;
         currentTrackSize = disk.getSectorCount(currentTrack);
         currentSector = disk.getSector(currentTrack, 0);
-        writeProtected = false;
+        this.writeProtected = writeProtected;
 
         if (warmup) {
             // Run the 1541 drive for a second to get it warmed up (needed for some games).
