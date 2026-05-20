@@ -190,6 +190,7 @@ public class HomeScreen extends InputAdapter implements Screen {
         basicAppConfigItem.setIconPath("screenshots/B/Basic/Basic.png");
         basicAppConfigItem.setMachineType("PAL");
         basicAppConfigItem.setRam("RAM_UNEXPANDED");
+        basicAppConfigItem.setDiskWrite("persist");
         return basicAppConfigItem;
     }
 
