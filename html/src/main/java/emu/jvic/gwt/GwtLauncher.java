@@ -192,6 +192,7 @@ public class GwtLauncher extends GwtApplication {
         mapParameterIfPresent("ram", argsMap);
         mapParameterIfPresent("tv", argsMap);
         mapParameterIfPresent("dskwrt", argsMap);
+        mapParameterIfPresent("diskwrite", argsMap);
         mapParameterIfPresent("type", argsMap);
         mapParameterIfPresent("entry", argsMap);
         mapParameterIfPresent("addr", argsMap);

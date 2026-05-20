@@ -128,7 +128,11 @@ public class JVic extends Game {
     private void applyConfigArgs(AppConfigItem appConfigItem, Map<String, String> args) {
         applyRamConfig(appConfigItem, args.get("ram"));
         applyTvConfig(appConfigItem, args.get("tv"));
-        applyDiskWriteConfig(appConfigItem, args.get("dskwrt"));
+        String diskWriteArg = args.get("diskwrite");
+        if (diskWriteArg == null) {
+            diskWriteArg = args.get("dskwrt");
+        }
+        applyDiskWriteConfig(appConfigItem, diskWriteArg);
         applyProgramType(appConfigItem, args.get("type"));
         if (args.containsKey("entry")) {
             appConfigItem.setEntryName(args.get("entry"));
