@@ -6,6 +6,7 @@ import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -35,6 +36,7 @@ import emu.jvic.ui.MachineInputProcessor.ScreenSize;
 public class DesktopJVicRunner extends JVicRunner {
 
     private Thread machineThread;
+    private final Queue<Runnable> pendingMachineActions = new ConcurrentLinkedQueue<Runnable>();
     
     private Machine machine;
 
@@ -115,10 +117,15 @@ public class DesktopJVicRunner extends JVicRunner {
         long lastTime = TimeUtils.nanoTime();
 
         while (true) {
+            processPendingMachineActions();
+
             if (paused) {
                 synchronized (this) {
                     try {
                         while (paused) {
+                            if (processPendingMachineActions()) {
+                                continue;
+                            }
                             wait();
                         }
                     } catch (InterruptedException e) {
@@ -184,6 +191,23 @@ public class DesktopJVicRunner extends JVicRunner {
         }
         
         machine = null;
+    }
+
+    private boolean processPendingMachineActions() {
+        boolean processedAction = false;
+        Runnable pendingAction;
+        while ((pendingAction = pendingMachineActions.poll()) != null) {
+            processedAction = true;
+            pendingAction.run();
+        }
+        return processedAction;
+    }
+
+    private void enqueueMachineAction(Runnable pendingAction) {
+        pendingMachineActions.offer(pendingAction);
+        synchronized (this) {
+            this.notifyAll();
+        }
     }
 
     private byte[] resolveMountedDiskImageData(AppConfigItem appConfigItem, Program program) {
@@ -287,6 +311,41 @@ public class DesktopJVicRunner extends JVicRunner {
     @Override
     public boolean isRunning() {
         return (machineThread != null);
+    }
+
+    @Override
+    public boolean canResetMountedDisk() {
+        return (machine != null) && machine.canResetMountedDisk();
+    }
+
+    @Override
+    public void requestMountedDiskReset(ResetDiskHandler resetDiskHandler) {
+        if (!canResetMountedDisk()) {
+            resetDiskHandler.onResetFailed();
+            return;
+        }
+
+        enqueueMachineAction(new Runnable() {
+            @Override
+            public void run() {
+                if (machine == null) {
+                    resetDiskHandler.onResetFailed();
+                    return;
+                }
+
+                machine.resetMountedDisk(new Machine.ResetDiskHandler() {
+                    @Override
+                    public void onResetComplete() {
+                        resetDiskHandler.onResetComplete();
+                    }
+
+                    @Override
+                    public void onResetFailed() {
+                        resetDiskHandler.onResetFailed();
+                    }
+                });
+            }
+        });
     }
 
     @Override

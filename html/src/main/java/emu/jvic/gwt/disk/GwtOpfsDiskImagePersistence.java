@@ -42,7 +42,7 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
                                 : originalDiskImage;
                         if (!persistent
                             && (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.PERSIST)) {
-                            createInitialPersistentDisk(state, key.getProgramKey(),
+                            writePersistentDisk(state, key.getProgramKey(),
                                 key.getOriginalDiskHash(), toArrayBuffer(originalDiskImage),
                                 createMetadataJson(appConfigItem, key, programIdSource,
                                     originalDiskImage, originalDiskImage),
@@ -233,7 +233,7 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
             });
     }-*/;
 
-    private native void createInitialPersistentDisk(JavaScriptObject state, String programKey,
+    private native void writePersistentDisk(JavaScriptObject state, String programKey,
             String originalDiskHash, ArrayBuffer diskImageData, String metadataJson,
             WriteCallback callback) /*-{
         var ensureDir = function(parent, name) {
@@ -282,7 +282,7 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
                 callback.@emu.jvic.gwt.disk.GwtOpfsDiskImagePersistence.WriteCallback::onComplete(Z)(true);
             })
             ['catch'](function(error) {
-                console.error('JVic GWT OPFS initial persist failed', error);
+                console.error('JVic GWT OPFS write failed', error);
                 callback.@emu.jvic.gwt.disk.GwtOpfsDiskImagePersistence.WriteCallback::onComplete(Z)(false);
             });
     }-*/;
@@ -299,6 +299,7 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
         private final AppConfigItem appConfigItem;
         private final DiskPersistenceKey key;
         private final String programIdSource;
+        private final byte[] originalDiskImage;
         private final int originalDiskSize;
         private final byte[] startupDiskImage;
         private boolean persistent;
@@ -312,6 +313,7 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
             this.appConfigItem = appConfigItem;
             this.key = key;
             this.programIdSource = programIdSource;
+            this.originalDiskImage = originalDiskImage;
             this.originalDiskSize = (originalDiskImage != null) ? originalDiskImage.length : 0;
             this.startupDiskImage = startupDiskImage;
             this.persistent = persistent;
@@ -350,6 +352,42 @@ public class GwtOpfsDiskImagePersistence implements DiskImagePersistence {
 
             queueWrite(state, key.getProgramKey(), key.getOriginalDiskHash(),
                     toArrayBuffer(diskImageBytes), metadata.toJson());
+        }
+
+        @Override
+        public void resetToOriginalImage(ResetHandler resetHandler) {
+            if ((originalDiskImage == null) || (originalDiskImage.length == 0)) {
+                resetHandler.onResetFailed();
+                return;
+            }
+
+            long now = System.currentTimeMillis();
+            long nextCreatedAtEpochMs = (createdAtEpochMs != 0) ? createdAtEpochMs : now;
+            long nextPersistenceActivatedAtEpochMs = (persistenceActivatedAtEpochMs != 0)
+                    ? persistenceActivatedAtEpochMs
+                    : now;
+            DiskPersistenceMetadata metadata = new DiskPersistenceMetadata(appConfigItem,
+                    key, programIdSource, originalDiskSize);
+            metadata.setCreatedAtEpochMs(nextCreatedAtEpochMs);
+            metadata.setUpdatedAtEpochMs(now);
+            metadata.setPersistenceActivatedAtEpochMs(nextPersistenceActivatedAtEpochMs);
+            metadata.setPersistedDiskHash(DiskPersistenceSupport.stableHashHex(originalDiskImage));
+
+            writePersistentDisk(state, key.getProgramKey(), key.getOriginalDiskHash(),
+                    toArrayBuffer(originalDiskImage), metadata.toJson(), new WriteCallback() {
+                        @Override
+                        public void onComplete(boolean success) {
+                            if (!success) {
+                                resetHandler.onResetFailed();
+                                return;
+                            }
+
+                            createdAtEpochMs = nextCreatedAtEpochMs;
+                            persistenceActivatedAtEpochMs = nextPersistenceActivatedAtEpochMs;
+                            persistent = true;
+                            resetHandler.onResetComplete(originalDiskImage);
+                        }
+                    });
         }
 
         @Override

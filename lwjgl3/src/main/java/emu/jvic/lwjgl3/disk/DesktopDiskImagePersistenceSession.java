@@ -21,6 +21,7 @@ public class DesktopDiskImagePersistenceSession implements DiskImagePersistenceS
     private final AppConfigItem appConfigItem;
     private final DiskPersistenceKey key;
     private final DesktopPersistencePaths persistencePaths;
+    private final byte[] originalDiskImage;
     private final byte[] startupDiskImage;
     private final int originalDiskSize;
     private final String programIdSource;
@@ -31,11 +32,13 @@ public class DesktopDiskImagePersistenceSession implements DiskImagePersistenceS
 
     public DesktopDiskImagePersistenceSession(AppConfigItem appConfigItem,
             DiskPersistenceKey key, DesktopPersistencePaths persistencePaths,
-            byte[] startupDiskImage, boolean persistent, int originalDiskSize,
+            byte[] originalDiskImage, byte[] startupDiskImage, boolean persistent,
+            int originalDiskSize,
             String programIdSource) {
         this.appConfigItem = appConfigItem;
         this.key = key;
         this.persistencePaths = persistencePaths;
+        this.originalDiskImage = originalDiskImage;
         this.startupDiskImage = startupDiskImage;
         this.persistent = persistent;
         this.originalDiskSize = originalDiskSize;
@@ -79,6 +82,33 @@ public class DesktopDiskImagePersistenceSession implements DiskImagePersistenceS
             }
         } catch (IOException e) {
             // Ignore persistence errors and keep the emulator running on desktop.
+        }
+    }
+
+    @Override
+    public void resetToOriginalImage(ResetHandler resetHandler) {
+        if ((originalDiskImage == null) || (originalDiskImage.length == 0)) {
+            resetHandler.onResetFailed();
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        long nextCreatedAtEpochMs = (createdAtEpochMs != 0) ? createdAtEpochMs : now;
+        long nextPersistenceActivatedAtEpochMs = (persistenceActivatedAtEpochMs != 0)
+                ? persistenceActivatedAtEpochMs
+                : now;
+
+        try {
+            ensureDirectories();
+            writeDiskImage(originalDiskImage);
+            writeMetadata(originalDiskImage, now, nextCreatedAtEpochMs,
+                    nextPersistenceActivatedAtEpochMs);
+            createdAtEpochMs = nextCreatedAtEpochMs;
+            persistenceActivatedAtEpochMs = nextPersistenceActivatedAtEpochMs;
+            persistent = true;
+            resetHandler.onResetComplete(originalDiskImage);
+        } catch (IOException e) {
+            resetHandler.onResetFailed();
         }
     }
 

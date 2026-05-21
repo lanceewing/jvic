@@ -44,6 +44,13 @@ import emu.jvic.ui.MachineInputProcessor;
  */
 public abstract class JVicRunner {
 
+    public interface ResetDiskHandler {
+
+        void onResetComplete();
+
+        void onResetFailed();
+    }
+
     protected MachineScreen machineScreen;
     
     protected KeyboardMatrix keyboardMatrix;
@@ -257,6 +264,14 @@ public abstract class JVicRunner {
     public abstract void cancelImport();
 
     public abstract boolean isRunning();
+
+    public boolean canResetMountedDisk() {
+        return false;
+    }
+
+    public void requestMountedDiskReset(ResetDiskHandler resetDiskHandler) {
+        resetDiskHandler.onResetFailed();
+    }
     
     public abstract void sendNmi();
 

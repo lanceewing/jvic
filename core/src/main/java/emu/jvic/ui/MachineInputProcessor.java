@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
+import emu.jvic.JVicRunner;
 import emu.jvic.KeyboardMatrix;
 import emu.jvic.KeyboardType;
 import emu.jvic.MachineScreen;
@@ -165,6 +166,9 @@ public class MachineInputProcessor extends InputAdapter {
                     }
                     return true;
                 case Keys.Z:
+                    handleDiskReset();
+                    return true;
+                case Keys.MINUS:
                     rotateScreenSize();
                     return true;
                 default:
@@ -504,6 +508,41 @@ public class MachineInputProcessor extends InputAdapter {
                 machineScreen.getJvicRunner().resume();
             }
         });
+    }
+
+    private void handleDiskReset() {
+        if (dialogHandler.isDialogOpen() || !machineScreen.getJvicRunner().canResetMountedDisk()) {
+            return;
+        }
+
+        if (Gdx.app.getType().equals(ApplicationType.Desktop) && Gdx.graphics.isFullscreen()) {
+            switchOutOfFullScreen();
+        }
+
+        machineScreen.getJvicRunner().pause();
+        dialogHandler.confirm("Reset the mounted disk to its original image? Any persisted changes will be lost.",
+                new ConfirmResponseHandler() {
+                    @Override
+                    public void yes() {
+                        machineScreen.getJvicRunner().requestMountedDiskReset(
+                                new JVicRunner.ResetDiskHandler() {
+                                    @Override
+                                    public void onResetComplete() {
+                                        machineScreen.getJvicRunner().resume();
+                                    }
+
+                                    @Override
+                                    public void onResetFailed() {
+                                        machineScreen.getJvicRunner().resume();
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void no() {
+                        machineScreen.getJvicRunner().resume();
+                    }
+                });
     }
 
     private void handleShowFPSToggle() {

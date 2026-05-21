@@ -61,7 +61,7 @@ public class DesktopDiskImagePersistence implements DiskImagePersistence {
         }
 
         DesktopDiskImagePersistenceSession session = new DesktopDiskImagePersistenceSession(appConfigItem, key,
-                persistencePaths, startupDiskImage, persistent,
+            persistencePaths, originalDiskImage, startupDiskImage, persistent,
                 originalDiskImage.length, programIdSource);
 
         if (!persistent && (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.PERSIST)) {

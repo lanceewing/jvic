@@ -36,6 +36,13 @@ import emu.jvic.video.Vic6561;
  */
 public class Machine {
 
+    public interface ResetDiskHandler {
+
+        void onResetComplete();
+
+        void onResetFailed();
+    }
+
     // Machine components.
     private Vic20Memory memory;
     private Vic vic;
@@ -56,6 +63,10 @@ public class Machine {
     private SoundGenerator soundGenerator;
     
     private boolean paused = true;
+
+    private DiskImagePersistenceSession activeDiskPersistenceSession;
+    private boolean activeDiskWriteProtected;
+    private boolean hasMountedDisk;
 
     private MachineType machineType;
     
@@ -194,6 +205,10 @@ public class Machine {
         // Initialise the sound generator.
         soundGenerator.init(memory.getMemoryArray(), machineType);
 
+        activeDiskPersistenceSession = null;
+        activeDiskWriteProtected = false;
+        hasMountedDisk = false;
+
         if (shouldMountDisk(programType, appConfigItem, mountedDiskImageData)) {
             AppConfigItem.DiskWriteMode diskWriteMode = (appConfigItem != null)
                     ? appConfigItem.getDiskWriteMode()
@@ -205,6 +220,9 @@ public class Machine {
             }
             byte[] startupDiskImage = persistenceSession.getStartupDiskImage();
             c1541Drive.insertDisk(startupDiskImage, true, persistenceSession, writeProtected);
+            activeDiskPersistenceSession = persistenceSession;
+            activeDiskWriteProtected = writeProtected;
+            hasMountedDisk = true;
         }
         
         // Check if the resource parameters have been set.
@@ -325,6 +343,37 @@ public class Machine {
      */
     public boolean isPaused() {
         return paused;
+    }
+
+    public boolean canResetMountedDisk() {
+        return hasMountedDisk && (c1541Drive != null) && (activeDiskPersistenceSession != null)
+                && activeDiskPersistenceSession.isPersistent();
+    }
+
+    public void resetMountedDisk(ResetDiskHandler resetDiskHandler) {
+        if (!canResetMountedDisk()) {
+            resetDiskHandler.onResetFailed();
+            return;
+        }
+
+        activeDiskPersistenceSession.resetToOriginalImage(
+                new DiskImagePersistenceSession.ResetHandler() {
+                    @Override
+                    public void onResetComplete(byte[] diskImageBytes) {
+                        if ((diskImageBytes == null) || (diskImageBytes.length == 0)) {
+                            resetDiskHandler.onResetFailed();
+                            return;
+                        }
+
+                        c1541Drive.replaceDisk(diskImageBytes, activeDiskWriteProtected);
+                        resetDiskHandler.onResetComplete();
+                    }
+
+                    @Override
+                    public void onResetFailed() {
+                        resetDiskHandler.onResetFailed();
+                    }
+                });
     }
 
     /**

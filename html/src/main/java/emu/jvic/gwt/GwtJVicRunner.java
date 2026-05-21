@@ -59,6 +59,10 @@ public class GwtJVicRunner extends JVicRunner {
      * The web worker that will execute the VIC 20 emulator in the background.
      */
     private Worker worker;
+
+    private boolean resetMountedDiskSupported;
+
+    private ResetDiskHandler pendingResetDiskHandler;
     
     /**
      * Indicates that the GWT GwtJVicRunner is in the stopped state, i.e. it was previously
@@ -187,6 +191,19 @@ public class GwtJVicRunner extends JVicRunner {
 
         return loadBlankDiskImage();
     }
+
+    private boolean supportsMountedDiskReset(AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
+        switch (appConfigItem.getDiskWriteMode()) {
+            case OFF:
+            case TEMP:
+                return false;
+            case DEFAULT:
+            case PERSIST:
+            default:
+                return "DISK".equals(appConfigItem.getFileType()) || (mountedDiskImageData != null);
+        }
+    }
     
     /**
      * Creates a new web worker to run the VIC 20 program.
@@ -197,6 +214,7 @@ public class GwtJVicRunner extends JVicRunner {
         clearPerformanceStats();
 
         byte[] mountedDiskImageData = resolveMountedDiskImageData(appConfigItem, program);
+        resetMountedDiskSupported = supportsMountedDiskReset(appConfigItem, mountedDiskImageData);
         int programDataLength = (program != null) ? program.getProgramData().length : 0;
         int mountedDiskImageDataLength = (mountedDiskImageData != null)
             ? mountedDiskImageData.length
@@ -229,6 +247,14 @@ public class GwtJVicRunner extends JVicRunner {
                                 getNestedDouble(eventObject, "avgBatchCycles"),
                                 getNestedInt(eventObject, "audioQueueSamples"),
                                 getNestedDouble(eventObject, "audioQueueMillis"));
+                        break;
+
+                    case "MountedDiskResetComplete":
+                        completeMountedDiskReset(true);
+                        break;
+
+                    case "MountedDiskResetFailed":
+                        completeMountedDiskReset(false);
                         break;
                         
                     default:
@@ -390,6 +416,8 @@ public class GwtJVicRunner extends JVicRunner {
         worker.terminate();
         soundGenerator.pauseSound();
         stopped = true;
+        resetMountedDiskSupported = false;
+        pendingResetDiskHandler = null;
     }
     
     @Override
@@ -398,6 +426,8 @@ public class GwtJVicRunner extends JVicRunner {
         paused = false;
         stopped = false;
         worker = null;
+        resetMountedDiskSupported = false;
+        pendingResetDiskHandler = null;
         clearPerformanceStats();
         
         clearUrl();
@@ -501,6 +531,22 @@ public class GwtJVicRunner extends JVicRunner {
     public boolean isRunning() {
         return (worker != null);
     }
+
+    @Override
+    public boolean canResetMountedDisk() {
+        return (worker != null) && resetMountedDiskSupported;
+    }
+
+    @Override
+    public void requestMountedDiskReset(ResetDiskHandler resetDiskHandler) {
+        if (!canResetMountedDisk() || (pendingResetDiskHandler != null)) {
+            resetDiskHandler.onResetFailed();
+            return;
+        }
+
+        pendingResetDiskHandler = resetDiskHandler;
+        worker.postObject("ResetMountedDisk", JavaScriptObject.createObject());
+    }
     
     @Override
     public void changeSound(boolean soundOn) {
@@ -534,6 +580,20 @@ public class GwtJVicRunner extends JVicRunner {
     @Override
     public void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem) {
         // Not supported yet by the HTML5/GWT version.
+    }
+
+    private void completeMountedDiskReset(boolean success) {
+        ResetDiskHandler resetDiskHandler = pendingResetDiskHandler;
+        pendingResetDiskHandler = null;
+        if (resetDiskHandler == null) {
+            return;
+        }
+
+        if (success) {
+            resetDiskHandler.onResetComplete();
+        } else {
+            resetDiskHandler.onResetFailed();
+        }
     }
 
     public void updatePerformanceStats(double avgUnusedNanosPerCycle, double headroomFactor,

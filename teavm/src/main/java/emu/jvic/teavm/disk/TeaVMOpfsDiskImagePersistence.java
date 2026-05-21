@@ -43,14 +43,14 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
                             : originalDiskImage;
                     if (!persistent
                         && (appConfigItem.getDiskWriteMode() == AppConfigItem.DiskWriteMode.PERSIST)) {
-	                    createInitialPersistentDisk(key.getProgramKey(), key.getOriginalDiskHash(),
-	                        toArrayBuffer(originalDiskImage),
-	                        createMetadataJson(appConfigItem, key, programIdSource,
-	                            originalDiskImage, originalDiskImage),
-	                        success -> onResolved.accept(new TeaVMOpfsDiskImagePersistenceSession(
-	                            state, appConfigItem, key, programIdSource,
-	                            originalDiskImage, originalDiskImage, success)));
-	                    return;
+                        writePersistentDisk(state, key.getProgramKey(), key.getOriginalDiskHash(),
+                            toArrayBuffer(originalDiskImage),
+                            createMetadataJson(appConfigItem, key, programIdSource,
+                                originalDiskImage, originalDiskImage),
+                            success -> onResolved.accept(new TeaVMOpfsDiskImagePersistenceSession(
+                                state, appConfigItem, key, programIdSource,
+                                originalDiskImage, originalDiskImage, success)));
+                        return;
                     }
 
                     onResolved.accept(new TeaVMOpfsDiskImagePersistenceSession(state,
@@ -146,7 +146,7 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
     private static native void queueWrite(JSObject state, String programKey,
             String originalDiskHash, ArrayBuffer diskImageData, String metadataJson);
 
-    @JSBody(params = { "programKey", "originalDiskHash", "diskImageData", "metadataJson", "callback" }, script = ""
+    @JSBody(params = { "state", "programKey", "originalDiskHash", "diskImageData", "metadataJson", "callback" }, script = ""
         + "var ensureDir = function(parent, name) {"
         + "  return parent.getDirectoryHandle(name, {create: true});"
         + "};"
@@ -155,17 +155,22 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
         + "    return writable.write(contents).then(function() { return writable.close(); }, function(error) { writable.abort(); throw error; });"
         + "  });"
         + "};"
-        + "self.navigator.storage.getDirectory()"
-        + "  .then(function(root) { return ensureDir(root, 'JVic'); })"
-        + "  .then(function(jvicDir) { return ensureDir(jvicDir, 'Disk Images'); })"
-        + "  .then(function(diskImagesDir) { return ensureDir(diskImagesDir, 'v1'); })"
-        + "  .then(function(versionDir) { return ensureDir(versionDir, programKey); })"
-        + "  .then(function(programDir) { return ensureDir(programDir, originalDiskHash); })"
-        + "  .then(function(imageDir) { return Promise.all([imageDir.getFileHandle('disk.d64', {create: true}), imageDir.getFileHandle('meta.json', {create: true})]); })"
-        + "  .then(function(handles) { return Promise.all([writeFile(handles[0], diskImageData), writeFile(handles[1], metadataJson)]); })"
-        + "  .then(function() { callback(true); })"
-        + "  .catch(function(error) { console.error('JVic TeaVM OPFS initial persist failed', error); callback(false); });")
-    private static native void createInitialPersistentDisk(String programKey,
+        + "state.writeChain = (state.writeChain || Promise.resolve())"
+        + "  .catch(function() {})"
+        + "  .then(function() {"
+        + "    if (state.closed) { callback(false); return null; }"
+        + "    return self.navigator.storage.getDirectory()"
+        + "      .then(function(root) { return ensureDir(root, 'JVic'); })"
+        + "      .then(function(jvicDir) { return ensureDir(jvicDir, 'Disk Images'); })"
+        + "      .then(function(diskImagesDir) { return ensureDir(diskImagesDir, 'v1'); })"
+        + "      .then(function(versionDir) { return ensureDir(versionDir, programKey); })"
+        + "      .then(function(programDir) { return ensureDir(programDir, originalDiskHash); })"
+        + "      .then(function(imageDir) { return Promise.all([imageDir.getFileHandle('disk.d64', {create: true}), imageDir.getFileHandle('meta.json', {create: true})]); })"
+        + "      .then(function(handles) { return Promise.all([writeFile(handles[0], diskImageData), writeFile(handles[1], metadataJson)]); });"
+        + "  })"
+        + "  .then(function(result) { if (result !== null) { callback(true); } })"
+        + "  .catch(function(error) { console.error('JVic TeaVM OPFS write failed', error); callback(false); });")
+    private static native void writePersistentDisk(JSObject state, String programKey,
         String originalDiskHash, ArrayBuffer diskImageData, String metadataJson,
         WriteCallback callback);
 
@@ -178,6 +183,7 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
         private final AppConfigItem appConfigItem;
         private final DiskPersistenceKey key;
         private final String programIdSource;
+        private final byte[] originalDiskImage;
         private final int originalDiskSize;
         private final byte[] startupDiskImage;
         private boolean persistent;
@@ -191,6 +197,7 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
             this.appConfigItem = appConfigItem;
             this.key = key;
             this.programIdSource = programIdSource;
+            this.originalDiskImage = originalDiskImage;
             this.originalDiskSize = (originalDiskImage != null) ? originalDiskImage.length : 0;
             this.startupDiskImage = startupDiskImage;
             this.persistent = persistent;
@@ -229,6 +236,39 @@ public class TeaVMOpfsDiskImagePersistence implements DiskImagePersistence {
 
             queueWrite(state, key.getProgramKey(), key.getOriginalDiskHash(),
                     toArrayBuffer(diskImageBytes), metadata.toJson());
+        }
+
+        @Override
+        public void resetToOriginalImage(ResetHandler resetHandler) {
+            if ((originalDiskImage == null) || (originalDiskImage.length == 0)) {
+                resetHandler.onResetFailed();
+                return;
+            }
+
+            long now = System.currentTimeMillis();
+            long nextCreatedAtEpochMs = (createdAtEpochMs != 0) ? createdAtEpochMs : now;
+            long nextPersistenceActivatedAtEpochMs = (persistenceActivatedAtEpochMs != 0)
+                    ? persistenceActivatedAtEpochMs
+                    : now;
+            DiskPersistenceMetadata metadata = new DiskPersistenceMetadata(appConfigItem,
+                    key, programIdSource, originalDiskSize);
+            metadata.setCreatedAtEpochMs(nextCreatedAtEpochMs);
+            metadata.setUpdatedAtEpochMs(now);
+            metadata.setPersistenceActivatedAtEpochMs(nextPersistenceActivatedAtEpochMs);
+            metadata.setPersistedDiskHash(DiskPersistenceSupport.stableHashHex(originalDiskImage));
+
+            writePersistentDisk(state, key.getProgramKey(), key.getOriginalDiskHash(),
+                    toArrayBuffer(originalDiskImage), metadata.toJson(), success -> {
+                        if (!success) {
+                            resetHandler.onResetFailed();
+                            return;
+                        }
+
+                        createdAtEpochMs = nextCreatedAtEpochMs;
+                        persistenceActivatedAtEpochMs = nextPersistenceActivatedAtEpochMs;
+                        persistent = true;
+                        resetHandler.onResetComplete(originalDiskImage);
+                    });
         }
 
         @Override

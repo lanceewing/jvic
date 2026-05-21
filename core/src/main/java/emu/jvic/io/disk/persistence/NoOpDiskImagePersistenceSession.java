@@ -26,6 +26,11 @@ public class NoOpDiskImagePersistenceSession implements DiskImagePersistenceSess
     }
 
     @Override
+    public void resetToOriginalImage(ResetHandler resetHandler) {
+        resetHandler.onResetComplete(startupDiskImage);
+    }
+
+    @Override
     public void close() {
     }
 }

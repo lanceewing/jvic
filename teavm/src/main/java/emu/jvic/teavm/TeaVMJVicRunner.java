@@ -46,6 +46,8 @@ public class TeaVMJVicRunner extends JVicRunner {
 
     private JSObject worker;
     private boolean stopped;
+    private boolean resetMountedDiskSupported;
+    private ResetDiskHandler pendingResetDiskHandler;
     private final TeaVMFrameCounter frameCounter;
     private int lastConsumedFrameCount;
 
@@ -73,6 +75,7 @@ public class TeaVMJVicRunner extends JVicRunner {
         clearPerformanceStats();
 
         byte[] mountedDiskImageData = resolveMountedDiskImageData(appConfigItem, program);
+        resetMountedDiskSupported = supportsMountedDiskReset(appConfigItem, mountedDiskImageData);
         int programDataLength = (program != null) ? program.getProgramData().length : 0;
         int mountedDiskImageDataLength = (mountedDiskImageData != null)
             ? mountedDiskImageData.length
@@ -170,6 +173,19 @@ public class TeaVMJVicRunner extends JVicRunner {
         return loadBlankDiskImage();
     }
 
+    private boolean supportsMountedDiskReset(AppConfigItem appConfigItem,
+            byte[] mountedDiskImageData) {
+        switch (appConfigItem.getDiskWriteMode()) {
+            case OFF:
+            case TEMP:
+                return false;
+            case DEFAULT:
+            case PERSIST:
+            default:
+                return "DISK".equals(appConfigItem.getFileType()) || (mountedDiskImageData != null);
+        }
+    }
+
     private void handleWorkerMessage(JSObject eventObject) {
         switch (TeaVMWorkerInterop.getEventType(eventObject)) {
             case "QuitGame":
@@ -190,6 +206,14 @@ public class TeaVMJVicRunner extends JVicRunner {
                         TeaVMWorkerInterop.getNestedDouble(eventObject, "avgBatchCycles"),
                         TeaVMWorkerInterop.getNestedInt(eventObject, "audioQueueSamples"),
                         TeaVMWorkerInterop.getNestedDouble(eventObject, "audioQueueMillis"));
+                break;
+
+            case "MountedDiskResetComplete":
+                completeMountedDiskReset(true);
+                break;
+
+            case "MountedDiskResetFailed":
+                completeMountedDiskReset(false);
                 break;
 
             default:
@@ -234,6 +258,8 @@ public class TeaVMJVicRunner extends JVicRunner {
         lastConsumedFrameCount = 0;
         TeaVMBrowser.replaceState(TeaVMBrowser.buildCleanUrl());
         worker = null;
+        resetMountedDiskSupported = false;
+        pendingResetDiskHandler = null;
         clearPerformanceStats();
         Gdx.graphics.setTitle("JVic - The web-based VIC 20 emulator built with libGDX");
     }
@@ -306,6 +332,23 @@ public class TeaVMJVicRunner extends JVicRunner {
     }
 
     @Override
+    public boolean canResetMountedDisk() {
+        return (worker != null) && resetMountedDiskSupported;
+    }
+
+    @Override
+    public void requestMountedDiskReset(ResetDiskHandler resetDiskHandler) {
+        if (!canResetMountedDisk() || (pendingResetDiskHandler != null)) {
+            resetDiskHandler.onResetFailed();
+            return;
+        }
+
+        pendingResetDiskHandler = resetDiskHandler;
+        TeaVMWorkerInterop.postObject(worker, "ResetMountedDisk",
+                TeaVMWorkerInterop.createEmptyObject());
+    }
+
+    @Override
     public void sendNmi() {
         if (worker != null) {
             TeaVMWorkerInterop.postObject(worker, "SendNMI", TeaVMWorkerInterop.createEmptyObject());
@@ -320,6 +363,8 @@ public class TeaVMJVicRunner extends JVicRunner {
         }
         soundGenerator.pauseSound();
         stopped = true;
+        resetMountedDiskSupported = false;
+        pendingResetDiskHandler = null;
     }
 
     @Override
@@ -359,6 +404,20 @@ public class TeaVMJVicRunner extends JVicRunner {
     @Override
     public void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem) {
         Gdx.app.log("TeaVMJVicRunner", "saveScreenshot() is not implemented in the TeaVM web target.");
+    }
+
+    private void completeMountedDiskReset(boolean success) {
+        ResetDiskHandler resetDiskHandler = pendingResetDiskHandler;
+        pendingResetDiskHandler = null;
+        if (resetDiskHandler == null) {
+            return;
+        }
+
+        if (success) {
+            resetDiskHandler.onResetComplete();
+        } else {
+            resetDiskHandler.onResetFailed();
+        }
     }
 
     void notifyAudioWorkletReady() {

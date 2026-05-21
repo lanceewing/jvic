@@ -99,6 +99,27 @@ public final class TeaVMJVicWebWorker {
                 }
                 break;
 
+            case "ResetMountedDisk":
+                if (machine != null) {
+                    machine.resetMountedDisk(new Machine.ResetDiskHandler() {
+                        @Override
+                        public void onResetComplete() {
+                            TeaVMWorkerGlobalScope.postObject("MountedDiskResetComplete",
+                                    TeaVMWorkerInterop.createEmptyObject());
+                        }
+
+                        @Override
+                        public void onResetFailed() {
+                            TeaVMWorkerGlobalScope.postObject("MountedDiskResetFailed",
+                                    TeaVMWorkerInterop.createEmptyObject());
+                        }
+                    });
+                } else {
+                    TeaVMWorkerGlobalScope.postObject("MountedDiskResetFailed",
+                            TeaVMWorkerInterop.createEmptyObject());
+                }
+                break;
+
             default:
                 break;
         }

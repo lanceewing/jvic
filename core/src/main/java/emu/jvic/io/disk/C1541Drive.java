@@ -161,6 +161,28 @@ public class C1541Drive {
             this.diskPersistenceSession.close();
         }
 
+        initialiseDisk(diskData, diskPersistenceSession, writeProtected);
+
+        if (warmup) {
+            // Run the 1541 drive for a second to get it warmed up (needed for some games).
+            for (int i = 0; i < 1500000; i++) {
+                emulateCycle();
+            }
+        }
+    }
+
+    /**
+     * Replaces the currently inserted disk image without closing the current
+     * persistence session.
+     */
+    public void replaceDisk(byte[] diskData, boolean writeProtected) {
+        initialiseDisk(diskData, diskPersistenceSession, writeProtected);
+    }
+
+    private void initialiseDisk(byte[] diskData,
+            DiskImagePersistenceSession diskPersistenceSession,
+            boolean writeProtected) {
+
         disk = new GcrDiskImage(diskData);
         this.diskPersistenceSession = diskPersistenceSession;
 
@@ -171,13 +193,11 @@ public class C1541Drive {
         currentTrackSize = disk.getSectorCount(currentTrack);
         currentSector = disk.getSector(currentTrack, 0);
         this.writeProtected = writeProtected;
-
-        if (warmup) {
-            // Run the 1541 drive for a second to get it warmed up (needed for some games).
-            for (int i = 0; i < 1500000; i++) {
-                emulateCycle();
-            }
-        }
+        bytesWritten = 0;
+        currentByte = -1;
+        byteReady = false;
+        lastSync = false;
+        nextMoveForward = 0;
     }
 
     /**

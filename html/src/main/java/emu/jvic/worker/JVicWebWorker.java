@@ -159,6 +159,24 @@ public class JVicWebWorker extends DedicatedWorkerEntryPoint implements MessageH
                     machine.getCpu().setInterrupt(Cpu6502.S_NMI);
                 }
                 break;
+
+            case "ResetMountedDisk":
+                if (machine != null) {
+                    machine.resetMountedDisk(new Machine.ResetDiskHandler() {
+                        @Override
+                        public void onResetComplete() {
+                            postObject("MountedDiskResetComplete", JavaScriptObject.createObject());
+                        }
+
+                        @Override
+                        public void onResetFailed() {
+                            postObject("MountedDiskResetFailed", JavaScriptObject.createObject());
+                        }
+                    });
+                } else {
+                    postObject("MountedDiskResetFailed", JavaScriptObject.createObject());
+                }
+                break;
                 
             default:
                 // Unknown message. Ignore.
