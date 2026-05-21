@@ -32,6 +32,16 @@
       "machineType": "PAL"
     },
     {
+      "name": "Attack of the PETSCII Robots",
+      "displayName": "Attack of the\nPETSCII Robots",
+      "filePath": "https://vic20.games/programs?url=https://www.the8bitguy.com/wp-content/uploads/2025/09/Vic-Robots12.zip",
+      "fileType": "DISK",
+      "entryName": "vicrobots12.d64",
+      "iconPath": "screenshots/A/Attack of the PETSCII Robots/Attack_of_the_PETSCII_Robots.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Bad Scene Poetry",
       "displayName": "Bad Scene\nPoetry",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Demos%20-%20%5BPRG%5D%2FBad%20Scene%20Poetry%20%282003-08-30%29%28Cosine%29.zip",
@@ -805,6 +815,14 @@
       "iconPath": "screenshots/V/VIC44/VIC44.png",
       "machineType": "VIC44K",
       "ram": "RAM_UNEXPANDED"
+    },
+    {
+      "name": "VVVVIC",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=8046",
+      "fileType": "PRG",
+      "iconPath": "screenshots/V/VVVVIC/VVVVIC.png",
+      "machineType": "PAL",
+      "ram": "RAM_24K"
     },
     {
       "name": "Whack-E",
