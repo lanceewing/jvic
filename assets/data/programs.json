@@ -570,6 +570,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Quikman+",
+      "filePath": "https://vic20.games/programs?url=https://github.com/theflyingape/quikman_8k/releases/download/2014/quikman.8k.prg",
+      "fileType": "PRG",
+      "iconPath": "screenshots/Q/Quikman+/Quikman+.png",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
+    },
+    {
       "name": "Raid on Fort Knox",
       "displayName": "Raid on\nFort Knox",
       "filePath": "https://archive.org/download/download_20220510_2209/Vic20_gamebase_v03.zip/Games%2FRaid%20on%20Fort%20Knox.zip",
