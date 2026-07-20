@@ -52,7 +52,7 @@ export async function onRequest(context) {
 			request.headers.set("Origin", new URL(targetUrl).origin);
             
             // Perform request to destination URL.
-            let response = await fetch(request);
+            let response = await fetch(request, { redirect: 'follow' });
             
             // Recreate the response so you can modify the headers
             response = new Response(response.body, response);
