@@ -458,6 +458,14 @@
       "ram": "RAM_UNEXPANDED"
     },
     {
+      "name": "Omega Fury",
+      "filePath": "https://vic20.games/programs?url=https://github.com/theflyingape/omega-fury/releases/download/final/omega-fury.prg",
+      "fileType": "PRG",
+      "iconPath": "screenshots/O/Omega Fury/Omega_Fury.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Omega Race",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FOmega%20Race%20%281982%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
