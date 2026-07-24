@@ -170,6 +170,14 @@
       "machineType": "PAL"
     },
     {
+      "name": "Death Chase",
+      "filePath": "https://vic20.games/programs?url=https://raw.githubusercontent.com/Kweepa/Chase/refs/heads/main/chase.prg",
+      "fileType": "PRG",
+      "iconPath": "screenshots/D/Death Chase/Death_Chase.png",
+      "machineType": "PAL",
+      "ram": "RAM_8K"
+    },
+    {
       "name": "Defender",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FDefender%20%281983%29%28Atarisoft%29%28NTSC-PAL%29%5B6000%5D.zip",
       "fileType": "CART",
