@@ -634,6 +634,14 @@
       "ram": "RAM_8K"
     },
     {
+      "name": "Sabre Wulf",
+      "filePath": "https://vic20.games/programs?url=https://sleepingelephant.com/ipw-web/bulletin/bb/download/file.php?id=8212",
+      "fileType": "DISK",
+      "iconPath": "screenshots/S/Sabre Wulf/Sabre_Wulf.png",
+      "machineType": "PAL",
+      "ram": "RAM_35K"
+    },
+    {
       "name": "Shamus",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FShamus%20%281983%29%28HES%29%28NTSC%29%5BA000%5D.zip",
       "fileType": "CART",
