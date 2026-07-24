@@ -357,6 +357,15 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Jet Set Willy",
+      "displayName": "Jet Set\nWilly",
+      "filePath": "https://vic20.games/programs?url=https://raw.githubusercontent.com/Kweepa/Willy-Tape/refs/heads/master/jsw.prg",
+      "fileType": "PRG",
+      "iconPath": "screenshots/J/Jet Set Willy/Jet_Set_Willy.png",
+      "machineType": "PAL",
+      "ram": "RAM_16K"
+    },
+    {
       "name": "Jupiter Lander",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FJupiter%20Lander%20-%20VIC%20Super%20Lander%20%281981%29%28Commodore%29%5BA000%5D.zip",
       "fileType": "CART",
