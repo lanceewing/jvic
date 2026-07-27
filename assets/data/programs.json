@@ -118,6 +118,14 @@
       "machineType": "NTSC"
     },
     {
+      "name": "Cannonball Blitz",
+      "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCannonball%20Blitz%20%281982%29%28Sierra%29%28NTSC%29%5B2000%5D%5BA000%5D%5Bmultipart%5D.zip",
+      "fileType": "CART",
+      "iconPath": "screenshots/C/Cannonball Blitz/Cannonball_Blitz.png",
+      "loadAddress": "2000,A000",
+      "machineType": "NTSC"
+    },
+    {
       "name": "Capture the Flag",
       "displayName": "Capture\nthe Flag",
       "filePath": "https://archive.org/download/tosec-20161111-commodore-vic-20_20170305/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot.zip/TOSEC.2016.11.11.Commodore.VIC20.AlphaBot%2FCommodore%20VIC20%20-%20Games%20-%20%5BCRT%5D%2FCapture%20the%20Flag%20%281983%29%28Sirius%29%28NTSC%29%5BA000%5D.zip",
