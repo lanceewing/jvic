@@ -225,10 +225,14 @@ public class AndroidProgramLoader extends ProgramLoader {
                 loadAddress.append(loadAddrKey);
                 byte[] partData = cartParts.get(loadAddrKey);
                 baos.write(partData);
-                // If less than 8192, then pad with 00s.
+                // If less than 8192, mirror the content to fill the 8K slot.
+                // On real VIC-20 hardware a ROM chip smaller than 8K has its upper
+                // address line(s) unconnected, causing the ROM to mirror itself across
+                // the full 8K slot.  Zero-filling would place BRK ($00) opcodes in the
+                // mirror area and crash any game that calls code there.
                 int paddingSize = (8192 - partData.length);
                 for (int i=0; i<paddingSize; i++) {
-                    baos.write(0);
+                    baos.write(partData[i % partData.length]);
                 }
             }
             
