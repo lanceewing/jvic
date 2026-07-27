@@ -100,12 +100,7 @@ public class AndroidProgramLoader extends ProgramLoader {
                                     programData = fileData;
                                     break;
                                 }
-                                if (isCartFile(fileData) && entryMatch) {
-                                    appConfigItem.setFileType("CART");
-                                    programData = removeStartAddress(fileData);
-                                    break;
-                                }
-                                if (entryName.endsWith(".crt") && entryMatch) {
+                                if ((entryName.endsWith(".crt") || isCartFile(fileData)) && entryMatch) {
                                     appConfigItem.setFileType("CART");
                                     programData = loadFullCartProgramData(entryName, fileData, zis, appConfigItem);
                                     break;
