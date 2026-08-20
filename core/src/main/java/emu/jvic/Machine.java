@@ -11,6 +11,7 @@ import emu.jvic.io.Keyboard;
 import emu.jvic.io.Via1;
 import emu.jvic.io.Via2;
 import emu.jvic.io.Via6522;
+import emu.jvic.io._65omatic.MenuConfigIO;
 import emu.jvic.io.SerialBus;
 import emu.jvic.io.disk.C1541Drive;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
@@ -70,6 +71,8 @@ public class Machine {
 
     private MachineType machineType;
     
+    private MenuConfigIO menuConfigIO;
+
     /**
      * Constructor for Machine.
      * 
@@ -85,6 +88,15 @@ public class Machine {
         }
         this.keyboardMatrix = keyboardMatrix;
         this.pixelData = pixelData;
+    }
+
+    /**
+     * Sets the MenuConfigIO instance to be used by the Machine.
+     * 
+     * @param menuConfigIO
+     */
+    public void setMenuConfigIO(MenuConfigIO menuConfigIO) {
+        this.menuConfigIO = menuConfigIO;
     }
 
     /**
@@ -200,7 +212,7 @@ public class Machine {
         // Now we create the memory, which will include mapping the VIC chip,
         // the VIA chips, and the creation of RAM chips and ROM chips.
         memory = new Vic20Memory(cpu, vic, via1, via2, ramType.getRamPlacement(), machineType, 
-                basicRom, kernalRom, charRom, snapshot);
+                basicRom, kernalRom, charRom, snapshot, menuConfigIO);
 
         // Initialise the sound generator.
         soundGenerator.init(memory.getMemoryArray(), machineType);

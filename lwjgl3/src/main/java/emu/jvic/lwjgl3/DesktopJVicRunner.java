@@ -25,6 +25,8 @@ import emu.jvic.PixelData;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.io._65omatic.MenuConfigIO;
+import emu.jvic.io._65omatic.MenuConfigIO.ResetCallback;
 import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
@@ -92,14 +94,65 @@ public class DesktopJVicRunner extends JVicRunner {
         }
     }
 
+    private MenuConfigIO applyMenuConfigIOOverrides(final AppConfigItem appConfigItem) {
+        if ("65omatic".equals(appConfigItem.getName())) {
+            MenuConfigIO menuConfigIO = new MenuConfigIO(
+                new ResetCallback() {
+                    @Override
+                    public void triggerReset() {
+                        // This callback is invoked from within machine.update(), which runs on
+                        // the machine thread itself. We must NOT block here waiting for the
+                        // machine thread to stop — that would cause a deadlock (the thread
+                        // waiting for itself to die). Instead, we enqueue the stop+restart as
+                        // a pending action. The machine thread returns from triggerReset(),
+                        // completes the current cycle, then picks up the pending action at
+                        // the top of the main loop via processPendingMachineActions().
+                        enqueueMachineAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                stop();
+                                start(appConfigItem);
+                            }
+                        });
+                    }
+                }
+            );
+            if (menuConfigIO.getBootMode() == MenuConfigIO.BOOT_SKIP_MENU) {
+                System.out.println("65omatic menu config overrides: RAM=" + menuConfigIO.getRamType().name() + ", KERNAL machine type=" + menuConfigIO.getKernalMachineType().name());
+                appConfigItem.setRam(menuConfigIO.getRamType().name());
+                appConfigItem.setMachineType(menuConfigIO.getKernalMachineType().name());
+                appConfigItem.setFilePath("");
+                appConfigItem.setFileType("");
+                appConfigItem.setLoadAddress(null);
+                return null;
+            } else {
+                System.out.println("65omatic menu activated");
+                appConfigItem.setRam("RAM_8K");
+                appConfigItem.setMachineType("PAL");
+                appConfigItem.setFilePath("roms/menu_rom.bin");
+                appConfigItem.setFileType("CART");
+                appConfigItem.setLoadAddress("A000");
+                return menuConfigIO;
+            }
+        } else {
+            // It isn't the 65omatic menu, so don't build a MenuConfigIO.
+            return null;
+        }
+    }
+    
     private void runProgram(AppConfigItem appConfigItem, Program program,
             DiskImagePersistenceSession persistenceSession, byte[] mountedDiskImageData) {
+
+        // TODO: This will only work for Desktop at the moment, since web needs different storage for web worker.
+        MenuConfigIO menuConfigIO = applyMenuConfigIOOverrides(appConfigItem);
+
         MachineType machineType = MachineType.valueOf(appConfigItem.getMachineType());
         RamType ramType = RamType.valueOf(appConfigItem.getRam());
         
         // Create the Machine instance that will run the VIC 20 program.
         machine = new Machine(soundGenerator, keyboardMatrix, pixelData);
-        
+        machine.setMenuConfigIO(menuConfigIO);
+
         // Load the ROM files.
         byte[] basicRom = loadBasicRom(machineType);
         byte[] dos1541Rom = Gdx.files.internal("roms/dos1541.rom").readBytes();
@@ -114,6 +167,17 @@ public class DesktopJVicRunner extends JVicRunner {
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         
+        // Hung-CPU diagnostic: track the PC every CHECK_INTERVAL_FRAMES frames, starting
+        // after WARMUP_FRAMES (to skip normal KERNAL boot). If the PC stays in the same
+        // 256-byte page for STUCK_THRESHOLD consecutive checks, dump CPU state.
+        final int WARMUP_FRAMES = machineType.getFramesPerSecond() * 3;   // 3 seconds
+        final int CHECK_INTERVAL_FRAMES = machineType.getFramesPerSecond(); // every 1 second
+        final int STUCK_THRESHOLD = 5;
+        int frameCount = 0;
+        int lastCheckedPc = -1;
+        int stuckCount = 0;
+        boolean hungReported = false;
+
         long lastTime = TimeUtils.nanoTime();
 
         while (true) {
@@ -147,6 +211,44 @@ public class DesktopJVicRunner extends JVicRunner {
 
             // Updates the Machine's state for a frame.
             machine.update();
+            
+            // Hung-CPU diagnostic check.
+            if (!hungReported) {
+                frameCount++;
+                if (frameCount > WARMUP_FRAMES && (frameCount % CHECK_INTERVAL_FRAMES) == 0) {
+                    int currentPc = machine.getCpu().getProgramCounter();
+                    if (lastCheckedPc >= 0 && ((currentPc >> 8) == (lastCheckedPc >> 8))) {
+                        stuckCount++;
+                        System.out.println(String.format(
+                            "HungCPU[%d]: PC=$%04X still in same 256-byte page as last check ($%04X)",
+                            stuckCount, currentPc, lastCheckedPc));
+                        if (stuckCount >= STUCK_THRESHOLD) {
+                            System.out.println("HungCPU: CPU appears stuck. Register state:");
+                            System.out.println("  " + machine.getCpu().getRegisterStatus());
+                            int[] mem = machine.getMemory().getMemoryArray();
+                            StringBuilder sb = new StringBuilder("  Memory near PC:");
+                            for (int i = -4; i <= 8; i++) {
+                                int addr = (currentPc + i) & 0xFFFF;
+                                sb.append(String.format(" $%04X=%02X", addr, mem[addr]));
+                            }
+                            System.out.println(sb.toString());
+                            // Dump KERNAL vectors so we can trace where IRQ/NMI/BRK are going.
+                            System.out.println(String.format(
+                                "  Vectors: NMI=$%02X%02X  RESET=$%02X%02X  IRQ=$%02X%02X",
+                                mem[0xFFFB], mem[0xFFFA], mem[0xFFFD], mem[0xFFFC],
+                                mem[0xFFFF], mem[0xFFFE]));
+                            System.out.println(String.format(
+                                "  RAM vectors: userIRQ=$%02X%02X  BRK=$%02X%02X  NMI=$%02X%02X",
+                                mem[0x0315], mem[0x0314], mem[0x0317], mem[0x0316],
+                                mem[0x0319], mem[0x0318]));
+                            hungReported = true;
+                        }
+                    } else {
+                        stuckCount = 0;
+                    }
+                    lastCheckedPc = currentPc;
+                }
+            }
             
             // Check for BASIC program auto-load
             if (autoLoadProgram != null) {

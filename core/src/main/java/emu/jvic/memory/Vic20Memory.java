@@ -8,6 +8,7 @@ import emu.jvic.MachineType;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Via6522;
+import emu.jvic.io._65omatic.MenuConfigIO;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.video.Vic;
 
@@ -38,6 +39,11 @@ public class Vic20Memory extends Memory {
     private MachineType machineType;
 
     /**
+     * The 65omatic menu system's configuration API.
+     */
+    private MenuConfigIO menuConfigIO;
+
+    /**
      * Constructor for Vic20Memory.
      * 
      * @param cpu          The CPU that will access this Memory.
@@ -52,7 +58,7 @@ public class Vic20Memory extends Memory {
      * @param snapshot     Optional snapshot of the machine state to start with.
      */
     public Vic20Memory(Cpu6502 cpu, Vic vic, Via6522 via1, Via6522 via2, int ramExpansion, MachineType machineType,
-            byte[] basicRom, byte[] kernalRom, byte[] charRom, Snapshot snapshot) {
+            byte[] basicRom, byte[] kernalRom, byte[] charRom, Snapshot snapshot, MenuConfigIO menuConfigIO) {
         super(cpu, snapshot);
         if (snapshot != null) {
             this.ramExpansion = snapshot.getRamExpansion();
@@ -60,6 +66,7 @@ public class Vic20Memory extends Memory {
             this.ramExpansion = ramExpansion;
         }
         this.machineType = machineType;
+        this.menuConfigIO = menuConfigIO;
         initVicMemory(vic, via1, via2, basicRom, kernalRom, charRom);
     }
 
@@ -177,7 +184,20 @@ public class Vic20Memory extends Memory {
             // The colour RAM lives at this spot by default.
             mapChipToMemory(new NibbleRamChip(), 0x9400, 0x97FF);
     
-            mapChipToMemory(vic, 0x9800, 0x9FFF); // Unconnected VIC address bus space.
+            // 65omatic menu system's config API (currently 4 consecutive memory locations)
+            if ((menuConfigIO == null) || (menuConfigIO.getBootMode() == MenuConfigIO.BOOT_SKIP_MENU)) {
+                // If the user has selected to skip the menu, then we will not map the menu system
+                // to memory. This means that the menu system will not be available, but it also
+                // means that the VIC 20's memory map will be more like a real VIC 20.
+                mapChipToMemory(vic, 0x9800, 0x9803); // Unconnected VIC address bus space.
+            } 
+            else {
+                // Map the 65omatic menu system config to memory.
+                mapChipToMemory(menuConfigIO, 0x9800, 0x9803);
+            }
+
+            // The rest of I/O 2/3.
+            mapChipToMemory(vic, 0x9804, 0x9FFF); // Unconnected VIC address bus space.
     
             // It is possible to connect RAM in this block, even though it would normally be
             // a cartridge ROM.
@@ -309,7 +329,6 @@ public class Vic20Memory extends Memory {
                         secondPartStartAddress = Integer.parseInt(addressParts[1], 16);
                     }
                 }
-                
                 mapChipToMemory(new RomChip(), firstPartStartAddress, firstPartStartAddress + 0x1FFF, cartData);
                 byte data2ndHalf[] = new byte[8192];
                 System.arraycopy(cartData, 8192, data2ndHalf, 0, 8192);
