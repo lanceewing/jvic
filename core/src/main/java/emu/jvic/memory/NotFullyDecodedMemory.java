@@ -29,7 +29,11 @@ public class NotFullyDecodedMemory extends MemoryMappedChip {
      * @return the contents of the memory address.
      */
     public int readMemory(int address) {
-        int value = 0;
+        // Models a wired-AND bus: an idle line reads as 1, and each selected chip
+        // can only pull individual bits low, never force one back high. 0xFF is
+        // AND's identity value, so it starts the accumulator "undriven" and lets
+        // each chip's zero bits (and only its zero bits) win.
+        int value = 0xFF;
         int len = chips.length;
 
         for (int i = 0; i < len; i++) {
