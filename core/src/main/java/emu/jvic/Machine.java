@@ -423,10 +423,19 @@ public class Machine {
     
     /**
      * Gets the Memory used by this Machine.
-     * 
+     *
      * @return
      */
     public Memory getMemory() {
         return memory;
+    }
+
+    /**
+     * Gets the C1541Drive used by this Machine.
+     *
+     * @return The C1541Drive used by this Machine.
+     */
+    public C1541Drive getC1541Drive() {
+        return c1541Drive;
     }
 }

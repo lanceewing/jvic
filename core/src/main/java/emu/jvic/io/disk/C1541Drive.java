@@ -435,9 +435,46 @@ public class C1541Drive {
         return currentSector.read(currentSectorOffset);
     }
 
+    // ---------------------------------------------------------------------------
+    // Package-private, read-only accessors for test observability. These expose
+    // no new behaviour - they let same-package tests observe internal head/byte
+    // state without needing to bypass or fight the drive's own CPU (which is
+    // actively running the real DOS ROM against via1/via2 every cycle).
+    // ---------------------------------------------------------------------------
+
+    /** The track (1-35) that the drive head is currently positioned over. */
+    int getCurrentTrack() {
+        return currentTrack;
+    }
+
+    /** The half-track (2-70) that the drive head is currently positioned over. */
+    int getCurrentHalfTrack() {
+        return currentHalfTrack;
+    }
+
+    /** Whether a byte is currently ready for the CPU to read. */
+    boolean isByteReady() {
+        return byteReady;
+    }
+
+    /** Whether the head is currently positioned at a sync mark (only meaningful while reading). */
+    boolean isAtSyncMark() {
+        return atSyncMark();
+    }
+
+    /** Whether the drive motor is currently on. */
+    boolean isMotorOn() {
+        return motorOn;
+    }
+
+    /** Whether the drive is currently in write mode (as opposed to read mode). */
+    boolean isDiskModeWrite() {
+        return diskModeWrite;
+    }
+
     /**
      * Creates the Via6522 that handles the Serial Communication.
-     * 
+     *
      * @return The Via6522 that handles the Serial Communication.
      */
     public Via6522 createVia1() {
