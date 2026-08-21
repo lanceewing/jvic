@@ -125,6 +125,11 @@ public class Cpu6502 extends BaseChip {
     private static final int ISC = 66;
     private static final int RRA = 67;
     private static final int ARR = 68;
+    private static final int RLA = 69;
+    private static final int SRE = 70;
+    private static final int DCP = 71;
+    private static final int SBX = 72;
+    private static final int ALR = 73;
 
     // Instruction constant for emulation trap routine.
     private static final int TRAP = 0x100;
@@ -200,7 +205,7 @@ public class Cpu6502 extends BaseChip {
         {BRK, FETCH_INC_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST}, // BRK
         {ORA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ORA - (Indirect, X)
         {}, // - KIL
-        {SLO, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_ADL, STORE_DATA_ADL}, // SLO* - (Indirect, X)
+        {SLO, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SLO* - (Indirect, X)
         {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP* - Zero Page
         {ORA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // ORA - Zero Page
         {ASL, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ASL - Zero Page
@@ -219,112 +224,112 @@ public class Cpu6502 extends BaseChip {
         // 10 (16)
         {BPL, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BPL
         {ORA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - (Indirect), Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {SLO, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SLO* - (Indirect), Y
+        {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {ORA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // ORA - Zero Page, X
         {ASL, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ASL - Zero Page, X
-        {}, // -
+        {SLO, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // SLO* - Zero Page, X
     
         // 18 (24)
         {CLC, EXECUTE_DIS}, // CLC
         {ORA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {SLO, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SLO* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {ORA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - Absolute, X
         {ASL, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ASL - Absolute, X
-        {}, // -
+        {SLO, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SLO* - Absolute, X
     
         // 20 (32)
         {JSR, FETCH_ADL_PC, FETCH_DIS_SP, STORE_PCH_SP, STORE_PCL_SP, FETCH_ADH_PC, EXECUTE_LAST}, // JSR
         {AND, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // AND - (Indirect, X)
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {RLA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // RLA* - (Indirect, X)
         {BIT, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // BIT - Zero Page
         {AND, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // AND - Zero Page
         {ROL, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ROL - Zero Page
-        {}, // -
+        {RLA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // RLA* - Zero Page
     
         // 28 (40)
         {PLP, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_DATA_SP, EXECUTE_LAST}, // PLP
         {AND, FETCH_DATA_PC, EXECUTE_LAST}, // AND - Immediate
         {ROL_A, EXECUTE_DIS}, // ROL - Accumulator
-        {}, // -
+        {ANC, FETCH_DATA_PC, EXECUTE_LAST}, // ANC* - Immediate
         {BIT, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // BIT - Absolute
         {AND, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // AND - Absolute
         {ROL, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ROL - Absolute
-        {}, // -
+        {RLA, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // RLA* - Absolute
     
         // 30 (48)
         {BMI, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BMI
         {AND, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // AND - (Indirect), Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {RLA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RLA* - (Indirect), Y
+        {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {AND, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // AND - Zero Page, X
         {ROL, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ROL - Zero Page, X
-        {}, // -
+        {RLA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // RLA* - Zero Page, X
     
         // 38 (56)
         {SEC, EXECUTE_DIS}, // SEC
         {AND, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // AND - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {RLA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RLA* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {AND, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // AND - Absolute, X
         {ROL, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ROL - Absolute, X
-        {}, // -
+        {RLA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RLA* - Absolute, X
     
         // 40 (64)
         {RTI, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_P_SP, FETCH_PCL_SP, FETCH_PCH_SP, EXECUTE_LAST}, // RTI
         {EOR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // EOR - (Indirect, X)
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {SRE, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SRE* - (Indirect, X)
+        {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP* - Zero Page
         {EOR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // EOR - Zero Page
         {LSR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // LSR - Zero Page
-        {}, // -
+        {SRE, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // SRE* - Zero Page
     
         // 48 (72)
         {PHA, EXECUTE_DIS, STORE_DATA_SP}, // PHA
         {EOR, FETCH_DATA_PC, EXECUTE_LAST}, // EOR - Immediate
         {LSR_A, EXECUTE_DIS}, // LSR - Accumulator
-        {}, // -
+        {ALR, FETCH_DATA_PC, EXECUTE_LAST}, // ALR* - Immediate
         {JMP, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_LAST}, // JMP - Absolute
         {EOR, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // EOR - Absolute
         {LSR, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // LSR - Absolute
-        {}, // -
+        {SRE, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SRE* - Absolute
     
         // 50 (80)
         {BVC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVC
         {EOR, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - (Indirect), Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {SRE, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SRE* - (Indirect), Y
+        {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {EOR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // EOR - Zero Page, X
         {LSR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // LSR - Zero Page, X
-        {}, // -
+        {SRE, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // SRE* - Zero Page, X
     
         // 58 (88)
         {CLI, EXECUTE_DIS}, // CLI
         {EOR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {SRE, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SRE* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {EOR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - Absolute, X
         {LSR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // LSR - Absolute, X
-        {}, // -
+        {SRE, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SRE* - Absolute, X
     
         // 60 (96)
         {RTS, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_PCL_SP, FETCH_PCH_SP, FETCH_DATA_PC}, // RTS
         {ADC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ADC - (Indirect, X)
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {RRA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // RRA* - (Indirect, X)
         {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP - Zero Page
         {ADC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // ADC - Zero Page
         {ROR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ROR - Zero Page
-        {}, // -
+        {RRA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // RRA* - Zero Page
     
         // 68 (104)
         {PLA, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_DATA_SP, EXECUTE_LAST}, // PLA
@@ -340,37 +345,37 @@ public class Cpu6502 extends BaseChip {
         {BVS, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVS
         {ADC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - (Indirect), Y
         {}, // -
-        {RRA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_MID_EA, STORE_DATA_EA}, // RRA (Indirect), Y
+        {RRA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RRA* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP - Zero Page, X
         {ADC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // ADC - Zero Page, X
         {ROR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ROR - Zero Page, X
-        {}, // -
+        {RRA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // RRA* - Zero Page, X
     
         // 78 (120)
         {SEI, EXECUTE_DIS}, // SEI
         {ADC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {RRA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RRA* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {ADC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - Absolute, X
         {ROR, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ROR - Absolute, X
-        {}, // -
+        {RRA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RRA* - Absolute, X
     
         // 80 (128)
-        {}, // -
+        {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
         {STA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, EXECUTE_STORE_EA}, // STA - (Indirect, X)
-        {}, // -
-        {}, // -
+        {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
+        {SAX, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, EXECUTE_STORE_EA}, // SAX* - (Indirect, X)
         {STY, FETCH_ADL_PC, EXECUTE_STORE_ADL}, // STY - Zero Page
         {STA, FETCH_ADL_PC, EXECUTE_STORE_ADL}, // STA - Zero Page
         {STX, FETCH_ADL_PC, EXECUTE_STORE_ADL}, // STX - Zero Page
-        {}, // -
+        {SAX, FETCH_ADL_PC, EXECUTE_STORE_ADL}, // SAX* - Zero Page
     
         // 88 (136)
         {DEY, EXECUTE_DIS}, // DEY
-        {}, // -
+        {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
         {TXA, EXECUTE_DIS}, // TXA Implied
-        {}, // -
+        {}, // - ANE* (unstable, not implemented)
         {STY, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STY - Absolute
         {STA, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STA - Absolute
         {STX, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STX - Absolute
@@ -379,48 +384,48 @@ public class Cpu6502 extends BaseChip {
         // 90 (144)
         {BCC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BCC
         {STA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - (Indirect), Y
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {}, // - SHA* (unstable, not implemented)
         {STY, FETCH_BAL_PC, FETCH_DIS_BAL_X, EXECUTE_STORE_BAL}, // STY - Zero Page, X
         {STA, FETCH_BAL_PC, FETCH_DIS_BAL_X, EXECUTE_STORE_BAL}, // STA - Zero Page, X
         {STX, FETCH_BAL_PC, FETCH_DIS_BAL_Y, EXECUTE_STORE_BAL}, // STX - Zero Page, Y
-        {}, // -
+        {SAX, FETCH_BAL_PC, FETCH_DIS_BAL_Y, EXECUTE_STORE_BAL}, // SAX* - Zero Page, Y
     
         // 98 (152)
         {TYA, EXECUTE_DIS}, // TYA
         {STA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - Absolute, Y
         {TXS, EXECUTE_DIS}, // TXS
-        {}, // -
-        {}, // -
+        {}, // - TAS* (unstable, not implemented)
+        {}, // - SHY* (unstable, not implemented)
         {STA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, EXECUTE_STORE_BA}, // STA - Absolute, X
-        {}, // -
-        {}, // -
+        {}, // - SHX* (unstable, not implemented)
+        {}, // - SHA* (unstable, not implemented)
     
         // A0 (160)
         {LDY, FETCH_DATA_PC, EXECUTE_LAST}, // LDY - Immediate
         {LDA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // LDA - (Indirect, X)
         {LDX, FETCH_DATA_PC, EXECUTE_LAST}, // LDX - Immediate
-        {}, // -
+        {LAX, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // LAX* - (Indirect, X)
         {LDY, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // LDY - Zero Page
         {LDA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // LDA - Zero Page
         {LDX, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // LDX - Zero Page
-        {}, // -
+        {LAX, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // LAX* - Zero Page
     
         // A8 (168)
         {TAY, EXECUTE_DIS}, // TAY
         {LDA, FETCH_DATA_PC, EXECUTE_LAST}, // LDA - Immediate
         {TAX, EXECUTE_DIS}, // TAX
-        {}, // -
+        {}, // - LXA* (unstable, not implemented)
         {LDY, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDY - Absolute
         {LDA, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDA - Absolute
         {LDX, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDX - Absolute
-        {}, // -
+        {LAX, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LAX* - Absolute
     
         // B0 (176)
         {BCS, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BCS
         {LDA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - (Indirect), Y
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {LAX, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LAX* - (Indirect), Y
         {LDY, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // LDY - Zero Page, X
         {LDA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // LDA - Zero Page, X
         {LDX, FETCH_BAL_PC, FETCH_DIS_BAL_Y, FETCH_DATA_BAL, EXECUTE_LAST}, // LDX - Zero Page, Y
@@ -430,74 +435,74 @@ public class Cpu6502 extends BaseChip {
         {CLV, EXECUTE_DIS}, // CLV
         {LDA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - Absolute, Y
         {TSX, EXECUTE_DIS}, // TSX
-        {}, // -
+        {}, // - LAS* (unstable, not implemented)
         {LDY, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // LDY - Absolute, X
         {LDA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - Absolute, X
         {LDX, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDX - Absolute, Y
-        {}, // -
+        {LAX, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LAX* - Absolute, Y
     
     
         {CPY, FETCH_DATA_PC, EXECUTE_LAST}, // CPY - Immediate
         {CMP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // CMP - (Indirect, X)
-        {}, // -
-        {}, // -
+        {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
+        {DCP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // DCP* - (Indirect, X)
         {CPY, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // CPY - Zero Page
         {CMP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // CMP - Zero Page
         {DEC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // DEC - Zero Page
-        {}, // -
+        {DCP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // DCP* - Zero Page
     
         {INY, EXECUTE_DIS}, // INY
         {CMP, FETCH_DATA_PC, EXECUTE_LAST}, // CMP - Immediate
         {DEX, EXECUTE_DIS}, // DEX
-        {}, // -
+        {SBX, FETCH_DATA_PC, EXECUTE_LAST}, // SBX* - Immediate
         {CPY, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // CPY - Absolute
         {CMP, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // CMP - Absolute
         {DEC, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // DEC - Absolute
-        {}, // -
+        {DCP, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // DCP* - Absolute
     
         {BNE, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BNE
         {CMP, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // CMP - (Indirect), Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {DCP, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // DCP* - (Indirect), Y
+        {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {CMP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // CMP - Zero Page, X
         {DEC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // DEC - Zero Page, X
-        {}, // -
+        {DCP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // DCP* - Zero Page, X
     
         {CLD, EXECUTE_DIS}, // CLD
         {CMP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // CMP - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {DCP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // DCP* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {CMP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // CMP - Absolute, X
         {DEC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // DEC - Absolute, X
-        {}, // -
+        {DCP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // DCP* - Absolute, X
     
     
         {CPX, FETCH_DATA_PC, EXECUTE_LAST}, // CPX - Immediate
         {SBC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // SBC - (Indirect, X)
-        {}, // -
-        {}, // -
+        {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
+        {ISC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ISC* - (Indirect, X)
         {CPX, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // CPX - Zero Page
         {SBC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // SBC - Zero Page
         {INC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // INC - Zero Page
-        {}, // -
+        {ISC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_MID_ADL, STORE_DATA_ADL}, // ISC* - Zero Page
     
         {INX, EXECUTE_DIS}, // INX
         {SBC, FETCH_DATA_PC, EXECUTE_LAST}, // SBC - Immediate
         {NOP, EXECUTE_DIS}, // NOP
-        {}, // -
+        {SBC, FETCH_DATA_PC, EXECUTE_LAST}, // SBC* - Immediate (undocumented duplicate of 0xE9)
         {CPX, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // CPX - Absolute
         {SBC, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // SBC - Absolute
         {INC, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // INC - Absolute
-        {}, // -
+        {ISC, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // ISC* - Absolute
     
         // F0
         {BEQ, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BEQ
         {SBC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // SBC - (Indirect), Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {}, // - KIL
+        {ISC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ISC* - (Indirect), Y
+        {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {SBC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // SBC - Zero Page, X
         {INC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // INC - Zero Page, X
         {ISC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_MID_BAL, STORE_DATA_BAL}, // ISC - Zero Page, X
@@ -505,12 +510,12 @@ public class Cpu6502 extends BaseChip {
         // F8
         {SED, EXECUTE_DIS}, // SED
         {SBC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // SBC - Absolute, Y
-        {}, // -
-        {}, // -
-        {}, // -
+        {NOP, EXECUTE_DIS}, // NOP* - Implied
+        {ISC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ISC* - Absolute, Y
+        {NOP, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // NOP* - Absolute, X
         {SBC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // SBC - Absolute, X
         {INC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // INC - Absolute, X
-        {},  // -
+        {ISC, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ISC* - Absolute, X
         
         {TRAP, EXECUTE_DIS}   // Opcode 256 (0x100) is mapped to an emulation trap routine.
     };
@@ -698,7 +703,7 @@ public class Cpu6502 extends BaseChip {
         negativeResultFlag = false;
         overflowFlag = false;
         decimalModeFlag = false;
-        interruptDisableFlag = false;
+        interruptDisableFlag = true; // real 6502/6510 hardware sets I=1 on reset
         zeroResultFlag = false;
         carryFlag = false;
         processorStatusRegister = 0x20;
@@ -1245,8 +1250,7 @@ public class Cpu6502 extends BaseChip {
             // carry).
             tmp = (inputDataLatch & 1);
             dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
-            //carryFlag = (tmp != 0);
-            //setNZ(dataBusBuffer);
+            carryFlag = (tmp != 0); // bit rotated out of memory becomes the carry used by the addition below
             op1 = accumulator;
             //op2 = inputDataLatch;
             op2 = dataBusBuffer;
@@ -1286,15 +1290,57 @@ public class Cpu6502 extends BaseChip {
               // Status flags: N,V,Z,C
               
               accumulator = accumulator & inputDataLatch;
-              //setNZ(accumulator);
-              
+
               tmp = accumulator | (carryFlag ? 0x100 : 0);
-              carryFlag = (accumulator & 1) != 0;
-              accumulator = (tmp >> 1);
+              accumulator = (tmp >> 1) & 0xFF;
+              carryFlag = (accumulator & 0x40) != 0;
+              overflowFlag = (((accumulator >> 6) ^ (accumulator >> 5)) & 1) != 0;
               setNZ(accumulator);
-              
+
               break;
-            
+
+          case RLA:
+            // Rotate one bit left in memory, then AND accumulator with memory.
+            tmp = (inputDataLatch & 0x80);
+            dataBusBuffer = (((inputDataLatch << 1) | (carryFlag ? 1 : 0)) & 0xFF);
+            carryFlag = (tmp != 0);
+            accumulator = accumulator & dataBusBuffer;
+            setNZ(accumulator);
+            break;
+
+          case SRE:
+            // Shift one bit right in memory, then EOR accumulator with memory.
+            carryFlag = (inputDataLatch & 1) != 0;
+            dataBusBuffer = inputDataLatch >> 1;
+            accumulator = accumulator ^ dataBusBuffer;
+            setNZ(accumulator);
+            break;
+
+          case DCP:
+            // Decrement memory by one, then compare accumulator with memory (as per CMP).
+            dataBusBuffer = ((inputDataLatch - 1) & 0xFF);
+            tmp = accumulator - dataBusBuffer;
+            setFlagBorrow(tmp);
+            setNZ(tmp);
+            break;
+
+          case SBX:
+            // (A AND X) - oper -> X. Sets flags like a subtraction/CMP (no decimal mode).
+            op1 = accumulator & indexRegisterX;
+            tmp = op1 - inputDataLatch;
+            indexRegisterX = tmp & 0xFF;
+            setFlagBorrow(tmp);
+            setNZ(indexRegisterX);
+            break;
+
+          case ALR:
+            // AND accumulator with operand, then LSR the accumulator.
+            accumulator = accumulator & inputDataLatch;
+            carryFlag = (accumulator & 1) != 0;
+            accumulator = accumulator >> 1;
+            setNZ(accumulator);
+            break;
+
           case TRAP:
             // A Trap pretends to be 6502 subroutine, allowing the emulator to hook non-standard features into the emulation.
             Trap trap = traps.get(programCounter - 1);
@@ -1724,7 +1770,10 @@ public class Cpu6502 extends BaseChip {
                 case STORE_P_SP:
                     // No I/O in the stack page (BRK)
                     packPSR();
-                    memory.writeMemory(stackPointer + 0x100, (processorStatusRegister | (instructionRegister == 0 ? 0x10 : 0)));
+                    // instructionSteps[0] is BRK only when genuinely executing a BRK instruction
+                    // (it's IRQ/NMI when servicing a hardware interrupt); unlike instructionRegister,
+                    // it can never be stale/coincidentally 0 from a prior fetch or from reset().
+                    memory.writeMemory(stackPointer + 0x100, (processorStatusRegister | (instructionSteps[0] == BRK ? 0x10 : 0)));
                     // BRK flag only exists on the stack.
                     stackPointer = ((stackPointer - 1) & 0xFF);
                     break;

@@ -39,8 +39,15 @@ public class Vic6560 extends Vic {
     private static final int NTSC_BURST_E = (20 << 0);
     private static final int NTSC_BURST_O = (20 << 0);
 
-    // TODO: Chane to actual NTSC palette.
-    private final static int ntsc_palette[] = { 
+    // TODO: Chane to actual NTSC palette. This is currently a placeholder (in fact
+    // identical to Vic6561's PAL "even line" palette, see palEvenRGBA8888Colours) rather
+    // than a genuine NTSC-composite-decoded palette. Unlike the other TODOs in this file,
+    // this is a colour-accuracy question rather than a functional/logic bug: NTSC composite
+    // colour reproduction is inherently a matter of degree (depends on the specific
+    // decoder/TV being modelled), so there's no single unambiguous "correct" answer the way
+    // there is for, say, a raster timing rule. Left as-is pending a specific reference
+    // palette to adopt.
+    private final static int ntsc_palette[] = {
             0x000000FF, // BLACK
             0xFFFFFFFF, // WHITE
             0x982D18FF, // RED
@@ -408,7 +415,17 @@ public class Vic6560 extends Vic {
                 }
                 
                 // Vertical Cell Counter is loaded 2 cycles after the VC resets.
-                // TODO: This probably needs to move for the 6560, as VC doesn't reset in HC=1.
+                // TODO: This "load 2 cycles after VC resets" rule, and its placement here at
+                // HC=3, appears to be inherited from the PAL (6561) chip, where other code
+                // comments confirm VC actually does reset at HC=1 (making HC=3 the correct
+                // "+2 cycles" point). For NTSC, VC resets at HC=62 (or HC=29 on the half-line
+                // path; see the HC=62/HC=29 case blocks) - a completely different point in the
+                // line - so this HC=3 check may not correspond to "2 cycles after reset" for
+                // NTSC at all. Left unresolved rather than guessed at: there's no independent
+                // public spec for this reverse-engineered internal timing precise enough to
+                // verify a fix against (real hardware or a known-correct reference VIC-I
+                // emulator would be needed), and an unverified change here risks trading one
+                // inaccuracy for a different one rather than fixing it.
                 if (verticalCounter == 0) {
                     verticalCellCounter = num_of_rows;
                 }
@@ -887,7 +904,18 @@ public class Vic6560 extends Vic {
                                 multiColourTable[2] = (colourData & 0x07);
 
                                 int screenAddress = screen_mem_start + videoMatrixCounter;
-                                // TODO: Replace with unconnected memory version.
+                                // TODO: This reads the shared mem[] array directly rather than
+                                // dispatching through memoryMap[...].readMemory(...), so if screen
+                                // memory is pointed at genuinely unconnected RAM (e.g. an unpopulated
+                                // expansion block on an unexpanded/partially-expanded VIC-20 - a real,
+                                // sometimes deliberately-exploited configuration), this returns a
+                                // hardcoded 0 instead of realistic "floating bus" data. See
+                                // UnconnectedMemory.java's matching TODO for why the fix isn't just a
+                                // one-line change: it needs that class's open-bus read enabled AND this
+                                // fetch switched to go through it, and the latter sits on the render hot
+                                // path (this fetch runs on every visible character cell, i.e. very
+                                // frequently per frame), so it needs a deliberate perf-vs-accuracy call
+                                // rather than being changed reflexively.
                                 cellIndex = mem[VIC_MEM_TABLE[screenAddress & 0x3FFF]];
 
                                 // Due to the way the colour memory is wired up, the above fetch of the cell index
@@ -927,7 +955,10 @@ public class Vic6560 extends Vic {
                                     charDataOffset += 24576;
                                 }
                                 
-                                // TODO: Add unconnected memory check here.
+                                // TODO: Same "floating bus" gap as the screenAddress fetch above (see
+                                // its TODO for the full explanation) - character data pointed at
+                                // unconnected memory reads back a hardcoded 0 instead of realistic
+                                // open-bus data, and this fetch is on the same hot path.
                                 // Fetch cell data, initially latched to the side until it is needed.
                                 charDataLatch = mem[VIC_MEM_TABLE[(charDataOffset & 0x3FFF)]];
                                 

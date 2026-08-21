@@ -161,6 +161,12 @@ public class Via6522 extends MemoryMappedChip {
    * True when timer2 has just reached zero when in one shot mode.
    */
   private boolean timer2HasShot;
+
+  /**
+   * Tracks the previous state of PB6, for detecting negative-going pulses when
+   * Timer 2 is in PB6 pulse-counting mode (ACR bit 5 set).
+   */
+  private int pb6;
   
   /**
    * Whether to reset the IRQ signal when the IRQ flags reset.
@@ -187,6 +193,14 @@ public class Via6522 extends MemoryMappedChip {
       
     switch (address & 0x000F) {
       case VIA_REG_0: // ORB/IRB
+        // Unlike ORA/CA2 (which triggers on both read and write), CB2 handshake/pulse
+        // triggers only on a write of ORB.
+        if (cb2ControlMode == OUTPUT_MODE_HANDSHAKE) {
+          cb2 = 0;
+        }
+        else if (cb2ControlMode == OUTPUT_MODE_PULSE) {
+          cb2PulseModeCount = 1;
+        }
         outputRegisterB = value;
         updatePortBPins();
         interruptFlagRegister &= CB1_AND_2_RESET;
@@ -689,7 +703,20 @@ public class Via6522 extends MemoryMappedChip {
         }
         
       } else {
-        // TODO: PB6 pulse counting.
+        // PB6 pulse counting mode: T2 decrements once per negative-going pulse on
+        // PB6 (an input pin) instead of once per clock cycle. The terminal
+        // condition (interrupt when the counter reaches 0, once, until reloaded)
+        // is otherwise identical to one-shot mode.
+        int currentPb6 = getPortBPins() & 0x40;
+        if ((currentPb6 == 0) && (pb6 != 0)) {
+          timer2Counter = (timer2Counter - 1) & 0xFFFF;
+          if (!timer2HasShot && (timer2Counter == 0)) {
+            interruptFlagRegister |= TIMER2_SET;
+            updateIFRTopBit();
+            timer2HasShot = true;
+          }
+        }
+        pb6 = currentPb6;
       }
     } else {
       timer2Loaded = false;
@@ -745,7 +772,25 @@ public class Via6522 extends MemoryMappedChip {
         }
       }
     }
-    
+
+    if (cb2ControlMode == OUTPUT_MODE_PULSE) {
+      if (cb2PulseModeCount > 0) {
+        cb2PulseModeCount++;
+        switch (cb2PulseModeCount++) {
+          case 0:
+          case 1:
+            break;
+          case 2:
+            cb2 = 0;
+            break;
+          default:
+            cb2 = 1;
+            cb2PulseModeCount = 0;
+            break;
+        }
+      }
+    }
+
     // If in timer 1 PB7 pulse mode, and a write to T1C-H happened this cycle, we start the
     // pulse at the end of the cycle, i.e. here.
     if (pb7DelayedPulseStart) {
@@ -764,10 +809,14 @@ public class Via6522 extends MemoryMappedChip {
           // Port A latching enabled, so latch current port A pins.
           inputRegisterA = getPortAPins();
         }
+        if (ca2ControlMode == OUTPUT_MODE_HANDSHAKE) {
+          // Reset CA2 high with an active transition on CA1.
+          ca2 = 1;
+        }
       }
       this.ca1 = ca1;
     }
-    
+
     // Check for CB1 transition.
     int cb1 = getCb1();
     if (cb1 != this.cb1) {
@@ -779,8 +828,42 @@ public class Via6522 extends MemoryMappedChip {
           // Port B latching enabled, so latch current port B pins.
           inputRegisterB = getPortBPins();
         }
+        if (cb2ControlMode == OUTPUT_MODE_HANDSHAKE) {
+          // Reset CB2 high with an active transition on CB1.
+          cb2 = 1;
+        }
       }
       this.cb1 = cb1;
+    }
+
+    // Check for CA2 transition (only meaningful when CA2 is configured as an input;
+    // getCa2Input() defaults to a no-op unless a subclass overrides it).
+    if (ca2ControlMode < OUTPUT_MODE_HANDSHAKE) {
+      int ca2Input = getCa2Input();
+      if (ca2Input != ca2) {
+        boolean positiveEdgeMode = (ca2ControlMode & 0x02) != 0;
+        if ((positiveEdgeMode ? 1 : 0) == ca2Input) {
+          interruptFlagRegister |= CA2_SET;
+          updateIFRTopBit();
+        }
+        ca2 = ca2Input;
+      }
+    }
+
+    // Check for CB2 transition (only meaningful when CB2 is configured as an input,
+    // and only when the shift register isn't already using CB2 for serial data -
+    // real hardware has the shift register take over the CB2 pin electrically,
+    // independent of whatever PCR CB2 control mode happens to be configured).
+    if ((cb2ControlMode < OUTPUT_MODE_HANDSHAKE) && (shiftRegisterMode == SHIFT_DISABLED)) {
+      int cb2Input = getCb2Input();
+      if (cb2Input != cb2) {
+        boolean positiveEdgeMode = (cb2ControlMode & 0x02) != 0;
+        if ((positiveEdgeMode ? 1 : 0) == cb2Input) {
+          interruptFlagRegister |= CB2_SET;
+          updateIFRTopBit();
+        }
+        cb2 = cb2Input;
+      }
     }
     
     // Clear the flag that says we had a SR write this cycle.
@@ -881,7 +964,20 @@ public class Via6522 extends MemoryMappedChip {
   protected int getCb1() {
     return cb1;
   }
-  
+
+  // Template method for subclasses to provide external CA2 input, used only when CA2 is
+  // configured (via PCR) as an input rather than an output. If not overridden, defaults to
+  // the pin's own current value, i.e. no external transitions are ever observed.
+  protected int getCa2Input() {
+    return ca2;
+  }
+
+  // Template method for subclasses to provide external CB2 input, used only when CB2 is
+  // configured (via PCR) as an input rather than an output.
+  protected int getCb2Input() {
+    return cb2;
+  }
+
   /**
    * @return the ca2
    */
