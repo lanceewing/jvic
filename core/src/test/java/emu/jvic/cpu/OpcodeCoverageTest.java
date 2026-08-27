@@ -23,12 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * opcode with no {@code INSTRUCTION_DECODE_MATRIX} entry (an empty {@code {}} in
  * Cpu6502) has a zero-length decode array, which this emulator's cycle-stepping
  * treats as an immediate 1-cycle no-op re-dispatch instead of raising an error -
- * so "runs in exactly 1 cycle" reliably means "not implemented".
+ * so "runs in exactly 1 cycle, and stays at the same PC forever" reliably means
+ * "not implemented, and jammed".
  *
- * <p>This test intentionally stays green for the currently-unimplemented illegal
- * opcodes (asserting the CURRENT 1-cycle skip behaviour, labelled as a known gap)
- * rather than failing outright, so the full punch list of missing opcodes stays
- * visible and enumerable without blocking the build.
+ * <p>Every opcode in the standard NMOS matrix now has a decode entry, including
+ * the 12 JAM/KIL opcodes (which halt the CPU, matching real hardware - see
+ * {@link #jamOpcodeHaltsTheCpu}) and the 8 "unstable" illegal opcodes (ANE, LXA,
+ * LAS, SHA x2, SHX, SHY, TAS - approximated with a fixed "magic" constant rather
+ * than the genuinely chip/temperature-dependent real behaviour; see
+ * {@link UndocumentedOpcodesTest} for their correctness tests).
  */
 public class OpcodeCoverageTest {
 
@@ -54,10 +57,6 @@ public class OpcodeCoverageTest {
         return IntStream.range(0, 256).filter(op -> !UNIMPLEMENTED.contains(op));
     }
 
-    static IntStream unimplementedNonJamOpcodes() {
-        return IntStream.of(Opcode6502Reference.UNIMPLEMENTED_NON_JAM_OPCODES);
-    }
-
     static IntStream jamOpcodes() {
         return IntStream.of(Opcode6502Reference.JAM_OPCODES);
     }
@@ -73,27 +72,27 @@ public class OpcodeCoverageTest {
     }
 
     @ParameterizedTest(name = "0x{0}")
-    @MethodSource("unimplementedNonJamOpcodes")
-    void unimplementedIllegalOpcodeIsAKnownGap(int opcode) {
-        long cycles = execute(opcode);
-        assertEquals(1, cycles, () -> String.format(
-                "KNOWN GAP: opcode 0x%02X (%s) has no INSTRUCTION_DECODE_MATRIX entry in Cpu6502 - it is "
-                        + "silently skipped as a 1-cycle no-op instead of performing its documented "
-                        + "illegal-opcode behaviour. If this now runs for >1 cycle, the gap has been "
-                        + "closed - please remove it from UNIMPLEMENTED_NON_JAM_OPCODES and add proper "
-                        + "correctness tests to UndocumentedOpcodesTest instead.",
-                opcode, Opcode6502Reference.MNEMONIC[opcode]));
-    }
-
-    @ParameterizedTest(name = "0x{0}")
     @MethodSource("jamOpcodes")
-    void jamOpcodeDivergesFromRealHardwareHalt(int opcode) {
-        long cycles = execute(opcode);
-        assertEquals(1, cycles, () -> String.format(
-                "KNOWN DEVIATION: real NMOS hardware halts completely (JAM/KIL) on opcode 0x%02X until a "
-                        + "physical reset; this emulator instead silently treats it as a 1-cycle no-op and "
-                        + "continues executing normally.",
-                opcode));
+    void jamOpcodeHaltsTheCpu(int opcode) {
+        CpuTestHarness h = new CpuTestHarness();
+        long firstCycles = h.execute(0x0300, opcode, 0x00, 0x00);
+        assertEquals(1, firstCycles, () -> String.format(
+                "opcode 0x%02X (%s): expected a single discarded-read cycle before jamming",
+                opcode, Opcode6502Reference.MNEMONIC[opcode]));
+        int jammedPc = h.cpu.getProgramCounter();
+
+        // Real hardware never recovers from JAM/KIL without a RESET: it keeps re-reading
+        // the same address forever instead of ever fetching a new opcode. Run several
+        // more cycles and confirm the CPU never moves on.
+        for (int i = 0; i < 5; i++) {
+            long cycles = h.runInstruction();
+            assertEquals(1, cycles, () -> String.format(
+                    "opcode 0x%02X (%s): should still be jammed, spinning one cycle at a time",
+                    opcode, Opcode6502Reference.MNEMONIC[opcode]));
+            assertEquals(jammedPc, h.cpu.getProgramCounter(), () -> String.format(
+                    "opcode 0x%02X (%s): PC must not advance while jammed",
+                    opcode, Opcode6502Reference.MNEMONIC[opcode]));
+        }
     }
 
     @Test
@@ -104,6 +103,6 @@ public class OpcodeCoverageTest {
         assertEquals(256, implemented + jam + unimplemented);
         System.out.println("6502 opcode coverage: " + implemented + " implemented, " + unimplemented
                 + " illegal opcodes not implemented (known gaps), " + jam
-                + " JAM/KIL opcodes (real hardware halts; this emulator does not).");
+                + " JAM/KIL opcodes (real hardware halts; this emulator matches that).");
     }
 }

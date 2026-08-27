@@ -49,8 +49,10 @@ public final class Opcode6502Reference {
 
     /**
      * The 12 official NMOS "JAM"/"KIL" opcodes, which halt real hardware completely
-     * (requiring a physical reset). This emulator does not reproduce the halt - see
-     * {@code OpcodeCoverageTest} for its actual (divergent) behaviour.
+     * (requiring a physical reset). Cpu6502 reproduces this: it repeats a discarded
+     * read at the same address forever (see {@code EXECUTE_HANG}) rather than
+     * advancing to a new instruction - see {@code OpcodeCoverageTest} for the test
+     * verifying this.
      */
     public static final int[] JAM_OPCODES = {
         0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x72, 0x92, 0xB2, 0xD2, 0xF2
@@ -58,27 +60,11 @@ public final class Opcode6502Reference {
 
     /**
      * Opcodes whose {@code INSTRUCTION_DECODE_MATRIX} entry in Cpu6502 is an empty
-     * {@code {}} - i.e. intentionally not implemented - determined by reading the
-     * source directly (cross-checked against the empirical "runs in 1 cycle"
-     * signature that OpcodeCoverageTest also verifies independently). Excludes the
-     * 12 JAM opcodes above (listed separately - their real-hardware semantics,
-     * halting the CPU, are fundamentally different from "not implemented").
-     *
-     * <p>What remains here (unlike the larger list this used to be) is a
-     * deliberate scope decision, not a to-do list: these are the "unstable"
-     * illegal opcodes whose real-hardware behaviour is chip-batch/temperature
-     * dependent and not consistently documented (ANE/XAA, LXA, LAS, SHA, SHX,
-     * SHY, TAS) - not worth chasing for a VIC-20 emulator. Every other illegal
-     * opcode in the standard NMOS matrix is implemented.
+     * {@code {}} - i.e. intentionally not implemented. Empty: every illegal opcode in
+     * the standard NMOS matrix, including the "unstable" ones (ANE/XAA, LXA, LAS, SHA,
+     * SHX, SHY, TAS - approximated with a fixed "magic" constant rather than the
+     * genuinely chip/temperature-dependent real behaviour), now has a decode entry.
+     * See {@link emu.jvic.cpu.UndocumentedOpcodesTest} for their correctness tests.
      */
-    public static final int[] UNIMPLEMENTED_NON_JAM_OPCODES = {
-        0x8B, // ANE/XAA
-        0x93, // SHA/AHX - (Indirect),Y
-        0x9B, // TAS/SHS
-        0x9C, // SHY
-        0x9E, // SHX
-        0x9F, // SHA/AHX - Absolute,Y
-        0xAB, // LXA/ATX/OAL
-        0xBB, // LAS/LAE
-    };
+    public static final int[] UNIMPLEMENTED_NON_JAM_OPCODES = {};
 }

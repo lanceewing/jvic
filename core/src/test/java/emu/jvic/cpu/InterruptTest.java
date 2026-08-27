@@ -160,6 +160,89 @@ public class InterruptTest {
     }
 
     @Test
+    void pendingIrqIsDelayedByOneInstructionAfterCli() {
+        // Real hardware quirk: CLI/SEI/PLP's own effect on the I flag isn't visible
+        // to the interrupt-recognition poll that happens right after them - that poll
+        // still uses the OLD (pre-CLI) value, so a pending IRQ during CLI is NOT
+        // serviced immediately after it. It only becomes visible to the poll that
+        // runs after the NEXT instruction (here, the NOP), one instruction later.
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05); // IRQ vector -> $0500
+        h.writeByte(0x0300, 0x58); // CLI
+        h.writeByte(0x0301, 0xEA); // NOP
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setInterruptDisableFlag(true); // interrupts initially masked
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch CLI (nothing pending yet)
+        h.cpu.setInterrupt(Cpu6502.S_IRQ); // raise it while CLI is "in flight"
+        h.cpu.step(); // run CLI (I becomes false), then dispatch what comes after using
+                       // the OLD (still masked) value: a normal fetch, not the interrupt
+
+        assertEquals(0xEA, h.cpu.getInstructionRegister(),
+                "IRQ must not be taken immediately after CLI despite now being unmasked");
+        assertEquals(0xFF, h.cpu.getStackPointer(), "interrupt must not have been serviced yet");
+
+        h.cpu.step(); // run NOP, then dispatch what comes after using the NOW-current
+                       // (post-CLI) value: the IRQ sequence is selected
+
+        assertEquals(0xFF, h.cpu.getStackPointer(), "interrupt sequence selected but not yet run");
+
+        h.cpu.step(); // run the interrupt sequence to completion
+
+        assertEquals(0x0501, h.cpu.getProgramCounter());
+        assertTrue(h.cpu.getInterruptDisableFlag());
+        assertEquals(0xFC, h.cpu.getStackPointer());
+    }
+
+    @Test
+    void lateArrivingNmiHijacksAnInFlightIrqsVectorFetch() {
+        // Real hardware: if NMI is recognised no later than the end of the PCL-push
+        // cycle of an in-flight BRK/IRQ sequence (i.e. before the status-byte push
+        // cycle begins), it hijacks the vector fetch - the CPU ends up at the NMI
+        // handler instead of the IRQ handler, even though the status byte already
+        // being pushed still reflects the original (hardware IRQ, break bit clear)
+        // sequence. step() runs a whole 7-cycle interrupt sequence in one go, so this
+        // test drives emulateCycle() directly to inject the NMI mid-sequence.
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05); // IRQ vector -> $0500 (must NOT be where we land)
+        h.writeByte(0xFFFA, 0x00);
+        h.writeByte(0xFFFB, 0x06); // NMI vector -> $0600 (hijacked target)
+        h.writeByte(0x0300, 0xEA); // NOP
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setInterruptDisableFlag(false);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch NOP (no interrupt pending yet)
+        h.cpu.setInterrupt(Cpu6502.S_IRQ);
+        h.cpu.step(); // run NOP, then SELECT the pending IRQ sequence (does not run it yet)
+
+        // Manually run the first 3 cycles of IRQ_STEPS: FETCH_DIS_PC, STORE_PCH_SP,
+        // STORE_PCL_SP - i.e. up to (but not including) the status-byte push cycle.
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+
+        // NMI arrives now - right at the edge of the real hijack window.
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+
+        // Run the remaining cycles: STORE_P_SP (hijack detected here), the (redirected)
+        // vector fetch, and the fused next-opcode fetch.
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+
+        assertEquals(0x0601, h.cpu.getProgramCounter(), "must land at the NMI vector, not the IRQ vector");
+        assertFalse(h.cpu.isNmiAsserted(), "the hijacking NMI must be consumed (edge-triggered)");
+        int pushedStatus = h.readByte(PUSHED_STATUS_ADDRESS);
+        assertEquals(0, pushedStatus & 0x10,
+                "the pushed status byte must still reflect the original hardware IRQ (break bit clear)");
+    }
+
+    @Test
     void takenSamePageBranchDelaysAPendingInterruptByOneInstruction() {
         h.cpu.reset();
         h.cpu.setProgramCounter(0x0300);

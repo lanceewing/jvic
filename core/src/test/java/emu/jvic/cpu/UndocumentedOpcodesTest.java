@@ -178,6 +178,36 @@ public class UndocumentedOpcodesTest {
     }
 
     @Test
+    void arrAppliesBcdNibbleCorrectionInDecimalMode() {
+        // The bit6/bit5 AND+ROR flag logic above is unaffected by decimal mode; only
+        // the accumulator gets an additional BCD nibble correction (real hardware's
+        // exact formula is only sparsely documented - see the comment on the ARR case
+        // in Cpu6502 - so this test pins down the implementation's approximation
+        // rather than an independently-verified real-hardware value).
+        h.prepareInstruction(0x0300, 0x6B, 0xFF); // ARR #$FF
+        h.cpu.setAccumulator(0x99);
+        h.cpu.setCarryFlag(false);
+        h.cpu.setDecimalModeFlag(true);
+        long cycles = h.runInstruction();
+        assertEquals(0xA2, h.cpu.getAccumulator());
+        assertTrue(h.cpu.getCarryFlag());
+        assertEquals(2, cycles);
+    }
+
+    @Test
+    void arrDecimalModeLeavesLowNibbleUnchangedWhenNoCorrectionNeeded() {
+        h.prepareInstruction(0x0300, 0x6B, 0x11); // ARR #$11
+        h.cpu.setAccumulator(0x11);
+        h.cpu.setCarryFlag(false);
+        h.cpu.setDecimalModeFlag(true);
+        h.runInstruction();
+        // 0x11 & 0x11 = 0x11, rotated right (carry-in 0) -> 0x08; low/high nibble
+        // corrections both fall below their thresholds, so 0x08 is unchanged.
+        assertEquals(0x08, h.cpu.getAccumulator());
+        assertFalse(h.cpu.getCarryFlag());
+    }
+
+    @Test
     void rraRotatesMemoryThenAddsToAccumulator() {
         h.writeByte(0x0400, 0x05); // 0000 0101, bit0 = 1
         h.prepareInstruction(0x0300, 0x6F, 0x00, 0x04); // RRA $0400
@@ -777,5 +807,136 @@ public class UndocumentedOpcodesTest {
         h.runInstruction();
         assertEquals(0x01, h.cpu.getAccumulator());
         assertFalse(h.cpu.getCarryFlag());
+    }
+
+    // ------------------------------------------------------ ANE / LXA (unstable) ----
+    //
+    // These two opcodes are genuinely unstable on real hardware: (A OR magic) AND ...,
+    // where "magic" depends on chip batch/temperature/bus capacitance decay and has no
+    // single correct value. Cpu6502 approximates it with a fixed UNSTABLE_MAGIC_CONSTANT
+    // (0xEE); these tests pin down that approximation rather than "the" real answer.
+
+    @Test
+    void aneApproximatesMagicOrAndXAndOperand() {
+        h.prepareInstruction(0x0300, 0x8B, 0xFF); // ANE #$FF
+        h.cpu.setAccumulator(0x00);
+        h.cpu.setIndexRegisterX(0xFF);
+        long cycles = h.runInstruction();
+        assertEquals(0xEE, h.cpu.getAccumulator()); // (0x00 | 0xEE) & 0xFF & 0xFF
+        assertTrue(h.cpu.getNegativeResultFlag());
+        assertEquals(2, cycles);
+    }
+
+    @Test
+    void aneAndsXIntoTheMagicConstant() {
+        h.prepareInstruction(0x0300, 0x8B, 0xFF); // ANE #$FF
+        h.cpu.setAccumulator(0x00);
+        h.cpu.setIndexRegisterX(0x0F);
+        h.runInstruction();
+        assertEquals(0x0E, h.cpu.getAccumulator()); // (0x00 | 0xEE) & 0x0F & 0xFF
+        assertFalse(h.cpu.getNegativeResultFlag());
+    }
+
+    @Test
+    void lxaLoadsBothAccumulatorAndXFromMagicOrAndOperand() {
+        h.prepareInstruction(0x0300, 0xAB, 0xFF); // LXA #$FF
+        h.cpu.setAccumulator(0x00);
+        long cycles = h.runInstruction();
+        assertEquals(0xEE, h.cpu.getAccumulator()); // (0x00 | 0xEE) & 0xFF
+        assertEquals(0xEE, h.cpu.getIndexRegisterX());
+        assertTrue(h.cpu.getNegativeResultFlag());
+        assertEquals(2, cycles);
+    }
+
+    // ------------------------------------------------------ SHA / SHX / SHY / TAS (unstable) ----
+    //
+    // "M AND (highByteOfEffectiveAddress + 1)"-family opcodes. Unstable on real hardware
+    // (the "+1" term isn't always reliably applied); these tests pin down Cpu6502's
+    // deterministic approximation.
+
+    @Test
+    void shaAbsoluteYStoresAAndXAndAddressHighPlusOne() {
+        h.writeByte(0x0410, 0x00);
+        h.prepareInstruction(0x0300, 0x9F, 0x00, 0x04); // SHA $0400,Y
+        h.cpu.setAccumulator(0xFF);
+        h.cpu.setIndexRegisterX(0xFF);
+        h.cpu.setIndexRegisterY(0x10);
+        long cycles = h.runInstruction();
+        assertEquals(0x05, h.readByte(0x0410)); // 0xFF & 0xFF & (0x04 + 1)
+        assertEquals(5, cycles);
+    }
+
+    @Test
+    void shaIndirectYStoresAAndXAndAddressHighPlusOne() {
+        h.writeWord(0x0020, 0x0400); // pointer resolves to $0400
+        h.writeByte(0x0410, 0x00);
+        h.prepareInstruction(0x0300, 0x93, 0x20); // SHA ($20),Y
+        h.cpu.setAccumulator(0xFF);
+        h.cpu.setIndexRegisterX(0xFF);
+        h.cpu.setIndexRegisterY(0x10);
+        long cycles = h.runInstruction();
+        assertEquals(0x05, h.readByte(0x0410)); // 0xFF & 0xFF & (0x04 + 1)
+        assertEquals(6, cycles);
+    }
+
+    @Test
+    void shxAbsoluteYStoresXAndAddressHighPlusOne() {
+        h.writeByte(0x0410, 0x00);
+        h.prepareInstruction(0x0300, 0x9E, 0x00, 0x04); // SHX $0400,Y
+        h.cpu.setIndexRegisterX(0xFF);
+        h.cpu.setIndexRegisterY(0x10);
+        long cycles = h.runInstruction();
+        assertEquals(0x05, h.readByte(0x0410)); // 0xFF & (0x04 + 1)
+        assertEquals(5, cycles);
+    }
+
+    @Test
+    void shyAbsoluteXStoresYAndAddressHighPlusOne() {
+        h.writeByte(0x0410, 0x00);
+        h.prepareInstruction(0x0300, 0x9C, 0x00, 0x04); // SHY $0400,X
+        h.cpu.setIndexRegisterY(0xFF);
+        h.cpu.setIndexRegisterX(0x10);
+        long cycles = h.runInstruction();
+        assertEquals(0x05, h.readByte(0x0410)); // 0xFF & (0x04 + 1)
+        assertEquals(5, cycles);
+    }
+
+    @Test
+    void tasSetsStackPointerToAAndXThenStoresItAndedWithAddressHighPlusOne() {
+        h.writeByte(0x0410, 0x00);
+        h.prepareInstruction(0x0300, 0x9B, 0x00, 0x04); // TAS $0400,Y
+        h.cpu.setAccumulator(0xFF);
+        h.cpu.setIndexRegisterX(0x3C);
+        h.cpu.setIndexRegisterY(0x10);
+        long cycles = h.runInstruction();
+        assertEquals(0x3C, h.cpu.getStackPointer()); // S = A & X
+        assertEquals(0x04, h.readByte(0x0410)); // 0x3C & (0x04 + 1)
+        assertEquals(5, cycles);
+    }
+
+    // ------------------------------------------------------ LAS (unstable) ----
+
+    @Test
+    void lasAndsMemoryWithStackPointerIntoAXAndS() {
+        h.writeByte(0x0410, 0x3C);
+        h.prepareInstruction(0x0300, 0xBB, 0x00, 0x04); // LAS $0400,Y
+        h.cpu.setIndexRegisterY(0x10);
+        h.cpu.setStackPointer(0xFF);
+        long cycles = h.runInstruction();
+        assertEquals(0x3C, h.cpu.getAccumulator());
+        assertEquals(0x3C, h.cpu.getIndexRegisterX());
+        assertEquals(0x3C, h.cpu.getStackPointer());
+        assertEquals(4, cycles); // no page crossing
+    }
+
+    @Test
+    void lasCrossesPageBoundaryForOneExtraCycle() {
+        h.writeByte(0x0500, 0x0F);
+        h.prepareInstruction(0x0300, 0xBB, 0xFF, 0x04); // LAS $04FF,Y
+        h.cpu.setIndexRegisterY(0x01); // $04FF + 1 = $0500, crosses page
+        h.cpu.setStackPointer(0xFF);
+        long cycles = h.runInstruction();
+        assertEquals(0x0F, h.cpu.getAccumulator());
+        assertEquals(5, cycles);
     }
 }

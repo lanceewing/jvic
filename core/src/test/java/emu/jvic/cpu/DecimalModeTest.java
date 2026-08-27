@@ -12,14 +12,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * ADC / SBC in BCD (decimal) mode, operating on valid packed-BCD operands
  * (both nibbles 0-9).
  *
- * <p><b>Known documented deviation from real NMOS hardware:</b> this
- * implementation unconditionally clears N and V and derives Z from the final
- * (adjusted) accumulator value. Real NMOS 6502 decimal mode has well-known flag
- * quirks where N/V/Z actually reflect the pre-adjustment binary result rather than
- * the final decimal one. The tests below lock in the emulator's simplified,
- * current behaviour (which is correct for the accumulator RESULT and carry, just
- * not for N/V/Z in every case) rather than asserting real-hardware N/V/Z quirks
- * that this emulator does not attempt to reproduce.
+ * <p><b>Real NMOS hardware flag quirks, now modeled here</b> (see 6502.org's
+ * Decimal Mode tutorial, "Appendix A"):
+ * <ul>
+ *   <li>ADC: Z is set as if the addition had been done in binary, not from the
+ *       BCD-corrected accumulator result - so a decimal add that wraps to a
+ *       BCD-corrected $00 does NOT necessarily set Z (see
+ *       {@link #adcHandlesTensDigitCarry}, the canonical example of this).</li>
+ *   <li>ADC: N and V reflect the result before the final high-nibble decimal
+ *       correction is applied, not the BCD-corrected accumulator.</li>
+ *   <li>SBC: N, V, Z and C are ALL computed as if the subtraction had been done
+ *       in binary - none of them reflect the BCD-corrected result.</li>
+ * </ul>
+ * In both cases the accumulator (and, for ADC, the carry) result itself is
+ * still the properly BCD-corrected value.
  */
 public class DecimalModeTest {
 
@@ -64,7 +70,10 @@ public class DecimalModeTest {
         adcDecimal(0x50, 0x50, false); // 50 + 50 = 100 -> wraps to 00, carry set
         assertEquals(0x00, h.cpu.getAccumulator());
         assertTrue(h.cpu.getCarryFlag());
-        assertTrue(h.cpu.getZeroResultFlag());
+        // Classic NMOS decimal-mode Z quirk: Z is set from the BINARY sum
+        // ($50 + $50 = $A0, non-zero), not from the BCD-corrected accumulator
+        // ($00) - so despite the accumulator reading zero, Z is clear.
+        assertFalse(h.cpu.getZeroResultFlag());
     }
 
     @Test
@@ -72,6 +81,9 @@ public class DecimalModeTest {
         adcDecimal(0x99, 0x01, false); // 99 + 1 = 100 -> wraps to 00, carry set
         assertEquals(0x00, h.cpu.getAccumulator());
         assertTrue(h.cpu.getCarryFlag());
+        // Same Z quirk as adcHandlesTensDigitCarry: binary sum $99 + $01 = $9A is
+        // non-zero, so Z is clear despite the BCD-corrected accumulator being $00.
+        assertFalse(h.cpu.getZeroResultFlag());
     }
 
     @Test
@@ -82,10 +94,17 @@ public class DecimalModeTest {
     }
 
     @Test
-    void adcAlwaysClearsOverflowAndNegativeInThisImplementation() {
+    void adcNegativeAndOverflowReflectPreCorrectionResultNotFinalAccumulator() {
+        // $99 + $99 (decimal 99+99=198, BCD-corrected accumulator becomes $98,
+        // carry set). The pre-correction intermediate is $138 truncated to $38
+        // (0011 1000): bit 7 clear, so N is clear even though the final
+        // accumulator ($98) has bit 7 set. V compares operand signs against that
+        // same pre-correction byte, and is set here.
         adcDecimal(0x99, 0x99, false);
-        assertFalse(h.cpu.getOverflowFlag());
+        assertEquals(0x98, h.cpu.getAccumulator());
+        assertTrue(h.cpu.getCarryFlag());
         assertFalse(h.cpu.getNegativeResultFlag());
+        assertTrue(h.cpu.getOverflowFlag());
     }
 
     @Test
@@ -113,6 +132,21 @@ public class DecimalModeTest {
     void sbcArbitraryTwoDigitSubtraction() {
         sbcDecimal(0x46, 0x12, true); // 46 - 12 = 34
         assertEquals(0x34, h.cpu.getAccumulator());
+    }
+
+    @Test
+    void sbcFlagsReflectBinarySubtractionNotBcdCorrectedResult() {
+        // $00 - $01 (borrow in): BCD-corrected accumulator wraps to $99 with carry
+        // clear (borrow out) - but N, V, Z all come from the BINARY subtraction
+        // $00 - $01 - 0 = -1 ($FF as a byte): N set (bit 7 of $FF), Z clear, and
+        // no signed overflow (V clear, since operands don't have matching signs
+        // per the standard overflow test).
+        sbcDecimal(0x00, 0x01, true);
+        assertEquals(0x99, h.cpu.getAccumulator());
+        assertFalse(h.cpu.getCarryFlag());
+        assertTrue(h.cpu.getNegativeResultFlag());
+        assertFalse(h.cpu.getZeroResultFlag());
+        assertFalse(h.cpu.getOverflowFlag());
     }
 
     @Test

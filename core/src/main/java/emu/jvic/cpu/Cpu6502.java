@@ -130,6 +130,22 @@ public class Cpu6502 extends BaseChip {
     private static final int DCP = 71;
     private static final int SBX = 72;
     private static final int ALR = 73;
+    private static final int SHA = 74;
+    private static final int SHX = 75;
+    private static final int SHY = 76;
+    private static final int TAS = 77;
+    private static final int ANE = 78;
+    private static final int LXA = 79;
+    private static final int LAS = 80;
+    private static final int JAM = 81;
+
+    /**
+     * "Magic" constant OR-ed into the accumulator for the unstable ANE/LXA illegal
+     * opcodes. On real hardware this reflects bus capacitance/decay effects and varies
+     * by chip batch and temperature - there is no single correct value. 0xEE is a
+     * commonly-used approximation for NMOS 6502/6510 parts.
+     */
+    private static final int UNSTABLE_MAGIC_CONSTANT = 0xEE;
 
     // Instruction constant for emulation trap routine.
     private static final int TRAP = 0x100;
@@ -192,6 +208,7 @@ public class Cpu6502 extends BaseChip {
     private static final int STORE_P_SP = 53;
     private static final int STORE_PCH_SP = 54;
     private static final int STORE_PCL_SP = 55;
+    private static final int EXECUTE_HANG = 56; // JAM/KIL: repeats forever, matching real hardware's halt.
 
     /**
      * This static lookup table holds the decoding details of all of the 6502's
@@ -204,7 +221,7 @@ public class Cpu6502 extends BaseChip {
         // 00 (0)
         {BRK, FETCH_INC_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST}, // BRK
         {ORA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ORA - (Indirect, X)
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {SLO, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SLO* - (Indirect, X)
         {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP* - Zero Page
         {ORA, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // ORA - Zero Page
@@ -224,7 +241,7 @@ public class Cpu6502 extends BaseChip {
         // 10 (16)
         {BPL, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BPL
         {ORA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ORA - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {SLO, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SLO* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {ORA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // ORA - Zero Page, X
@@ -244,7 +261,7 @@ public class Cpu6502 extends BaseChip {
         // 20 (32)
         {JSR, FETCH_ADL_PC, FETCH_DIS_SP, STORE_PCH_SP, STORE_PCL_SP, FETCH_ADH_PC, EXECUTE_LAST}, // JSR
         {AND, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // AND - (Indirect, X)
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {RLA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // RLA* - (Indirect, X)
         {BIT, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // BIT - Zero Page
         {AND, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // AND - Zero Page
@@ -264,7 +281,7 @@ public class Cpu6502 extends BaseChip {
         // 30 (48)
         {BMI, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BMI
         {AND, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // AND - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {RLA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RLA* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {AND, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // AND - Zero Page, X
@@ -284,7 +301,7 @@ public class Cpu6502 extends BaseChip {
         // 40 (64)
         {RTI, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_P_SP, FETCH_PCL_SP, FETCH_PCH_SP, EXECUTE_LAST}, // RTI
         {EOR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // EOR - (Indirect, X)
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {SRE, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // SRE* - (Indirect, X)
         {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP* - Zero Page
         {EOR, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // EOR - Zero Page
@@ -304,7 +321,7 @@ public class Cpu6502 extends BaseChip {
         // 50 (80)
         {BVC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVC
         {EOR, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // EOR - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {SRE, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // SRE* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {EOR, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // EOR - Zero Page, X
@@ -324,7 +341,7 @@ public class Cpu6502 extends BaseChip {
         // 60 (96)
         {RTS, FETCH_DIS_PC, FETCH_DIS_SP, FETCH_PCL_SP, FETCH_PCH_SP, FETCH_DATA_PC}, // RTS
         {ADC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_LAST}, // ADC - (Indirect, X)
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {RRA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_ADL_BAL, FETCH_ADH_BAL, FETCH_DATA_EA, EXECUTE_MID_EA, STORE_DATA_EA}, // RRA* - (Indirect, X)
         {NOP, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // NOP - Zero Page
         {ADC, FETCH_ADL_PC, FETCH_DATA_ADL, EXECUTE_LAST}, // ADC - Zero Page
@@ -344,7 +361,7 @@ public class Cpu6502 extends BaseChip {
         // 70 (112)
         {BVS, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BVS
         {ADC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // ADC - (Indirect), Y
-        {}, // -
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {RRA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // RRA* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP - Zero Page, X
         {ADC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // ADC - Zero Page, X
@@ -375,7 +392,7 @@ public class Cpu6502 extends BaseChip {
         {DEY, EXECUTE_DIS}, // DEY
         {NOP, FETCH_DATA_PC, EXECUTE_LAST}, // NOP* - Immediate
         {TXA, EXECUTE_DIS}, // TXA Implied
-        {}, // - ANE* (unstable, not implemented)
+        {ANE, FETCH_DATA_PC, EXECUTE_LAST}, // ANE* - Immediate (unstable)
         {STY, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STY - Absolute
         {STA, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STA - Absolute
         {STX, FETCH_ADL_PC, FETCH_ADH_PC, EXECUTE_STORE_EA}, // STX - Absolute
@@ -384,8 +401,8 @@ public class Cpu6502 extends BaseChip {
         // 90 (144)
         {BCC, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BCC
         {STA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - (Indirect), Y
-        {}, // - KIL
-        {}, // - SHA* (unstable, not implemented)
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
+        {SHA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // SHA* - (Indirect), Y (unstable)
         {STY, FETCH_BAL_PC, FETCH_DIS_BAL_X, EXECUTE_STORE_BAL}, // STY - Zero Page, X
         {STA, FETCH_BAL_PC, FETCH_DIS_BAL_X, EXECUTE_STORE_BAL}, // STA - Zero Page, X
         {STX, FETCH_BAL_PC, FETCH_DIS_BAL_Y, EXECUTE_STORE_BAL}, // STX - Zero Page, Y
@@ -395,11 +412,11 @@ public class Cpu6502 extends BaseChip {
         {TYA, EXECUTE_DIS}, // TYA
         {STA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // STA - Absolute, Y
         {TXS, EXECUTE_DIS}, // TXS
-        {}, // - TAS* (unstable, not implemented)
-        {}, // - SHY* (unstable, not implemented)
+        {TAS, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // TAS* - Absolute, Y (unstable)
+        {SHY, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, EXECUTE_STORE_BA}, // SHY* - Absolute, X (unstable)
         {STA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_X, EXECUTE_STORE_BA}, // STA - Absolute, X
-        {}, // - SHX* (unstable, not implemented)
-        {}, // - SHA* (unstable, not implemented)
+        {SHX, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // SHX* - Absolute, Y (unstable)
+        {SHA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DIS_BA_Y, EXECUTE_STORE_BA}, // SHA* - Absolute, Y (unstable)
     
         // A0 (160)
         {LDY, FETCH_DATA_PC, EXECUTE_LAST}, // LDY - Immediate
@@ -415,7 +432,7 @@ public class Cpu6502 extends BaseChip {
         {TAY, EXECUTE_DIS}, // TAY
         {LDA, FETCH_DATA_PC, EXECUTE_LAST}, // LDA - Immediate
         {TAX, EXECUTE_DIS}, // TAX
-        {}, // - LXA* (unstable, not implemented)
+        {LXA, FETCH_DATA_PC, EXECUTE_LAST}, // LXA* - Immediate (unstable)
         {LDY, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDY - Absolute
         {LDA, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDA - Absolute
         {LDX, FETCH_ADL_PC, FETCH_ADH_PC, FETCH_DATA_EA, EXECUTE_LAST}, // LDX - Absolute
@@ -424,7 +441,7 @@ public class Cpu6502 extends BaseChip {
         // B0 (176)
         {BCS, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BCS
         {LDA, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {LAX, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LAX* - (Indirect), Y
         {LDY, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // LDY - Zero Page, X
         {LDA, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // LDA - Zero Page, X
@@ -435,7 +452,7 @@ public class Cpu6502 extends BaseChip {
         {CLV, EXECUTE_DIS}, // CLV
         {LDA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - Absolute, Y
         {TSX, EXECUTE_DIS}, // TSX
-        {}, // - LAS* (unstable, not implemented)
+        {LAS, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LAS* - Absolute, Y (unstable)
         {LDY, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // LDY - Absolute, X
         {LDA, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_X, FETCH_DATA_BA, EXECUTE_LAST}, // LDA - Absolute, X
         {LDX, FETCH_BAL_PC, FETCH_BAH_PC, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // LDX - Absolute, Y
@@ -462,7 +479,7 @@ public class Cpu6502 extends BaseChip {
     
         {BNE, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BNE
         {CMP, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // CMP - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {DCP, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // DCP* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {CMP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // CMP - Zero Page, X
@@ -500,7 +517,7 @@ public class Cpu6502 extends BaseChip {
         // F0
         {BEQ, EXECUTE_BRANCH, BRANCH_DIS_NEXT, BRANCH_DIS_OFFSET}, // BEQ
         {SBC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DATA_BA_Y, FETCH_DATA_BA, EXECUTE_LAST}, // SBC - (Indirect), Y
-        {}, // - KIL
+        {JAM, EXECUTE_HANG}, // JAM/KIL - halts the CPU until RESET
         {ISC, FETCH_IAL_PC, FETCH_BAL_IAL, FETCH_BAH_IAL, FETCH_DIS_BA_Y, FETCH_DATA_BA, EXECUTE_MID_BA, STORE_DATA_BA}, // ISC* - (Indirect), Y
         {NOP, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // NOP* - Zero Page, X
         {SBC, FETCH_BAL_PC, FETCH_DIS_BAL_X, FETCH_DATA_BAL, EXECUTE_LAST}, // SBC - Zero Page, X
@@ -524,14 +541,14 @@ public class Cpu6502 extends BaseChip {
      * The execution steps for an IRQ.
      */
     private static final int IRQ_STEPS[] = {
-        IRQ, FETCH_DIS_PC, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST
+        IRQ, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFE, FETCH_ADH_FFFF, EXECUTE_LAST
     };
 
     /**
      * The execution steps for a NMI.
      */
     private static final int NMI_STEPS[] = {
-        NMI, FETCH_DIS_PC, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFA, FETCH_ADH_FFFB, EXECUTE_LAST
+        NMI, FETCH_DIS_PC, STORE_PCH_SP, STORE_PCL_SP, STORE_P_SP, FETCH_ADL_FFFA, FETCH_ADH_FFFB, EXECUTE_LAST
     };
 
     /**
@@ -550,6 +567,30 @@ public class Cpu6502 extends BaseChip {
      * page boundary will delay a pending interrupt by one cycle.
      */
     private boolean delayInterruptOneCycle;
+
+    /**
+     * Snapshot of {@link #interruptDisableFlag} taken when the currently-executing
+     * instruction was dispatched (its opcode fetched), used - instead of the live
+     * flag - when polling for a pending interrupt at that same instruction's end.
+     * Real hardware's interrupt-recognition logic effectively uses the I flag's
+     * value from before the completing instruction ran, not any value it just wrote
+     * itself: a CLI/SEI/PLP's own new I value therefore doesn't affect whether a
+     * pending interrupt is taken immediately after it - that decision is delayed
+     * until the poll at the end of the NEXT instruction. For every instruction that
+     * doesn't itself change I, this is identical to the live flag, so the delay is
+     * only ever observable directly after CLI/SEI/PLP.
+     */
+    private boolean interruptDisableFlagAtDispatch;
+
+    /**
+     * Set when a late-arriving NMI hijacks the vector fetch of an in-flight software
+     * BRK or hardware IRQ sequence (real hardware allows this if NMI is recognised no
+     * later than the end of the PCL-push cycle - i.e. before the status byte push
+     * cycle begins). The already-pushed/being-pushed status byte keeps its original
+     * B-flag semantics; only the vector fetched by FETCH_ADL_FFFE/FETCH_ADH_FFFF is
+     * redirected from $FFFE/$FFFF to $FFFA/$FFFB. Reset once consumed.
+     */
+    private boolean vectorHijackedByNmi;
 
     /**
      * Index register X.
@@ -681,6 +722,7 @@ public class Cpu6502 extends BaseChip {
             // Intialise the flags.
             processorStatusRegister = snapshot.getProcessorStatusRegister();
             unpackPSR();
+            interruptDisableFlagAtDispatch = interruptDisableFlag;
         }
     }
 
@@ -704,6 +746,7 @@ public class Cpu6502 extends BaseChip {
         overflowFlag = false;
         decimalModeFlag = false;
         interruptDisableFlag = true; // real 6502/6510 hardware sets I=1 on reset
+        interruptDisableFlagAtDispatch = true;
         zeroResultFlag = false;
         carryFlag = false;
         processorStatusRegister = 0x20;
@@ -755,6 +798,30 @@ public class Cpu6502 extends BaseChip {
      */
     private void setFlagBorrow(int value) {
         carryFlag = ((value & 0x100) == 0);
+    }
+
+    /**
+     * Returns the I flag value to use when polling for a pending interrupt at the end
+     * of the instruction that is about to complete (see
+     * {@link #interruptDisableFlagAtDispatch}'s Javadoc for the general rule).
+     *
+     * <p>The one exception is a hardware interrupt sequence (BRK/IRQ/NMI) completing:
+     * real hardware sets I during that sequence's status-byte push, several cycles
+     * before its own final cycle, so there is no same-cycle race to model there and
+     * the live flag is used directly. Using the pre-sequence snapshot instead would
+     * make a level-triggered IRQ that's still asserted look "still unmasked" from its
+     * own sequence's point of view and re-trigger itself forever.
+     */
+    private boolean pollInterruptDisableFlag() {
+        if (instructionSteps == null) {
+            // No instruction has ever been dispatched yet (very first cycle after
+            // construction/reset()); the snapshot and live flag are identical at
+            // this point regardless.
+            return interruptDisableFlagAtDispatch;
+        }
+        int mnemonic = instructionSteps[0];
+        return (mnemonic == BRK || mnemonic == IRQ || mnemonic == NMI)
+                ? interruptDisableFlag : interruptDisableFlagAtDispatch;
     }
 
     /**
@@ -833,30 +900,40 @@ public class Cpu6502 extends BaseChip {
         int tmp = 0, op1 = 0, op2 = 0;
     
         switch(instructionSteps[0]) {
-          case ADC:
+          case ADC: {
             op1 = accumulator;
             op2 = inputDataLatch;
+            boolean carryIn = carryFlag;
             if (decimalModeFlag) {
+              // NMOS quirk (see 6502.org's Decimal Mode tutorial): Z is set as if the
+              // addition had been done in binary, not from the BCD-corrected result.
+              int binarySum = op1 + op2 + (carryIn ? 1 : 0);
+              zeroResultFlag = ((binarySum & 0xFF) == 0);
+
               int lo, hi;
-              lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
+              lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryIn ? 1 : 0);
               if ((lo & 0xff) > 9) lo += 6;
               hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
+              // N and V are taken from the result BEFORE the high-nibble decimal
+              // correction below - another real, documented NMOS quirk.
+              int preCorrection = ((hi << 4) | (lo & 0x0f)) & 0xFF;
+              negativeResultFlag = (preCorrection & 0x80) != 0;
+              overflowFlag = ((op1 ^ preCorrection) & ~(op1 ^ op2) & 0x80) != 0;
+
               if ((hi & 0xff) > 9) hi += 6;
               tmp = (hi << 4) | (lo & 0x0f);
               accumulator = tmp & 0xff;
               carryFlag = (hi > 15);
-              zeroResultFlag = (accumulator == 0);
-              overflowFlag = false;       // BCD never sets overflow flag
-              negativeResultFlag = false; // BCD is never negative on NMOS 6502
             }
             else {       // binary mode
-              tmp = op1 + op2 + (carryFlag ? 1 : 0);
+              tmp = op1 + op2 + (carryIn ? 1 : 0);
               accumulator = tmp & 0xFF;
               overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
               setFlagCarry(tmp);
               setNZ(accumulator);
             }
             break;
+          }
     
           case AND:
             accumulator = accumulator & inputDataLatch;
@@ -1060,30 +1137,35 @@ public class Cpu6502 extends BaseChip {
             // Nothing left to do.
             break;
     
-          case SBC:
+          case SBC: {
             op1 = accumulator;
             op2 = inputDataLatch;
+            boolean carryIn = carryFlag;
             if (decimalModeFlag) {
               int lo, hi;
-              lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
+              lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryIn ? 0 : 1);
               if ((lo & 0x10) != 0) lo -= 6;
               hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
               if ((hi & 0x10) != 0) hi -= 6;
               tmp = (hi << 4) | (lo & 0x0F);
               accumulator = tmp & 0xFF;
-              carryFlag = ((hi & 0xFF) < 15);
-              zeroResultFlag = (accumulator == 0);
-              overflowFlag = false;       // BCD never sets overflow flag
-              negativeResultFlag = false; // BCD is never negative on NMOS 6502
-              
+              // NMOS quirk (see 6502.org's Decimal Mode tutorial): N, V, Z and C are
+              // all computed as if the subtraction had been done in binary, not from
+              // the BCD-corrected result above.
+              int binaryResult = op1 - op2 - (carryIn ? 0 : 1);
+              overflowFlag = ((op1 ^ op2) & (op1 ^ binaryResult) & 0x80) != 0;
+              setFlagBorrow(binaryResult);
+              negativeResultFlag = (binaryResult & 0x80) != 0;
+              zeroResultFlag = (binaryResult & 0xFF) == 0;
             } else {  // binary mode
-              tmp = op1 - op2 - (carryFlag ? 0 : 1);
+              tmp = op1 - op2 - (carryIn ? 0 : 1);
               accumulator = tmp & 0xFF;
               overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
               setFlagBorrow(tmp);
               setNZ(accumulator);
             }
             break;
+          }
     
           case SEC:
             carryFlag = true;
@@ -1212,39 +1294,41 @@ public class Cpu6502 extends BaseChip {
             setNZ(indexRegisterX);
             break;
             
-          case ISC:
+          case ISC: {
             // M + 1 -> M, A - M - C -> A
             // INC oper + SBC oper
             // Increase memory by one, then subtract memory from accumulator (with borrow).
             // Status flags: N,V,Z,C
-            // TODO: Test this. There are demos that use it.
             dataBusBuffer = ((inputDataLatch + 1) & 0xFF);
             op1 = accumulator;
-            //op2 = inputDataLatch;
             op2 = dataBusBuffer;
+            boolean carryIn = carryFlag;
             if (decimalModeFlag) {
                 int lo, hi;
-                lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryFlag ? 0 : 1);
+                lo = (op1 & 0x0F) - (op2 & 0x0F) - (carryIn ? 0 : 1);
                 if ((lo & 0x10) != 0) lo -= 6;
                 hi = (op1 >> 4) - (op2 >> 4) - ((lo & 0x10) != 0 ? 1 : 0);
                 if ((hi & 0x10) != 0) hi -= 6;
                 tmp = (hi << 4) | (lo & 0x0F);
                 accumulator = tmp & 0xFF;
-                carryFlag = ((hi & 0xFF) < 15);
-                zeroResultFlag = (accumulator == 0);
-                overflowFlag = false;       // BCD never sets overflow flag
-                negativeResultFlag = false; // BCD is never negative on NMOS 6502
-                
+                // NMOS quirk: N, V, Z and C are all computed as if the subtraction had
+                // been done in binary (see 6502.org's Decimal Mode tutorial).
+                int binaryResult = op1 - op2 - (carryIn ? 0 : 1);
+                overflowFlag = ((op1 ^ op2) & (op1 ^ binaryResult) & 0x80) != 0;
+                setFlagBorrow(binaryResult);
+                negativeResultFlag = (binaryResult & 0x80) != 0;
+                zeroResultFlag = (binaryResult & 0xFF) == 0;
             } else {  // binary mode
-                tmp = op1 - op2 - (carryFlag ? 0 : 1);
+                tmp = op1 - op2 - (carryIn ? 0 : 1);
                 accumulator = tmp & 0xFF;
                 overflowFlag = ((op1 ^ op2) & (op1 ^ accumulator) & 0x80) != 0;
                 setFlagBorrow(tmp);
                 setNZ(accumulator);
             }
             break;
-            
-          case RRA:
+          }
+
+          case RRA: {
             // M = C -> [76543210] -> C, A + M + C -> A, C
             // Rotate one bit right in memory, then add memory to accumulator (with
             // carry).
@@ -1252,31 +1336,40 @@ public class Cpu6502 extends BaseChip {
             dataBusBuffer = ((inputDataLatch >> 1) | (carryFlag ? 0x80 : 0));
             carryFlag = (tmp != 0); // bit rotated out of memory becomes the carry used by the addition below
             op1 = accumulator;
-            //op2 = inputDataLatch;
             op2 = dataBusBuffer;
+            boolean carryIn = carryFlag; // carry-in to the ADC half is the bit just rotated out
             if (decimalModeFlag) {
+                // NMOS quirk: Z is set as if the addition had been done in binary, not
+                // from the BCD-corrected result (see 6502.org's Decimal Mode tutorial).
+                int binarySum = op1 + op2 + (carryIn ? 1 : 0);
+                zeroResultFlag = ((binarySum & 0xFF) == 0);
+
                 int lo, hi;
-                lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryFlag ? 1 : 0);
+                lo = (op1 & 0x0f) + (op2 & 0x0f) + (carryIn ? 1 : 0);
                 if ((lo & 0xff) > 9) lo += 6;
                 hi = (op1 >> 4) + (op2 >> 4) + (lo > 15 ? 1 : 0);
+                // N and V are taken from the result BEFORE the high-nibble decimal
+                // correction below.
+                int preCorrection = ((hi << 4) | (lo & 0x0f)) & 0xFF;
+                negativeResultFlag = (preCorrection & 0x80) != 0;
+                overflowFlag = ((op1 ^ preCorrection) & ~(op1 ^ op2) & 0x80) != 0;
+
                 if ((hi & 0xff) > 9) hi += 6;
                 tmp = (hi << 4) | (lo & 0x0f);
                 accumulator = tmp & 0xff;
                 carryFlag = (hi > 15);
-                zeroResultFlag = (accumulator == 0);
-                overflowFlag = false;       // BCD never sets overflow flag
-                negativeResultFlag = false; // BCD is never negative on NMOS 6502
             }
             else {       // binary mode
-                tmp = op1 + op2 + (carryFlag ? 1 : 0);
+                tmp = op1 + op2 + (carryIn ? 1 : 0);
                 accumulator = tmp & 0xFF;
                 overflowFlag = ((op1 ^ accumulator) & ~(op1 ^ op2) & 0x80) != 0;
                 setFlagCarry(tmp);
                 setNZ(accumulator);
             }
             break;
+          }
             
-          case ARR:
+          case ARR: {
               // AND oper + ROR
               // A AND oper, C -> [76543210] -> C
               // V-flag is set according to (A AND oper) + oper
@@ -1288,16 +1381,33 @@ public class Cpu6502 extends BaseChip {
               // If only bit 5 is 1: set V, clear C.
               // If only bit 6 is 1: set C and V.
               // Status flags: N,V,Z,C
-              
-              accumulator = accumulator & inputDataLatch;
+              //
+              // This AND+ROR+bit6/5-flag-check part is identical in binary and decimal
+              // mode. In decimal mode, real hardware additionally applies a BCD nibble
+              // correction to the accumulator (ARR shares the same adder/decimal-correction
+              // hardware as ADC). The exact bit-level formula for this correction is only
+              // sparsely documented; the nibble-correction shape below is the commonly
+              // reproduced approximation, not verified bit-for-bit against real silicon.
+              int andResult = accumulator & inputDataLatch;
 
-              tmp = accumulator | (carryFlag ? 0x100 : 0);
+              tmp = andResult | (carryFlag ? 0x100 : 0);
               accumulator = (tmp >> 1) & 0xFF;
               carryFlag = (accumulator & 0x40) != 0;
               overflowFlag = (((accumulator >> 6) ^ (accumulator >> 5)) & 1) != 0;
               setNZ(accumulator);
 
+              if (decimalModeFlag) {
+                  if (((andResult & 0x0F) + (andResult & 0x01)) > 5) {
+                      accumulator = (accumulator & 0xF0) | ((accumulator + 6) & 0x0F);
+                  }
+                  if (((andResult & 0xF0) + (andResult & 0x10)) > 0x50) {
+                      accumulator = (accumulator + 0x60) & 0xFF;
+                      carryFlag = true;
+                  }
+              }
+
               break;
+          }
 
           case RLA:
             // Rotate one bit left in memory, then AND accumulator with memory.
@@ -1338,6 +1448,46 @@ public class Cpu6502 extends BaseChip {
             accumulator = accumulator & inputDataLatch;
             carryFlag = (accumulator & 1) != 0;
             accumulator = accumulator >> 1;
+            setNZ(accumulator);
+            break;
+
+          case SHA:
+            // Unstable: A AND X AND (high byte of the effective address + 1) -> M.
+            dataBusBuffer = accumulator & indexRegisterX & (((baseAddressHigh >> 8) + 1) & 0xFF);
+            break;
+
+          case SHX:
+            // Unstable: X AND (high byte of the effective address + 1) -> M.
+            dataBusBuffer = indexRegisterX & (((baseAddressHigh >> 8) + 1) & 0xFF);
+            break;
+
+          case SHY:
+            // Unstable: Y AND (high byte of the effective address + 1) -> M.
+            dataBusBuffer = indexRegisterY & (((baseAddressHigh >> 8) + 1) & 0xFF);
+            break;
+
+          case TAS:
+            // Unstable: A AND X -> S, then S AND (high byte of the effective address + 1) -> M.
+            stackPointer = accumulator & indexRegisterX;
+            dataBusBuffer = stackPointer & (((baseAddressHigh >> 8) + 1) & 0xFF);
+            break;
+
+          case ANE:
+            // Unstable: (A OR magic) AND X AND oper -> A.
+            accumulator = (accumulator | UNSTABLE_MAGIC_CONSTANT) & indexRegisterX & inputDataLatch;
+            setNZ(accumulator);
+            break;
+
+          case LXA:
+            // Unstable: (A OR magic) AND oper -> A -> X.
+            accumulator = (accumulator | UNSTABLE_MAGIC_CONSTANT) & inputDataLatch;
+            indexRegisterX = accumulator;
+            setNZ(accumulator);
+            break;
+
+          case LAS:
+            // M AND S -> A, X, S.
+            accumulator = indexRegisterX = stackPointer = (inputDataLatch & stackPointer);
             setNZ(accumulator);
             break;
 
@@ -1411,7 +1561,9 @@ public class Cpu6502 extends BaseChip {
             // Execute instruction step.
             switch (action) {
                 case BRANCH_DIS_NEXT:
-                    // Third step of a branch. Fetch next op code, and add offset.
+                    // Third step of a branch. Fetch next op code (discarded) at the not-yet-adjusted
+                    // PC, and add offset.
+                    memory.readMemory(programCounter);
                     inputDataLatch = ((inputDataLatch & 0x80) == 0 ? inputDataLatch : inputDataLatch - 0x100);
                     branchAddress = ((programCounter + inputDataLatch) & 0xFFFF);
                     if ((programCounter & 0xFF00) == (branchAddress & 0xFF00)) {
@@ -1423,9 +1575,12 @@ public class Cpu6502 extends BaseChip {
                         delayInterruptOneCycle = false;
                     }
                     break;
-    
+
                 case BRANCH_DIS_OFFSET:
-                    // Fourth step of a branch. Fetch bad op code, fix program counter.
+                    // Fourth step of a branch (only reached when a page boundary was crossed).
+                    // Fetch (discarded) from the address with the corrected PCL but still-old PCH,
+                    // matching real hardware's invalid intermediate address, then fix up PC.
+                    memory.readMemory((programCounter & 0xFF00) | (branchAddress & 0x00FF));
                     programCounter = branchAddress;
                     break;
     
@@ -1448,8 +1603,20 @@ public class Cpu6502 extends BaseChip {
                     }
                     break;
     
+                case EXECUTE_HANG:
+                    // JAM/KIL/HLT: real hardware's timing state machine never reaches a state
+                    // that resets it back to T0, so the CPU is stuck rereading the same
+                    // address forever (with $FF conventionally stuck on the data bus).
+                    // Recovery requires a RESET. Cancel the unconditional currentInstructionStep++
+                    // below so this same cycle repeats indefinitely.
+                    memory.readMemory(programCounter);
+                    currentInstructionStep--;
+                    break;
+
                 case EXECUTE_DIS: // Execute (with fetch next op code then discard)
-                    // Single byte instructions & PHP, PHA
+                    // Single byte instructions & PHP, PHA. Real hardware reads (and discards)
+                    // the byte at PC on this cycle without incrementing PC.
+                    memory.readMemory(programCounter);
                     executeInstruction();
                     break;
     
@@ -1458,7 +1625,7 @@ public class Cpu6502 extends BaseChip {
                     executeInstruction();
                     // Fetch next op code.
                     currentInstructionStep = 0;
-                    if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag)
+                    if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())
                             || delayInterruptOneCycle) {
                         if (debug) {
                             displayCurrentInstruction();
@@ -1472,6 +1639,9 @@ public class Cpu6502 extends BaseChip {
                         // An interrupt occurred.
                         instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
                     }
+                    // Snapshot I for the poll at the end of the instruction just dispatched above
+                    // (see the field's Javadoc for why this can't just be the live flag).
+                    interruptDisableFlagAtDispatch = interruptDisableFlag;
                     numOfInstructionSteps = instructionSteps.length;
                     break;
     
@@ -1533,7 +1703,9 @@ public class Cpu6502 extends BaseChip {
                     break;
     
                 case FETCH_ADH_FFFF:
-                    effectiveAddressHigh = (memory.readMemory(0xFFFF) << 8);
+                    // A late-arriving NMI may have hijacked this BRK/IRQ's vector fetch.
+                    effectiveAddressHigh = (memory.readMemory(vectorHijackedByNmi ? 0xFFFB : 0xFFFF) << 8);
+                    vectorHijackedByNmi = false;
                     break;
     
                 case FETCH_ADH_PC:
@@ -1559,7 +1731,8 @@ public class Cpu6502 extends BaseChip {
                     break;
     
                 case FETCH_ADL_FFFE:
-                    effectiveAddressLow = memory.readMemory(0xFFFE);
+                    // A late-arriving NMI may have hijacked this BRK/IRQ's vector fetch.
+                    effectiveAddressLow = memory.readMemory(vectorHijackedByNmi ? 0xFFFA : 0xFFFE);
                     break;
     
                 case FETCH_ADL_PC:
@@ -1693,11 +1866,9 @@ public class Cpu6502 extends BaseChip {
                     break;
     
                 case FETCH_DIS_PC: // Fetches using PC but doesn't increment PC.
-                    // Program counter is highly unlikely to be pointing at I/O (PLA, PLP. RTS, RTI,
-                    // IRQ, NMI)
-                    // TODO: Apparently it does fetch data using PC, but having this here affects
-                    // the sound. ?!
-                    // memory.readMemory(programCounter);
+                    // Real hardware reads (and discards) the byte at PC on this cycle without
+                    // incrementing PC (PLA, PLP, RTS, RTI, IRQ, NMI).
+                    memory.readMemory(programCounter);
                     break;
     
                 case FETCH_DIS_SP:
@@ -1776,6 +1947,15 @@ public class Cpu6502 extends BaseChip {
                     memory.writeMemory(stackPointer + 0x100, (processorStatusRegister | (instructionSteps[0] == BRK ? 0x10 : 0)));
                     // BRK flag only exists on the stack.
                     stackPointer = ((stackPointer - 1) & 0xFF);
+                    // Interrupt hijacking: a late-arriving NMI, recognised no later than this
+                    // point (i.e. before this status-byte push cycle began), redirects the
+                    // upcoming vector fetch to $FFFA/$FFFB. This only applies to an in-flight
+                    // BRK or hardware IRQ (an NMI can't hijack another NMI); the status byte
+                    // just pushed above keeps its original B-flag semantics either way.
+                    if ((instructionSteps[0] == BRK || instructionSteps[0] == IRQ) && (interruptStatus & S_NMI) != 0) {
+                        vectorHijackedByNmi = true;
+                        interruptStatus &= ~S_NMI; // edge-triggered; consumed by the hijack
+                    }
                     break;
     
                 case STORE_PCH_SP:
@@ -1801,7 +1981,7 @@ public class Cpu6502 extends BaseChip {
             // Set up next instruction.
             currentInstructionStep = 1;
 
-            if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && interruptDisableFlag) || delayInterruptOneCycle) {
+            if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && pollInterruptDisableFlag()) || delayInterruptOneCycle) {
                 if (debug) {
                     displayCurrentInstruction();
                 }
@@ -1814,6 +1994,9 @@ public class Cpu6502 extends BaseChip {
                 // An interrupt occurred.
                 instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
             }
+            // Snapshot I for the poll at the end of the instruction just dispatched above
+            // (see the field's Javadoc for why this can't just be the live flag).
+            interruptDisableFlagAtDispatch = interruptDisableFlag;
 
             numOfInstructionSteps = instructionSteps.length;
         }
@@ -2131,6 +2314,7 @@ public class Cpu6502 extends BaseChip {
     public void setProcessorStatus(int value) {
         processorStatusRegister = value;
         unpackPSR();
+        interruptDisableFlagAtDispatch = interruptDisableFlag;
     }
 
     public int getInstructionRegister() {
@@ -2183,6 +2367,7 @@ public class Cpu6502 extends BaseChip {
 
     public void setInterruptDisableFlag(boolean value) {
         interruptDisableFlag = value;
+        interruptDisableFlagAtDispatch = value;
     }
 
     public void stackPush(int value) {
