@@ -88,7 +88,21 @@ public class Vic6560 extends Vic {
     protected static final int DO_VBLANK_LONG  = 1;
     protected static final int DO_VBLANK_SHORT = 2;
     protected int do_vblank = 0;
-    
+
+    // Video Matrix Counter "stale nibble carry" emulation (bug in the VIC chip's VMC carry logic).
+    //
+    // The real VMC is a 12-bit counter that steps once per matrix cycle (two steps per
+    // character), with the fetch address being (vm + 1) >> 1. In this class the
+    // videoMatrixLatch holds the value in those chip units, while videoMatrixCounter
+    // continues to be the per-character fetch address (for efficiency reasons). The carries 
+    // into bit 4 and bit 8 of the real VMC are held on dynamic nodes that are refreshed in 
+    // every cycle except the reload cycle, so if the VMC was still counting in the cycle 
+    // immediately before the reload, the carries from that last step get applied (per nibble,
+    // with no carry between nibbles) to the value loaded from the latch.
+    private int videoMatrixLineStart;     // 12-bit VMC value (chip units) loaded at start of line
+    private boolean videoMatrixCarry4;    // Stale carry into VMC bit 4, applied at next reload
+    private boolean videoMatrixCarry8;    // Stale carry into VMC bit 8, applied at next reload
+
     /**
      * Constructor for Vic6560.
      * 
@@ -99,7 +113,15 @@ public class Vic6560 extends Vic {
     public Vic6560(PixelData pixelData, MachineType machineType, Snapshot snapshot) {
         super(pixelData, machineType, snapshot);
     }
- 
+
+    @Override
+    public void reset() {
+        super.reset();
+        videoMatrixLineStart = 0;
+        videoMatrixCarry4 = false;
+        videoMatrixCarry8 = false;
+    }
+
     /**
      * Emulates single NTSC VIC cycle.
      * 
@@ -240,25 +262,49 @@ public class Vic6560 extends Vic {
                 // Counter Reset logic, the "In Matrix" status logic, and Video Matrix Latch,
                 // until HC = 1.
     
+                // Was the VMC still counting in this cycle, i.e. the one immediately before
+                // the reload? In chip units, it steps in both the screen code and char data
+                // cycles of each cell. This cycle is in a different position from all the
+                // others: in FETCH_SCREEN_CODE it counts only for a real cell (HCC > 0),
+                // and the half step it makes is not reflected in videoMatrixCounter.
+                boolean vmcCountedLastCycle = false;
+                int vmcHalfStep = 0;
+
                 // The "new line" signal closes the matrix, if it is still open.
                 if (fetchState >= FETCH_MATRIX_DLY_1) {
-                    // The real chip appears to have another increment in this cycle, if the 
+                    // The real chip appears to have another increment in this cycle, if the
                     // state is FETCH_CHAR_DATA. Not 100% clear though, since distortion ensues
                     // when setting the registers such that the matrix closes here.
                     if (fetchState == FETCH_CHAR_DATA) {
                         videoMatrixCounter++;
+                        vmcCountedLastCycle = true;
+                    } else if ((fetchState == FETCH_SCREEN_CODE) && (horizontalCellCounter > 0)) {
+                        vmcCountedLastCycle = true;
+                        vmcHalfStep = 1;
                     }
                     fetchState = FETCH_MATRIX_LINE;
                 }
-    
+
+                // Final VMC value for this line, in chip units (12-bit, two steps per cell).
+                int vmcLineEnd = (videoMatrixLineStart +
+                        ((videoMatrixCounter - ((videoMatrixLineStart + 1) >> 1)) << 1) +
+                        vmcHalfStep) & 0xFFF;
+
+                // The carries into VMC bits 4 and 8 from the last step are left on their
+                // dynamic nodes if counting continued right up to the reload; otherwise the
+                // idle refresh cycles after the matrix closed will have cleared them.
+                videoMatrixCarry4 = vmcCountedLastCycle && ((vmcLineEnd & 0x00F) == 0);
+                videoMatrixCarry8 = vmcCountedLastCycle && ((vmcLineEnd & 0x0FF) == 0);
+
                 // Check for Cell Depth Counter reset.
                 if ((cellDepthCounter == last_line_of_cell) || (cellDepthCounter == 0xF)) {
                     // Reset CDC.
                     cellDepthCounter = 0;
-                    
+
                     // If last line was the last line of the character cell, then we latch
-                    // the current VMC value ready for the next character row.
-                    videoMatrixLatch = videoMatrixCounter;
+                    // the current VMC value ready for the next character row. This is the
+                    // value as counted, i.e. without the stale carries applied.
+                    videoMatrixLatch = vmcLineEnd;
                     
                     // Vertical Cell Counter decrements when CDC resets, unless its the first line, 
                     // since it was loaded instead (see VC reset logic in HC=2).
@@ -271,8 +317,13 @@ public class Vic6560 extends Vic {
                         } else {
                             // NOTE: Due to comparison being prev HC, this is match HC=0.
                             if (prevHorizontalCounter == screen_origin_x) {
-                                // Last line was in the matrix, so start the in matrix delay.
-                                fetchState = FETCH_MATRIX_DLY_1;
+                                // Last line was in the matrix, so start the in matrix delay. This can only
+                                // match here when screen origin X is 0. If the matrix was still counting in the
+                                // final cycle of the last line, then the X latch was only off for one cycle,
+                                // which causes a bogus one cycle pulse on the matrix enable signal (around X=2),
+                                // giving an extra VMC/HCC step. This is equivalent to the line starting one
+                                // cycle earlier, so we skip the first delay state.
+                                fetchState = (vmcCountedLastCycle ? FETCH_MATRIX_DLY_2 : FETCH_MATRIX_DLY_1);
                             }
                         }
                     }
@@ -285,8 +336,13 @@ public class Vic6560 extends Vic {
                       
                         // NOTE: Due to comparison being prev HC, this is match HC=0.
                         if (prevHorizontalCounter == screen_origin_x) {
-                            // Last line was in the matrix, so start the in matrix delay.
-                            fetchState = FETCH_MATRIX_DLY_1;
+                            // Last line was in the matrix, so start the in matrix delay. This can only
+                            // match here when screen origin X is 0. If the matrix was still counting in the
+                            // final cycle of the last line, then the X latch was only off for one cycle,
+                            // which causes a bogus one cycle pulse on the matrix enable signal (around X=2),
+                            // giving an extra VMC/HCC step. This is equivalent to the line starting one
+                            // cycle earlier, so we skip the first delay state.
+                            fetchState = (vmcCountedLastCycle ? FETCH_MATRIX_DLY_2 : FETCH_MATRIX_DLY_1);
                         }
                     } else {
                         fetchState = FETCH_OUTSIDE_MATRIX;
@@ -365,7 +421,18 @@ public class Vic6560 extends Vic {
                 }
               
                 // Video Matrix Counter (VMC) is reloaded from latch on "new line" signal.
-                videoMatrixCounter = videoMatrixLatch;
+                // The refresh signal is inactive during the reload, so the carries into
+                // bits 4 and 8 still hold whatever the last step of the previous line left
+                // there, and get added to the loaded value, each nibble independently.
+                int vm = videoMatrixLatch;
+                if (videoMatrixCarry8) {
+                    vm = (vm & 0x0FF) | ((vm + 0x100) & 0xF00);
+                }
+                if (videoMatrixCarry4) {
+                    vm = (vm & 0xF0F) | ((vm + 0x010) & 0x0F0);
+                }
+                videoMatrixLineStart = vm;
+                videoMatrixCounter = ((vm + 1) >> 1);
                 
                 // Horizontal Cell Counter (HCC) is reloaded on "new line" signal.
                 horizontalCellCounter = num_of_columns;
@@ -492,7 +559,7 @@ public class Vic6560 extends Vic {
                             putBlankPixels(NTSC_LONG_SYNC_H);
     
                             // Vertical sync is what resets the video matrix latch.
-                            videoMatrixLatch = videoMatrixCounter = 0;
+                            videoMatrixLatch = videoMatrixCounter = videoMatrixLineStart = 0;
                         } else {
                             // Lines 7, 8, 9.
                             putBlankPixels(NTSC_SHORT_SYNC_L);
@@ -666,7 +733,7 @@ public class Vic6560 extends Vic {
                             do_vblank = DO_VBLANK_LONG;
 
                             // Vertical sync is what resets the video matrix latch.
-                            videoMatrixLatch = videoMatrixCounter = 0;
+                            videoMatrixLatch = videoMatrixCounter = videoMatrixLineStart = 0;
                         }
                         else {
                             // Lines 7, 8, 9.
