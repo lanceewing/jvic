@@ -49,7 +49,7 @@ public class Via1 extends Via6522 {
      * @param snapshot  Optional snapshot of the machine state to start with.
      */
     public Via1(Cpu6502 cpu6502, Keyboard keyboard, Joystick joystick, SerialBus serialBus, C1530Datasette datasette, Snapshot snapshot) {
-        super(false);
+        super(true);
         this.cpu6502 = cpu6502;
         this.keyboard = keyboard;
         this.joystick = joystick;
@@ -135,6 +135,17 @@ public class Via1 extends Via6522 {
                 | (serialBus.getClock() ? 0x00 : 0x01));
 
         return value;
+    }
+
+    /**
+     * Returns the current values of the Port B pins. Port B goes to the user port, which
+     * has nothing connected to it, so the 6522's internal pull-ups hold any input pin high.
+     *
+     * @return the current values of the Port B pins.
+     */
+    @Override
+    public int getPortBPins() {
+        return (super.getPortBPins() | (~dataDirectionRegisterB & 0xFF));
     }
 
     /**

@@ -19,7 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class Via1WiringTest {
 
+    private static final int ORB = 0;
     private static final int ORA = 1;
+    private static final int DDRB = 2;
     private static final int DDRA = 3;
     private static final int PCR = 12;
     private static final int IER = 14;
@@ -98,6 +100,29 @@ public class Via1WiringTest {
 
         via1.writeMemory(PCR, 0x0C); // CA2 manual low (active low) -> motor on
         assertTrue(datasette.isMotorOn());
+    }
+
+    @Test
+    void portBInputPinsAreHeldHighByThePullUps() {
+        // Port B goes to the user port, with nothing connected, so input pins read high.
+        assertEquals(0xFF, via1.readMemory(ORB));
+    }
+
+    @Test
+    void portBOutputPinsReadBackWhatWasWritten() {
+        via1.writeMemory(DDRB, 0x0F);
+        via1.writeMemory(ORB, 0x05);
+        assertEquals(0xF5, via1.readMemory(ORB));
+    }
+
+    @Test
+    void portBPinGoesBackHighWhenChangedFromOutputToInput() {
+        via1.writeMemory(DDRB, 0xFF);
+        via1.writeMemory(ORB, 0x00);
+        assertEquals(0x00, via1.readMemory(ORB));
+
+        via1.writeMemory(DDRB, 0x00);
+        assertEquals(0xFF, via1.readMemory(ORB));
     }
 
     @Test

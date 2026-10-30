@@ -579,11 +579,12 @@ public class Cpu6502 extends BaseChip {
     private int polledInterruptStatus;
 
     /**
-     * Tells the 6502 to delay the check for a pending interrupt by one cycle. This
-     * emulates an undocumented feature where taken branches that do not cross a
-     * page boundary will delay a pending interrupt by one cycle.
+     * The current level of the NMI pin. The real 6502's NMI input is edge detected, so
+     * a pending NMI is only raised by a high to low transition: the line going low again
+     * needs it to have gone high in between. Whilst the line stays low, nothing further
+     * happens, no matter how many times the device connected to it reasserts it.
      */
-    private boolean delayInterruptOneCycle;
+    private boolean nmiLineLow;
 
     /**
      * Snapshot of {@link #interruptDisableFlag} taken when the currently-executing
@@ -824,12 +825,13 @@ public class Cpu6502 extends BaseChip {
      * of the instruction that is about to complete (see
      * {@link #interruptDisableFlagAtDispatch}'s Javadoc for the general rule).
      *
-     * <p>The one exception is a hardware interrupt sequence (BRK/IRQ/NMI) completing:
-     * real hardware sets I during that sequence's status-byte push, several cycles
-     * before its own final cycle, so there is no same-cycle race to model there and
-     * the live flag is used directly. Using the pre-sequence snapshot instead would
-     * make a level-triggered IRQ that's still asserted look "still unmasked" from its
-     * own sequence's point of view and re-trigger itself forever.
+     * <p>The exceptions are the instructions that update I well before their last
+     * cycle, for which the live flag is used directly. A hardware interrupt sequence
+     * (BRK/IRQ/NMI) sets I during its status-byte push, so using the pre-sequence
+     * snapshot would make a level-triggered IRQ that's still asserted look "still
+     * unmasked" from its own sequence's point of view and re-trigger itself forever.
+     * RTI restores P three cycles before it ends, so unlike CLI/SEI/PLP, the restored
+     * I is already in effect for the poll at the end of the RTI itself.
      */
     private boolean pollInterruptDisableFlag() {
         if (instructionSteps == null) {
@@ -839,7 +841,7 @@ public class Cpu6502 extends BaseChip {
             return interruptDisableFlagAtDispatch;
         }
         int mnemonic = instructionSteps[0];
-        return (mnemonic == BRK || mnemonic == IRQ || mnemonic == NMI)
+        return (mnemonic == BRK || mnemonic == IRQ || mnemonic == NMI || mnemonic == RTI)
                 ? interruptDisableFlag : interruptDisableFlagAtDispatch;
     }
 
@@ -874,7 +876,13 @@ public class Cpu6502 extends BaseChip {
      * @param irqSignalCode either S_IRQ or a S_NMI.
      */
     public void setInterrupt(int irqSignalCode) {
-        this.interruptStatus |= irqSignalCode;
+        if ((irqSignalCode & S_IRQ) != 0) {
+            this.interruptStatus |= S_IRQ;
+        }
+        if (((irqSignalCode & S_NMI) != 0) && !nmiLineLow) {
+            nmiLineLow = true;
+            this.interruptStatus |= S_NMI;
+        }
     }
 
     /**
@@ -883,7 +891,14 @@ public class Cpu6502 extends BaseChip {
      * @param irqSignalCode either S_IRQ or S_NMI.
      */
     public void clearInterrupt(int irqSignalCode) {
-        this.interruptStatus &= ~irqSignalCode;
+        if ((irqSignalCode & S_IRQ) != 0) {
+            this.interruptStatus &= ~S_IRQ;
+        }
+        // The NMI edge is already latched, so releasing the line doesn't cancel a pending
+        // NMI, even a very short pulse. It only arms the next high to low transition.
+        if ((irqSignalCode & S_NMI) != 0) {
+            nmiLineLow = false;
+        }
     }
 
     /**
@@ -1602,9 +1617,11 @@ public class Cpu6502 extends BaseChip {
                         // Destination address within same page, so skip next instruction step.
                         programCounter = branchAddress;
                         currentInstructionStep++;
-                    } else {
-                        // Crossing page boundary, which means that delayed interrupt doesn't apply.
-                        delayInterruptOneCycle = false;
+                        // The real 6502 polls for interrupts at the end of the operand fetch and,
+                        // on a taken branch that doesn't cross a page, doesn't poll again. So the
+                        // poll that ends this branch sees only what the pins were one cycle ago,
+                        // and anything that arrived after that waits for the next instruction.
+                        interruptStatusAtCycleStart = polledInterruptStatus;
                     }
                     break;
 
@@ -1625,13 +1642,6 @@ public class Cpu6502 extends BaseChip {
                     // Skip next two instruction steps if branch is not taken.
                     if (!branchFlag) {
                         currentInstructionStep += 2;
-                    } else {
-                        // Delay pending interrupt by one cycle if branch is taken. Happens only when not
-                        // crossing page boundary (see BRANCH_DIS_NEXT for its reversal of this on such
-                        // boundary crossing). Note that this is an undocumented feature, but has been
-                        // discovered independently by different people in BBC, Atari, Commodrore, etc.
-                        // communities at different times over the years.
-                        delayInterruptOneCycle = true;
                     }
                     break;
     
@@ -1657,8 +1667,7 @@ public class Cpu6502 extends BaseChip {
                     executeInstruction();
                     // Fetch next op code.
                     currentInstructionStep = 0;
-                    if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())
-                            || delayInterruptOneCycle) {
+                    if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
                         if (debug) {
                             displayCurrentInstruction();
                         }
@@ -1666,7 +1675,6 @@ public class Cpu6502 extends BaseChip {
                         instructionRegister = memory.readMemory(programCounter);
                         programCounter++;
                         instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-                        delayInterruptOneCycle = false;
                     } else {
                         // An interrupt occurred.
                         instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
@@ -2013,7 +2021,7 @@ public class Cpu6502 extends BaseChip {
             // Set up next instruction.
             currentInstructionStep = 1;
 
-            if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag()) || delayInterruptOneCycle) {
+            if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
                 if (debug) {
                     displayCurrentInstruction();
                 }
@@ -2021,7 +2029,6 @@ public class Cpu6502 extends BaseChip {
                 instructionRegister = memory.readMemory(programCounter);
                 programCounter++;
                 instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-                delayInterruptOneCycle = false;
             } else {
                 // An interrupt occurred.
                 instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);

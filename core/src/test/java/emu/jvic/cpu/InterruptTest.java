@@ -266,6 +266,95 @@ public class InterruptTest {
     }
 
     @Test
+    void pendingIrqIsTakenStraightAfterAnRtiThatClearsTheInterruptDisableFlag() {
+        // Unlike CLI/SEI/PLP, RTI restores P well before it ends, so the restored I is
+        // already in effect for the poll at the end of the RTI itself.
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05); // IRQ vector -> $0500
+        h.writeByte(0x0300, 0x40); // RTI
+        h.writeByte(0x01FD, 0x00); // Pulled P: I clear
+        h.writeByte(0x01FE, 0x00); // Pulled PCL
+        h.writeByte(0x01FF, 0x04); // Pulled PCH: returns to $0400
+        h.writeByte(0x0400, 0xEA); // NOP (must not run)
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setInterruptDisableFlag(true);
+        h.cpu.setStackPointer(0xFC);
+        h.cpu.setInterrupt(Cpu6502.S_IRQ);
+
+        h.cpu.step(); // prime: fetch RTI (masked, so not taken)
+        h.cpu.step(); // run RTI, then SELECT the IRQ sequence (does not run it yet)
+        h.cpu.step(); // run the IRQ sequence to completion
+
+        assertEquals(0x0501, h.cpu.getProgramCounter());
+        assertEquals(0x04, h.readByte(0x01FF), "the pushed PCH must be the RTI's return address");
+        assertEquals(0x00, h.readByte(0x01FE), "the NOP at the return address must not have run first");
+    }
+
+    @Test
+    void nmiLineStayingLowDoesNotRaiseAnotherNmi() {
+        h.writeByte(0xFFFA, 0x00);
+        h.writeByte(0xFFFB, 0x06); // NMI vector -> $0600
+        h.writeByte(0x0300, 0xEA);
+        h.writeByte(0x0600, 0xEA); // NOP
+        h.writeByte(0x0601, 0xEA); // NOP
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch NOP
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        h.cpu.step(); // run NOP, then SELECT the NMI sequence (does not run it yet)
+        h.cpu.step(); // run the NMI sequence to completion
+
+        // A device reasserting its already low output is not a new edge.
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        assertFalse(h.cpu.isNmiAsserted());
+
+        h.cpu.step(); // run the handler's first NOP
+        h.cpu.step(); // and the second, which must not be replaced by another NMI
+        assertEquals(0xFC, h.cpu.getStackPointer());
+    }
+
+    @Test
+    void nmiLineGoingHighThenLowAgainRaisesAnotherNmi() {
+        h.writeByte(0xFFFA, 0x00);
+        h.writeByte(0xFFFB, 0x06); // NMI vector -> $0600
+        h.writeByte(0x0300, 0xEA);
+        h.writeByte(0x0600, 0xEA);
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch NOP
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        h.cpu.step(); // run NOP, then SELECT the NMI sequence (does not run it yet)
+        h.cpu.step(); // run the NMI sequence to completion
+
+        h.cpu.clearInterrupt(Cpu6502.S_NMI);
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        assertTrue(h.cpu.isNmiAsserted());
+    }
+
+    @Test
+    void nmiPulseIsLatchedEvenIfTheLineIsReleasedStraightAway() {
+        h.writeByte(0xFFFA, 0x00);
+        h.writeByte(0xFFFB, 0x06); // NMI vector -> $0600
+        h.writeByte(0x0300, 0xEA);
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch NOP
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        h.cpu.clearInterrupt(Cpu6502.S_NMI);
+        h.cpu.step(); // run NOP, then SELECT the NMI sequence (does not run it yet)
+        h.cpu.step(); // run the NMI sequence to completion
+
+        assertEquals(0x0601, h.cpu.getProgramCounter());
+    }
+
+    @Test
     void lateArrivingNmiHijacksAnInFlightIrqsVectorFetch() {
         // Real hardware: if NMI is recognised no later than the end of the PCL-push
         // cycle of an in-flight BRK/IRQ sequence (i.e. before the status-byte push
@@ -312,7 +401,7 @@ public class InterruptTest {
     }
 
     @Test
-    void takenSamePageBranchDelaysAPendingInterruptByOneInstruction() {
+    void interruptArrivingAfterTheOperandFetchOfATakenSamePageBranchIsDelayed() {
         h.cpu.reset();
         h.cpu.setProgramCounter(0x0300);
         h.writeByte(0x0300, 0xF0); // BEQ +5 (same page: target 0x0307)
@@ -324,15 +413,12 @@ public class InterruptTest {
         h.cpu.setStackPointer(0xFF);
 
         h.cpu.step(); // prime: fetch BEQ opcode (no interrupt pending yet)
-        // Raise the interrupt only now, i.e. while BEQ is "in flight" - this is the
-        // scenario the delay logic exists for. Raising it before the first step()
-        // would instead have it selected immediately, before BEQ ever got a chance
-        // to run, which would not exercise the delay at all.
-        h.cpu.setInterrupt(Cpu6502.S_IRQ);
-        h.cpu.step(); // run BEQ (taken, same page): interrupt check is deferred, so LDA is fetched normally
+        h.cpu.emulateCycle(); // BEQ's operand fetch
+        h.cpu.setInterrupt(Cpu6502.S_IRQ); // too late for the only poll a taken branch does
+        h.cpu.step(); // finish BEQ: interrupt not seen, so LDA is fetched normally
 
         assertEquals(0xA9, h.cpu.getInstructionRegister(),
-                "a pending interrupt must be delayed by one instruction after a taken same-page branch");
+                "an interrupt arriving this late must be delayed until after the next instruction");
         assertEquals(0xFF, h.cpu.getStackPointer(), "interrupt must not have been serviced yet");
 
         h.cpu.step(); // run LDA to completion, then SELECT the (now due) interrupt sequence
@@ -341,6 +427,30 @@ public class InterruptTest {
 
         h.cpu.step(); // run the interrupt sequence to completion
         assertTrue(h.cpu.getInterruptDisableFlag());
+        assertEquals(0xFC, h.cpu.getStackPointer());
+    }
+
+    @Test
+    void interruptArrivingBeforeTheOperandFetchOfATakenSamePageBranchIsNotDelayed() {
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05);
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.writeByte(0x0300, 0xF0); // BEQ +5 (same page: target 0x0307)
+        h.writeByte(0x0301, 0x05);
+        h.cpu.setInterruptDisableFlag(false);
+        h.cpu.setZeroResultFlag(true); // BEQ will be taken
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch BEQ opcode
+        h.cpu.setInterrupt(Cpu6502.S_IRQ); // in time for the poll at the end of the operand fetch
+        h.cpu.step(); // run branch: the interrupt sequence is SELECTED straight after it
+
+        assertEquals(0xF0, h.cpu.getInstructionRegister(),
+                "no normal instruction fetch should have happened - the interrupt was not delayed");
+
+        h.cpu.step(); // run the interrupt sequence to completion
+        assertEquals(0x0501, h.cpu.getProgramCounter());
         assertEquals(0xFC, h.cpu.getStackPointer());
     }
 

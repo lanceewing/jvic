@@ -163,6 +163,12 @@ public class Via6522 extends MemoryMappedChip {
   private boolean timer2HasShot;
 
   /**
+   * True when timer1 went from 0x0000 to 0xFFFF in the previous cycle. This can't be
+   * inferred from the counter being 0xFFFF, since that's also a value it can be loaded with.
+   */
+  private boolean timer1Underflowed;
+
+  /**
    * Tracks the previous state of PB6, for detecting negative-going pulses when
    * Timer 2 is in PB6 pulse-counting mode (ACR bit 5 set).
    */
@@ -636,8 +642,9 @@ public class Via6522 extends MemoryMappedChip {
     // N + 2 (the interrupt happens at N + 1.5 cycles).
     
     if (!timer1Loaded) {
-      // Check if counter was at 0xFFFF at the start of this cycle.
-      if (timer1Counter == 0xFFFF) {
+      // Check if counter went past zero to 0xFFFF in the previous cycle.
+      if (timer1Underflowed) {
+        timer1Underflowed = false;
         if (timer1Mode == ONE_SHOT) {
           // Timed interrupt each time T1 is loaded (one shot). 
           // Set the interrupt flag only if the timer has been reloaded.
@@ -651,8 +658,9 @@ public class Via6522 extends MemoryMappedChip {
             }
           }
           
-          // Counter continues to count down from 0xFFFF.
-          timer1Counter = 0xFFFE;
+          // The reload from the latches is not gated by ACR6 on the real chip. One shot
+          // mode only stops the repeat interrupt, not the reload.
+          timer1Counter = timer1Latch;
           
         } else {
           // Continuous interrupts (free-running).
@@ -669,10 +677,12 @@ public class Via6522 extends MemoryMappedChip {
       }
       else {
         // Decrement by one, wrapping around to 0XFFFF after zero.
+        timer1Underflowed = (timer1Counter == 0);
         timer1Counter = (timer1Counter - 1) & 0xFFFF;
       }
     } else {
       timer1Loaded = false;
+      timer1Underflowed = false;
     }
     
     if (!timer2Loaded) {

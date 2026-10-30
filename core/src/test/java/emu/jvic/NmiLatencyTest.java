@@ -25,6 +25,7 @@ public class NmiLatencyTest {
     private static final int HANDLER_ADDRESS = 0x1100;
     private static final int SAVED_A = 0xFC;
     private static final int HIGHEST_T1CL = 0xFB;
+    private static final int NMI_COUNT = 0xFB;
 
     private static final int EXPECTED_HIGHEST_T1CL = 0xFF - 22;
 
@@ -74,5 +75,40 @@ public class NmiLatencyTest {
         h.frames(10);
 
         assertEquals(EXPECTED_HIGHEST_T1CL, mem[HIGHEST_T1CL]);
+    }
+
+    @Test
+    void unacknowledgedTimerInterruptRaisesOnlyOneNmi() {
+        // VIA1's IRQ output stays low until the flag is cleared, and NMI is edge detected,
+        // so however many times T1 times out, there's only the one falling edge.
+        MachineTestHarness h = MachineTestHarness.withRealRoms(MachineType.PAL, RamType.RAM_UNEXPANDED);
+        h.frames(50); // Boot to the READY prompt.
+
+        int[] mem = h.getMemory().getMemoryArray();
+
+        load(mem, MAIN_ADDRESS,
+                0x78,             // SEI
+                0xA9, 0x40,       // LDA #$40
+                0x8D, 0x1B, 0x91, // STA $911B  (T1 free running)
+                0xA9, 0xFE,       // LDA #$FE
+                0x8D, 0x14, 0x91, // STA $9114
+                0xA9, 0x00,       // LDA #$00
+                0x8D, 0x15, 0x91, // STA $9115  (start T1, with a period of 256 cycles)
+                0xA9, 0xC0,       // LDA #$C0
+                0x8D, 0x1E, 0x91, // STA $911E  (enable T1 interrupt)
+                0x4C, (MAIN_ADDRESS + 21) & 0xFF, MAIN_ADDRESS >> 8); // loop: JMP loop
+
+        load(mem, HANDLER_ADDRESS,
+                0xE6, NMI_COUNT, // INC NMI_COUNT
+                0x40);           // RTI  (T1 deliberately not acknowledged)
+
+        mem[0x0318] = HANDLER_ADDRESS & 0xFF;
+        mem[0x0319] = HANDLER_ADDRESS >> 8;
+        mem[NMI_COUNT] = 0;
+
+        h.machine.getCpu().setProgramCounter(MAIN_ADDRESS);
+        h.frames(10);
+
+        assertEquals(1, mem[NMI_COUNT]);
     }
 }

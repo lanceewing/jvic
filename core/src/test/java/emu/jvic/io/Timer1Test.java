@@ -66,9 +66,48 @@ public class Timer1Test {
         assertTrue(t1Fired());
 
         // Flag stays set (nothing has acknowledged it), but keeps counting down and
-        // wrapping without ever firing again in one-shot mode.
+        // reloading without ever firing again in one-shot mode.
         h.cycles(20);
         assertTrue(t1Fired());
+    }
+
+    @Test
+    void oneShotReloadsFromTheLatchesOnUnderflow() {
+        // ACR6 only gates the repeat interrupt on the real chip, not the reload, so
+        // the counter doesn't carry on down from $FFFF. The first cycle after a write
+        // doesn't decrement, then it's 1, 0, $FFFF, and the reload brings it back to 2.
+        h.write(ACR, 0x00);
+        h.writeWord(T1L_L, T1C_H, 2);
+        int[] expected = {0x02, 0x01, 0x00, 0xFF, 0x02, 0x01, 0x00, 0xFF, 0x02};
+        for (int value : expected) {
+            h.cycle();
+            assertEquals(value, h.read(T1C_L));
+        }
+    }
+
+    @Test
+    void oneShotDoesNotFireAgainAfterTheReload() {
+        h.write(ACR, 0x00);
+        h.writeWord(T1L_L, T1C_H, 2);
+        h.cycles(5);
+        assertTrue(t1Fired());
+
+        h.read(T1C_L); // Acknowledge it.
+        assertFalse(t1Fired());
+
+        h.cycles(50); // Several reloads.
+        assertFalse(t1Fired(), "only a T1C-H write re-arms it");
+    }
+
+    @Test
+    void latchOfAllOnesCountsTheFullRangeRatherThanFiringStraightAway() {
+        h.write(ACR, 0x00);
+        h.writeWord(T1L_L, T1C_H, 0xFFFF);
+
+        h.cycles(1000);
+
+        assertFalse(t1Fired(), "being loaded with $FFFF is not an underflow");
+        assertEquals((0xFFFF - 999) & 0xFF, h.read(T1C_L));
     }
 
     @Test
