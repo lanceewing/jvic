@@ -562,6 +562,23 @@ public class Cpu6502 extends BaseChip {
     private int interruptStatus;
 
     /**
+     * The state of the interrupt pins at the start of the current cycle.
+     */
+    private int interruptStatusAtCycleStart;
+
+    /**
+     * The state of the interrupt pins as sampled for the end of instruction poll, i.e.
+     * as they were at the start of the previous cycle. The real 6502 samples them during
+     * the penultimate cycle of an instruction, so an interrupt that arrives in the final
+     * cycle waits until after the next instruction, and one that is released in the final
+     * cycle is still taken. The first cycle of the interrupt sequence is therefore never
+     * less than 2 cycles after the interrupt signal goes active. Programs can depend on
+     * this: Datapop's NMI handler derives a jitter correction from T1CL, and fails if the
+     * minimum latency is even 1 cycle shorter than on the real chip.
+     */
+    private int polledInterruptStatus;
+
+    /**
      * Tells the 6502 to delay the check for a pending interrupt by one cycle. This
      * emulates an undocumented feature where taken branches that do not cross a
      * page boundary will delay a pending interrupt by one cycle.
@@ -747,6 +764,8 @@ public class Cpu6502 extends BaseChip {
         decimalModeFlag = false;
         interruptDisableFlag = true; // real 6502/6510 hardware sets I=1 on reset
         interruptDisableFlagAtDispatch = true;
+        interruptStatusAtCycleStart = 0;
+        polledInterruptStatus = 0;
         zeroResultFlag = false;
         carryFlag = false;
         processorStatusRegister = 0x20;
@@ -865,6 +884,16 @@ public class Cpu6502 extends BaseChip {
      */
     public void clearInterrupt(int irqSignalCode) {
         this.interruptStatus &= ~irqSignalCode;
+    }
+
+    /**
+     * Consumes a pending NMI. NMI signals occur on the negative transition only, so as well
+     * as the pin state, this needs to clear the samples of it, or it would be taken again.
+     */
+    private void consumeNmi() {
+        interruptStatus &= ~S_NMI;
+        interruptStatusAtCycleStart &= ~S_NMI;
+        polledInterruptStatus &= ~S_NMI;
     }
 
     /**
@@ -1253,7 +1282,7 @@ public class Cpu6502 extends BaseChip {
             interruptDisableFlag = true;
             programCounter = (effectiveAddressHigh | effectiveAddressLow);
             // NMI signals occur on the negative transition only, so we need to reset.
-            interruptStatus &= ~S_NMI;
+            consumeNmi();
             break;
     
           case IRQ:
@@ -1554,6 +1583,9 @@ public class Cpu6502 extends BaseChip {
 
         totalCycles++;
 
+        polledInterruptStatus = interruptStatusAtCycleStart;
+        interruptStatusAtCycleStart = interruptStatus;
+
         if (currentInstructionStep < numOfInstructionSteps) {
             // Get the action for the current cycle of the instruction.
             action = instructionSteps[currentInstructionStep];
@@ -1625,7 +1657,7 @@ public class Cpu6502 extends BaseChip {
                     executeInstruction();
                     // Fetch next op code.
                     currentInstructionStep = 0;
-                    if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())
+                    if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())
                             || delayInterruptOneCycle) {
                         if (debug) {
                             displayCurrentInstruction();
@@ -1637,7 +1669,7 @@ public class Cpu6502 extends BaseChip {
                         delayInterruptOneCycle = false;
                     } else {
                         // An interrupt occurred.
-                        instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+                        instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
                     }
                     // Snapshot I for the poll at the end of the instruction just dispatched above
                     // (see the field's Javadoc for why this can't just be the live flag).
@@ -1954,7 +1986,7 @@ public class Cpu6502 extends BaseChip {
                     // just pushed above keeps its original B-flag semantics either way.
                     if ((instructionSteps[0] == BRK || instructionSteps[0] == IRQ) && (interruptStatus & S_NMI) != 0) {
                         vectorHijackedByNmi = true;
-                        interruptStatus &= ~S_NMI; // edge-triggered; consumed by the hijack
+                        consumeNmi(); // edge-triggered; consumed by the hijack
                     }
                     break;
     
@@ -1981,7 +2013,7 @@ public class Cpu6502 extends BaseChip {
             // Set up next instruction.
             currentInstructionStep = 1;
 
-            if ((interruptStatus == 0) || (((interruptStatus & S_NMI) == 0) && pollInterruptDisableFlag()) || delayInterruptOneCycle) {
+            if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag()) || delayInterruptOneCycle) {
                 if (debug) {
                     displayCurrentInstruction();
                 }
@@ -1992,7 +2024,7 @@ public class Cpu6502 extends BaseChip {
                 delayInterruptOneCycle = false;
             } else {
                 // An interrupt occurred.
-                instructionSteps = ((interruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+                instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
             }
             // Snapshot I for the poll at the end of the instruction just dispatched above
             // (see the field's Javadoc for why this can't just be the live flag).

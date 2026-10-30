@@ -22,11 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * selecting IRQ_STEPS/NMI_STEPS is itself a "priming" event, exactly like fetching a
  * normal opcode - the {@code step()} call that selects it stops immediately without
  * running any of its cycles, and a further {@code step()} call is needed to run it
- * to completion. This was confirmed empirically. The one exception is an interrupt
- * that is already pending before the very first {@code step()} call after a reset:
- * there, the first call's "priming" directly selects the interrupt sequence, so only
- * one further call (2 total) is needed - which is also precisely the scenario
- * exercised by {@link #interruptServicedImmediatelyAfterResetSetsBreakFlagCorrectly()}.
+ * to completion. This was confirmed empirically.
+ *
+ * <p><b>Interrupt sampling:</b> as on the real 6502, the pins are sampled in the
+ * penultimate cycle of an instruction, not its last, so an interrupt raised only as
+ * the last cycle completes waits until after the following instruction. An interrupt
+ * raised after priming an instruction is always early enough to be seen at that
+ * instruction's end, which is why most tests here raise it at that point.
  */
 public class InterruptTest {
 
@@ -113,12 +115,18 @@ public class InterruptTest {
         h.cpu.reset();
         h.cpu.setProgramCounter(0x0300);
         h.cpu.setStackPointer(0xFF);
-        h.cpu.setInterrupt(Cpu6502.S_NMI);
 
-        h.cpu.step(); // pending before the very first step(): selects the NMI sequence immediately
-        h.cpu.step(); // runs it to completion
+        h.cpu.step(); // prime: fetch NOP (no interrupt pending yet)
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+        h.cpu.step(); // run NOP, then SELECT the pending NMI sequence (does not run it yet)
+        h.cpu.step(); // run the NMI sequence to completion
 
         assertFalse(h.cpu.isNmiAsserted(), "NMI is edge-triggered: it must not re-fire on its own");
+        assertEquals(0xFC, h.cpu.getStackPointer());
+
+        h.cpu.step(); // run the handler's first instruction (memory is 0, so a BRK, fetched normally)
+
+        assertEquals(0xF9, h.cpu.getStackPointer(), "only the BRK's pushes: the NMI must not be taken twice");
     }
 
     @Test
@@ -135,28 +143,89 @@ public class InterruptTest {
     }
 
     @Test
-    void interruptServicedImmediatelyAfterResetSetsBreakFlagCorrectly() {
+    void hardwareInterruptDirectlyAfterBrkPushesStatusWithBreakFlagClear() {
         // Cpu6502 distinguishes a genuine BRK from a hardware IRQ/NMI by checking
-        // instructionSteps[0] == BRK (see STORE_P_SP), which is only ever true
-        // while actually executing a real BRK instruction - unlike
-        // instructionRegister (which reset() also happens to set to 0, coincidentally
-        // matching BRK's opcode value), it can never be stale. This locks in that an
-        // interrupt serviced before the CPU has fetched even its first real
-        // instruction still correctly leaves the break bit clear.
+        // instructionSteps[0] == BRK (see STORE_P_SP), which is only ever true while
+        // actually executing a real BRK instruction. instructionRegister isn't updated
+        // when an interrupt sequence is selected, so straight after a BRK it is still 0,
+        // coincidentally BRK's opcode. This locks in that an NMI taken at that point
+        // still correctly leaves the break bit clear.
         h.writeByte(0xFFFE, 0x00);
-        h.writeByte(0xFFFF, 0x05);
+        h.writeByte(0xFFFF, 0x05); // BRK vector -> $0500
+        h.writeByte(0xFFFA, 0x00);
+        h.writeByte(0xFFFB, 0x06); // NMI vector -> $0600
+        h.writeByte(0x0300, 0x00); // BRK
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch BRK
+
+        // Run BRK as far as its status push, so the NMI is too late to hijack the vector.
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.emulateCycle();
+        h.cpu.setInterrupt(Cpu6502.S_NMI);
+
+        h.cpu.step(); // finish BRK, then SELECT the pending NMI sequence (does not run it yet)
+        assertEquals(0x00, h.cpu.getInstructionRegister(), "still BRK's opcode when the NMI is taken");
+
+        h.cpu.step(); // run the NMI sequence to completion
+
+        assertEquals(0x0601, h.cpu.getProgramCounter());
+        assertEquals(0x10, h.readByte(PUSHED_STATUS_ADDRESS) & 0x10, "pushed by BRK");
+        assertEquals(0, h.readByte(0x01FA) & 0x10,
+                "hardware NMI must push status with the break bit clear, even straight after a BRK");
+    }
+
+    @Test
+    void interruptRaisedInTheLastCycleOfAnInstructionWaitsForTheNextInstruction() {
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05); // IRQ vector -> $0500
+        h.writeByte(0x0300, 0xEA); // NOP
+        h.writeByte(0x0301, 0xA9); // LDA #$42
+        h.writeByte(0x0302, 0x42);
         h.cpu.reset();
         h.cpu.setProgramCounter(0x0300);
         h.cpu.setInterruptDisableFlag(false);
         h.cpu.setStackPointer(0xFF);
-        h.cpu.setInterrupt(Cpu6502.S_IRQ); // pending before ANY instruction has been fetched
 
-        h.cpu.step(); // "primes" by selecting the IRQ sequence directly (nothing fetched yet)
-        h.cpu.step(); // runs it to completion
+        h.cpu.step(); // prime: fetch NOP
+        h.cpu.emulateCycle(); // NOP's last cycle
+        h.cpu.setInterrupt(Cpu6502.S_IRQ); // only now, too late for NOP's penultimate cycle sample
+        h.cpu.emulateCycle(); // dispatch what comes after NOP
 
-        int pushedStatus = h.readByte(PUSHED_STATUS_ADDRESS);
-        assertEquals(0, pushedStatus & 0x10,
-                "hardware IRQ must push status with the break bit clear, even serviced this early");
+        assertEquals(0xA9, h.cpu.getInstructionRegister(), "too late to be taken after the NOP");
+
+        h.cpu.step(); // run LDA to completion, then SELECT the IRQ sequence (does not run it yet)
+        assertEquals(0x42, h.cpu.getAccumulator());
+        h.cpu.step(); // run the IRQ sequence to completion
+
+        assertEquals(0x0501, h.cpu.getProgramCounter());
+    }
+
+    @Test
+    void irqReleasedInTheLastCycleOfAnInstructionIsStillTaken() {
+        // The poll already saw it during the penultimate cycle, so it's too late to
+        // stop it, even though nothing is asserting IRQ by the time it is serviced.
+        h.writeByte(0xFFFE, 0x00);
+        h.writeByte(0xFFFF, 0x05); // IRQ vector -> $0500
+        h.writeByte(0x0300, 0xEA); // NOP
+        h.cpu.reset();
+        h.cpu.setProgramCounter(0x0300);
+        h.cpu.setInterruptDisableFlag(false);
+        h.cpu.setStackPointer(0xFF);
+
+        h.cpu.step(); // prime: fetch NOP
+        h.cpu.setInterrupt(Cpu6502.S_IRQ);
+        h.cpu.emulateCycle(); // NOP's last cycle
+        h.cpu.clearInterrupt(Cpu6502.S_IRQ);
+        h.cpu.emulateCycle(); // SELECTs the IRQ sequence (does not run it yet)
+        h.cpu.step(); // run the IRQ sequence to completion
+
+        assertEquals(0x0501, h.cpu.getProgramCounter());
+        assertEquals(0xFC, h.cpu.getStackPointer());
     }
 
     @Test
