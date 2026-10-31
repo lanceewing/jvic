@@ -92,6 +92,50 @@ public class Timer2Test {
         assertFalse(t2Fired());
     }
 
+    // ------------------------------------------------------- ACR5 mode changes ----
+
+    @Test
+    void changingFromPulseCountingToTimedStartsCountingTheCycleAfterTheWrite() {
+        h.write(ACR, 0x20);
+        h.writeWord(T2C_L, T2C_H, 0x4000);
+        h.cycles(3);
+        assertEquals(0x00, h.read(T2C_L), "frozen in pulse counting mode");
+
+        h.write(ACR, 0x00);
+        h.cycle(); // The cycle of the ACR write: the count enable hasn't changed yet.
+        assertEquals(0x00, h.read(T2C_L));
+
+        h.cycle();
+        assertEquals(0xFF, h.read(T2C_L));
+    }
+
+    @Test
+    void changingFromTimedToPulseCountingStopsCountingTheCycleAfterTheWrite() {
+        h.write(ACR, 0x00);
+        h.writeWord(T2C_L, T2C_H, 0x4000);
+        h.cycles(2); // The cycle of the load doesn't decrement, the next one does.
+        assertEquals(0xFF, h.read(T2C_L));
+
+        h.write(ACR, 0x20);
+        h.cycle(); // The cycle of the ACR write: the count enable hasn't changed yet.
+        assertEquals(0xFE, h.read(T2C_L));
+
+        h.cycles(3);
+        assertEquals(0xFE, h.read(T2C_L), "frozen in pulse counting mode");
+    }
+
+    @Test
+    void rewritingAcrWithoutChangingBit5DoesNotDisturbCounting() {
+        h.write(ACR, 0x00);
+        h.writeWord(T2C_L, T2C_H, 0x4000);
+        h.cycles(2);
+        assertEquals(0xFF, h.read(T2C_L));
+
+        h.write(ACR, 0x00);
+        h.cycle();
+        assertEquals(0xFE, h.read(T2C_L));
+    }
+
     // ------------------------------------------------------ PB6 pulse counting ----
 
     private void pulsePb6() {

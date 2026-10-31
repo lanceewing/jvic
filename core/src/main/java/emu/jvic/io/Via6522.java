@@ -112,6 +112,7 @@ public class Via6522 extends MemoryMappedChip {
   protected boolean timer2Shift;            // If timer 2 shifting mode is active.
   protected boolean externalClockShift;     // If external clock shifting mode is active.
   protected boolean systemClockShift;       // If system clock shifting mode is active.
+  protected boolean timer2ModeWrite;        // Did an ACR write happen this cycle?
   protected boolean shiftRegisterWrite;     // Did a shift register write happen in current cycle?
   
   protected int auxiliaryControlRegister;   // Reg 11
@@ -291,7 +292,7 @@ public class Via6522 extends MemoryMappedChip {
         auxiliaryControlRegister = value;
         timer1PB7Mode = (value & 0x80) >> 7;
         timer1Mode = (value & 0x40) >> 6;
-        timer2Mode = (value & 0x20) >> 5;
+        timer2ModeWrite = true;
         portALatchMode = (value & 0x01);
         portBLatchMode = (value & 0x02) >> 1;
         shiftRegisterMode = (value & 0x1C) >> 2;
@@ -876,6 +877,13 @@ public class Via6522 extends MemoryMappedChip {
       }
     }
     
+    // The real chip latches T2's count enable (ACR5 AND NOT PB6) during PHI2, so a change
+    // to ACR5 doesn't affect counting until the cycle after the one in which it's written.
+    if (timer2ModeWrite) {
+      timer2Mode = (auxiliaryControlRegister & 0x20) >> 5;
+      timer2ModeWrite = false;
+    }
+
     // Clear the flag that says we had a SR write this cycle.
     shiftRegisterWrite = false;
   }
