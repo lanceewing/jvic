@@ -144,6 +144,39 @@ public class Vic6561 extends Vic {
         videoMatrixCarry8 = false;
     }
 
+    /**
+     * Writes a value to a VIC register. A write to $9003 can change the character height part way
+     * along a line, and with it the "last line of char" signal, which is decoded from the CDC and
+     * the current height. While that signal is active, the real chip's VM latch copies the VMC in
+     * every cycle. The VMC only changes at character fetches, where emulateCycle latches it, so the
+     * one case needing attention here is the signal becoming active after the last fetch of a line.
+     *
+     * @param address The address to write the value to.
+     * @param value   The value to write into the address.
+     */
+    @Override
+    public void writeMemory(int address, int value) {
+        super.writeMemory(address, value);
+        if (((address & 0xF) == 3) && (fetchState >= FETCH_MATRIX_LINE)) {
+            int lastLineOfCell = (7 | ((value & 0x01) << 3));
+            if ((cellDepthCounter == lastLineOfCell) || (cellDepthCounter == 0xF)) {
+                videoMatrixLatch = chipVideoMatrixCounter(videoMatrixCounter);
+            }
+        }
+    }
+
+    /**
+     * Converts a per-character video matrix position on the current line to the chip's own 12-bit
+     * VMC units, which step twice per character (see videoMatrixLineStart).
+     *
+     * @param cell The per-character position, as held in videoMatrixCounter.
+     *
+     * @return The VMC value in chip units.
+     */
+    private int chipVideoMatrixCounter(int cell) {
+        return (videoMatrixLineStart + ((cell - ((videoMatrixLineStart + 1) >> 1)) << 1)) & 0xFFF;
+    }
+
     public void setPalette(String palette) {
         if ((palette != null) && "mid".equalsIgnoreCase(palette.trim())) {
             pal_palette_o = pal_palette_m;
@@ -960,9 +993,11 @@ public class Vic6561 extends Vic {
                                     }
                                 }
         
-                                // Calculate offset of data.
-                                charDataOffset = char_mem_start + (cellIndex << char_size_shift) + cellDepthCounter;
-        
+                                // Calculate offset of data. The cell depth counter has 4 bits, but only those
+                                // within the current character height are used.
+                                charDataOffset = char_mem_start + (cellIndex << char_size_shift) +
+                                        (cellDepthCounter & last_line_of_cell);
+
                                 switch ((charDataOffset >> 10) & 0xF) {
                                     case 4:
                                     case 5:
@@ -1012,15 +1047,26 @@ public class Vic6561 extends Vic {
                                     // Leaving the matrix
                                     fetchState = FETCH_MATRIX_LINE;
                                 } else {
+                                    // In the real chip, the VM latch copies the VMC in every cycle that the "last
+                                    // line of char" signal is active. That signal is decoded from the CDC and the
+                                    // current height, so it changes as soon as the height does. Between character
+                                    // fetches the VMC doesn't change, so latching here, after a fetch on the last
+                                    // line, is enough. This only differs from the latching at HC=1 when the height
+                                    // changes during the line. See also writeMemory, for a height change after
+                                    // the last fetch.
+                                    if ((cellDepthCounter == last_line_of_cell) || (cellDepthCounter == 0xF)) {
+                                        videoMatrixLatch = chipVideoMatrixCounter(videoMatrixCounter + 1);
+                                    }
+
                                     // Increment the video matrix counter to next cell.
                                     videoMatrixCounter++;
-                                    
+
                                     // Toggle fetch state. For efficiency, HCC deliberately not checked here.
                                     fetchState = FETCH_SCREEN_CODE;
                                 }
                                 break;
                         }
-    
+
                         prevHorizontalCounter = horizontalCounter++;
                     }
                 } else {
