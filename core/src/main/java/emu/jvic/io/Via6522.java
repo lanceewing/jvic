@@ -154,14 +154,20 @@ public class Via6522 extends MemoryMappedChip {
   
   /**
    * This flag is set to true when timer1 is operating in the one shot mode and
-   * has just decremented through zero, i.e. is 0xFFFF.
+   * has just decremented through zero, i.e. is 0xFFFF. It is the inverse of the
+   * real chip's T1_active_ff, which is set by a T1C-H write and cleared by an
+   * underflow or by RES. Starts true, since the chip comes out of reset with the
+   * timer disarmed: it counts, but can't interrupt until T1C-H is written.
    */
-  private boolean timer1HasShot;
-  
+  private boolean timer1HasShot = true;
+
   /**
-   * True when timer2 has just reached zero when in one shot mode.
+   * True when timer2 has just reached zero when in one shot mode. It is the inverse
+   * of the real chip's T2_active_ff, which is set by a T2C-H write and cleared by an
+   * underflow or by RES. Starts true, since the chip comes out of reset with the
+   * timer disarmed: it counts, but can't interrupt until T2C-H is written.
    */
-  private boolean timer2HasShot;
+  private boolean timer2HasShot = true;
 
   /**
    * True when timer1 went from 0x0000 to 0xFFFF in the previous cycle. This can't be

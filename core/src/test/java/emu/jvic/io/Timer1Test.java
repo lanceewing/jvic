@@ -58,6 +58,39 @@ public class Timer1Test {
         assertTrue(t1Fired());
     }
 
+    /**
+     * More than a full 16-bit wrap of the counter, so it is certain to pass through
+     * zero at least once whatever value it started at.
+     */
+    private static final int MORE_THAN_A_FULL_WRAP = 0x10000 + 16;
+
+    // On the real chip, T1_active_ff (set by a T1C-H write, cleared by an underflow)
+    // also has RES ORed into its reset input (6522 netlist, T1 control block), so the
+    // chip comes out of reset with Timer 1 counting but disarmed in one-shot mode.
+
+    @Test
+    void oneShotTimer1IsDisarmedAtPowerOnAndDoesNotFireUntilT1HighIsWritten() {
+        h.write(ACR, 0x00);
+
+        h.cycles(MORE_THAN_A_FULL_WRAP);
+        assertFalse(t1Fired(), "T1 must not fire after power-on before T1C-H has been written");
+
+        h.writeWord(T1L_L, T1C_H, 0);
+        h.cycles(2);
+        assertFalse(t1Fired());
+        h.cycle();
+        assertTrue(t1Fired(), "the T1C-H write arms T1, so it must now fire as normal");
+    }
+
+    @Test
+    void writingOnlyTheT1LatchesAfterPowerOnDoesNotArmOneShotTimer1() {
+        h.write(ACR, 0x00);
+        h.writeWord(T1L_L, T1L_H, 0);
+
+        h.cycles(MORE_THAN_A_FULL_WRAP);
+        assertFalse(t1Fired(), "only a T1C-H write arms T1");
+    }
+
     @Test
     void oneShotFiresOnlyOnceEvenIfLeftUnacknowledged() {
         h.write(ACR, 0x00);

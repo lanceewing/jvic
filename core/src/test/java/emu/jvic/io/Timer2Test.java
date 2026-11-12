@@ -70,6 +70,49 @@ public class Timer2Test {
         assertTrue(t2Fired());
     }
 
+    /**
+     * More than a full 16-bit wrap of the counter, so it is certain to pass through
+     * zero at least once whatever value it started at.
+     */
+    private static final int MORE_THAN_A_FULL_WRAP = 0x10000 + 16;
+
+    // On the real chip, T2_active_ff (set by a T2C-H write, cleared by an underflow)
+    // also has RES ORed into its reset input (6522 netlist, "15d) T2H control"), so
+    // the chip comes out of reset with Timer 2 counting but disarmed.
+
+    @Test
+    void timer2IsDisarmedAtPowerOnAndDoesNotFireUntilT2HighIsWritten() {
+        h.write(ACR, 0x00);
+
+        h.cycles(MORE_THAN_A_FULL_WRAP);
+        assertFalse(t2Fired(), "T2 must not fire after power-on before T2C-H has been written");
+
+        loadT2(0);
+        h.cycle();
+        assertFalse(t2Fired());
+        h.cycle();
+        assertTrue(t2Fired(), "the T2C-H write arms T2, so it must now fire as normal");
+    }
+
+    @Test
+    void writingOnlyTheT2LowLatchAfterPowerOnDoesNotArmTimer2() {
+        h.write(ACR, 0x00);
+        h.write(T2C_L, 0x00);
+
+        h.cycles(MORE_THAN_A_FULL_WRAP);
+        assertFalse(t2Fired(), "only a T2C-H write arms T2");
+    }
+
+    @Test
+    void timer2IsDisarmedAtPowerOnInPb6PulseCountingModeToo() {
+        h.write(ACR, 0x20);
+
+        for (int i = 0; i < MORE_THAN_A_FULL_WRAP; i++) {
+            pulsePb6();
+        }
+        assertFalse(t2Fired(), "T2 must not fire after power-on before T2C-H has been written");
+    }
+
     @Test
     void readingCounterLowByteClearsInterruptFlag() {
         h.write(ACR, 0x00);
