@@ -21,9 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <li>For screen origin X = 0, the bogus one-cycle matrix enable pulse that makes the
  *     following line start one cycle (half a character) early.</li>
  * </ul>
- * See the vmc_carry_bug folder in the project root for the analysis, the real-hardware
- * captures these expected values were decoded from, and the Python version of the
- * reference model that {@link Model} is a port of (extended with the sx=0 rule).
+ * Some expected values were decoded from real-hardware captures; the rest come from the
+ * reference model in {@link Model}.
  */
 public class Vic6561VmcCarryTest {
 
@@ -99,9 +98,9 @@ public class Vic6561VmcCarryTest {
     }
 
     /**
-     * Port of the reference model in vmc_carry_bug/sim/vmc_carry_model.py, extended with
-     * the sx=0 rule: if the previous line was still counting in its final cycle, the
-     * line starts one cycle early, so it has one more counting cycle available.
+     * Reference model of the VMC stale nibble carry effect, including the sx=0 rule:
+     * if the previous line was still counting in its final cycle, the line starts one
+     * cycle early, so it has one more counting cycle available.
      */
     private static class Model {
         final int[] lineStarts = new int[LINES];
