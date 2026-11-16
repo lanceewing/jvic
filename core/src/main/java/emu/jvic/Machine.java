@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.debug.Debugger;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
 import emu.jvic.io.Via1;
@@ -69,7 +70,19 @@ public class Machine {
     private boolean hasMountedDisk;
 
     private MachineType machineType;
-    
+
+    /**
+     * The debug monitor's hooks into this machine, or null if not enabled (the normal
+     * case, and always the case on GWT and Android). See {@link #enableDebugger()}.
+     */
+    private Debugger debugger;
+
+    /**
+     * Whether {@link #enableDebugger()} has been called, so that a re-init of the
+     * machine re-creates the Debugger for the new chips.
+     */
+    private boolean debuggerEnabled;
+
     /**
      * Constructor for Machine.
      * 
@@ -133,6 +146,12 @@ public class Machine {
         String programType = resolveProgramType(program, appConfigItem);
 
         this.machineType = machineType;
+
+        // The chips are about to be replaced, so detach any debugger from the old ones.
+        if (debugger != null) {
+            debugger.detach();
+            debugger = null;
+        }
 
         // If we've been given the path to a program to load, we load the data prior to all
         // other initialisation. Primarily this is to work out what expansion we need.
@@ -274,7 +293,11 @@ public class Machine {
         if (snapshot == null) {
             cpu.reset();
         }
-        
+
+        if (debuggerEnabled) {
+            createDebugger();
+        }
+
         return autoLoadRunnable;
     }
 
@@ -298,9 +321,49 @@ public class Machine {
     }
 
     /**
-     * Updates the state of the machine until a frame is complete
+     * Updates the state of the machine until a frame is complete, or until the
+     * debugger stops it. Does nothing while the debugger is stopped.
      */
     public void update() {
+        Debugger debugger = this.debugger;
+        if (debugger == null) {
+            updateFrame();
+        } else if (debugger.isStopped()) {
+            // Stopped in the monitor. The runner should be paused, but be safe.
+        } else if (debugger.isArmed()) {
+            updateFrameDebug(debugger);
+        } else {
+            updateFrame();
+            // Nothing armed needs a per-cycle check. The exception is a JAM, which can
+            // happen at any time while a debugger is attached. The jammed CPU just
+            // repeats the same cycle, so stopping at the end of the frame loses nothing.
+            if (debugger.isStopPending()) {
+                debugger.enterStopped();
+            }
+        }
+    }
+
+    /**
+     * Updates the machine until a frame is complete, checking for a debugger stop
+     * after every machine cycle. Used only while the debugger is armed. The stop
+     * happens at the end of a whole machine cycle, so no chip is left part-way
+     * through one. If it stops mid-frame, the next update continues the frame.
+     */
+    private void updateFrameDebug(Debugger debugger) {
+        boolean frameComplete = false;
+        do {
+            frameComplete |= emulateCycle();
+            if (debugger.isStopPending()) {
+                debugger.enterStopped();
+                return;
+            }
+        } while (!frameComplete);
+    }
+
+    /**
+     * Updates the machine until a frame is complete. This is the normal loop.
+     */
+    private void updateFrame() {
         boolean frameComplete = false;
         do {
             frameComplete |= vic.emulateCycle();
@@ -327,6 +390,71 @@ public class Machine {
         return render;
     }
     
+    /**
+     * For runners that call {@link #emulateCycle()} directly in their own loop (the
+     * web workers): whether that loop needs to call {@link #checkDebuggerStop()}
+     * after every cycle. While false, once per batch is enough.
+     *
+     * @return true if a debugger is attached and armed.
+     */
+    public boolean isDebuggerArmed() {
+        return (debugger != null) && debugger.isArmed();
+    }
+
+    /**
+     * For runners that call {@link #emulateCycle()} directly: whether the debugger is
+     * stopped, in which case the runner must not emulate.
+     *
+     * @return true if a debugger is attached and stopped.
+     */
+    public boolean isDebuggerStopped() {
+        return (debugger != null) && debugger.isStopped();
+    }
+
+    /**
+     * For runners that call {@link #emulateCycle()} directly: enters the debugger's
+     * stopped state if a stop was requested during the last cycle.
+     *
+     * @return true if the machine is now stopped, so the runner should end its loop.
+     */
+    public boolean checkDebuggerStop() {
+        if ((debugger != null) && debugger.isStopPending()) {
+            debugger.enterStopped();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Attaches the debug monitor's hooks to this machine, or returns the existing
+     * Debugger if already enabled. Until something is armed, the emulation runs the
+     * same code as without a debugger. Must be called after init(). A later re-init
+     * creates a new Debugger for the new chips, so callers should get it again with
+     * {@link #getDebugger()} after a re-init.
+     *
+     * @return The Debugger.
+     */
+    public Debugger enableDebugger() {
+        debuggerEnabled = true;
+        if ((debugger == null) && (cpu != null)) {
+            createDebugger();
+        }
+        return debugger;
+    }
+
+    private void createDebugger() {
+        debugger = new Debugger(cpu, memory, c1541Drive.getCpu(), c1541Drive.getMemory());
+    }
+
+    /**
+     * Gets the debug monitor's hooks into this machine.
+     *
+     * @return The Debugger, or null if {@link #enableDebugger()} hasn't been called.
+     */
+    public Debugger getDebugger() {
+        return debugger;
+    }
+
     /**
      * Pauses and resumes the Machine.
      * 
@@ -437,5 +565,33 @@ public class Machine {
      */
     public C1541Drive getC1541Drive() {
         return c1541Drive;
+    }
+
+    /**
+     * Gets VIA1 ($9110), which handles the NMI sources: RESTORE, the user port,
+     * joystick and the serial bus ATN output.
+     *
+     * @return VIA1.
+     */
+    public Via6522 getVia1() {
+        return via1;
+    }
+
+    /**
+     * Gets VIA2 ($9120), which handles the keyboard, IRQ timer and tape.
+     *
+     * @return VIA2.
+     */
+    public Via6522 getVia2() {
+        return via2;
+    }
+
+    /**
+     * Gets the C1530 datasette.
+     *
+     * @return The datasette.
+     */
+    public C1530Datasette getDatasette() {
+        return datasette;
     }
 }

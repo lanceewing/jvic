@@ -37,6 +37,11 @@ public class C1541Drive {
     private Via6522 via2;
 
     /**
+     * The drive's memory map: 2K RAM, the two VIAs and the DOS ROM, as seen by its CPU.
+     */
+    private Memory memory;
+
+    /**
      * Holds all of the data of the currently loaded .d64 disk image.
      */
     private GcrDiskImage disk;
@@ -142,7 +147,7 @@ public class C1541Drive {
         cpu = new Cpu6502(null);
         via1 = createVia1();
         via2 = createVia2();
-        createMemory(cpu, via1, via2, dos1541Rom);
+        memory = createMemory(cpu, via1, via2, dos1541Rom);
         this.serialBus = serialBus;
         cpu.reset();
     }
@@ -433,6 +438,51 @@ public class C1541Drive {
             return 0;
         }
         return currentSector.read(currentSectorOffset);
+    }
+
+    /**
+     * Gets the drive's 6502 CPU. Used by the debug monitor's "8:" memspace.
+     *
+     * @return The drive's CPU.
+     */
+    public Cpu6502 getCpu() {
+        return cpu;
+    }
+
+    /**
+     * Gets the drive's memory, as seen by its CPU. Used by the debug monitor's "8:" memspace.
+     *
+     * @return The drive's memory.
+     */
+    public Memory getMemory() {
+        return memory;
+    }
+
+    /**
+     * Gets the VIA at $1800 that handles the serial bus.
+     *
+     * @return The drive's VIA1.
+     */
+    public Via6522 getVia1() {
+        return via1;
+    }
+
+    /**
+     * Gets the VIA at $1C00 that handles the disk head, motor and R/W logic.
+     *
+     * @return The drive's VIA2.
+     */
+    public Via6522 getVia2() {
+        return via2;
+    }
+
+    /**
+     * Gets the currently inserted disk image.
+     *
+     * @return The inserted disk image, or null if no disk is inserted.
+     */
+    public GcrDiskImage getDiskImage() {
+        return disk;
     }
 
     // ---------------------------------------------------------------------------
