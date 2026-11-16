@@ -198,6 +198,18 @@ public class Memory {
     }
 
     /**
+     * Reads the value of the given memory address without side effects, for the
+     * debug monitor. See {@link MemoryMappedChip#peekMemory(int)}.
+     *
+     * @param address The address to read the byte from.
+     *
+     * @return The contents of the memory address.
+     */
+    public int peekMemory(int address) {
+        return memoryMap[address].peekMemory(address);
+    }
+
+    /**
      * Writes a value to the give VIC 20 memory address.
      * 
      * @param address The address to write the value to.

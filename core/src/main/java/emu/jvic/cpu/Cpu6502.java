@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import emu.jvic.BaseChip;
+import emu.jvic.debug.CpuDebugger;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.util.StringUtils;
 
@@ -611,6 +612,29 @@ public class Cpu6502 extends BaseChip {
     private boolean vectorHijackedByNmi;
 
     /**
+     * The debug monitor's hook into this CPU, or null if no debugger is attached
+     * (the normal case, and always the case on GWT and Android).
+     */
+    private CpuDebugger debugger;
+
+    /**
+     * True only while the attached debugger needs to see every instruction
+     * boundary (an exec checkpoint, a step, CPU history or profiling is active).
+     * This is the only test added to the hot path, once per instruction, so the
+     * emulation runs as before while it is false. Only ever true when
+     * {@link #debugger} is non-null.
+     */
+    private boolean debugHooksActive;
+
+    /**
+     * Set on the first cycle that a JAM (KIL/HLT) opcode halts the CPU. Used to
+     * report the JAM to the debugger once, not on every cycle that the CPU stays
+     * halted. Cleared by {@link #reset()} and {@link #redispatchAt(int)}, the only
+     * ways out of the halt.
+     */
+    private boolean jammed;
+
+    /**
      * Index register X.
      */
     private int indexRegisterX;
@@ -781,6 +805,8 @@ public class Cpu6502 extends BaseChip {
         indirectAddressHigh = 0;
         indirectAddressLow = 0;
         currentInstructionStep = 0;
+
+        jammed = false;
     }
 
     /**
@@ -1653,6 +1679,16 @@ public class Cpu6502 extends BaseChip {
                     // below so this same cycle repeats indefinitely.
                     memory.readMemory(programCounter);
                     currentInstructionStep--;
+                    // Report the JAM to an attached debugger once, not on every repeat of
+                    // this cycle. The JAM opcode's address is PC - 1, as PC was
+                    // incremented when the opcode was fetched. Not a hot path, so this
+                    // doesn't need the debugHooksActive guard.
+                    if (!jammed) {
+                        jammed = true;
+                        if (debugger != null) {
+                            debugger.onJam(this, (programCounter - 1) & 0xFFFF);
+                        }
+                    }
                     break;
 
                 case EXECUTE_DIS: // Execute (with fetch next op code then discard)
@@ -2023,9 +2059,16 @@ public class Cpu6502 extends BaseChip {
      * (where the fetch overlaps the previous instruction's final cycle) and the
      * "set up next instruction" branch taken after instructions that don't end in
      * EXECUTE_LAST. The caller is responsible for setting currentInstructionStep.
+     *
+     * <p>This is also where the debugger's instruction boundary hook is called, before
+     * the fetch, but only while debugHooksActive is true. That boolean test is the
+     * only cost to the emulation when the monitor isn't in use.
      */
     private void dispatchNextInstruction() {
         if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
+            if (debugHooksActive) {
+                debugger.onInstructionBoundary(this, programCounter, 0);
+            }
             if (debug) {
                 displayCurrentInstruction();
             }
@@ -2035,7 +2078,11 @@ public class Cpu6502 extends BaseChip {
             instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
         } else {
             // An interrupt occurred.
-            instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+            int interrupt = ((polledInterruptStatus & S_NMI) == 0 ? S_IRQ : S_NMI);
+            if (debugHooksActive) {
+                debugger.onInstructionBoundary(this, programCounter, interrupt);
+            }
+            instructionSteps = (interrupt == S_IRQ ? IRQ_STEPS : NMI_STEPS);
         }
         // Snapshot I for the poll at the end of the instruction just dispatched above
         // (see the field's Javadoc for why this can't just be the live flag).
@@ -2443,5 +2490,118 @@ public class Cpu6502 extends BaseChip {
 
     public int getInputDataLatch() {
         return inputDataLatch;
+    }
+
+    ///////////////////////////////// DEBUGGER HOOKS /////////////////////////////////
+
+    /**
+     * Attaches the debug monitor's hook to this CPU, or detaches it if null.
+     * Detaching also turns the debug hooks off.
+     *
+     * @param debugger The debugger to attach, or null to detach.
+     */
+    public void setDebugger(CpuDebugger debugger) {
+        this.debugger = debugger;
+        if (debugger == null) {
+            debugHooksActive = false;
+        }
+    }
+
+    public CpuDebugger getDebugger() {
+        return debugger;
+    }
+
+    /**
+     * Turns the per-instruction debugger hook on or off. It should be on only while
+     * the debugger needs to see instruction boundaries (exec checkpoints, stepping,
+     * CPU history or profiling), as it is called once per instruction.
+     *
+     * @param active true to call the debugger at every instruction boundary.
+     *
+     * @throws IllegalStateException if turning it on with no debugger attached.
+     */
+    public void setDebugHooksActive(boolean active) {
+        if (active && (debugger == null)) {
+            throw new IllegalStateException("No debugger attached");
+        }
+        this.debugHooksActive = active;
+    }
+
+    public boolean isDebugHooksActive() {
+        return debugHooksActive;
+    }
+
+    /**
+     * Returns the interrupt pin state as sampled for the end-of-instruction poll
+     * (see the field's Javadoc). A combination of {@link #S_IRQ} and {@link #S_NMI}.
+     *
+     * @return The polled interrupt status.
+     */
+    public int getPolledInterruptStatus() {
+        return polledInterruptStatus;
+    }
+
+    /**
+     * Returns whether the CPU is halted by a JAM (KIL/HLT) opcode. It stays halted
+     * until a reset or {@link #redispatchAt(int)}.
+     *
+     * @return true if the CPU is jammed.
+     */
+    public boolean isJammed() {
+        return jammed;
+    }
+
+    /**
+     * Returns whether an IRQ or NMI sequence has been dispatched at the current
+     * instruction boundary but has not run any of its cycles yet. This is the state
+     * when the machine is stopped at a boundary where an interrupt is being taken.
+     *
+     * @return true if an interrupt sequence is dispatched and not yet started.
+     */
+    public boolean isInterruptDispatched() {
+        return (currentInstructionStep == 1)
+                && ((instructionSteps == IRQ_STEPS) || (instructionSteps == NMI_STEPS));
+    }
+
+    /**
+     * Moves execution to the given address, for the debug monitor while the machine
+     * is stopped (the {@code g} command, {@code r PC=...}, or a memory write over
+     * the instruction about to run). It consumes no cycles.
+     *
+     * <p>A simple {@link #setProgramCounter(int)} is not enough when stopped at an
+     * instruction boundary, because the opcode fetch overlaps the previous
+     * instruction's final cycle, so the next opcode is already latched in the
+     * instruction register and PC already points past it. This method instead
+     * repeats the dispatch for the new address: it re-reads the opcode there,
+     * without side effects, and sets up the CPU exactly as a normal fetch of it
+     * would have left it.
+     *
+     * <ul>
+     * <li>If an IRQ or NMI sequence has been dispatched but not started, it stays
+     * dispatched, and only its return address changes to the given address.</li>
+     * <li>If the CPU is jammed, this ends the halt, as in VICE's monitor.</li>
+     * <li>If the CPU is part-way through an instruction (for example, the machine
+     * was stopped by a drive checkpoint), that instruction is abandoned.</li>
+     * </ul>
+     *
+     * @param address The address to continue execution from.
+     */
+    public void redispatchAt(int address) {
+        address &= 0xFFFF;
+        jammed = false;
+        if (isInterruptDispatched()) {
+            // The interrupt sequence pushes the PC, which at this point is still the
+            // boundary address, so changing it changes where RTI returns to.
+            programCounter = address;
+        } else {
+            instructionRegister = memory.peekMemory(address);
+            programCounter = (address + 1) & 0xFFFF;
+            instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+            numOfInstructionSteps = instructionSteps.length;
+            currentInstructionStep = 1;
+        }
+        // As in dispatchNextInstruction(): the I flag snapshot for this instruction's
+        // end-of-instruction interrupt poll.
+        interruptDisableFlagAtDispatch = interruptDisableFlag;
     }
 }
