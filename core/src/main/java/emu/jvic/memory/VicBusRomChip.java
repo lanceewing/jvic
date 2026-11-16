@@ -21,6 +21,14 @@ public class VicBusRomChip extends RomChip {
     }
 
     /**
+     * Reads the value without updating the open bus value, for the debug monitor.
+     */
+    @Override
+    public int peekMemory(int address) {
+        return mem[address];
+    }
+
+    /**
      * Writes a value to the given memory address.
      *
      * @param address the address to write the value to.

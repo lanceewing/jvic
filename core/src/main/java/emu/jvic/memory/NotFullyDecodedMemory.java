@@ -44,6 +44,19 @@ public class NotFullyDecodedMemory extends MemoryMappedChip {
     }
 
     /**
+     * As {@link #readMemory(int)}, but peeking each chip, so that no chip's read side
+     * effects happen, for the debug monitor.
+     */
+    @Override
+    public int peekMemory(int address) {
+        int value = 0xFF;
+        for (int i = 0; i < chips.length; i++) {
+            value &= chips[i].peekMemory(address);
+        }
+        return value;
+    }
+
+    /**
      * Writes a value to the given memory address.
      * 
      * @param address The address to write the value to.

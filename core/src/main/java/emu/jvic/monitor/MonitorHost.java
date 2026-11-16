@@ -20,6 +20,16 @@ public interface MonitorHost {
     void quit();
 
     /**
+     * Whether warp mode (running as fast as possible) is on.
+     */
+    boolean isWarp();
+
+    /**
+     * Turns warp mode on or off.
+     */
+    void setWarp(boolean warp);
+
+    /**
      * Prints output that isn't the direct result of a command: checkpoint hits,
      * tracepoint lines and the results of step, next, return and until, which arrive
      * while the machine runs, on the emulation thread.

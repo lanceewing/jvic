@@ -280,6 +280,15 @@ public abstract class Vic extends MemoryMappedChip {
     }
 
     /**
+     * Reads a VIC register without updating the open bus value, for the debug monitor.
+     * VIC register reads have no other side effects.
+     */
+    @Override
+    public int peekMemory(int address) {
+        return mem[address & 0xFF0F];
+    }
+
+    /**
      * Writes a value to VIC memory.
      * 
      * @param address The address to write the value to.

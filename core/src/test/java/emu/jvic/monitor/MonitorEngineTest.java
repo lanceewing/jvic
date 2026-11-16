@@ -41,6 +41,18 @@ public class MonitorEngineTest {
         @Override
         public void print(String text) {
         }
+
+        boolean warp;
+
+        @Override
+        public boolean isWarp() {
+            return warp;
+        }
+
+        @Override
+        public void setWarp(boolean warp) {
+            this.warp = warp;
+        }
     }
 
     private MachineTestHarness h;
@@ -209,6 +221,49 @@ public class MonitorEngineTest {
         assertOutput(error(MonitorException.UNEXPECTED_TOKEN, "dev 8", 4), "dev 8");
         assertOutput(error(MonitorException.UNEXPECTED_TOKEN, "dev c", 4), "dev c");
         assertOutput(error("Drive 9: is not emulated in jvic.", "dev 9:", 4), "dev 9:");
+    }
+
+    @Test
+    void sidefxOffDoesNotClearViaInterruptFlags() {
+        // Start VIA1's timer 1 with a short count and let it time out, setting IFR bit 6.
+        run("> 9114 10 00");
+        for (int i = 0; i < 100; i++) {
+            h.machine.emulateCycle();
+        }
+        int ifr = 0x911D;
+        assertTrue((h.machine.getVia1().peekMemory(ifr) & 0x40) != 0, "T1 timed out");
+
+        // Reading T1C-L as the CPU would clears the flag; peeking doesn't.
+        run("m 9114 9114", "d 9110 9120", "i 9110 911f", "mc 9110");
+        assertTrue((h.machine.getVia1().peekMemory(ifr) & 0x40) != 0, "sidefx off: still set");
+        run("sfx on", "m 9114 9114");
+        assertEquals(0, h.machine.getVia1().peekMemory(ifr) & 0x40, "sidefx on: cleared");
+    }
+
+    @Test
+    void peeksDoNotChangeTheOpenBusValue() {
+        h.getMemory().setLastBusData(0x5A);
+        run("m 9000 900f", "m 0 ff", "m 9400 94ff", "m 9110 913f", "d c000 c100");
+        assertEquals(0x5A, h.getMemory().getLastBusData());
+    }
+
+    @Test
+    void viaPeekMatchesReadWithoutSideEffects() {
+        // Every VIA register peeks as readMemory reads it.
+        for (int register = 0; register < 16; register++) {
+            int address = 0x9120 + register;
+            int peeked = h.machine.getVia2().peekMemory(address);
+            assertEquals(h.machine.getVia2().readMemory(address), peeked, "register " + register);
+        }
+    }
+
+    @Test
+    void warpMatchesVice() {
+        assertOutput("Warp mode is off.\nWarp mode is on.\nWarp mode is off.\n",
+                "warp", "warp on", "warp", "warp toggle", "warp", "warp off");
+        assertOutput("", "warp toggle");
+        assertTrue(host.warp);
+        assertOutput(error(MonitorException.UNEXPECTED_TOKEN, "warp foo", 5), "warp foo");
     }
 
     @Test

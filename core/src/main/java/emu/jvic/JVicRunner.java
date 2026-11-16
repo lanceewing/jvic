@@ -5,6 +5,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Pixmap;
 
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.debug.MonitorChannel;
+import emu.jvic.debug.UnsupportedMonitorChannel;
 import emu.jvic.sound.SoundGenerator;
 import emu.jvic.ui.MachineInputProcessor;
 
@@ -153,6 +155,35 @@ public abstract class JVicRunner {
      */
     public boolean isWarpSpeed() {
         return warpSpeed;
+    }
+
+    /**
+     * Sets the warp speed state.
+     *
+     * @param warpSpeed true for warp speed.
+     */
+    public void setWarpSpeed(boolean warpSpeed) {
+        this.warpSpeed = warpSpeed;
+    }
+
+    /**
+     * Returns whether this platform has the machine-language monitor. Only desktop and
+     * TeaVM do; GWT and Android keep this default.
+     *
+     * @return true if the monitor is available.
+     */
+    public boolean isMonitorSupported() {
+        return false;
+    }
+
+    /**
+     * Gets the channel for sending commands to the monitor and receiving its output.
+     *
+     * @return The monitor channel; on platforms without a monitor, one that answers
+     *         every command with a "not implemented" message.
+     */
+    public MonitorChannel getMonitorChannel() {
+        return UnsupportedMonitorChannel.INSTANCE;
     }
     
     /**

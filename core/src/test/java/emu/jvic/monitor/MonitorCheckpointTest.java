@@ -48,6 +48,15 @@ public class MonitorCheckpointTest {
             public void print(String text) {
                 async.append(text);
             }
+
+            @Override
+            public boolean isWarp() {
+                return false;
+            }
+
+            @Override
+            public void setWarp(boolean warp) {
+            }
         });
         debugger = h.machine.getDebugger();
     }

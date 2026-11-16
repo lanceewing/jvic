@@ -568,8 +568,46 @@ public class Via6522 extends MemoryMappedChip {
     }
 
     memory.setLastBusData(value);
-    
+
     return value;
+  }
+
+  /**
+   * Reads a register as {@link #readMemory(int)} does, but without any side effects,
+   * for the debug monitor: reading ORB, ORA, T1C-L, T2C-L or the shift register doesn't
+   * clear their interrupt flags, reading ORA doesn't start a CA2 handshake or pulse,
+   * the IRQ output isn't updated, and the open bus value isn't changed.
+   *
+   * @param address The address to read from.
+   *
+   * @return The value that readMemory would return.
+   */
+  @Override
+  public int peekMemory(int address) {
+    switch (address & 0x000F) {
+      case VIA_REG_0: // ORB/IRB
+        int portB = ((auxiliaryControlRegister & PORTB_INPUT_LATCHING) == 0) ? getPortBPins() : inputRegisterB;
+        return (portB & ~dataDirectionRegisterB & 0xFF) | (outputRegisterB & dataDirectionRegisterB);
+      case VIA_REG_1: // ORA/IRA
+      case VIA_REG_15: // ORA/IRA (no handshake)
+        return ((auxiliaryControlRegister & PORTA_INPUT_LATCHING) == 0) ? getPortAPins() : inputRegisterA;
+      case VIA_REG_2: return dataDirectionRegisterB;
+      case VIA_REG_3: return dataDirectionRegisterA;
+      case VIA_REG_4: return timer1Counter & 0xFF;
+      case VIA_REG_5: return (timer1Counter >> 8) & 0xFF;
+      case VIA_REG_6: return timer1Latch & 0xFF;
+      case VIA_REG_7: return (timer1Latch >> 8) & 0xFF;
+      case VIA_REG_8: return timer2Counter & 0xFF;
+      case VIA_REG_9: return (timer2Counter >> 8) & 0xFF;
+      case VIA_REG_10: return shiftRegister;
+      case VIA_REG_11: return auxiliaryControlRegister;
+      case VIA_REG_12: return peripheralControlRegister;
+      case VIA_REG_13: // IFR, with the top bit as updateIFRTopBit() would set it.
+        int flags = interruptFlagRegister & 0x7F;
+        return ((flags & interruptEnableRegister & 0x7F) != 0) ? (flags | 0x80) : flags;
+      default: // VIA_REG_14, Interrupt Enable Register
+        return (interruptEnableRegister & 0x7F) | 0x80;
+    }
   }
 
   /**

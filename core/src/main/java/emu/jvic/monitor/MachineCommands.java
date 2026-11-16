@@ -152,6 +152,38 @@ final class MachineCommands {
         }
     }
 
+    static final class Warp extends MonitorCommand {
+
+        Warp() {
+            super("warp", null, "warp [on|off|toggle]",
+                    "Turns warp mode, where the emulator runs as fast as it can, on or off,\n"
+                    + "or toggles it. With no argument, shows whether it is on.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            MonitorHost host = engine.getHost();
+            if (args.atEnd()) {
+                out.print("Warp mode is " + (host.isWarp() ? "on" : "off") + ".\n");
+                return;
+            }
+            int position = args.position();
+            String word = args.readWord().toLowerCase();
+            boolean warp;
+            if (word.equals("on")) {
+                warp = true;
+            } else if (word.equals("off")) {
+                warp = false;
+            } else if (word.equals("toggle")) {
+                warp = !host.isWarp();
+            } else {
+                throw new MonitorException(MonitorException.UNEXPECTED_TOKEN, position);
+            }
+            args.expectEnd();
+            host.setWarp(warp);
+        }
+    }
+
     static final class Cpu extends MonitorCommand {
 
         Cpu() {

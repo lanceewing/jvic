@@ -42,6 +42,15 @@ public class MonitorMemoryCommandsTest {
             @Override
             public void print(String text) {
             }
+
+            @Override
+            public boolean isWarp() {
+                return false;
+            }
+
+            @Override
+            public void setWarp(boolean warp) {
+            }
         });
     }
 

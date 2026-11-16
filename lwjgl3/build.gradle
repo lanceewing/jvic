@@ -30,6 +30,13 @@ dependencies {
   implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
   implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
   implementation project(':core')
+
+  testImplementation platform("org.junit:junit-bom:$junitVersion")
+  testImplementation "org.junit.jupiter:junit-jupiter"
+}
+
+test {
+  useJUnitPlatform()
 }
 
 def version = rootProject.file('assets/data/version.txt').text.trim().substring(1);

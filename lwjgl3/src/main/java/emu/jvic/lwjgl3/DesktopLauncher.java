@@ -1,5 +1,6 @@
 package emu.jvic.lwjgl3;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter;
 
 import emu.jvic.JVic;
+import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 
 /** Launches the desktop (LWJGL3) application. */
 public class DesktopLauncher {
@@ -37,8 +39,32 @@ public class DesktopLauncher {
         DesktopJVicRunner desktopJVicRunner = new DesktopJVicRunner(
                 new DesktopKeyboardMatrix(), new DesktopPixelData(), 
                 new DesktopSoundGenerator());
+        startRemoteMonitor(desktopJVicRunner, argsMap.get("remotemonitor"));
         JVic jvic = new JVic(desktopJVicRunner, desktopDialogHandler, argsMap);
         return new Lwjgl3Application(jvic, getDefaultConfiguration(jvic));
+    }
+
+    /**
+     * Starts VICE's remote text monitor if the remotemonitor option is given:
+     * {@code remotemonitor=on} for port 6510, {@code remotemonitor=<port>}, or VICE's
+     * address form {@code remotemonitor=ip4://127.0.0.1:<port>}. It always listens on
+     * 127.0.0.1 only.
+     */
+    private static void startRemoteMonitor(DesktopJVicRunner runner, String option) {
+        if ((option == null) || option.equalsIgnoreCase("off") || option.equalsIgnoreCase("false")) {
+            return;
+        }
+        int port = RemoteTextMonitor.DEFAULT_PORT;
+        String portText = option.substring(option.lastIndexOf(':') + 1);
+        if (!portText.isEmpty() && portText.chars().allMatch(Character::isDigit)) {
+            port = Integer.parseInt(portText);
+        }
+        try {
+            runner.startRemoteMonitor(port);
+            System.out.println("Remote monitor listening on 127.0.0.1:" + port);
+        } catch (IOException e) {
+            System.err.println("Could not start the remote monitor on port " + port + ": " + e.getMessage());
+        }
     }
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration(JVic jvic) {

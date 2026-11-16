@@ -43,7 +43,8 @@ final class CommandRegistry {
         machineState.commands.add(new MachineCommands.Return());
         machineState.commands.add(new MachineCommands.Step(false));
         notImplemented(machineState, "profile", "prof", "reset", null, "export", "exp", "cartfreeze", null, "updb",
-                null, "jpdb", null, "keybuf", null, "warp", null);
+                null, "jpdb", null, "keybuf", null);
+        machineState.commands.add(new MachineCommands.Warp());
 
         CommandGroup symbols = group(groups, "Symbol table commands:");
         notImplemented(symbols, "add_label", "al", "delete_label", "dl", "load_labels", "ll", "save_labels", "sl",

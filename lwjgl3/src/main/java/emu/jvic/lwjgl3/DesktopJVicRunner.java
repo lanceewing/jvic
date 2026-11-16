@@ -25,11 +25,15 @@ import emu.jvic.PixelData;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.debug.MonitorChannel;
 import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
 import emu.jvic.lwjgl3.disk.DesktopDiskImagePersistence;
+import emu.jvic.lwjgl3.monitor.DesktopMonitorChannel;
+import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.memory.RamType;
+import emu.jvic.monitor.MonitorSession;
 import emu.jvic.sound.SoundGenerator;
 import emu.jvic.ui.MachineInputProcessor.ScreenSize;
 
@@ -40,8 +44,69 @@ public class DesktopJVicRunner extends JVicRunner {
     
     private Machine machine;
 
+    /** The monitor, created when first needed (null until then, so no debugger runs). */
+    private volatile MonitorSession monitorSession;
+    private DesktopMonitorChannel monitorChannel;
+    private RemoteTextMonitor remoteMonitor;
+
     public DesktopJVicRunner(KeyboardMatrix keyboardMatrix, PixelData pixelData, SoundGenerator soundGenerator) {
         super(keyboardMatrix, pixelData, soundGenerator);
+    }
+
+    @Override
+    public boolean isMonitorSupported() {
+        return true;
+    }
+
+    @Override
+    public synchronized MonitorChannel getMonitorChannel() {
+        if (monitorSession == null) {
+            monitorSession = new MonitorSession(new MonitorSession.Platform() {
+                @Override
+                public void resumeEmulation() {
+                    synchronized (DesktopJVicRunner.this) {
+                        DesktopJVicRunner.this.notifyAll();
+                    }
+                }
+
+                @Override
+                public void quit() {
+                    Gdx.app.postRunnable(() -> Gdx.app.exit());
+                }
+
+                @Override
+                public boolean isWarp() {
+                    return warpSpeed;
+                }
+
+                @Override
+                public void setWarp(boolean warp) {
+                    setWarpSpeed(warp);
+                }
+            });
+            monitorChannel = new DesktopMonitorChannel(monitorSession, this::enqueueMachineAction);
+            // If a machine is already running, attach it on its own thread.
+            enqueueMachineAction(() -> {
+                if (machine != null) {
+                    monitorSession.attach(machine);
+                }
+            });
+        }
+        return monitorChannel;
+    }
+
+    /**
+     * Starts VICE's remote text monitor on 127.0.0.1 at the given port. It is off
+     * unless the remotemonitor command-line option is given.
+     *
+     * @param port The port, e.g. 6510.
+     *
+     * @throws java.io.IOException if the port can't be opened.
+     */
+    public void startRemoteMonitor(int port) throws IOException {
+        if (remoteMonitor == null) {
+            remoteMonitor = new RemoteTextMonitor(getMonitorChannel(), port);
+        }
     }
 
     @Override
@@ -111,6 +176,14 @@ public class DesktopJVicRunner extends JVicRunner {
             basicRom, kernalRom, charRom, dos1541Rom, program, appConfigItem,
             mountedDiskImageData, machineType, ramType, appConfigItem.getPalette(),
             persistenceSession);
+
+        MonitorSession session;
+        synchronized (this) {
+            session = monitorSession;
+        }
+        if (session != null) {
+            session.attach(machine);
+        }
         
         final int NANOS_PER_FRAME = (1000000000 / machineType.getFramesPerSecond());
         
@@ -147,6 +220,27 @@ public class DesktopJVicRunner extends JVicRunner {
 
             // Updates the Machine's state for a frame.
             machine.update();
+
+            if ((monitorSession != null) && machine.isDebuggerStopped()) {
+                // Stopped in the monitor. Wait for monitor commands (which arrive as
+                // machine actions) until one resumes the machine.
+                monitorSession.onMachineStopped();
+                synchronized (this) {
+                    try {
+                        while (machine.isDebuggerStopped() && !exit) {
+                            if (processPendingMachineActions()) {
+                                monitorSession.onMachineStopped();
+                                continue;
+                            }
+                            wait();
+                        }
+                    } catch (InterruptedException e) {
+                        // Stopping; the loop checks exit.
+                    }
+                }
+                lastTime = TimeUtils.nanoTime();
+                continue;
+            }
             
             // Check for BASIC program auto-load
             if (autoLoadProgram != null) {
@@ -190,6 +284,9 @@ public class DesktopJVicRunner extends JVicRunner {
             }
         }
         
+        if (monitorSession != null) {
+            monitorSession.detach();
+        }
         machine = null;
     }
 
