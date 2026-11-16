@@ -736,12 +736,66 @@ public final class MonitorEngine implements Debugger.Listener {
 
     /**
      * Called by the runner once per frame: feeds queued keybuf characters into the
-     * keyboard buffer as it empties.
+     * keyboard buffer as it empties, and carries out a pending autostart once BASIC
+     * is ready.
      */
     public void onFrame() {
+        if ((autostartKind != null) && (machine.getMemory().getMemoryArray()[0xD1] == 110)) {
+            finishAutostart();
+        }
         if (keyboardQueue.length() > 0) {
             feedKeys();
         }
+    }
+
+    // ------------------------------------------------------------------------------
+    // Drive 8 and autostart.
+    // ------------------------------------------------------------------------------
+
+    private String autostartKind;
+    private byte[] autostartData;
+    private String autostartKeys;
+
+    /** The disk in drive 8, or null if there is none. */
+    D64Disk getDisk() {
+        emu.jvic.io.disk.GcrDiskImage image = machine.getC1541Drive().getDiskImage();
+        return (image != null) ? new D64Disk(image) : null;
+    }
+
+    /**
+     * Starts autostart or autoload: turns the machine off and on, resumes it, and,
+     * once BASIC is ready (the same test as jvic's own auto-load), loads the program
+     * or types the LOAD command, then the keys (e.g. RUN).
+     *
+     * @param kind "PRG", "DISK" or "TAPE"; a disk or tape is already inserted.
+     * @param data The program, for "PRG".
+     * @param keys The text to type, with 
+ for RETURN.
+     */
+    void startAutostart(String kind, byte[] data, String keys) {
+        machine.powerCycle();
+        autostartKind = kind;
+        autostartData = data;
+        autostartKeys = keys;
+        assemblySpace = null;
+        resume();
+    }
+
+    private void finishAutostart() {
+        String kind = autostartKind;
+        autostartKind = null;
+        if ("PRG".equals(kind)) {
+            byte[] data = autostartData;
+            int start = (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
+            for (int i = 2; i < data.length; i++) {
+                mainSpace.write((start + i - 2) & 0xFFFF, data[i] & 0xFF);
+            }
+            FileCommands.Load.setBasicPointers(mainSpace, start, start + data.length - 2);
+        } else if ("TAPE".equals(kind)) {
+            machine.getDatasette().play();
+        }
+        autostartData = null;
+        queueKeys(InspectCommands.Keybuf.toPetscii(autostartKeys));
     }
 
     private void feedKeys() {

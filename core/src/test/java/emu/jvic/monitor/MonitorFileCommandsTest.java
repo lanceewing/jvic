@@ -257,8 +257,9 @@ public class MonitorFileCommandsTest {
         assertEquals("Start address must be below end address.\n", run("save \"r.prg\" 0 1102 1100"));
         assertFalse(fs.exists("r.prg"));
         assertEquals(error("Expecting a filename:", "logname", 7), run("logname"));
-        assertEquals("Device 8 (the emulated disk) is not supported by this command in jvic yet.\n",
-                run("load \"x.prg\" 8"));
+        // No disk in drive 8: as VICE says.
+        assertEquals("Cannot open 'x.prg'.\n", run("load \"x.prg\" 8"));
+        assertEquals("Device 9 is not supported by this command in jvic.\n", run("load \"x.prg\" 9"));
     }
 
     @ParameterizedTest

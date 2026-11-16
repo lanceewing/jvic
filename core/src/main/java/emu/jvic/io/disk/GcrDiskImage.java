@@ -409,6 +409,46 @@ public class GcrDiskImage {
   }
 
   /**
+   * The number of tracks on the disk.
+   *
+   * @return The number of tracks (35).
+   */
+  public int getTrackCount() {
+    return numOfTracks;
+  }
+
+  /**
+   * Reads a sector's 256 data bytes directly, without the drive. For the debug
+   * monitor's disk commands.
+   *
+   * @param track  The track (1 to 35).
+   * @param sector The sector on the track.
+   *
+   * @return A copy of the sector's data bytes.
+   */
+  public int[] readSectorData(int track, int sector) {
+    return allTracks[track][sector].rawData.clone();
+  }
+
+  /**
+   * Writes a sector's 256 data bytes directly, without the drive, updating the raw
+   * image and the GCR data that the drive reads. For the debug monitor's disk
+   * commands.
+   *
+   * @param track  The track (1 to 35).
+   * @param sector The sector on the track.
+   * @param data   The 256 data bytes.
+   */
+  public void writeSectorData(int track, int sector, int[] data) {
+    Sector s = allTracks[track][sector];
+    for (int i = 0; i < 256; i++) {
+      s.rawData[i] = data[i] & 0xFF;
+    }
+    System.arraycopy(s.rawData, 0, rawImage, s.rawDataOffset, s.sectorSize);
+    s.gcrData = buildGCRSectorData(track, sector, s.rawData);
+  }
+
+  /**
    * Returns a copy of the current raw .d64 disk image bytes.
    * 
    * @return a copy of the raw disk image.

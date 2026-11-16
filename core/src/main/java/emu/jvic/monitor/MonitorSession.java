@@ -58,6 +58,11 @@ public final class MonitorSession implements MonitorHost {
         default boolean downloadFile(String name, byte[] data) {
             return false;
         }
+
+        /** See {@link MonitorHost#toggleDomConsole()}. */
+        default boolean toggleDomConsole() {
+            return false;
+        }
     }
 
     private final Platform platform;
@@ -353,6 +358,11 @@ public final class MonitorSession implements MonitorHost {
     @Override
     public boolean downloadFile(String name, byte[] data) {
         return platform.downloadFile(name, data);
+    }
+
+    @Override
+    public boolean toggleDomConsole() {
+        return platform.toggleDomConsole();
     }
 
     @Override

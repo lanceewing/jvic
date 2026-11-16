@@ -72,4 +72,13 @@ public interface MonitorHost {
     default boolean downloadFile(String name, byte[] data) {
         return false;
     }
+
+    /**
+     * Web only: shows or hides the monitor's HTML panel (the domconsole command).
+     *
+     * @return false if the platform doesn't have one.
+     */
+    default boolean toggleDomConsole() {
+        return false;
+    }
 }

@@ -29,6 +29,11 @@ final class HeadlessPixelData extends PixelData {
     }
 
     @Override
+    public int getPixel(int index) {
+        return pixels[index];
+    }
+
+    @Override
     public void clearPixels() {
         Arrays.fill(pixels, 0);
     }

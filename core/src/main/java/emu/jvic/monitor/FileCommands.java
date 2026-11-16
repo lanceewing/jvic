@@ -33,24 +33,71 @@ final class FileCommands {
     }
 
     /**
-     * Reads the device number of load, save and the others. Returns true for device
-     * 0, the host file system. For any other device, prints why it can't be used and
-     * returns false.
+     * Reads the device number of load, save and the others: 0 (the host file system)
+     * or 8 (the disk in the drive). For any other device, prints why it can't be used
+     * and returns -1.
      */
-    static boolean parseDevice(Parser args, MonitorOutput out) {
+    static int parseDevice(Parser args, MonitorOutput out) {
         if (args.atEnd()) {
             throw args.wrongSyntax();
         }
         int device = args.parseExpression();
+        if ((device == 0) || (device == 8)) {
+            return device;
+        }
+        out.print("Device " + device + " is not supported by this command in jvic.\n");
+        return -1;
+    }
+
+    /**
+     * Reads a whole file from device 0 or 8.
+     *
+     * @return The file, or null after printing VICE's "Cannot open" message.
+     */
+    static byte[] readDeviceFile(MonitorEngine engine, int device, String name, MonitorOutput out) {
+        try {
+            if (device == 0) {
+                return engine.getFileSystem().read(name);
+            }
+            D64Disk disk = engine.getDisk();
+            D64Disk.Entry entry = (disk != null) ? disk.find(name) : null;
+            if (entry != null) {
+                return disk.read(entry);
+            }
+        } catch (MonitorFileException | D64Disk.DosException e) {
+            // Reported below.
+        }
+        out.print("Cannot open '" + name + "'.\n");
+        return null;
+    }
+
+    /**
+     * Writes a whole file to device 0, or as a PRG file to the disk in drive 8.
+     */
+    static void writeDeviceFile(MonitorEngine engine, int device, String name, byte[] data, MonitorOutput out) {
         if (device == 0) {
-            return true;
+            try {
+                engine.getFileSystem().write(name, data);
+            } catch (MonitorFileException e) {
+                out.print("Cannot open '" + name + "'.\n");
+            }
+            return;
         }
-        if (device == 8) {
-            out.print("Device 8 (the emulated disk) is not supported by this command in jvic yet.\n");
-        } else {
-            out.print("Device " + device + " is not supported by this command in jvic.\n");
+        D64Disk disk = engine.getDisk();
+        if (disk == null) {
+            out.print("Cannot open '" + name + "'.\n");
+            return;
         }
-        return false;
+        if (engine.getMachine().getC1541Drive().isWriteProtected()) {
+            out.print("The disk in drive 8 is write protected.\n");
+            return;
+        }
+        try {
+            disk.write(name, data);
+        } catch (D64Disk.DosException e) {
+            out.print(e.status() + "\n");
+        }
+        engine.getMachine().getC1541Drive().onDiskChangedByHost();
     }
 
     /** Reads an address that VICE requires, with its message if it is missing. */
@@ -194,7 +241,8 @@ final class FileCommands {
      */
     private static FileData readFile(Parser args, MonitorEngine engine, MonitorOutput out, boolean binary) {
         String name = parseFilename(args);
-        if (!parseDevice(args, out)) {
+        int device = parseDevice(args, out);
+        if (device < 0) {
             return null;
         }
         FileData file = new FileData();
@@ -211,10 +259,8 @@ final class FileCommands {
         }
         args.expectEnd();
 
-        try {
-            file.data = engine.getFileSystem().read(name);
-        } catch (MonitorFileException e) {
-            out.print("Cannot open '" + name + "'.\n");
+        file.data = readDeviceFile(engine, device, name, out);
+        if (file.data == null) {
             return null;
         }
         if (binary) {
@@ -269,13 +315,13 @@ final class FileCommands {
             switch (kind) {
                 case LOAD:
                     return "Loads a file into memory. The file starts with a two-byte load address,\n"
-                            + "which is used if no address is given. Device 0 is the host file system.";
+                            + "which is used if no address is given.\nDevice 0 is the host file system; device 8 is the disk in the drive.";
                 case LOAD_BASIC:
                     return "Loads a file as load does, then sets the BASIC pointers to the loaded\n"
-                            + "program, as if BASIC had loaded it. Device 0 is the host file system.";
+                            + "program, as if BASIC had loaded it.\nDevice 0 is the host file system; device 8 is the disk in the drive.";
                 default:
                     return "Loads a whole file into memory at the address; the file has no load\n"
-                            + "address. Device 0 is the host file system.";
+                            + "address.\nDevice 0 is the host file system; device 8 is the disk in the drive.";
             }
         }
 
@@ -296,7 +342,7 @@ final class FileCommands {
         }
 
         /** Sets the pointers that the VIC-20's BASIC sets after a load, as VICE does. */
-        private static void setBasicPointers(AddressSpace space, int start, int end) {
+        static void setBasicPointers(AddressSpace space, int start, int end) {
             int[] startPointers = { 0x2B, 0xAC };
             int[] endPointers = { 0x2D, 0x2F, 0x31, 0xAE };
             for (int pointer : startPointers) {
@@ -328,9 +374,9 @@ final class FileCommands {
                     (binary ? "bverify" : "verify") + " \"<filename>\" <device> "
                             + (binary ? "<address>" : "[<address>]"),
                     binary ? "Compares a whole file with memory at the address, and lists the bytes\n"
-                                    + "that differ. Device 0 is the host file system."
+                                    + "that differ.\nDevice 0 is the host file system; device 8 is the disk in the drive."
                             : "Compares a file with memory, as load would load it, and lists the bytes\n"
-                                    + "that differ. Device 0 is the host file system.");
+                                    + "that differ.\nDevice 0 is the host file system; device 8 is the disk in the drive.");
             this.binary = binary;
         }
 
@@ -376,16 +422,17 @@ final class FileCommands {
             super(binary ? "bsave" : "save", binary ? "bs" : "s",
                     (binary ? "bsave" : "save") + " \"<filename>\" <device> <address1> <address2>",
                     binary ? "Saves memory from address1 to address2 to a file, with no load address.\n"
-                                    + "Device 0 is the host file system."
+                                    + "Device 0 is the host file system, 8 the disk in the drive."
                             : "Saves memory from address1 to address2 to a file, starting with a\n"
-                                    + "two-byte load address. Device 0 is the host file system.");
+                                    + "two-byte load address.\nDevice 0 is the host file system; device 8 is the disk in the drive.");
             this.binary = binary;
         }
 
         @Override
         void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
             String name = parseFilename(args);
-            if (!parseDevice(args, out)) {
+            int device = parseDevice(args, out);
+            if (device < 0) {
                 return;
             }
             int position = args.position();
@@ -409,11 +456,7 @@ final class FileCommands {
                 data[header + address - start] = (byte) space.read(address, engine.isSideEffects());
             }
             out.print("Saving file '" + name + "' from $" + Format.hex4(start) + " to $" + Format.hex4(end) + "\n");
-            try {
-                engine.getFileSystem().write(name, data);
-            } catch (MonitorFileException e) {
-                out.print("Cannot open '" + name + "'.\n");
-            }
+            writeDeviceFile(engine, device, name, data, out);
         }
     }
 
@@ -461,6 +504,24 @@ final class FileCommands {
                 out.print("Fetching " + url + "...\n");
             } else {
                 out.print("fetch is only supported in the browser.\n");
+            }
+        }
+    }
+
+    static final class DomConsole extends MonitorCommand {
+
+        DomConsole() {
+            super("domconsole", null, "domconsole ",
+                    "Browser only: shows or hides the monitor as an HTML panel beside the\n"
+                    + "screen, where text can be selected, copied and searched. Also\n"
+                    + "window.jvic.console() in the browser's developer tools.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            args.expectEnd();
+            if (!engine.getHost().toggleDomConsole()) {
+                out.print("domconsole is only available in the browser.\n");
             }
         }
     }

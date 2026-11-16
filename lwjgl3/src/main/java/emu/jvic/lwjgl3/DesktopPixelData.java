@@ -29,6 +29,13 @@ public class DesktopPixelData extends PixelData {
     }
 
     @Override
+    public int getPixel(int ulaIndex) {
+        int index = (ulaIndex << 2);
+        return ((imageData[index] & 0xFF) << 24) | ((imageData[index + 1] & 0xFF) << 16)
+                | ((imageData[index + 2] & 0xFF) << 8) | (imageData[index + 3] & 0xFF);
+    }
+
+    @Override
     public void clearPixels() {
         Arrays.fill(imageData, (byte)0);
     }

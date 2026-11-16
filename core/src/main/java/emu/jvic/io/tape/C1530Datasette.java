@@ -99,6 +99,47 @@ public class C1530Datasette {
      * 
      * @return true if the motor is currently on; otherwise false.
      */
+    /**
+     * Whether a tape is in. For the debug monitor's tape commands.
+     *
+     * @return true if a tape is inserted.
+     */
+    public boolean hasTape() {
+        return tape != null;
+    }
+
+    /**
+     * The tape's position, for the debug monitor's tapeoffs.
+     *
+     * @return The offset in the tape's pulse data, or 0 with no tape.
+     */
+    public int getTapeOffset() {
+        return (tape != null) ? tape.getPosition() : 0;
+    }
+
+    /**
+     * Winds the tape to a position straight away, for the debug monitor's tapeoffs
+     * and tapectrl (rewind, forward, reset).
+     *
+     * @param offset The offset in the tape's pulse data.
+     */
+    public void setTapeOffset(int offset) {
+        if (tape != null) {
+            tape.setPosition(offset);
+            currentTime = 0;
+            timeOfNextPulse = 0;
+        }
+    }
+
+    /**
+     * The length of the tape's pulse data.
+     *
+     * @return The length in bytes, or 0 with no tape.
+     */
+    public int getTapeLength() {
+        return (tape != null) ? tape.getLength() : 0;
+    }
+
     public boolean isMotorOn() {
         return motorOn;
     }

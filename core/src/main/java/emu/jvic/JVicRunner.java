@@ -1,5 +1,6 @@
 package emu.jvic;
 
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -195,6 +196,16 @@ public abstract class JVicRunner {
      */
     public boolean hasMonitorChannel() {
         return false;
+    }
+
+    /**
+     * Whether Alt+Y can save a screenshot. True everywhere except in the browser,
+     * where only the TeaVM build supports it (as a download).
+     *
+     * @return true if screenshots are supported.
+     */
+    public boolean isScreenshotSupported() {
+        return !Gdx.app.getType().equals(ApplicationType.WebGL);
     }
     
     /**

@@ -160,8 +160,8 @@ public class MachineInputProcessor extends InputAdapter {
                     handleWarpSpeedToggle();
                     return true;
                 case Keys.Y:
-                    // Web version doesn't support screen shots... yet.
-                    if (!Gdx.app.getType().equals(ApplicationType.WebGL)) {
+                    // The GWT web version doesn't support screen shots.
+                    if (machineScreen.getJvicRunner().isScreenshotSupported()) {
                         machineScreen.saveScreenshot();
                     }
                     return true;

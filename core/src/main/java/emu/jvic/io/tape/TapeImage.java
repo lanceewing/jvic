@@ -81,6 +81,36 @@ public class TapeImage {
      * 
      * @return true if the end of the tape data has been reached; otherwise false.
      */
+    /**
+     * The position in the pulse data (after the .tap header). For the debug
+     * monitor's tapeoffs.
+     *
+     * @return The offset in bytes.
+     */
+    public int getPosition() {
+        return position;
+    }
+
+    /**
+     * Moves to a position in the pulse data. For the debug monitor's tapeoffs and
+     * tapectrl.
+     *
+     * @param position The offset in bytes; past the end means the end.
+     */
+    public void setPosition(int position) {
+        this.position = Math.max(0, Math.min(position, dataBuffer.length));
+        endOfInput = (this.position >= dataBuffer.length);
+    }
+
+    /**
+     * The length of the pulse data.
+     *
+     * @return The length in bytes.
+     */
+    public int getLength() {
+        return dataBuffer.length;
+    }
+
     public boolean isEndOfInput() {
         return endOfInput;
     }

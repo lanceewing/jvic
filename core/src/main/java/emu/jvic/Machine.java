@@ -600,6 +600,16 @@ public class Machine {
     }
 
     /**
+     * Gets the pixel data the VIC draws into. Used by the debug monitor's screenshot
+     * command.
+     *
+     * @return The PixelData.
+     */
+    public PixelData getPixelData() {
+        return pixelData;
+    }
+
+    /**
      * Resets the machine as its RESET line does: the CPU, both VIAs, and the drive
      * (through the serial bus RESET line). The VIC has no reset line, and memory is
      * left as it is. Used by the debug monitor's reset command.
@@ -633,6 +643,11 @@ public class Machine {
         via1.reset();
         via2.reset();
         c1541Drive.reset(true);
+        if (c1541Drive.getDiskImage() != null) {
+            // The drive takes longer to start than BASIC; as when jvic starts with a
+            // disk, let it finish first, as if it had been switched on earlier.
+            c1541Drive.warmUp();
+        }
         cpu.reset();
     }
 }

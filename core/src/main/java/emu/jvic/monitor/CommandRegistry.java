@@ -47,7 +47,11 @@ final class CommandRegistry {
         notImplemented(machineState, "profile", "prof");
         machineState.commands.add(new InspectCommands.Reset());
         machineState.commands.add(new InspectCommands.Export());
-        notImplemented(machineState, "cartfreeze", null, "updb", null, "jpdb", null);
+        machineState.commands.add(new MediaCommands.NoDevice("cartfreeze", "cartfreeze ",
+                "Accepted, as in VICE, but jvic has no freezer cartridges."));
+        machineState.commands.add(new MediaCommands.NoDevice("updb", "updb <value>",
+                "Accepted, as in VICE, but jvic has no user port devices."));
+        machineState.commands.add(new MediaCommands.Jpdb());
         machineState.commands.add(new InspectCommands.Keybuf());
         machineState.commands.add(new MachineCommands.Warp());
 
@@ -94,19 +98,25 @@ final class CommandRegistry {
         files.commands.add(new FileCommands.Pwd());
         files.commands.add(new FileCommands.Mkdir());
         files.commands.add(new FileCommands.Rmdir());
-        notImplemented(files, "@", null, "attach", null, "autostart", null, "autoload", null);
+        files.commands.add(new DiskCommands.DiskCommand());
+        files.commands.add(new DiskCommands.Attach());
+        files.commands.add(new DiskCommands.Autostart(true));
+        files.commands.add(new DiskCommands.Autostart(false));
         files.commands.add(new FileCommands.Load(FileCommands.Load.BLOAD));
-        notImplemented(files, "block_read", "br");
+        files.commands.add(new DiskCommands.BlockRead());
         files.commands.add(new FileCommands.Save(true));
         files.commands.add(new FileCommands.Verify(true));
-        notImplemented(files, "block_write", "bw", "detach", null);
+        files.commands.add(new DiskCommands.BlockWrite());
+        files.commands.add(new DiskCommands.Detach());
         files.commands.add(new FileCommands.Dir());
-        notImplemented(files, "list", null);
+        files.commands.add(new DiskCommands.ListCommand());
         files.commands.add(new FileCommands.Load(FileCommands.Load.LOAD));
         files.commands.add(new FileCommands.Load(FileCommands.Load.LOAD_BASIC));
         files.commands.add(new FileCommands.Save(false));
         files.commands.add(new FileCommands.Verify(false));
-        notImplemented(files, "screenshot", "scrsh", "tapectrl", null, "tapeoffs", null);
+        files.commands.add(new MediaCommands.Screenshot());
+        files.commands.add(new MediaCommands.TapeControl());
+        files.commands.add(new MediaCommands.TapeOffset());
 
         CommandGroup commandFiles = group(groups, "Command file commands:");
         commandFiles.commands.add(new FileCommands.Playback());
@@ -114,8 +124,10 @@ final class CommandRegistry {
         commandFiles.commands.add(new FileCommands.Stop());
 
         CommandGroup resources = group(groups, "Resource state commands:");
-        notImplemented(resources, "resourceget", "resget", "resourceset", "resset", "load_resources", "resload",
-                "save_resources", "ressave");
+        resources.commands.add(new MediaCommands.ResourceGet());
+        resources.commands.add(new MediaCommands.ResourceSet());
+        resources.commands.add(new MediaCommands.LoadResources());
+        resources.commands.add(new MediaCommands.SaveResources());
 
         // jvic's own commands for the browser's file store. help doesn't list them,
         // so that its list stays VICE's; "help upload" and so on still work.
@@ -124,6 +136,7 @@ final class CommandRegistry {
         web.commands.add(new FileCommands.Upload());
         web.commands.add(new FileCommands.Fetch());
         web.commands.add(new FileCommands.Download());
+        web.commands.add(new FileCommands.DomConsole());
 
         return groups;
     }

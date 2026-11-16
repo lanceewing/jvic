@@ -47,6 +47,7 @@ public class TeaVMJVicRunner extends JVicRunner {
 
     private JSObject worker;
     private TeaVMMonitorChannel monitorChannel;
+    private TeaVMDomConsole domConsole;
     private boolean stopped;
     private boolean resetMountedDiskSupported;
     private ResetDiskHandler pendingResetDiskHandler;
@@ -58,7 +59,28 @@ public class TeaVMJVicRunner extends JVicRunner {
         frameCounter = new TeaVMFrameCounter();
         ((TeaVMSoundGenerator)soundGenerator).attachAudioWorklet(this);
         TeaVMBrowser.registerPopStateListener(this::onPopState);
+        // window.jvic.monitor("r") in the browser's developer tools.
+        ((TeaVMMonitorChannel) getMonitorChannel()).installJavaScriptHook();
+        installConsoleHook(this::toggleDomConsole);
     }
+
+    /** Shows or hides the monitor's HTML panel. */
+    private void toggleDomConsole() {
+        if (domConsole == null) {
+            domConsole = new TeaVMDomConsole(getMonitorChannel());
+        }
+        domConsole.toggle();
+    }
+
+    @org.teavm.jso.JSFunctor
+    interface ConsoleCallback extends JSObject {
+        void toggle();
+    }
+
+    @JSBody(params = "callback", script = ""
+            + "window.jvic = window.jvic || {};"
+            + "window.jvic.console = function() { callback(); };")
+    private static native void installConsoleHook(ConsoleCallback callback);
 
     @Override
     public void start(AppConfigItem appConfigItem) {
@@ -296,6 +318,10 @@ public class TeaVMJVicRunner extends JVicRunner {
                         TeaVMWorkerInterop.getNestedString(eventObject, "name"));
                 break;
 
+            case "MonitorDomConsole":
+                toggleDomConsole();
+                break;
+
             case "MonitorQuit":
                 // A browser tab can't close itself; quit returns to the home screen.
                 stop();
@@ -488,7 +514,29 @@ public class TeaVMJVicRunner extends JVicRunner {
 
     @Override
     public void saveScreenshot(Pixmap screenPixmap, AppConfigItem appConfigItem) {
-        Gdx.app.log("TeaVMJVicRunner", "saveScreenshot() is not implemented in the TeaVM web target.");
+        // The visible screen, as a PNG download (Alt+Y).
+        MachineType machineType = MachineType.PAL;
+        if ((appConfigItem != null) && (appConfigItem.getMachineType() != null)) {
+            machineType = MachineType.valueOf(appConfigItem.getMachineType());
+        }
+        int width = machineType.getVisibleScreenWidth();
+        int height = machineType.getVisibleScreenHeight();
+        int[] pixels = new int[width * height];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                pixels[(y * width) + x] = screenPixmap.getPixel(machineType.getHorizontalOffset() + x,
+                        machineType.getVerticalOffset() + y);
+            }
+        }
+        String name = ((appConfigItem != null) ? appConfigItem.getName() : "jvic")
+                .replaceAll("[ ,\n/\\:;*?\"<>|!]", "_") + "_" + System.currentTimeMillis() + ".png";
+        TeaVMMonitorChannel.download(name, TeaVMWorkerMonitor.toArrayBuffer(
+                emu.jvic.monitor.ImageEncoder.png(pixels, width, height)));
+    }
+
+    @Override
+    public boolean isScreenshotSupported() {
+        return true;
     }
 
     private void completeMountedDiskReset(boolean success) {

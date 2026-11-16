@@ -54,6 +54,13 @@ public class TeaVMPixelData extends PixelData {
     }
 
     @Override
+    public int getPixel(int index) {
+        int offset = index << 2;
+        return (pixelArray.get(offset) << 24) | (pixelArray.get(offset + 1) << 16)
+                | (pixelArray.get(offset + 2) << 8) | pixelArray.get(offset + 3);
+    }
+
+    @Override
     public void clearPixels() {
         if (packedPixelWritesSupported) {
             for (int index = 0; index < activePackedPixelLength; index++) {

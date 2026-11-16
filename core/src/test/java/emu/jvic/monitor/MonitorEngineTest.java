@@ -127,7 +127,7 @@ public class MonitorEngineTest {
     @Test
     void unimplementedCommandsSaySo() {
         assertOutput("The profile command is not implemented in jvic yet.\n", "profile");
-        assertOutput("The list command is not implemented in jvic yet.\n", "list");
+        assertOutput("The dump command is not implemented in jvic yet.\n", "dump");
     }
 
     // ---------------------------------------------------------------------------------

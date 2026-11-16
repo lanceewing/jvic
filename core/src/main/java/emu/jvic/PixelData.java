@@ -41,5 +41,17 @@ public abstract class PixelData {
      * @param pixmap 
      */
     public abstract void updatePixmap(Pixmap pixmap);
+
+    /**
+     * Reads back a pixel, for the debug monitor's screenshot command. Platforms
+     * without the monitor keep this default.
+     *
+     * @param index The pixel's index, as given to {@link #putPixel(int, int)}.
+     *
+     * @return The pixel's RGBA8888 colour, or 0 if not supported.
+     */
+    public int getPixel(int index) {
+        return 0;
+    }
     
 }

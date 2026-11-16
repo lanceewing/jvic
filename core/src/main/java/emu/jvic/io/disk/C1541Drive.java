@@ -169,10 +169,18 @@ public class C1541Drive {
         initialiseDisk(diskData, diskPersistenceSession, writeProtected);
 
         if (warmup) {
-            // Run the 1541 drive for a second to get it warmed up (needed for some games).
-            for (int i = 0; i < 1500000; i++) {
-                emulateCycle();
-            }
+            warmUp();
+        }
+    }
+
+    /**
+     * Runs the drive on its own for about a second and a half, so that its DOS has
+     * finished starting up (needed for some games, and before anything talks to it
+     * on the serial bus). The drive only runs while a disk is in it.
+     */
+    public void warmUp() {
+        for (int i = 0; i < 1500000; i++) {
+            emulateCycle();
         }
     }
 
@@ -203,6 +211,26 @@ public class C1541Drive {
         byteReady = false;
         lastSync = false;
         nextMoveForward = 0;
+    }
+
+    /**
+     * Whether the inserted disk is write protected.
+     *
+     * @return true if writes to the disk are refused.
+     */
+    public boolean isWriteProtected() {
+        return writeProtected;
+    }
+
+    /**
+     * Called after the debug monitor has changed the disk image's sectors directly
+     * (not through the drive), so that the change is persisted like a write by the
+     * drive.
+     */
+    public void onDiskChangedByHost() {
+        if ((disk != null) && (diskPersistenceSession != null)) {
+            diskPersistenceSession.onDiskChanged(disk.copyRawImage());
+        }
     }
 
     /**

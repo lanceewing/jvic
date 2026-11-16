@@ -188,6 +188,12 @@ final class TeaVMWorkerMonitor {
             }
 
             @Override
+            public boolean toggleDomConsole() {
+                TeaVMWorkerGlobalScope.postObject("MonitorDomConsole", TeaVMWorkerInterop.createEmptyObject());
+                return true;
+            }
+
+            @Override
             public boolean downloadFile(String name, byte[] data) {
                 TeaVMWorkerGlobalScope.postObject("MonitorDownload", createDownloadObject(name, toArrayBuffer(data)));
                 return true;
