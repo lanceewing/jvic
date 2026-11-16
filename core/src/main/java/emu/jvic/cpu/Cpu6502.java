@@ -1665,24 +1665,10 @@ public class Cpu6502 extends BaseChip {
                 case EXECUTE_LAST: // Execute (with fetch next op code)
                     // Execute previous instruction.
                     executeInstruction();
-                    // Fetch next op code.
+                    // Fetch next op code. Set to 0 rather than 1 because of the
+                    // unconditional currentInstructionStep++ after this switch.
                     currentInstructionStep = 0;
-                    if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
-                        if (debug) {
-                            displayCurrentInstruction();
-                        }
-                        // No interrupts, so proceed to next instruction.
-                        instructionRegister = memory.readMemory(programCounter);
-                        programCounter++;
-                        instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-                    } else {
-                        // An interrupt occurred.
-                        instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
-                    }
-                    // Snapshot I for the poll at the end of the instruction just dispatched above
-                    // (see the field's Javadoc for why this can't just be the live flag).
-                    interruptDisableFlagAtDispatch = interruptDisableFlag;
-                    numOfInstructionSteps = instructionSteps.length;
+                    dispatchNextInstruction();
                     break;
     
                 case EXECUTE_MID_ADL: // Executes (does a write unmodified data at same time)
@@ -2020,30 +2006,41 @@ public class Cpu6502 extends BaseChip {
         } else {
             // Set up next instruction.
             currentInstructionStep = 1;
-
-            if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
-                if (debug) {
-                    displayCurrentInstruction();
-                }
-                // No interrupts, so proceed to next instruction.
-                instructionRegister = memory.readMemory(programCounter);
-                programCounter++;
-                instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
-            } else {
-                // An interrupt occurred.
-                instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
-            }
-            // Snapshot I for the poll at the end of the instruction just dispatched above
-            // (see the field's Javadoc for why this can't just be the live flag).
-            interruptDisableFlagAtDispatch = interruptDisableFlag;
-
-            numOfInstructionSteps = instructionSteps.length;
+            dispatchNextInstruction();
         }
 
         if (instructionSteps.length == 0) {
             if (instructionRegister != 114)
                 System.out.println(StringUtils.format("Unknown instruction: {0}", instructionRegister));
         }
+    }
+
+    /**
+     * Dispatches the next instruction at an instruction boundary: either fetches the
+     * next op code at the program counter, or starts the IRQ/NMI sequence if an
+     * interrupt was polled. This is the single place where a new instruction begins,
+     * shared by the two fetch sites in {@link #emulateCycle()}: the EXECUTE_LAST step
+     * (where the fetch overlaps the previous instruction's final cycle) and the
+     * "set up next instruction" branch taken after instructions that don't end in
+     * EXECUTE_LAST. The caller is responsible for setting currentInstructionStep.
+     */
+    private void dispatchNextInstruction() {
+        if ((polledInterruptStatus == 0) || (((polledInterruptStatus & S_NMI) == 0) && pollInterruptDisableFlag())) {
+            if (debug) {
+                displayCurrentInstruction();
+            }
+            // No interrupts, so proceed to next instruction.
+            instructionRegister = memory.readMemory(programCounter);
+            programCounter++;
+            instructionSteps = INSTRUCTION_DECODE_MATRIX[instructionRegister];
+        } else {
+            // An interrupt occurred.
+            instructionSteps = ((polledInterruptStatus & S_NMI) == 0 ? IRQ_STEPS : NMI_STEPS);
+        }
+        // Snapshot I for the poll at the end of the instruction just dispatched above
+        // (see the field's Javadoc for why this can't just be the live flag).
+        interruptDisableFlagAtDispatch = interruptDisableFlag;
+        numOfInstructionSteps = instructionSteps.length;
     }
   
     ///////////////////////////////// DEBUG /////////////////////////////////////////
