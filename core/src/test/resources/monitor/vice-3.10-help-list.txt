@@ -1,0 +1,54 @@
+Available commands are:
+
+help (?)                 ~                        print (p)                
+
+Monitor state commands:
+device (dev)             exit (x)                 quit (q)                 
+radix (rad)              sidefx (sfx)             log                      
+logname                  
+
+Machine state commands:
+dump                     undump                   bank                     
+cpu                      backtrace (bt)           cpuhistory (chis)        
+registers (r)            stopwatch (sw)           goto (g)                 
+next (n)                 return (ret)             step (z)                 
+profile (prof)           reset                    export (exp)             
+cartfreeze               updb                     jpdb                     
+keybuf                   warp                     
+
+Symbol table commands:
+add_label (al)           delete_label (dl)        load_labels (ll)         
+save_labels (sl)         show_labels (shl)        clear_labels (cl)        
+
+Assembler and memory commands:
+>                        a                        compare (c)              
+disass (d)               fill (f)                 hunt (h)                 
+i                        ii                       mem (m)                  
+memchar (mc)             memmapsave (mmsave)      memmapshow (mmsh)        
+memmapzap (mmzap)        memsprite (ms)           move (t)                 
+io                       screen (sc)              
+
+Checkpoint commands:
+break (bk)               command                  condition (cond)         
+delete (del)             disable (dis)            enable (en)              
+ignore                   until (un)               watch (w)                
+trace (tr)               dummy                    
+
+File commands:
+cd                       pwd                      mkdir                    
+rmdir                    @                        attach                   
+autostart                autoload                 bload (bl)               
+block_read (br)          bsave (bs)               bverify (bv)             
+block_write (bw)         detach                   dir (ls)                 
+list                     load (l)                 loadbasic (ldb)          
+save (s)                 verify (v)               screenshot (scrsh)       
+tapectrl                 tapeoffs                 
+
+Command file commands:
+playback (pb)            record (rec)             stop                     
+
+Resource state commands:
+resourceget (resget)     resourceset (resset)     load_resources (resload) 
+save_resources (ressave) 
+
+Use "help <command>" for details.

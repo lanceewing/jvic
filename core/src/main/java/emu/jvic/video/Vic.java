@@ -243,8 +243,27 @@ public abstract class Vic extends MemoryMappedChip {
     }
 
     /**
+     * Gets the current raster line (the 9-bit vertical counter), for the debug monitor.
+     *
+     * @return The current raster line.
+     */
+    public int getRasterLine() {
+        return verticalCounter;
+    }
+
+    /**
+     * Gets the current cycle within the raster line (the horizontal counter), for the
+     * debug monitor.
+     *
+     * @return The current cycle within the raster line.
+     */
+    public int getRasterCycle() {
+        return horizontalCounter;
+    }
+
+    /**
      * Reads a value from VIC memory.
-     * 
+     *
      * @param address The address to read from.
      * 
      * @return The byte at the specified address.
