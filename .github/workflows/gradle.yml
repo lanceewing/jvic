@@ -42,22 +42,14 @@ jobs:
           mv teavm/build/dist/webapp/functions teavm/build/dist
 
     - name: Publish to Cloudflare Pages
-      #uses: cloudflare/wrangler-action@v3
-      #with:
-      #    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      #    workingDirectory: html/build 
-      #    command: pages deploy dist --project-name='jvic' --commit-dirty=true
-      uses: cloudflare/pages-action@1
+      uses: cloudflare/wrangler-action@v4
       with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: 'jvic'
           workingDirectory: teavm/build/dist
-          directory: webapp
+          command: pages deploy webapp --project-name=jvic --branch=master --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
-          wranglerVersion: '3'
+          # wranglerVersion: '3'   # uncomment to stay on Wrangler 3 as before
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
