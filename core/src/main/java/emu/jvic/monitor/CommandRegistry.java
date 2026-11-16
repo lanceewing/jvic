@@ -29,7 +29,8 @@ final class CommandRegistry {
         monitorState.commands.add(new GeneralCommands.Quit());
         monitorState.commands.add(new GeneralCommands.RadixCommand());
         monitorState.commands.add(new GeneralCommands.SideEffects());
-        notImplemented(monitorState, "log", null, "logname", null);
+        monitorState.commands.add(new FileCommands.Log());
+        monitorState.commands.add(new FileCommands.LogName());
 
         CommandGroup machineState = group(groups, "Machine state commands:");
         notImplemented(machineState, "dump", null, "undump", null);
@@ -80,14 +81,28 @@ final class CommandRegistry {
         notImplemented(checkpoints, "dummy", null);
 
         CommandGroup files = group(groups, "File commands:");
-        notImplemented(files, "cd", null, "pwd", null, "mkdir", null, "rmdir", null, "@", null, "attach", null,
-                "autostart", null, "autoload", null, "bload", "bl", "block_read", "br", "bsave", "bs",
-                "bverify", "bv", "block_write", "bw", "detach", null, "dir", "ls", "list", null, "load", "l",
-                "loadbasic", "ldb", "save", "s", "verify", "v", "screenshot", "scrsh", "tapectrl", null,
-                "tapeoffs", null);
+        files.commands.add(new FileCommands.Cd());
+        files.commands.add(new FileCommands.Pwd());
+        files.commands.add(new FileCommands.Mkdir());
+        files.commands.add(new FileCommands.Rmdir());
+        notImplemented(files, "@", null, "attach", null, "autostart", null, "autoload", null);
+        files.commands.add(new FileCommands.Load(FileCommands.Load.BLOAD));
+        notImplemented(files, "block_read", "br");
+        files.commands.add(new FileCommands.Save(true));
+        files.commands.add(new FileCommands.Verify(true));
+        notImplemented(files, "block_write", "bw", "detach", null);
+        files.commands.add(new FileCommands.Dir());
+        notImplemented(files, "list", null);
+        files.commands.add(new FileCommands.Load(FileCommands.Load.LOAD));
+        files.commands.add(new FileCommands.Load(FileCommands.Load.LOAD_BASIC));
+        files.commands.add(new FileCommands.Save(false));
+        files.commands.add(new FileCommands.Verify(false));
+        notImplemented(files, "screenshot", "scrsh", "tapectrl", null, "tapeoffs", null);
 
         CommandGroup commandFiles = group(groups, "Command file commands:");
-        notImplemented(commandFiles, "playback", "pb", "record", "rec", "stop", null);
+        commandFiles.commands.add(new FileCommands.Playback());
+        commandFiles.commands.add(new FileCommands.Record());
+        commandFiles.commands.add(new FileCommands.Stop());
 
         CommandGroup resources = group(groups, "Resource state commands:");
         notImplemented(resources, "resourceget", "resget", "resourceset", "resset", "load_resources", "resload",

@@ -124,6 +124,21 @@ final class Parser {
     }
 
     /**
+     * Reads the rest of the line, without leading or trailing spaces, as cd, mkdir,
+     * rmdir and dir take their argument. A pair of surrounding double quotes is
+     * removed (VICE's dir keeps them, so it can't open a quoted path).
+     */
+    String readRest() {
+        skipSpaces();
+        String rest = line.substring(pos).trim();
+        pos = line.length();
+        if ((rest.length() >= 2) && rest.startsWith("\"") && rest.endsWith("\"")) {
+            rest = rest.substring(1, rest.length() - 1);
+        }
+        return rest;
+    }
+
+    /**
      * Reads a memspace prefix such as "c:" or "8:", if there is one.
      *
      * @return The memspace name in lower case without the colon (e.g. "c", "8"), or

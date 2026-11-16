@@ -9,14 +9,21 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter;
 
 import emu.jvic.JVic;
+import emu.jvic.lwjgl3.headless.HeadlessJVicRunner;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 
 /** Launches the desktop (LWJGL3) application. */
 public class DesktopLauncher {
     
     public static void main(String[] args) {
+        Map<String, String> argsMap = convertArgsToMap(args);
+        if ("true".equalsIgnoreCase(argsMap.get("headless"))) {
+            // No window, so none of the windowing setup below. Checked before
+            // StartupHelper, which may start a new JVM and lose standard input.
+            System.exit(HeadlessJVicRunner.run(argsMap));
+        }
         if (StartupHelper.startNewJvmIfRequired()) return; // This handles macOS support and helps on Windows.
-        createApplication(convertArgsToMap(args));
+        createApplication(argsMap);
     }
 
     private static Map<String, String> convertArgsToMap(String[] args) {

@@ -53,6 +53,21 @@ run {
   // regardless, please report it via the gdx-liftoff issue tracker or just mention it on the libGDX Discord.
 }
 
+// Runs jvic headless, driven by the monitor (see HeadlessJVicRunner), e.g.
+//   ./gradlew -q :lwjgl3:headless --args="autostart=game.prg limitcycles=10000000 moncommands=mon.txt"
+// Relative paths are from the repository root. Standard input is empty, because Gradle
+// doesn't pass on the end of piped input, so commands must come from moncommands. A
+// non-zero exit code (1 for limitcycles) makes Gradle report a failure. To pipe in
+// commands or get the exit code, run the jar instead:
+//   java -jar lwjgl3/build/lib/jvic-<version>.jar headless=true ...
+tasks.register('headless', JavaExec) {
+  dependsOn classes
+  mainClass = 'emu.jvic.lwjgl3.DesktopLauncher'
+  classpath = sourceSets.main.runtimeClasspath
+  workingDir = rootProject.projectDir
+  args 'headless=true'
+}
+
 jar {
 // sets the name of the .jar file this produces to the name of the game or app.
   archiveFileName.set(jarName)

@@ -22,7 +22,9 @@ import emu.jvic.debug.MonitorChannel;
  * <li>After each command that leaves the machine stopped, and whenever the machine
  * stops, the prompt (e.g. "(C:$e5d1) ") is sent.</li>
  * <li>Commands queued behind one that resumes the machine (x, g, z...) wait until it
- * next stops.</li>
+ * next stops. So do the rest of a playback file's lines.</li>
+ * <li>Lines given to {@link #execute} count as typed: they are logged after the
+ * prompt and recorded, as in VICE.</li>
  * </ul>
  */
 public final class MonitorSession implements MonitorHost {
@@ -47,12 +49,28 @@ public final class MonitorSession implements MonitorHost {
     private final List<MonitorChannel.Listener> listeners = new CopyOnWriteArrayList<>();
     private final Deque<String> pendingLines = new ArrayDeque<>();
 
+    private MonitorFileSystem fileSystem = new InMemoryMonitorFileSystem();
     private Machine machine;
     private MonitorEngine engine;
     private boolean promptSent;
 
     public MonitorSession(Platform platform) {
         this.platform = platform;
+    }
+
+    /**
+     * Sets the file system for the file commands, e.g. the real one on desktop. Set
+     * it before attaching a machine.
+     */
+    public void setFileSystem(MonitorFileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+        if (engine != null) {
+            engine.setFileSystem(fileSystem);
+        }
+    }
+
+    public MonitorFileSystem getFileSystem() {
+        return fileSystem;
     }
 
     public void addListener(MonitorChannel.Listener listener) {
@@ -72,6 +90,7 @@ public final class MonitorSession implements MonitorHost {
         }
         this.machine = machine;
         this.engine = new MonitorEngine(machine, this);
+        this.engine.setFileSystem(fileSystem);
         this.promptSent = false;
     }
 
@@ -79,6 +98,9 @@ public final class MonitorSession implements MonitorHost {
      * Detaches the machine when the runner has finished with it.
      */
     public void detach() {
+        if (engine != null) {
+            engine.flushLog();
+        }
         machine = null;
         engine = null;
         pendingLines.clear();
@@ -124,20 +146,44 @@ public final class MonitorSession implements MonitorHost {
         if ((engine == null) || !machine.isDebuggerStopped()) {
             return;
         }
+        if (engine.hasPendingScript()) {
+            // The rest of a playback file that a command resumed the machine from.
+            engine.continueScript(this::print);
+            if (!machine.isDebuggerStopped()) {
+                promptSent = false;
+                return;
+            }
+        }
         if (!promptSent && pendingLines.isEmpty()) {
             promptSent = true;
-            print(engine.getPrompt());
+            printPrompt();
         }
         while (!pendingLines.isEmpty() && machine.isDebuggerStopped()) {
             run(pendingLines.poll());
         }
     }
 
+    /**
+     * Runs a file of monitor commands, as playback does, e.g. a moncommands script.
+     * As with playback, its lines are not logged as typed, and lines after one that
+     * resumes the machine run when it next stops. Must be called while the machine
+     * is stopped.
+     *
+     * @param path The file, in the session's file system.
+     */
+    public void playback(String path) {
+        if (engine == null) {
+            return;
+        }
+        engine.playback(path, this::print);
+        promptSent = false;
+    }
+
     private void run(String line) {
-        engine.execute(line, this::print);
+        engine.executeTyped(line, this::print);
         if (machine.isDebuggerStopped()) {
             promptSent = true;
-            print(engine.getPrompt());
+            printPrompt();
         }
     }
 
@@ -153,6 +199,9 @@ public final class MonitorSession implements MonitorHost {
 
     @Override
     public void quit() {
+        if (engine != null) {
+            engine.flushLog();
+        }
         platform.quit();
     }
 
@@ -164,6 +213,13 @@ public final class MonitorSession implements MonitorHost {
     @Override
     public void setWarp(boolean warp) {
         platform.setWarp(warp);
+    }
+
+    private void printPrompt() {
+        String prompt = engine.getPrompt();
+        for (MonitorChannel.Listener listener : listeners) {
+            listener.onPrompt(prompt);
+        }
     }
 
     @Override

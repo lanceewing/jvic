@@ -33,6 +33,7 @@ import emu.jvic.lwjgl3.disk.DesktopDiskImagePersistence;
 import emu.jvic.lwjgl3.monitor.DesktopMonitorChannel;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.memory.RamType;
+import emu.jvic.monitor.JavaIoMonitorFileSystem;
 import emu.jvic.monitor.MonitorSession;
 import emu.jvic.sound.SoundGenerator;
 import emu.jvic.ui.MachineInputProcessor.ScreenSize;
@@ -84,6 +85,7 @@ public class DesktopJVicRunner extends JVicRunner {
                     setWarpSpeed(warp);
                 }
             });
+            monitorSession.setFileSystem(new JavaIoMonitorFileSystem());
             monitorChannel = new DesktopMonitorChannel(monitorSession, this::enqueueMachineAction);
             // If a machine is already running, attach it on its own thread.
             enqueueMachineAction(() -> {

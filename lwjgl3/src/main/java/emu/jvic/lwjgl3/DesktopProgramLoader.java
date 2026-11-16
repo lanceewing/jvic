@@ -172,6 +172,10 @@ public class DesktopProgramLoader extends ProgramLoader {
 
     private FileHandle resolveFileHandle(AppConfigItem appConfigItem) {
         FileLocation fileLocation = appConfigItem.getFileLocation();
+        if (Gdx.files == null) {
+            // Headless mode: libGDX isn't running, so read the path directly.
+            return new FileHandle(new java.io.File(appConfigItem.getFilePath()));
+        }
         if ((fileLocation == FileLocation.ABSOLUTE) || (fileLocation == FileLocation.LOCAL)) {
             return Gdx.files.absolute(appConfigItem.getFilePath());
         }

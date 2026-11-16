@@ -21,6 +21,17 @@ public interface MonitorChannel {
          *             "(C:$e5d1) " with no newline.
          */
         void onOutput(String text);
+
+        /**
+         * Receives a prompt such as "(C:$e5d1) ", sent after each command that leaves
+         * the machine stopped, and whenever it stops. By default it is output like
+         * any other text; a front end that shows commands differently can override it.
+         *
+         * @param prompt The prompt, with no newline.
+         */
+        default void onPrompt(String prompt) {
+            onOutput(prompt);
+        }
     }
 
     void addListener(Listener listener);
