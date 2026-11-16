@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.debug.Debugger;
+import emu.jvic.debug.WatchProxyChip;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
 import emu.jvic.io.Via1;
@@ -18,6 +19,9 @@ import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistenceSession;
 import emu.jvic.io.tape.C1530Datasette;
 import emu.jvic.memory.Memory;
+import emu.jvic.memory.MemoryMappedChip;
+import emu.jvic.memory.NibbleRamChip;
+import emu.jvic.memory.RamChip;
 import emu.jvic.memory.RamType;
 import emu.jvic.memory.Vic20Memory;
 import emu.jvic.snap.PcvSnapshot;
@@ -593,5 +597,42 @@ public class Machine {
      */
     public C1530Datasette getDatasette() {
         return datasette;
+    }
+
+    /**
+     * Resets the machine as its RESET line does: the CPU, both VIAs, and the drive
+     * (through the serial bus RESET line). The VIC has no reset line, and memory is
+     * left as it is. Used by the debug monitor's reset command.
+     */
+    public void reset() {
+        via1.reset();
+        via2.reset();
+        c1541Drive.reset(false);
+        cpu.reset();
+    }
+
+    /**
+     * Turns the machine off and on again, keeping its configuration: clears RAM and
+     * the VIC's registers, then resets. Used by the debug monitor's reset 1.
+     */
+    public void powerCycle() {
+        int[] mem = memory.getMemoryArray();
+        MemoryMappedChip[] memoryMap = memory.getMemoryMap();
+        for (int address = 0; address < 0x10000; address++) {
+            MemoryMappedChip chip = memoryMap[address];
+            if (chip instanceof WatchProxyChip) {
+                chip = ((WatchProxyChip) chip).getTarget();
+            }
+            if ((chip instanceof RamChip) || (chip instanceof NibbleRamChip)) {
+                mem[address] = 0;
+            }
+        }
+        for (int address = 0x9000; address < 0x9010; address++) {
+            mem[address] = 0;
+        }
+        via1.reset();
+        via2.reset();
+        c1541Drive.reset(true);
+        cpu.reset();
     }
 }

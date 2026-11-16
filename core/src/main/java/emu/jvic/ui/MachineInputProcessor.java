@@ -171,6 +171,11 @@ public class MachineInputProcessor extends InputAdapter {
                 case Keys.MINUS:
                     rotateScreenSize();
                     return true;
+                case Keys.H:
+                case Keys.M:
+                    // The monitor, as in VICE. Ignored where it isn't supported.
+                    machineScreen.toggleMonitorConsole();
+                    return true;
                 default:
                     return false;
             }

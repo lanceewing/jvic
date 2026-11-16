@@ -2552,6 +2552,45 @@ public class Cpu6502 extends BaseChip {
     }
 
     /**
+     * For the debug monitor's watchpoints (VICE's "dummy off"): whether the memory
+     * access the CPU is making right now, part-way through emulateCycle(), is a dummy
+     * one, i.e. a read whose value is discarded or the unmodified write of a
+     * read-modify-write instruction. Worked out from the current instruction step, so
+     * the emulation itself does nothing extra. Opcode and operand fetches at the PC
+     * are not counted here.
+     *
+     * @return true if the current access is a dummy access.
+     */
+    public boolean isDummyAccess() {
+        if ((instructionSteps == null) || (currentInstructionStep >= numOfInstructionSteps)) {
+            return false;
+        }
+        switch (instructionSteps[currentInstructionStep]) {
+            case BRANCH_DIS_NEXT:
+            case BRANCH_DIS_OFFSET:
+            case EXECUTE_DIS:
+            case EXECUTE_HANG:
+            case EXECUTE_MID_ADL:
+            case EXECUTE_MID_BA:
+            case EXECUTE_MID_BAL:
+            case EXECUTE_MID_EA:
+            case FETCH_DIS_BA_X:
+            case FETCH_DIS_BA_Y:
+            case FETCH_DIS_PC:
+            case FETCH_INC_PC:
+                return true;
+            case FETCH_DATA_BA_X:
+                // The read before the high byte is fixed up after a page crossing.
+                // At that point the low byte has wrapped, so it is below X.
+                return baseAddressLow < indexRegisterX;
+            case FETCH_DATA_BA_Y:
+                return baseAddressLow < indexRegisterY;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Returns whether an IRQ or NMI sequence has been dispatched at the current
      * instruction boundary but has not run any of its cycles yet. This is the state
      * when the machine is stopped at a boundary where an interrupt is being taken.

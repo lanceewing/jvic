@@ -60,6 +60,11 @@ public class DesktopJVicRunner extends JVicRunner {
     }
 
     @Override
+    public boolean hasMonitorChannel() {
+        return monitorSession != null;
+    }
+
+    @Override
     public synchronized MonitorChannel getMonitorChannel() {
         if (monitorSession == null) {
             monitorSession = new MonitorSession(new MonitorSession.Platform() {
@@ -109,6 +114,15 @@ public class DesktopJVicRunner extends JVicRunner {
         if (remoteMonitor == null) {
             remoteMonitor = new RemoteTextMonitor(getMonitorChannel(), port);
         }
+    }
+
+    /**
+     * Sets the monitor's startup options (moncommands, monlog, initbreak), which apply
+     * to the next program started. Creates the monitor if needed.
+     */
+    public void setMonitorStartup(String monCommands, String monLog, int initBreak) {
+        getMonitorChannel();
+        monitorSession.setStartup(monCommands, monLog, initBreak);
     }
 
     @Override
@@ -222,6 +236,9 @@ public class DesktopJVicRunner extends JVicRunner {
 
             // Updates the Machine's state for a frame.
             machine.update();
+            if (monitorSession != null) {
+                monitorSession.onFrame();
+            }
 
             if ((monitorSession != null) && machine.isDebuggerStopped()) {
                 // Stopped in the monitor. Wait for monitor commands (which arrive as

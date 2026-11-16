@@ -196,6 +196,35 @@ public class Via6522 extends MemoryMappedChip {
   }
   
   /**
+   * The timer 2 latch, which the registers don't show. For the debug monitor's io
+   * command.
+   *
+   * @return The timer 2 latch.
+   */
+  public int getTimer2Latch() {
+    return timer2Latch;
+  }
+
+  /**
+   * Pulls the VIA's RESET line, as the VIC-20's reset does: clears the port
+   * registers, data direction registers, ACR, PCR, IFR and IER. As on the real
+   * chip, the timers, their latches and the shift register are left alone. Used by
+   * the debug monitor's reset command.
+   */
+  public void reset() {
+    int lastBusData = memory.getLastBusData();
+    writeMemory(VIA_REG_14, 0x7F);
+    writeMemory(VIA_REG_13, 0x7F);
+    writeMemory(VIA_REG_11, 0x00);
+    writeMemory(VIA_REG_12, 0x00);
+    writeMemory(VIA_REG_2, 0x00);
+    writeMemory(VIA_REG_3, 0x00);
+    writeMemory(VIA_REG_0, 0x00);
+    writeMemory(VIA_REG_15, 0x00);
+    memory.setLastBusData(lastBusData);
+  }
+
+  /**
    * Writes a byte into one of the 16 VIA registers.
    * 
    * @param address The address to write to.
@@ -203,7 +232,7 @@ public class Via6522 extends MemoryMappedChip {
    */
   public void writeMemory(int address, int value) {
     memory.setLastBusData(value);
-      
+
     switch (address & 0x000F) {
       case VIA_REG_0: // ORB/IRB
         // Unlike ORA/CA2 (which triggers on both read and write), CB2 handshake/pulse

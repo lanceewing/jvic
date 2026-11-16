@@ -185,6 +185,17 @@ public abstract class JVicRunner {
     public MonitorChannel getMonitorChannel() {
         return UnsupportedMonitorChannel.INSTANCE;
     }
+
+    /**
+     * Whether the monitor channel has been created, e.g. by the remote monitor or by
+     * startup options, so that the screen should create its console to show output.
+     *
+     * @return true if {@link #getMonitorChannel()} has been called on a platform with
+     *         the monitor.
+     */
+    public boolean hasMonitorChannel() {
+        return false;
+    }
     
     /**
      * Pauses the MachineRunnable.

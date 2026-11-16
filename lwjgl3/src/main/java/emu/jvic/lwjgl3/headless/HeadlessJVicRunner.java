@@ -266,6 +266,9 @@ public final class HeadlessJVicRunner {
             }
         });
         session.attach(machine);
+        // As in xvic, chis always has the history. It costs some speed, which matters
+        // less without a display to keep up with.
+        session.getEngine().setHistoryEnabled(true);
 
         if (options.monLog != null) {
             MonitorEngine engine = session.getEngine();
@@ -493,6 +496,7 @@ public final class HeadlessJVicRunner {
      * BASIC is ready, as the windowed desktop runner does.
      */
     private void onFrame() {
+        session.onFrame();
         int[] mem = machine.getMemory().getMemoryArray();
         if (readyBreakPending && (mem[0xD1] == 110)) {
             // Stop before the program is loaded; it loads after the monitor resumes.

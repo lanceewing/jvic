@@ -11,6 +11,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter;
 import emu.jvic.JVic;
 import emu.jvic.lwjgl3.headless.HeadlessJVicRunner;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
+import emu.jvic.monitor.MonitorSession;
 
 /** Launches the desktop (LWJGL3) application. */
 public class DesktopLauncher {
@@ -47,6 +48,7 @@ public class DesktopLauncher {
                 new DesktopKeyboardMatrix(), new DesktopPixelData(), 
                 new DesktopSoundGenerator());
         startRemoteMonitor(desktopJVicRunner, argsMap.get("remotemonitor"));
+        setMonitorStartup(desktopJVicRunner, argsMap);
         JVic jvic = new JVic(desktopJVicRunner, desktopDialogHandler, argsMap);
         return new Lwjgl3Application(jvic, getDefaultConfiguration(jvic));
     }
@@ -72,6 +74,28 @@ public class DesktopLauncher {
         } catch (IOException e) {
             System.err.println("Could not start the remote monitor on port " + port + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Applies VICE's startup options for the monitor, if given: moncommands=<file>,
+     * monlog=<file> and initbreak=reset|ready|<hex address>.
+     */
+    private static void setMonitorStartup(DesktopJVicRunner runner, Map<String, String> argsMap) {
+        String monCommands = argsMap.get("moncommands");
+        String monLog = argsMap.get("monlog");
+        String initBreakText = argsMap.get("initbreak");
+        if ((monCommands == null) && (monLog == null) && (initBreakText == null)) {
+            return;
+        }
+        int initBreak = MonitorSession.INITBREAK_NONE;
+        if (initBreakText != null) {
+            try {
+                initBreak = MonitorSession.parseInitBreak(initBreakText);
+            } catch (IllegalArgumentException e) {
+                System.err.println("jvic: " + e.getMessage());
+            }
+        }
+        runner.setMonitorStartup(monCommands, monLog, initBreak);
     }
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration(JVic jvic) {

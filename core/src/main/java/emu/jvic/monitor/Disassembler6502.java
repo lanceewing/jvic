@@ -28,10 +28,29 @@ final class Disassembler6502 {
      * @return The length of the instruction in bytes.
      */
     static int disassembleLine(AddressSpace space, int address, boolean sideEffects, StringBuilder out) {
-        int[] bytes = readInstruction(space, address & 0xFFFF, sideEffects);
-        appendAddressAndBytes(space, address & 0xFFFF, bytes, out);
-        out.append(instruction(address & 0xFFFF, bytes)).append('\n');
+        address &= 0xFFFF;
+        String label = space.getLabels().nameAt(address);
+        if (label != null) {
+            // VICE's label line, e.g. ".C:1000   .start:"
+            out.append('.').append(space.getName()).append(':').append(Format.hex4(address)).append("   ")
+                    .append(label).append(":\n");
+        }
+        int[] bytes = readInstruction(space, address, sideEffects);
+        appendAddressAndBytes(space, address, bytes, out, "  ");
+        out.append(instruction(address, bytes, space.getLabels())).append('\n');
         return bytes.length;
+    }
+
+    /**
+     * One line of disassembly as backtrace shows it, with three spaces after the
+     * address and no label line, ending with a newline.
+     */
+    static String backtraceLine(AddressSpace space, int address) {
+        address &= 0xFFFF;
+        int[] bytes = readInstruction(space, address, false);
+        StringBuilder out = new StringBuilder();
+        appendAddressAndBytes(space, address, bytes, out, "   ");
+        return out.append(instruction(address, bytes, space.getLabels())).append('\n').toString();
     }
 
     /**
@@ -49,8 +68,8 @@ final class Disassembler6502 {
         address &= 0xFFFF;
         int[] bytes = readInstruction(space, address, false);
         StringBuilder out = new StringBuilder();
-        appendAddressAndBytes(space, address, bytes, out);
-        out.append(Format.padRight(instruction(address, bytes), 15));
+        appendAddressAndBytes(space, address, bytes, out, "  ");
+        out.append(Format.padRight(instruction(address, bytes, space.getLabels()), 15));
         Cpu6502 cpu = space.getCpu();
         out.append("- A:").append(Format.hex2Upper(cpu.getAccumulator()));
         out.append(" X:").append(Format.hex2Upper(cpu.getIndexRegisterX()));
@@ -72,7 +91,7 @@ final class Disassembler6502 {
         return text.toString();
     }
 
-    private static int[] readInstruction(AddressSpace space, int address, boolean sideEffects) {
+    static int[] readInstruction(AddressSpace space, int address, boolean sideEffects) {
         int opcode = space.read(address, sideEffects);
         int[] bytes = new int[Opcodes6502.length(opcode)];
         bytes[0] = opcode;
@@ -82,7 +101,8 @@ final class Disassembler6502 {
         return bytes;
     }
 
-    private static void appendAddressAndBytes(AddressSpace space, int address, int[] bytes, StringBuilder out) {
+    static void appendAddressAndBytes(AddressSpace space, int address, int[] bytes, StringBuilder out,
+            String gap) {
         StringBuilder hex = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             if (i > 0) {
@@ -90,7 +110,7 @@ final class Disassembler6502 {
             }
             hex.append(Format.hex2Upper(bytes[i]));
         }
-        out.append('.').append(space.getName()).append(':').append(Format.hex4(address)).append("  ");
+        out.append('.').append(space.getName()).append(':').append(Format.hex4(address)).append(gap);
         out.append(Format.padRight(hex.toString(), 12));
     }
 
@@ -101,29 +121,47 @@ final class Disassembler6502 {
      * @param bytes   The opcode and its operand bytes.
      */
     static String instruction(int address, int[] bytes) {
+        return instruction(address, bytes, null);
+    }
+
+    /**
+     * As {@link #instruction(int, int[])}, showing a label in place of an address that
+     * has one, e.g. "JMP .loop".
+     */
+    static String instruction(int address, int[] bytes, LabelTable labels) {
         int opcode = bytes[0];
         String mnemonic = Opcodes6502.mnemonic(opcode);
-        String operand = operand(address, opcode, bytes);
+        String operand = operand(address, opcode, bytes, labels);
         return operand.isEmpty() ? mnemonic : mnemonic + " " + operand;
     }
 
-    private static String operand(int address, int opcode, int[] bytes) {
+    private static String operand(int address, int opcode, int[] bytes, LabelTable labels) {
         int lo = (bytes.length > 1) ? bytes[1] : 0;
         int word = (bytes.length > 2) ? (lo | (bytes[2] << 8)) : lo;
         switch (Opcodes6502.mode(opcode)) {
             case Opcodes6502.ACC: return "A";
             case Opcodes6502.IMM: return "#$" + Format.hex2Upper(lo);
-            case Opcodes6502.ZP: return "$" + Format.hex2Upper(lo);
-            case Opcodes6502.ZPX: return "$" + Format.hex2Upper(lo) + ",X";
-            case Opcodes6502.ZPY: return "$" + Format.hex2Upper(lo) + ",Y";
-            case Opcodes6502.REL: return "$" + Format.hex4Upper(address + 2 + (byte) lo);
-            case Opcodes6502.ABS: return "$" + Format.hex4Upper(word);
-            case Opcodes6502.ABX: return "$" + Format.hex4Upper(word) + ",X";
-            case Opcodes6502.ABY: return "$" + Format.hex4Upper(word) + ",Y";
-            case Opcodes6502.IND: return "($" + Format.hex4Upper(word) + ")";
-            case Opcodes6502.IZX: return "($" + Format.hex2Upper(lo) + ",X)";
-            case Opcodes6502.IZY: return "($" + Format.hex2Upper(lo) + "),Y";
+            case Opcodes6502.ZP: return zeroPage(lo, labels);
+            case Opcodes6502.ZPX: return zeroPage(lo, labels) + ",X";
+            case Opcodes6502.ZPY: return zeroPage(lo, labels) + ",Y";
+            case Opcodes6502.REL: return absolute((address + 2 + (byte) lo) & 0xFFFF, labels);
+            case Opcodes6502.ABS: return absolute(word, labels);
+            case Opcodes6502.ABX: return absolute(word, labels) + ",X";
+            case Opcodes6502.ABY: return absolute(word, labels) + ",Y";
+            case Opcodes6502.IND: return "(" + absolute(word, labels) + ")";
+            case Opcodes6502.IZX: return "(" + zeroPage(lo, labels) + ",X)";
+            case Opcodes6502.IZY: return "(" + zeroPage(lo, labels) + "),Y";
             default: return "";
         }
+    }
+
+    private static String zeroPage(int address, LabelTable labels) {
+        String label = (labels != null) ? labels.nameAt(address) : null;
+        return (label != null) ? label : "$" + Format.hex2Upper(address);
+    }
+
+    private static String absolute(int address, LabelTable labels) {
+        String label = (labels != null) ? labels.nameAt(address) : null;
+        return (label != null) ? label : "$" + Format.hex4Upper(address);
     }
 }

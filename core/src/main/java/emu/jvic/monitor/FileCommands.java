@@ -163,7 +163,7 @@ final class FileCommands {
                     if (entry.isDirectory()) {
                         text.append("     <dir> ");
                     } else {
-                        text.append(String.format("%10d ", entry.getSize()));
+                        text.append(Format.decimal(entry.getSize(), 10)).append(' ');
                     }
                     text.append(entry.getName()).append('\n');
                 }
@@ -413,6 +413,81 @@ final class FileCommands {
                 engine.getFileSystem().write(name, data);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // upload, fetch and download (jvic's own, for the browser).
+    // ------------------------------------------------------------------------------
+
+    static final class Upload extends MonitorCommand {
+
+        Upload() {
+            super("upload", null, "upload [\"<filename>\"]",
+                    "Browser only: opens the file picker, and adds the chosen file to the\n"
+                    + "monitor's file store (under the given name, or its own), where load,\n"
+                    + "playback and the other file commands can read it. The file arrives\n"
+                    + "after the command has finished.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            String name = args.atEnd() ? null : parseFilename(args);
+            args.expectEnd();
+            if (engine.getHost().pickFile(name)) {
+                out.print("Choose a file...\n");
+            } else {
+                out.print("upload is only needed in the browser; here, use a path on this computer.\n");
+            }
+        }
+    }
+
+    static final class Fetch extends MonitorCommand {
+
+        Fetch() {
+            super("fetch", null, "fetch \"<url>\" [\"<filename>\"]",
+                    "Browser only: downloads a URL into the monitor's file store, under the\n"
+                    + "given name or the last part of the URL. It arrives after the command\n"
+                    + "has finished.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            String url = parseFilename(args);
+            String name = args.atEnd() ? null : parseFilename(args);
+            args.expectEnd();
+            if (engine.getHost().fetchUrl(url, name)) {
+                out.print("Fetching " + url + "...\n");
+            } else {
+                out.print("fetch is only supported in the browser.\n");
+            }
+        }
+    }
+
+    static final class Download extends MonitorCommand {
+
+        Download() {
+            super("download", null, "download \"<filename>\"",
+                    "Browser only: offers a file from the monitor's file store as a\n"
+                    + "download, e.g. one written by save or log.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            String name = parseFilename(args);
+            args.expectEnd();
+            byte[] data;
+            try {
+                data = engine.getFileSystem().read(name);
+            } catch (MonitorFileException e) {
+                out.print("Cannot open '" + name + "'.\n");
+                return;
+            }
+            String shortName = name.substring(Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1);
+            if (!engine.getHost().downloadFile(shortName, data)) {
+                out.print("download is only supported in the browser; the file is at "
+                        + engine.getFileSystem().absolute(name) + "\n");
             }
         }
     }

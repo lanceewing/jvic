@@ -36,24 +36,32 @@ final class CommandRegistry {
         notImplemented(machineState, "dump", null, "undump", null);
         machineState.commands.add(new MachineCommands.Bank());
         machineState.commands.add(new MachineCommands.Cpu());
-        notImplemented(machineState, "backtrace", "bt", "cpuhistory", "chis");
+        machineState.commands.add(new InspectCommands.Backtrace());
+        machineState.commands.add(new InspectCommands.CpuHistoryCommand());
         machineState.commands.add(new MachineCommands.Registers());
         machineState.commands.add(new MachineCommands.Stopwatch());
         machineState.commands.add(new MachineCommands.Goto());
         machineState.commands.add(new MachineCommands.Step(true));
         machineState.commands.add(new MachineCommands.Return());
         machineState.commands.add(new MachineCommands.Step(false));
-        notImplemented(machineState, "profile", "prof", "reset", null, "export", "exp", "cartfreeze", null, "updb",
-                null, "jpdb", null, "keybuf", null);
+        notImplemented(machineState, "profile", "prof");
+        machineState.commands.add(new InspectCommands.Reset());
+        machineState.commands.add(new InspectCommands.Export());
+        notImplemented(machineState, "cartfreeze", null, "updb", null, "jpdb", null);
+        machineState.commands.add(new InspectCommands.Keybuf());
         machineState.commands.add(new MachineCommands.Warp());
 
         CommandGroup symbols = group(groups, "Symbol table commands:");
-        notImplemented(symbols, "add_label", "al", "delete_label", "dl", "load_labels", "ll", "save_labels", "sl",
-                "show_labels", "shl", "clear_labels", "cl");
+        symbols.commands.add(new SymbolCommands.AddLabel());
+        symbols.commands.add(new SymbolCommands.DeleteLabel());
+        symbols.commands.add(new SymbolCommands.LoadLabels());
+        symbols.commands.add(new SymbolCommands.SaveLabels());
+        symbols.commands.add(new SymbolCommands.ShowLabels());
+        symbols.commands.add(new SymbolCommands.ClearLabels());
 
         CommandGroup memory = group(groups, "Assembler and memory commands:");
         memory.commands.add(new MemoryCommands.Write());
-        notImplemented(memory, "a", null);
+        memory.commands.add(new InspectCommands.Assemble());
         memory.commands.add(new MemoryCommands.Compare());
         memory.commands.add(new MemoryCommands.Disass());
         memory.commands.add(new MemoryCommands.Fill());
@@ -62,14 +70,15 @@ final class CommandRegistry {
         memory.commands.add(new MemoryCommands.Text(true));
         memory.commands.add(new MemoryCommands.Mem());
         memory.commands.add(new MemoryCommands.MemChar());
-        notImplemented(memory, "memmapsave", "mmsave", "memmapshow", "mmsh", "memmapzap", "mmzap", "memsprite",
-                "ms");
+        notImplemented(memory, "memmapsave", "mmsave", "memmapshow", "mmsh", "memmapzap", "mmzap");
+        memory.commands.add(new InspectCommands.MemSprite());
         memory.commands.add(new MemoryCommands.Move());
-        notImplemented(memory, "io", null, "screen", "sc");
+        memory.commands.add(new InspectCommands.Io());
+        memory.commands.add(new InspectCommands.Screen());
 
         CommandGroup checkpoints = group(groups, "Checkpoint commands:");
         checkpoints.commands.add(CheckpointCommands.breakCommand());
-        notImplemented(checkpoints, "command", null);
+        checkpoints.commands.add(new InspectCommands.Command());
         checkpoints.commands.add(new CheckpointCommands.ConditionCommand());
         checkpoints.commands.add(new CheckpointCommands.Delete());
         checkpoints.commands.add(new CheckpointCommands.Enable(false));
@@ -78,7 +87,7 @@ final class CommandRegistry {
         checkpoints.commands.add(new CheckpointCommands.Until());
         checkpoints.commands.add(CheckpointCommands.watchCommand());
         checkpoints.commands.add(CheckpointCommands.traceCommand());
-        notImplemented(checkpoints, "dummy", null);
+        checkpoints.commands.add(new InspectCommands.Dummy());
 
         CommandGroup files = group(groups, "File commands:");
         files.commands.add(new FileCommands.Cd());
@@ -107,6 +116,14 @@ final class CommandRegistry {
         CommandGroup resources = group(groups, "Resource state commands:");
         notImplemented(resources, "resourceget", "resget", "resourceset", "resset", "load_resources", "resload",
                 "save_resources", "ressave");
+
+        // jvic's own commands for the browser's file store. help doesn't list them,
+        // so that its list stays VICE's; "help upload" and so on still work.
+        CommandGroup web = group(groups, "jvic web commands:");
+        web.hidden = true;
+        web.commands.add(new FileCommands.Upload());
+        web.commands.add(new FileCommands.Fetch());
+        web.commands.add(new FileCommands.Download());
 
         return groups;
     }

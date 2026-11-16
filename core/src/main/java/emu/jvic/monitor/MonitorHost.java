@@ -37,4 +37,39 @@ public interface MonitorHost {
      * @param text The text, ending with a newline.
      */
     void print(String text);
+
+    /**
+     * Web only: opens the browser's file picker; the chosen file is added to the
+     * monitor's file store later (the upload command).
+     *
+     * @param name The name to store it under, or null for the file's own name.
+     * @return false if the platform has no use for this (desktop).
+     */
+    default boolean pickFile(String name) {
+        return false;
+    }
+
+    /**
+     * Web only: fetches a URL into the monitor's file store in the background (the
+     * fetch command).
+     *
+     * @param url  The URL.
+     * @param name The name to store it under, or null for the URL's last part.
+     * @return false if the platform doesn't support this.
+     */
+    default boolean fetchUrl(String url, String name) {
+        return false;
+    }
+
+    /**
+     * Web only: offers a file from the monitor's store as a browser download (the
+     * download command).
+     *
+     * @param name The file's name, as shown to the user.
+     * @param data The file's contents.
+     * @return false if the platform doesn't support this.
+     */
+    default boolean downloadFile(String name, byte[] data) {
+        return false;
+    }
 }

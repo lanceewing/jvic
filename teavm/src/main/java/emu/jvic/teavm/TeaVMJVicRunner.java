@@ -13,6 +13,7 @@ import emu.jvic.JVicRunner;
 import emu.jvic.MachineType;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.debug.MonitorChannel;
 
 public class TeaVMJVicRunner extends JVicRunner {
 
@@ -45,6 +46,7 @@ public class TeaVMJVicRunner extends JVicRunner {
     private boolean performanceStatsAvailable;
 
     private JSObject worker;
+    private TeaVMMonitorChannel monitorChannel;
     private boolean stopped;
     private boolean resetMountedDiskSupported;
     private ResetDiskHandler pendingResetDiskHandler;
@@ -111,9 +113,70 @@ public class TeaVMJVicRunner extends JVicRunner {
                 appConfigItem.getLoadAddress(), programDataLength,
                 mountedDiskImageDataLength));
 
+        postMonitorStartup();
+
         stopped = false;
         paused = false;
         soundGenerator.resumeSound();
+    }
+
+    /**
+     * Sends the monitor's startup options from the page URL, if any:
+     * ?moncommands=&lt;url or store path&gt;&amp;monlog=&lt;store path&gt;&amp;initbreak=reset|ready|&lt;address&gt;.
+     */
+    private void postMonitorStartup() {
+        String monCommands = TeaVMBrowser.getQueryParameter("moncommands");
+        String monLog = TeaVMBrowser.getQueryParameter("monlog");
+        String initBreak = TeaVMBrowser.getQueryParameter("initbreak");
+        if ((monCommands == null) && (monLog == null) && (initBreak == null)) {
+            return;
+        }
+        // Create the channel now, so the screen's console gets the output.
+        getMonitorChannel();
+        TeaVMWorkerInterop.postObject(worker, "MonitorStartup", createMonitorStartupObject(
+                (monCommands != null) ? monCommands : "", (monLog != null) ? monLog : "",
+                (initBreak != null) ? initBreak : ""));
+    }
+
+    @JSBody(params = { "moncommands", "monlog", "initbreak" },
+            script = "return { moncommands: moncommands, monlog: monlog, initbreak: initbreak };")
+    private static native JSObject createMonitorStartupObject(String moncommands, String monlog,
+            String initbreak);
+
+    @Override
+    public boolean isMonitorSupported() {
+        return true;
+    }
+
+    @Override
+    public boolean hasMonitorChannel() {
+        return monitorChannel != null;
+    }
+
+    @Override
+    public MonitorChannel getMonitorChannel() {
+        if (monitorChannel == null) {
+            monitorChannel = new TeaVMMonitorChannel(new TeaVMMonitorChannel.WorkerPoster() {
+                @Override
+                public boolean post(String name, JSObject object) {
+                    if (worker == null) {
+                        return false;
+                    }
+                    TeaVMWorkerInterop.postObject(worker, name, object);
+                    return true;
+                }
+
+                @Override
+                public boolean postWithBuffer(String name, ArrayBuffer buffer, JSObject object) {
+                    if (worker == null) {
+                        return false;
+                    }
+                    TeaVMWorkerInterop.postArrayBufferAndObject(worker, name, buffer, object);
+                    return true;
+                }
+            });
+        }
+        return monitorChannel;
     }
 
     private ArrayBuffer convertProgramToArrayBuffer(Program program, AppConfigItem appConfigItem,
@@ -214,6 +277,28 @@ public class TeaVMJVicRunner extends JVicRunner {
 
             case "MountedDiskResetFailed":
                 completeMountedDiskReset(false);
+                break;
+
+            case "MonitorOutput":
+                if (monitorChannel != null) {
+                    monitorChannel.output(TeaVMWorkerInterop.getNestedString(eventObject, "text"),
+                            TeaVMWorkerInterop.getNestedString(eventObject, "prompt"));
+                }
+                break;
+
+            case "MonitorDownload":
+                TeaVMMonitorChannel.download(TeaVMWorkerInterop.getNestedString(eventObject, "name"),
+                        (ArrayBuffer) TeaVMWorkerInterop.getNestedObject(eventObject, "buffer"));
+                break;
+
+            case "MonitorPickFile":
+                ((TeaVMMonitorChannel) getMonitorChannel()).pickFile(
+                        TeaVMWorkerInterop.getNestedString(eventObject, "name"));
+                break;
+
+            case "MonitorQuit":
+                // A browser tab can't close itself; quit returns to the home screen.
+                stop();
                 break;
 
             default:

@@ -40,6 +40,17 @@ public final class TeaVMJVicWebWorker {
     private double performanceWindowEmulatedMillis;
     private long performanceWindowBatchCount;
     private int lastAutoLoadCursorState = -1;
+    private final TeaVMWorkerMonitor monitor = new TeaVMWorkerMonitor(new TeaVMWorkerMonitor.Warp() {
+        @Override
+        public boolean isWarp() {
+            return warpSpeed;
+        }
+
+        @Override
+        public void setWarp(boolean warp) {
+            warpSpeed = warp;
+        }
+    });
     private boolean autoLoadStateLogged;
 
     public static void main(String[] args) {
@@ -51,7 +62,11 @@ public final class TeaVMJVicWebWorker {
     }
 
     private void onMessage(JSObject eventObject) {
-        switch (TeaVMWorkerInterop.getEventType(eventObject)) {
+        String type = TeaVMWorkerInterop.getEventType(eventObject);
+        if (type.startsWith("Monitor") && monitor.handleMessage(type, eventObject)) {
+            return;
+        }
+        switch (type) {
             case "Initialise":
                 SharedArrayBuffer keyMatrixSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "keyMatrixSAB");
                 SharedArrayBuffer pixelDataSAB = (SharedArrayBuffer)TeaVMWorkerInterop.getNestedObject(eventObject, "pixelDataSAB");
@@ -260,6 +275,7 @@ public final class TeaVMJVicWebWorker {
         lastAutoLoadCursorState = -1;
         autoLoadStateLogged = false;
         resetPerformanceStatsWindow();
+        monitor.onMachineStarted(machine);
         TeaVMWorkerGlobalScope.requestAnimationFrame(this::performAnimationFrame);
     }
 
@@ -270,7 +286,12 @@ public final class TeaVMJVicWebWorker {
     private void performAnimationFrame(double timestamp) {
         long expectedCycleCount = 0;
 
-        if (paused) {
+        // Stopped in the monitor (or waiting for its startup files): like paused, but
+        // the monitor still gets its turn below.
+        boolean monitorStopped = monitor.isActive()
+                && (monitor.isHoldingMachine() || machine.isDebuggerStopped());
+
+        if (paused || monitorStopped) {
             cycleCount = 0;
             startTime = timestamp;
         } else {
@@ -295,12 +316,16 @@ public final class TeaVMJVicWebWorker {
 
             long batchStartCycleCount = cycleCount;
             double batchStartTime = TeaVMWorkerGlobalScope.getPerformanceNowTimestamp();
-            do {
-                if (machine.emulateCycle() && (frameCounter != null)) {
-                    frameCounter.increment();
-                }
-                cycleCount++;
-            } while (cycleCount <= expectedCycleCount);
+            if (monitor.isActive()) {
+                emulateWithMonitor(expectedCycleCount);
+            } else {
+                do {
+                    if (machine.emulateCycle() && (frameCounter != null)) {
+                        frameCounter.increment();
+                    }
+                    cycleCount++;
+                } while (cycleCount <= expectedCycleCount);
+            }
 
             double batchEndTime = TeaVMWorkerGlobalScope.getPerformanceNowTimestamp();
             int audioQueueSamples = soundGenerator.isWriteSamplesEnabled()
@@ -310,7 +335,29 @@ public final class TeaVMJVicWebWorker {
                     batchEndTime - batchStartTime, audioQueueSamples);
         }
 
+        monitor.onAnimationFrame();
         TeaVMWorkerGlobalScope.requestAnimationFrame(this::performAnimationFrame);
+    }
+
+    /**
+     * The batch loop once the monitor has been used: as the normal loop, but it stops
+     * part-way through the batch when the monitor stops the machine, and tells the
+     * monitor about each completed frame. The normal loop is left untouched, so
+     * nothing changes for users who never open the monitor.
+     */
+    private void emulateWithMonitor(long expectedCycleCount) {
+        do {
+            if (machine.emulateCycle()) {
+                if (frameCounter != null) {
+                    frameCounter.increment();
+                }
+                monitor.onFrame();
+            }
+            cycleCount++;
+            if (machine.checkDebuggerStop()) {
+                break;
+            }
+        } while (cycleCount <= expectedCycleCount);
     }
 
     private void handleAutoLoad() {

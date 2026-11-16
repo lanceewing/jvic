@@ -29,6 +29,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.ui.DialogHandler;
 import emu.jvic.ui.MachineInputProcessor;
+import emu.jvic.ui.MonitorConsole;
 import emu.jvic.ui.ViewportManager;
 import emu.jvic.ui.MachineInputProcessor.JoystickAlignment;
 import emu.jvic.ui.MachineInputProcessor.ScreenSize;
@@ -90,6 +91,9 @@ public class MachineScreen implements Screen {
      * Platform specific JVicRunner implementation.
      */
     private JVicRunner jvicRunner;
+
+    /** The monitor console (Alt+H), created when first opened; null until then. */
+    private MonitorConsole monitorConsole;
 
     /**
      * The InputProcessor for the MachineScreen. Handles the key and touch input.
@@ -418,6 +422,19 @@ public class MachineScreen implements Screen {
 
         if (draw) {
             draw(delta);
+        }
+        if ((monitorConsole == null) && jvicRunner.isMonitorSupported() && jvicRunner.hasMonitorChannel()) {
+            // The monitor is in use (remote monitor, startup options): create the
+            // console, closed, so that it shows the output when opened, and opens
+            // itself when the machine stops in the monitor.
+            createMonitorConsole();
+        }
+        if (monitorConsole != null) {
+            // Drawn every frame while open, so output and typing show straight away.
+            if (!draw && monitorConsole.isOpen()) {
+                draw(delta);
+            }
+            monitorConsole.draw(batch, delta);
         }
         
         // Process any delayed key releases that are pending.
@@ -933,8 +950,32 @@ public class MachineScreen implements Screen {
         KeyboardType.dispose();
     }
 
+    /**
+     * Opens or closes the monitor console, as Alt+H does. Ignored on platforms
+     * without the monitor (GWT and Android).
+     */
+    public void toggleMonitorConsole() {
+        if (!jvicRunner.isMonitorSupported()) {
+            return;
+        }
+        if (monitorConsole == null) {
+            createMonitorConsole();
+        }
+        monitorConsole.toggle();
+    }
+
+    private void createMonitorConsole() {
+        monitorConsole = new MonitorConsole(jvicRunner.getMonitorChannel());
+        // First, so that it takes all keys while it is open.
+        portraitInputProcessor.addProcessor(0, monitorConsole);
+        landscapeInputProcessor.addProcessor(0, monitorConsole);
+    }
+
     @Override
     public void dispose() {
+        if (monitorConsole != null) {
+            monitorConsole.dispose();
+        }
         KeyboardType.dispose();
         keyboardIcon.dispose();
         joystickIcon.dispose();

@@ -47,6 +47,8 @@ public final class MonitorEngine implements Debugger.Listener {
     /** A group of commands in the help list. */
     static final class CommandGroup {
         final String title;
+        /** jvic's own commands, which help doesn't list, so that its list is VICE's. */
+        boolean hidden;
         final List<MonitorCommand> commands = new ArrayList<>();
 
         CommandGroup(String title) {
@@ -83,6 +85,21 @@ public final class MonitorEngine implements Debugger.Listener {
     private boolean resumed;
 
     private AddressSpace defaultSpace;
+
+    /** The memspace being assembled into in assembly mode, or null. */
+    private AddressSpace assemblySpace;
+
+    /** Whether CPU history (chis) is recorded. */
+    private boolean historyEnabled;
+
+    /** Whether checkpoints trigger on the CPU's dummy accesses (dummy). */
+    private boolean dummyAccesses;
+
+    /** The command of the checkpoint that stopped the machine, to run once stopped. */
+    private String stopCommand;
+
+    /** Keyboard buffer characters (PETSCII) still to feed, for keybuf. */
+    private final StringBuilder keyboardQueue = new StringBuilder();
     private Radix radix = Radix.HEXADECIMAL;
     private boolean sideEffects;
 
@@ -200,6 +217,10 @@ public final class MonitorEngine implements Debugger.Listener {
     }
 
     private void executeLine(String line, MonitorOutput out) {
+        if (assemblySpace != null) {
+            assembleLine(line, out);
+            return;
+        }
         int pos = 0;
         while ((pos < line.length()) && Character.isWhitespace(line.charAt(pos))) {
             pos++;
@@ -225,7 +246,7 @@ public final class MonitorEngine implements Debugger.Listener {
             // VICE reports an unknown command as a syntax error at the end of the line.
             throw new MonitorException(MonitorException.WRONG_SYNTAX, line.length());
         }
-        command.execute(new Parser(line, pos, radix), this, out);
+        command.execute(new Parser(line, pos, radix, this), this, out);
     }
 
     /**
@@ -253,7 +274,71 @@ public final class MonitorEngine implements Debugger.Listener {
      * The prompt VICE shows while stopped, e.g. "(C:$fd22) ".
      */
     public String getPrompt() {
-        return "(" + defaultSpace.getName() + ":$" + Format.hex4(defaultSpace.getDisplayPc()) + ") ";
+        if (assemblySpace != null) {
+            // VICE's assembly mode prompt: the next address, e.g. ".1102  ".
+            return "." + Format.hex4(assemblySpace.getDot()) + "  ";
+        }
+        // As in VICE, the dot address, which is the PC whenever the machine stops.
+        return "(" + defaultSpace.getName() + ":$" + Format.hex4(defaultSpace.getDot()) + ") ";
+    }
+
+    // ------------------------------------------------------------------------------
+    // The assembler (a).
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Assembles instructions separated by ':' at the memspace's dot address, moving
+     * the dot past each one. Stops at the first that fails, printing VICE's message.
+     *
+     * @param text   The instructions.
+     * @param column Where they start in the command line, for errors.
+     *
+     * @return false if an instruction was not valid or a branch too far (a syntax
+     *         error is thrown instead).
+     */
+    boolean assemble(AddressSpace space, String text, int column, MonitorOutput out) {
+        int start = 0;
+        while (start <= text.length()) {
+            int colon = text.indexOf(':', start);
+            int end = (colon < 0) ? text.length() : colon;
+            int address = space.getDot();
+            int[] bytes;
+            try {
+                bytes = Assembler6502.assemble(text.substring(start, end), address, this, space, column);
+            } catch (Assembler6502.AssemblyException e) {
+                out.print(e.getMessage() + "\n");
+                return false;
+            }
+            for (int i = 0; i < bytes.length; i++) {
+                space.write((address + i) & 0xFFFF, bytes[i]);
+            }
+            space.setDot(address + bytes.length);
+            if (colon < 0) {
+                break;
+            }
+            start = colon + 1;
+        }
+        return true;
+    }
+
+    /** Enters VICE's assembly mode: each line is an instruction until an empty one. */
+    void startAssemblyMode(AddressSpace space) {
+        assemblySpace = space;
+    }
+
+    private void assembleLine(String line, MonitorOutput out) {
+        if (line.trim().isEmpty()) {
+            assemblySpace = null;
+            return;
+        }
+        AddressSpace space = assemblySpace;
+        try {
+            assemble(space, line, 0, out);
+        } catch (MonitorException e) {
+            // As in VICE, a syntax error leaves assembly mode.
+            assemblySpace = null;
+            throw e;
+        }
     }
 
     /**
@@ -281,6 +366,9 @@ public final class MonitorEngine implements Debugger.Listener {
         // An exec checkpoint doesn't fire where an interrupt pre-empts the instruction;
         // the instruction runs, and the checkpoint fires, after RTI.
         boolean stop = false;
+        if (historyEnabled && (interrupt == 0)) {
+            space.history().record(space, address);
+        }
         if ((interrupt == 0) && checkpoints.hasExec(space, address)) {
             stop = checkpoints.checkExec(space, address);
         }
@@ -380,6 +468,12 @@ public final class MonitorEngine implements Debugger.Listener {
         updateHooks();
         if (message != null) {
             printAsync(message);
+        }
+        if (stopCommand != null) {
+            // A checkpoint's command runs once stopped, before anything else, as if
+            // from a playback file (so it isn't logged as typed).
+            script.addFirst(new ScriptLine(stopCommand, 1));
+            stopCommand = null;
         }
         flushLog();
     }
@@ -598,6 +692,72 @@ public final class MonitorEngine implements Debugger.Listener {
         this.stopMessage = message;
     }
 
+    /** Sets the command to run when the machine has stopped (a checkpoint's command). */
+    void setStopCommand(String command) {
+        this.stopCommand = command;
+    }
+
+    /**
+     * Runs a tracepoint's command straight away, while the machine runs on.
+     */
+    void runTraceCommand(String command) {
+        executeOne(command, this::printAsync);
+    }
+
+    boolean isHistoryEnabled() {
+        return historyEnabled;
+    }
+
+    /**
+     * Turns CPU history recording on or off. It needs the instruction hook on every
+     * instruction, so it slows emulation a little; headless mode turns it on.
+     */
+    public void setHistoryEnabled(boolean enabled) {
+        historyEnabled = enabled;
+        updateHooks();
+    }
+
+    boolean isDummyAccesses() {
+        return dummyAccesses;
+    }
+
+    void setDummyAccesses(boolean dummyAccesses) {
+        this.dummyAccesses = dummyAccesses;
+    }
+
+    /**
+     * Queues PETSCII characters for the KERNAL keyboard buffer (keybuf), and feeds
+     * as many as fit now.
+     */
+    void queueKeys(String petscii) {
+        keyboardQueue.append(petscii);
+        feedKeys();
+    }
+
+    /**
+     * Called by the runner once per frame: feeds queued keybuf characters into the
+     * keyboard buffer as it empties.
+     */
+    public void onFrame() {
+        if (keyboardQueue.length() > 0) {
+            feedKeys();
+        }
+    }
+
+    private void feedKeys() {
+        int[] mem = machine.getMemory().getMemoryArray();
+        int count = mem[0xC6];
+        if ((count < 0) || (count > 10)) {
+            return;
+        }
+        while ((count < 10) && (keyboardQueue.length() > 0)) {
+            mem[0x277 + count] = keyboardQueue.charAt(0) & 0xFF;
+            keyboardQueue.deleteCharAt(0);
+            count++;
+        }
+        mem[0xC6] = count;
+    }
+
     boolean hasStopMessage() {
         return stopMessage != null;
     }
@@ -608,7 +768,8 @@ public final class MonitorEngine implements Debugger.Listener {
      */
     void updateHooks() {
         for (AddressSpace space : new AddressSpace[] { mainSpace, driveSpace }) {
-            boolean needed = checkpoints.needsHooks(space) || ((stepMode != STEP_NONE) && (stepSpace == space));
+            boolean needed = checkpoints.needsHooks(space) || ((stepMode != STEP_NONE) && (stepSpace == space))
+                    || historyEnabled;
             space.getDebugCpu().setListenerHooks(needed);
         }
     }

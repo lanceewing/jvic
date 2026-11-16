@@ -24,6 +24,9 @@ final class AddressSpace {
     private final Vic vic;
     private final boolean hasBanks;
 
+    private final LabelTable labels = new LabelTable();
+    private CpuHistory history;
+
     private int dot;
     private String bank = "default";
     private long stopwatchBase;
@@ -78,6 +81,23 @@ final class AddressSpace {
 
     void setBank(String bank) {
         this.bank = bank;
+    }
+
+    LabelTable getLabels() {
+        return labels;
+    }
+
+    /** The CPU history, or null if it has never been recorded. */
+    CpuHistory getHistory() {
+        return history;
+    }
+
+    /** The CPU history, created if needed. */
+    CpuHistory history() {
+        if (history == null) {
+            history = new CpuHistory();
+        }
+        return history;
     }
 
     int getDot() {

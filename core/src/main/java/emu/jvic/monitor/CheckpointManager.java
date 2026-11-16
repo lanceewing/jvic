@@ -198,9 +198,13 @@ final class CheckpointManager {
             String text = header(checkpoint, "exec", address) + Disassembler6502.stateLine(space, address);
             if (!checkpoint.isStop()) {
                 engine.printAsync(text);
+                if (checkpoint.getCommand() != null) {
+                    engine.runTraceCommand(checkpoint.getCommand());
+                }
             } else if (!stop) {
                 stop = true;
                 engine.setStopMessage(text);
+                engine.setStopCommand(checkpoint.getCommand());
                 if (checkpoint.isTemporary()) {
                     remove(checkpoint);
                 }
@@ -219,6 +223,10 @@ final class CheckpointManager {
         if ((operation == Checkpoint.LOAD) && (address == (space.getCpu().getProgramCounter() & 0xFFFF))) {
             // A read at the PC is an opcode or operand fetch (or a dummy read there),
             // not a data load. VICE doesn't count fetches as loads either.
+            return;
+        }
+        if (!engine.isDummyAccesses() && space.getCpu().isDummyAccess()) {
+            // As VICE's "dummy off", the default.
             return;
         }
         for (Checkpoint checkpoint : checkpoints) {
@@ -253,8 +261,12 @@ final class CheckpointManager {
                     + Disassembler6502.stateLine(space, (Integer) access[3]);
             if (!checkpoint.isStop()) {
                 engine.printAsync(text);
+                if (checkpoint.getCommand() != null) {
+                    engine.runTraceCommand(checkpoint.getCommand());
+                }
             } else if (!engine.hasStopMessage()) {
                 engine.setStopMessage(text);
+                engine.setStopCommand(checkpoint.getCommand());
             }
         }
         pending.clear();

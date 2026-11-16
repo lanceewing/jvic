@@ -97,6 +97,17 @@ final class Checkpoint {
         this.condition = condition;
     }
 
+    private String command;
+
+    /** The monitor command to run when hit (the command command), or null. */
+    String getCommand() {
+        return command;
+    }
+
+    void setCommand(String command) {
+        this.command = command;
+    }
+
     /**
      * The kind VICE shows: UNTIL for until's checkpoint, TRACE for a tracepoint,
      * BREAK for an exec-only stop, and WATCH for any other stop.
@@ -149,6 +160,9 @@ final class Checkpoint {
         String text = describe();
         if (condition != null) {
             text += "\tCondition: " + condition.getText() + "\n";
+        }
+        if (command != null) {
+            text += "\tCommand: " + command + "\n";
         }
         return text;
     }

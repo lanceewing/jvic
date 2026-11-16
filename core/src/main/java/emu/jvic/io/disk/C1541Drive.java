@@ -348,7 +348,10 @@ public class C1541Drive {
      */
     private boolean atSyncMark() {
         // Sync only applicable in read mode. Mode is included in the SYNC NAND gate inputs.
-        return (!diskModeWrite && (currentSectorOffset >= 0) && (currentSector.read(currentSectorOffset) == 0xff));
+        // currentSector is null with no disk in; the drive doesn't run then, but the
+        // debug monitor can still read its VIAs.
+        return (!diskModeWrite && (currentSectorOffset >= 0) && (currentSector != null)
+                && (currentSector.read(currentSectorOffset) == 0xff));
     }
 
     /**
@@ -434,7 +437,7 @@ public class C1541Drive {
      * @return The byte read from disk.
      */
     private int readByteFromDisk() {
-        if (currentSectorOffset == -1) {
+        if ((currentSectorOffset == -1) || (currentSector == null)) {
             return 0;
         }
         return currentSector.read(currentSectorOffset);
@@ -483,6 +486,24 @@ public class C1541Drive {
      */
     public GcrDiskImage getDiskImage() {
         return disk;
+    }
+
+    /**
+     * Resets the drive, as the serial bus RESET line does: the drive's CPU and both
+     * VIAs. The disk stays in. Used by the debug monitor's reset command.
+     *
+     * @param powerCycle true to also clear the drive's RAM, as at power on.
+     */
+    public void reset(boolean powerCycle) {
+        if (powerCycle) {
+            int[] mem = memory.getMemoryArray();
+            for (int address = 0; address < 0x0800; address++) {
+                mem[address] = 0;
+            }
+        }
+        via1.reset();
+        via2.reset();
+        cpu.reset();
     }
 
     // ---------------------------------------------------------------------------

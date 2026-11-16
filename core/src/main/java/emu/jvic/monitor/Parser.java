@@ -30,6 +30,14 @@ final class Parser {
      * @param start The position after the command name.
      * @param radix The current default radix.
      */
+    /** For label lookups in addresses; null in parsers that don't need them. */
+    private MonitorEngine engine;
+
+    Parser(String line, int start, Radix radix, MonitorEngine engine) {
+        this(line, start, radix);
+        this.engine = engine;
+    }
+
     Parser(String line, int start, Radix radix) {
         this.line = line;
         this.pos = start;
@@ -290,7 +298,7 @@ final class Parser {
     boolean atAddress() {
         int start = pos;
         boolean memspace = (tryMemspace() != null);
-        boolean result = memspace || atNumber() || (peek() == '(');
+        boolean result = memspace || atNumber() || (peek() == '(') || (peek() == '.');
         pos = start;
         return result;
     }
@@ -308,6 +316,8 @@ final class Parser {
         int value;
         if (peek() == '(') {
             value = parseFactor(true);
+        } else if ((peek() == '.') && (engine != null)) {
+            value = parseLabel();
         } else if (atNumber()) {
             value = parseNumber(false);
         } else {
@@ -317,6 +327,41 @@ final class Parser {
     }
 
     private String lastMemspace;
+
+    /** Whether a label (".name") starts at the current position. */
+    boolean atLabel() {
+        return peek() == '.';
+    }
+
+    /** Reads a label name, such as ".loop", or returns an empty string. */
+    String readLabelName() {
+        skipSpaces();
+        int start = pos;
+        if (charAt(pos) != '.') {
+            return "";
+        }
+        pos++;
+        while ((pos < line.length()) && isLabelChar(line.charAt(pos))) {
+            pos++;
+        }
+        return line.substring(start, pos);
+    }
+
+    static boolean isLabelChar(char c) {
+        return Character.isLetterOrDigit(c) || (c == '_') || (c == '.');
+    }
+
+    /** Reads a label and looks it up in the memspace of the address being read. */
+    private int parseLabel() {
+        int start = position();
+        String name = readLabelName();
+        AddressSpace space = engine.getSpace(lastMemspace, start);
+        Integer address = space.getLabels().get(name);
+        if (address == null) {
+            throw new MonitorException("Symbol " + name + " not found.", start);
+        }
+        return address;
+    }
 
     /** The memspace prefix of the last address read, or null if it had none. */
     String getLastMemspace() {

@@ -38,6 +38,9 @@ final class GeneralCommands {
         private static String commandList(MonitorEngine engine) {
             StringBuilder text = new StringBuilder("Available commands are:\n\n");
             for (CommandGroup group : engine.getGroups()) {
+                if (group.hidden) {
+                    continue;
+                }
                 if (group.title != null) {
                     text.append(group.title).append('\n');
                 }

@@ -126,8 +126,8 @@ public class MonitorEngineTest {
 
     @Test
     void unimplementedCommandsSaySo() {
-        assertOutput("The io command is not implemented in jvic yet.\n", "io");
-        assertOutput("The dummy command is not implemented in jvic yet.\n", "dummy");
+        assertOutput("The profile command is not implemented in jvic yet.\n", "profile");
+        assertOutput("The list command is not implemented in jvic yet.\n", "list");
     }
 
     // ---------------------------------------------------------------------------------
@@ -349,10 +349,12 @@ public class MonitorEngineTest {
     @Test
     void settingPcRedispatches() {
         poke(0x1234, 0xA9, 0x42); // LDA #$42
+        String prompt = engine.getPrompt();
         assertOutput("", "r pc=1234");
         assertTrue(run("r").contains(".;1234 "));
         assertEquals(0xA9, h.machine.getCpu().getInstructionRegister());
-        assertEquals("(C:$1234) ", engine.getPrompt());
+        // As in xvic, the prompt shows the dot address, which r doesn't move.
+        assertEquals(prompt, engine.getPrompt());
     }
 
     @Test
@@ -461,10 +463,12 @@ public class MonitorEngineTest {
             h.machine.update();
         }
         poke(0x1000, 0xEA); // NOP
+        String prompt = engine.getPrompt();
         run("r pc=1000");
         assertEquals(0xEA, h.machine.getCpu().getInstructionRegister());
         run("> 1000 a9 07"); // LDA #$07
         assertEquals(0xA9, h.machine.getCpu().getInstructionRegister());
-        assertEquals("(C:$1000) ", engine.getPrompt());
+        // As in xvic, neither r nor > moves the dot address that the prompt shows.
+        assertEquals(prompt, engine.getPrompt());
     }
 }
