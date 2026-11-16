@@ -1,0 +1,98 @@
+.C:e000  0F DC A5    SLO $A5DC
+.C:e003  61 C9       ADC ($C9,X)
+.C:e005  88          DEY
+.C:e006  90 03       BCC $E00B
+.C:e008  20 D4 DA    JSR $DAD4
+.C:e00b  20 CC DC    JSR $DCCC
+.C:e00e  A5 07       LDA $07
+.C:e010  18          CLC
+.C:e011  69 81       ADC #$81
+.C:e013  F0 F3       BEQ $E008
+.C:e015  38          SEC
+.C:e016  E9 01       SBC #$01
+.C:e018  48          PHA
+.C:e019  A2 05       LDX #$05
+.C:e01b  B5 69       LDA $69,X
+.C:e01d  B4 61       LDY $61,X
+.C:e01f  95 61       STA $61,X
+.C:e021  94 69       STY $69,X
+.C:e023  CA          DEX
+.C:e024  10 F5       BPL $E01B
+.C:e026  A5 56       LDA $56
+.C:e028  85 70       STA $70
+.C:e02a  20 53 D8    JSR $D853
+.C:e02d  20 B4 DF    JSR $DFB4
+.C:e030  A9 C4       LDA #$C4
+.C:e032  A0 DF       LDY #$DF
+.C:e034  20 56 E0    JSR $E056
+.C:e037  A9 00       LDA #$00
+.C:e039  85 6F       STA $6F
+.C:e03b  68          PLA
+.C:e03c  20 B9 DA    JSR $DAB9
+.C:e03f  60          RTS
+.C:e040  85 71       STA $71
+.C:e042  84 72       STY $72
+.C:e044  20 CA DB    JSR $DBCA
+.C:e047  A9 57       LDA #$57
+.C:e049  20 28 DA    JSR $DA28
+.C:e04c  20 5A E0    JSR $E05A
+.C:e04f  A9 57       LDA #$57
+.C:e051  A0 00       LDY #$00
+.C:e053  4C 28 DA    JMP $DA28
+.C:e056  85 71       STA $71
+.C:e058  84 72       STY $72
+.C:e05a  20 C7 DB    JSR $DBC7
+.C:e05d  B1 71       LDA ($71),Y
+.C:e05f  85 67       STA $67
+.C:e061  A4 71       LDY $71
+.C:e063  C8          INY
+.C:e064  98          TYA
+.C:e065  D0 02       BNE $E069
+.C:e067  E6 72       INC $72
+.C:e069  85 71       STA $71
+.C:e06b  A4 72       LDY $72
+.C:e06d  20 28 DA    JSR $DA28
+.C:e070  A5 71       LDA $71
+.C:e072  A4 72       LDY $72
+.C:e074  18          CLC
+.C:e075  69 05       ADC #$05
+.C:e077  90 01       BCC $E07A
+.C:e079  C8          INY
+.C:e07a  85 71       STA $71
+.C:e07c  84 72       STY $72
+.C:e07e  20 67 D8    JSR $D867
+.C:e081  A9 5C       LDA #$5C
+.C:e083  A0 00       LDY #$00
+.C:e085  C6 67       DEC $67
+.C:e087  D0 E4       BNE $E06D
+.C:e089  60          RTS
+.C:e08a  98          TYA
+.C:e08b  35 44       AND $44,X
+.C:e08d  7A          NOOP
+.C:e08e  00          BRK
+.C:e08f  68          PLA
+.C:e090  28          PLP
+.C:e091  B1 46       LDA ($46),Y
+.C:e093  00          BRK
+.C:e094  20 2B DC    JSR $DC2B
+.C:e097  30 37       BMI $E0D0
+.C:e099  D0 20       BNE $E0BB
+.C:e09b  20 F3 FF    JSR $FFF3
+.C:e09e  86 22       STX $22
+.C:e0a0  84 23       STY $23
+.C:e0a2  A0 04       LDY #$04
+.C:e0a4  B1 22       LDA ($22),Y
+.C:e0a6  85 62       STA $62
+.C:e0a8  C8          INY
+.C:e0a9  B1 22       LDA ($22),Y
+.C:e0ab  85 64       STA $64
+.C:e0ad  A0 08       LDY #$08
+.C:e0af  B1 22       LDA ($22),Y
+.C:e0b1  85 63       STA $63
+.C:e0b3  C8          INY
+.C:e0b4  B1 22       LDA ($22),Y
+.C:e0b6  85 65       STA $65
+.C:e0b8  4C E0 E0    JMP $E0E0
+.C:e0bb  A9 8B       LDA #$8B
+.C:e0bd  A0 00       LDY #$00
+.C:e0bf  20 A2 DB    JSR $DBA2

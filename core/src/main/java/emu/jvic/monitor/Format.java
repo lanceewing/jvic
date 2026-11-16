@@ -29,6 +29,16 @@ final class Format {
                 HEX_DIGITS[v >> 12], HEX_DIGITS[(v >> 8) & 0xF], HEX_DIGITS[(v >> 4) & 0xF], HEX_DIGITS[v & 0xF] });
     }
 
+    /** "%02X" of the low byte. */
+    static String hex2Upper(int value) {
+        return hex2(value).toUpperCase();
+    }
+
+    /** "%04X" of the low 16 bits. */
+    static String hex4Upper(int value) {
+        return hex4(value).toUpperCase();
+    }
+
     /** "%0{width}o" for non-negative values. */
     static String octal(int value, int width) {
         return pad(Integer.toOctalString(value), width, '0');

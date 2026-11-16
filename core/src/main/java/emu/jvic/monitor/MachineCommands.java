@@ -51,6 +51,107 @@ final class MachineCommands {
         }
     }
 
+    static final class Goto extends MonitorCommand {
+
+        Goto() {
+            super("goto", "g", "goto <address>",
+                    "Resumes emulation, from the address if one is given, otherwise from the\n"
+                    + "current PC.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            if (!args.atEnd()) {
+                int position = args.position();
+                int address = args.parseAddress();
+                AddressSpace space = engine.getSpace(args.getLastMemspace(), position);
+                args.expectEnd();
+                space.setPc(address);
+            }
+            engine.resume();
+        }
+    }
+
+    /** step (z) and next (n). */
+    static final class Step extends MonitorCommand {
+
+        private final boolean over;
+
+        Step(boolean over) {
+            super(over ? "next" : "step", over ? "n" : "z", (over ? "next" : "step") + " [<count>]",
+                    over
+                            ? "Executes the next instruction, or count instructions, treating a JSR\n"
+                              + "and the subroutine it calls, or an interrupt and its handler, as\n"
+                              + "one instruction. Shows the instruction it stops at."
+                            : "Executes the next instruction, or count instructions, then shows the\n"
+                              + "instruction it stops at. An interrupt taken on the way stops at the\n"
+                              + "handler's first instruction.");
+            this.over = over;
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            int count = 1;
+            if (!args.atEnd()) {
+                count = args.parseExpression();
+                args.expectEnd();
+            }
+            if (count < 1) {
+                count = 1;
+            }
+            AddressSpace space = engine.getDefaultSpace();
+            if (space.getCpu().isJammed()) {
+                // A jammed CPU never reaches another instruction, so don't run forever.
+                out.print(Disassembler6502.stateLine(space, space.getDisplayPc()));
+                return;
+            }
+            if (count > 1) {
+                out.print((over ? "Nexting" : "Stepping") + " through the next " + count + " instruction(s).\n");
+            }
+            engine.startStep(over, count);
+        }
+    }
+
+    static final class Return extends MonitorCommand {
+
+        Return() {
+            super("return", "ret", "return ",
+                    "Resumes until the current subroutine or interrupt handler returns (an\n"
+                    + "RTS or RTI), then shows the instruction it returns to.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            args.expectEnd();
+            engine.startReturn();
+        }
+    }
+
+    static final class Stopwatch extends MonitorCommand {
+
+        Stopwatch() {
+            super("stopwatch", "sw", "stopwatch [reset]",
+                    "Shows the number of CPU cycles since the stopwatch was last reset (or\n"
+                    + "since the machine started). 'reset' sets it to zero.");
+        }
+
+        @Override
+        void execute(Parser args, MonitorEngine engine, MonitorOutput out) {
+            AddressSpace space = engine.getDefaultSpace();
+            if (args.atEnd()) {
+                out.print("Stopwatch: " + Format.decimal(space.getStopwatch(), 10) + "\n");
+                return;
+            }
+            int position = args.position();
+            if (!args.readWord().equalsIgnoreCase("reset")) {
+                throw new MonitorException(MonitorException.UNEXPECTED_TOKEN, position);
+            }
+            args.expectEnd();
+            space.resetStopwatch();
+            out.print("Stopwatch reset to 0.\n");
+        }
+    }
+
     static final class Cpu extends MonitorCommand {
 
         Cpu() {

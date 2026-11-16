@@ -23,6 +23,12 @@ public class MonitorException extends RuntimeException {
     /** VICE's message when a closing parenthesis is missing. */
     public static final String PAREN_EXPECTED = "')' expected:";
 
+    /** VICE's message when a condition ends where an operand is needed. */
+    public static final String MISSING_OPERAND = "Conditional operation missing an operand:";
+
+    /** VICE's message when a checkpoint number is missing or not a decimal number. */
+    public static final String CHECKPOINT_NUMBER_EXPECTED = "Checkpoint number expected:";
+
     /** VICE's message for an unknown register name in the registers command. */
     public static final String INVALID_REGISTER = "Invalid register.";
 

@@ -48,19 +48,22 @@ public final class DebugCpu implements CpuDebugger {
         boundaryInterrupt = interrupt;
         boundaryCycle = cpu.getTotalCycles();
 
+        // The listener sees every boundary while its hooks are on, even one where a
+        // stop was already requested (a watchpoint), so that tracepoints there still
+        // print, and it can track where each instruction started.
+        boolean listenerStop = false;
+        if (listenerHooks) {
+            Debugger.Listener listener = debugger.getListener();
+            listenerStop = (listener != null) && listener.onInstructionBoundary(this, address, interrupt);
+        }
+
         if (stopAtNextBoundary != Debugger.STOP_NONE) {
             int reason = stopAtNextBoundary;
             stopAtNextBoundary = Debugger.STOP_NONE;
             updateHooks();
             debugger.stop(reason, this, address);
-            return;
-        }
-
-        if (listenerHooks) {
-            Debugger.Listener listener = debugger.getListener();
-            if ((listener != null) && listener.onInstructionBoundary(this, address, interrupt)) {
-                debugger.stop(Debugger.STOP_LISTENER, this, address);
-            }
+        } else if (listenerStop) {
+            debugger.stop(Debugger.STOP_LISTENER, this, address);
         }
     }
 

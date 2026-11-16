@@ -1,0 +1,256 @@
+.C:1000  00          BRK
+.C:1004  01 34       ORA ($34,X)
+.C:1008  02          JAM
+.C:100c  03 34       SLO ($34,X)
+.C:1010  04 34       NOOP $34
+.C:1014  05 34       ORA $34
+.C:1018  06 34       ASL $34
+.C:101c  07 34       SLO $34
+.C:1020  08          PHP
+.C:1024  09 34       ORA #$34
+.C:1028  0A          ASL A
+.C:102c  0B 34       ANC #$34
+.C:1030  0C 34 12    NOOP $1234
+.C:1034  0D 34 12    ORA $1234
+.C:1038  0E 34 12    ASL $1234
+.C:103c  0F 34 12    SLO $1234
+.C:1040  10 34       BPL $1076
+.C:1044  11 34       ORA ($34),Y
+.C:1048  12          JAM
+.C:104c  13 34       SLO ($34),Y
+.C:1050  14 34       NOOP $34,X
+.C:1054  15 34       ORA $34,X
+.C:1058  16 34       ASL $34,X
+.C:105c  17 34       SLO $34,X
+.C:1060  18          CLC
+.C:1064  19 34 12    ORA $1234,Y
+.C:1068  1A          NOOP
+.C:106c  1B 34 12    SLO $1234,Y
+.C:1070  1C 34 12    NOOP $1234,X
+.C:1074  1D 34 12    ORA $1234,X
+.C:1078  1E 34 12    ASL $1234,X
+.C:107c  1F 34 12    SLO $1234,X
+.C:1080  20 34 12    JSR $1234
+.C:1084  21 34       AND ($34,X)
+.C:1088  22          JAM
+.C:108c  23 34       RLA ($34,X)
+.C:1090  24 34       BIT $34
+.C:1094  25 34       AND $34
+.C:1098  26 34       ROL $34
+.C:109c  27 34       RLA $34
+.C:10a0  28          PLP
+.C:10a4  29 34       AND #$34
+.C:10a8  2A          ROL A
+.C:10ac  2B 34       ANC #$34
+.C:10b0  2C 34 12    BIT $1234
+.C:10b4  2D 34 12    AND $1234
+.C:10b8  2E 34 12    ROL $1234
+.C:10bc  2F 34 12    RLA $1234
+.C:10c0  30 34       BMI $10F6
+.C:10c4  31 34       AND ($34),Y
+.C:10c8  32          JAM
+.C:10cc  33 34       RLA ($34),Y
+.C:10d0  34 34       NOOP $34,X
+.C:10d4  35 34       AND $34,X
+.C:10d8  36 34       ROL $34,X
+.C:10dc  37 34       RLA $34,X
+.C:10e0  38          SEC
+.C:10e4  39 34 12    AND $1234,Y
+.C:10e8  3A          NOOP
+.C:10ec  3B 34 12    RLA $1234,Y
+.C:10f0  3C 34 12    NOOP $1234,X
+.C:10f4  3D 34 12    AND $1234,X
+.C:10f8  3E 34 12    ROL $1234,X
+.C:10fc  3F 34 12    RLA $1234,X
+.C:1100  40          RTI
+.C:1104  41 34       EOR ($34,X)
+.C:1108  42          JAM
+.C:110c  43 34       SRE ($34,X)
+.C:1110  44 34       NOOP $34
+.C:1114  45 34       EOR $34
+.C:1118  46 34       LSR $34
+.C:111c  47 34       SRE $34
+.C:1120  48          PHA
+.C:1124  49 34       EOR #$34
+.C:1128  4A          LSR A
+.C:112c  4B 34       ASR #$34
+.C:1130  4C 34 12    JMP $1234
+.C:1134  4D 34 12    EOR $1234
+.C:1138  4E 34 12    LSR $1234
+.C:113c  4F 34 12    SRE $1234
+.C:1140  50 34       BVC $1176
+.C:1144  51 34       EOR ($34),Y
+.C:1148  52          JAM
+.C:114c  53 34       SRE ($34),Y
+.C:1150  54 34       NOOP $34,X
+.C:1154  55 34       EOR $34,X
+.C:1158  56 34       LSR $34,X
+.C:115c  57 34       SRE $34,X
+.C:1160  58          CLI
+.C:1164  59 34 12    EOR $1234,Y
+.C:1168  5A          NOOP
+.C:116c  5B 34 12    SRE $1234,Y
+.C:1170  5C 34 12    NOOP $1234,X
+.C:1174  5D 34 12    EOR $1234,X
+.C:1178  5E 34 12    LSR $1234,X
+.C:117c  5F 34 12    SRE $1234,X
+.C:1180  60          RTS
+.C:1184  61 34       ADC ($34,X)
+.C:1188  62          JAM
+.C:118c  63 34       RRA ($34,X)
+.C:1190  64 34       NOOP $34
+.C:1194  65 34       ADC $34
+.C:1198  66 34       ROR $34
+.C:119c  67 34       RRA $34
+.C:11a0  68          PLA
+.C:11a4  69 34       ADC #$34
+.C:11a8  6A          ROR A
+.C:11ac  6B 34       ARR #$34
+.C:11b0  6C 34 12    JMP ($1234)
+.C:11b4  6D 34 12    ADC $1234
+.C:11b8  6E 34 12    ROR $1234
+.C:11bc  6F 34 12    RRA $1234
+.C:11c0  70 34       BVS $11F6
+.C:11c4  71 34       ADC ($34),Y
+.C:11c8  72          JAM
+.C:11cc  73 34       RRA ($34),Y
+.C:11d0  74 34       NOOP $34,X
+.C:11d4  75 34       ADC $34,X
+.C:11d8  76 34       ROR $34,X
+.C:11dc  77 34       RRA $34,X
+.C:11e0  78          SEI
+.C:11e4  79 34 12    ADC $1234,Y
+.C:11e8  7A          NOOP
+.C:11ec  7B 34 12    RRA $1234,Y
+.C:11f0  7C 34 12    NOOP $1234,X
+.C:11f4  7D 34 12    ADC $1234,X
+.C:11f8  7E 34 12    ROR $1234,X
+.C:11fc  7F 34 12    RRA $1234,X
+.C:1200  80 34       NOOP #$34
+.C:1204  81 34       STA ($34,X)
+.C:1208  82 34       NOOP #$34
+.C:120c  83 34       SAX ($34,X)
+.C:1210  84 34       STY $34
+.C:1214  85 34       STA $34
+.C:1218  86 34       STX $34
+.C:121c  87 34       SAX $34
+.C:1220  88          DEY
+.C:1224  89 34       NOOP #$34
+.C:1228  8A          TXA
+.C:122c  8B 34       ANE #$34
+.C:1230  8C 34 12    STY $1234
+.C:1234  8D 34 12    STA $1234
+.C:1238  8E 34 12    STX $1234
+.C:123c  8F 34 12    SAX $1234
+.C:1240  90 34       BCC $1276
+.C:1244  91 34       STA ($34),Y
+.C:1248  92          JAM
+.C:124c  93 34       SHA ($34),Y
+.C:1250  94 34       STY $34,X
+.C:1254  95 34       STA $34,X
+.C:1258  96 34       STX $34,Y
+.C:125c  97 34       SAX $34,Y
+.C:1260  98          TYA
+.C:1264  99 34 12    STA $1234,Y
+.C:1268  9A          TXS
+.C:126c  9B 34 12    SHS $1234,Y
+.C:1270  9C 34 12    SHY $1234,X
+.C:1274  9D 34 12    STA $1234,X
+.C:1278  9E 34 12    SHX $1234,Y
+.C:127c  9F 34 12    SHA $1234,Y
+.C:1280  A0 34       LDY #$34
+.C:1284  A1 34       LDA ($34,X)
+.C:1288  A2 34       LDX #$34
+.C:128c  A3 34       LAX ($34,X)
+.C:1290  A4 34       LDY $34
+.C:1294  A5 34       LDA $34
+.C:1298  A6 34       LDX $34
+.C:129c  A7 34       LAX $34
+.C:12a0  A8          TAY
+.C:12a4  A9 34       LDA #$34
+.C:12a8  AA          TAX
+.C:12ac  AB 34       LXA #$34
+.C:12b0  AC 34 12    LDY $1234
+.C:12b4  AD 34 12    LDA $1234
+.C:12b8  AE 34 12    LDX $1234
+.C:12bc  AF 34 12    LAX $1234
+.C:12c0  B0 34       BCS $12F6
+.C:12c4  B1 34       LDA ($34),Y
+.C:12c8  B2          JAM
+.C:12cc  B3 34       LAX ($34),Y
+.C:12d0  B4 34       LDY $34,X
+.C:12d4  B5 34       LDA $34,X
+.C:12d8  B6 34       LDX $34,Y
+.C:12dc  B7 34       LAX $34,Y
+.C:12e0  B8          CLV
+.C:12e4  B9 34 12    LDA $1234,Y
+.C:12e8  BA          TSX
+.C:12ec  BB 34 12    LAS $1234,Y
+.C:12f0  BC 34 12    LDY $1234,X
+.C:12f4  BD 34 12    LDA $1234,X
+.C:12f8  BE 34 12    LDX $1234,Y
+.C:12fc  BF 34 12    LAX $1234,Y
+.C:1300  C0 34       CPY #$34
+.C:1304  C1 34       CMP ($34,X)
+.C:1308  C2 34       NOOP #$34
+.C:130c  C3 34       DCP ($34,X)
+.C:1310  C4 34       CPY $34
+.C:1314  C5 34       CMP $34
+.C:1318  C6 34       DEC $34
+.C:131c  C7 34       DCP $34
+.C:1320  C8          INY
+.C:1324  C9 34       CMP #$34
+.C:1328  CA          DEX
+.C:132c  CB 34       SBX #$34
+.C:1330  CC 34 12    CPY $1234
+.C:1334  CD 34 12    CMP $1234
+.C:1338  CE 34 12    DEC $1234
+.C:133c  CF 34 12    DCP $1234
+.C:1340  D0 34       BNE $1376
+.C:1344  D1 34       CMP ($34),Y
+.C:1348  D2          JAM
+.C:134c  D3 34       DCP ($34),Y
+.C:1350  D4 34       NOOP $34,X
+.C:1354  D5 34       CMP $34,X
+.C:1358  D6 34       DEC $34,X
+.C:135c  D7 34       DCP $34,X
+.C:1360  D8          CLD
+.C:1364  D9 34 12    CMP $1234,Y
+.C:1368  DA          NOOP
+.C:136c  DB 34 12    DCP $1234,Y
+.C:1370  DC 34 12    NOOP $1234,X
+.C:1374  DD 34 12    CMP $1234,X
+.C:1378  DE 34 12    DEC $1234,X
+.C:137c  DF 34 12    DCP $1234,X
+.C:1380  E0 34       CPX #$34
+.C:1384  E1 34       SBC ($34,X)
+.C:1388  E2 34       NOOP #$34
+.C:138c  E3 34       ISB ($34,X)
+.C:1390  E4 34       CPX $34
+.C:1394  E5 34       SBC $34
+.C:1398  E6 34       INC $34
+.C:139c  E7 34       ISB $34
+.C:13a0  E8          INX
+.C:13a4  E9 34       SBC #$34
+.C:13a8  EA          NOP
+.C:13ac  EB 34       USBC #$34
+.C:13b0  EC 34 12    CPX $1234
+.C:13b4  ED 34 12    SBC $1234
+.C:13b8  EE 34 12    INC $1234
+.C:13bc  EF 34 12    ISB $1234
+.C:13c0  F0 34       BEQ $13F6
+.C:13c4  F1 34       SBC ($34),Y
+.C:13c8  F2          JAM
+.C:13cc  F3 34       ISB ($34),Y
+.C:13d0  F4 34       NOOP $34,X
+.C:13d4  F5 34       SBC $34,X
+.C:13d8  F6 34       INC $34,X
+.C:13dc  F7 34       ISB $34,X
+.C:13e0  F8          SED
+.C:13e4  F9 34 12    SBC $1234,Y
+.C:13e8  FA          NOOP
+.C:13ec  FB 34 12    ISB $1234,Y
+.C:13f0  FC 34 12    NOOP $1234,X
+.C:13f4  FD 34 12    SBC $1234,X
+.C:13f8  FE 34 12    INC $1234,X
+.C:13fc  FF 34 12    ISB $1234,X

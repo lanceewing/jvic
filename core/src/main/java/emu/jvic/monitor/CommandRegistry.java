@@ -37,9 +37,13 @@ final class CommandRegistry {
         machineState.commands.add(new MachineCommands.Cpu());
         notImplemented(machineState, "backtrace", "bt", "cpuhistory", "chis");
         machineState.commands.add(new MachineCommands.Registers());
-        notImplemented(machineState, "stopwatch", "sw", "goto", "g", "next", "n", "return", "ret", "step", "z",
-                "profile", "prof", "reset", null, "export", "exp", "cartfreeze", null, "updb", null, "jpdb", null,
-                "keybuf", null, "warp", null);
+        machineState.commands.add(new MachineCommands.Stopwatch());
+        machineState.commands.add(new MachineCommands.Goto());
+        machineState.commands.add(new MachineCommands.Step(true));
+        machineState.commands.add(new MachineCommands.Return());
+        machineState.commands.add(new MachineCommands.Step(false));
+        notImplemented(machineState, "profile", "prof", "reset", null, "export", "exp", "cartfreeze", null, "updb",
+                null, "jpdb", null, "keybuf", null, "warp", null);
 
         CommandGroup symbols = group(groups, "Symbol table commands:");
         notImplemented(symbols, "add_label", "al", "delete_label", "dl", "load_labels", "ll", "save_labels", "sl",
@@ -47,16 +51,32 @@ final class CommandRegistry {
 
         CommandGroup memory = group(groups, "Assembler and memory commands:");
         memory.commands.add(new MemoryCommands.Write());
-        notImplemented(memory, "a", null, "compare", "c", "disass", "d", "fill", "f", "hunt", "h", "i", null,
-                "ii", null);
+        notImplemented(memory, "a", null);
+        memory.commands.add(new MemoryCommands.Compare());
+        memory.commands.add(new MemoryCommands.Disass());
+        memory.commands.add(new MemoryCommands.Fill());
+        memory.commands.add(new MemoryCommands.Hunt());
+        memory.commands.add(new MemoryCommands.Text(false));
+        memory.commands.add(new MemoryCommands.Text(true));
         memory.commands.add(new MemoryCommands.Mem());
-        notImplemented(memory, "memchar", "mc", "memmapsave", "mmsave", "memmapshow", "mmsh", "memmapzap",
-                "mmzap", "memsprite", "ms", "move", "t", "io", null, "screen", "sc");
+        memory.commands.add(new MemoryCommands.MemChar());
+        notImplemented(memory, "memmapsave", "mmsave", "memmapshow", "mmsh", "memmapzap", "mmzap", "memsprite",
+                "ms");
+        memory.commands.add(new MemoryCommands.Move());
+        notImplemented(memory, "io", null, "screen", "sc");
 
         CommandGroup checkpoints = group(groups, "Checkpoint commands:");
-        notImplemented(checkpoints, "break", "bk", "command", null, "condition", "cond", "delete", "del",
-                "disable", "dis", "enable", "en", "ignore", null, "until", "un", "watch", "w", "trace", "tr",
-                "dummy", null);
+        checkpoints.commands.add(CheckpointCommands.breakCommand());
+        notImplemented(checkpoints, "command", null);
+        checkpoints.commands.add(new CheckpointCommands.ConditionCommand());
+        checkpoints.commands.add(new CheckpointCommands.Delete());
+        checkpoints.commands.add(new CheckpointCommands.Enable(false));
+        checkpoints.commands.add(new CheckpointCommands.Enable(true));
+        checkpoints.commands.add(new CheckpointCommands.Ignore());
+        checkpoints.commands.add(new CheckpointCommands.Until());
+        checkpoints.commands.add(CheckpointCommands.watchCommand());
+        checkpoints.commands.add(CheckpointCommands.traceCommand());
+        notImplemented(checkpoints, "dummy", null);
 
         CommandGroup files = group(groups, "File commands:");
         notImplemented(files, "cd", null, "pwd", null, "mkdir", null, "rmdir", null, "@", null, "attach", null,

@@ -3,7 +3,9 @@ package emu.jvic.monitor;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.debug.DebugCpu;
 import emu.jvic.debug.Debugger;
+import emu.jvic.debug.WatchProxyChip;
 import emu.jvic.memory.Memory;
+import emu.jvic.memory.MemoryMappedChip;
 import emu.jvic.video.Vic;
 
 /**
@@ -128,10 +130,42 @@ final class AddressSpace {
      *                    "sidefx on"); false to peek without them.
      */
     int read(int address, boolean sideEffects) {
-        Memory memory = getMemory();
-        int value = sideEffects ? memory.readMemory(address & 0xFFFF) : memory.peekMemory(address & 0xFFFF);
+        address &= 0xFFFF;
+        MemoryMappedChip chip = chipAt(address);
+        int value = sideEffects ? chip.readMemory(address) : chip.peekMemory(address);
         return value & 0xFF;
     }
+
+    /**
+     * The chip mapped at the address, looking through a watchpoint proxy, so that the
+     * monitor's own reads and writes never trigger watchpoints.
+     */
+    private MemoryMappedChip chipAt(int address) {
+        MemoryMappedChip chip = getMemory().getMemoryMap()[address];
+        return (chip instanceof WatchProxyChip) ? ((WatchProxyChip) chip).getTarget() : chip;
+    }
+
+    /**
+     * Records the instruction boundary the CPU has just reached: the address of the
+     * instruction now starting (or of the instruction an interrupt is pre-empting).
+     * Watchpoint and tracepoint messages show the instruction that made the access,
+     * which is the one that started at the last boundary.
+     */
+    void setCurrentInstruction(int address, boolean interrupt) {
+        currentInstruction = address & 0xFFFF;
+        currentIsInterrupt = interrupt;
+    }
+
+    int getCurrentInstruction() {
+        return currentInstruction;
+    }
+
+    boolean isCurrentInterrupt() {
+        return currentIsInterrupt;
+    }
+
+    private int currentInstruction;
+    private boolean currentIsInterrupt;
 
     /**
      * Writes a byte as the CPU would (so a write to ROM does nothing). If the machine is
@@ -140,7 +174,7 @@ final class AddressSpace {
      */
     void write(int address, int value) {
         address &= 0xFFFF;
-        getMemory().writeMemory(address, value & 0xFF);
+        chipAt(address).writeMemory(address, value & 0xFF);
         Debugger debugger = debugCpu.getDebugger();
         if (debugger.isStopped() && debugCpu.isAtBoundary() && (address == debugCpu.getBoundaryAddress())) {
             debugCpu.redispatchAt(address);

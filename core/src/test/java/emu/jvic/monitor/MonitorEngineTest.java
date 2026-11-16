@@ -37,6 +37,10 @@ public class MonitorEngineTest {
         public void quit() {
             quits++;
         }
+
+        @Override
+        public void print(String text) {
+        }
     }
 
     private MachineTestHarness h;
@@ -110,8 +114,8 @@ public class MonitorEngineTest {
 
     @Test
     void unimplementedCommandsSaySo() {
-        assertOutput("The disass command is not implemented in jvic yet.\n", "d e000");
-        assertOutput("The break command is not implemented in jvic yet.\n", "bk");
+        assertOutput("The io command is not implemented in jvic yet.\n", "io");
+        assertOutput("The dummy command is not implemented in jvic yet.\n", "dummy");
     }
 
     // ---------------------------------------------------------------------------------

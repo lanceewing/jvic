@@ -1,0 +1,147 @@
+.C:c000  78          SEI
+.C:c001  E3 67       ISB ($67,X)
+.C:c003  E4 43       CPX $43
+.C:c005  42          JAM
+.C:c006  4D 42 41    EOR $4142
+.C:c009  53 49       SRE ($49),Y
+.C:c00b  43 30       SRE ($30,X)
+.C:c00d  C8          INY
+.C:c00e  41 C7       EOR ($C7,X)
+.C:c010  1D CD F7    ORA $F7CD,X
+.C:c013  C8          INY
+.C:c014  A4 CB       LDY $CB
+.C:c016  BE CB 80    LDX $80CB,Y
+.C:c019  D0 05       BNE $C020
+.C:c01b  CC A4 C9    CPY $C9A4
+.C:c01e  9F C8 70    SHA $70C8,Y
+.C:c021  C8          INY
+.C:c022  27 C9       RLA $C9
+.C:c024  1C C8 82    NOOP $82C8,X
+.C:c027  C8          INY
+.C:c028  D1 C8       CMP ($C8),Y
+.C:c02a  3A          NOOP
+.C:c02b  C9 2E       CMP #$2E
+.C:c02d  C8          INY
+.C:c02e  4A          LSR A
+.C:c02f  C9 2C       CMP #$2C
+.C:c031  D8          CLD
+.C:c032  64 E1       NOOP $E1
+.C:c034  52          JAM
+.C:c035  E1 61       SBC ($61,X)
+.C:c037  E1 B2       SBC ($B2,X)
+.C:c039  D3 23       DCP ($23),Y
+.C:c03b  D8          CLD
+.C:c03c  7F CA 9F    RRA $9FCA,X
+.C:c03f  CA          DEX
+.C:c040  56 C8       LSR $C8,X
+.C:c042  9B C6 5D    SHS $5DC6,Y
+.C:c045  C6 85       DEC $85
+.C:c047  CA          DEX
+.C:c048  26 E1       ROL $E1
+.C:c04a  BA          TSX
+.C:c04b  E1 C3       SBC ($C3,X)
+.C:c04d  E1 7A       SBC ($7A,X)
+.C:c04f  CB 41       SBX #$41
+.C:c051  C6 39       DEC $39
+.C:c053  DC CC DC    NOOP $DCCC,X
+.C:c056  58          CLI
+.C:c057  DC 00 00    NOOP $0000,X
+.C:c05a  7D D3 9E    ADC $9ED3,X
+.C:c05d  D3 71       DCP ($71),Y
+.C:c05f  DF 94 E0    DCP $E094,X
+.C:c062  EA          NOP
+.C:c063  D9 ED DF    CMP $DFED,Y
+.C:c066  61 E2       ADC ($E2,X)
+.C:c068  68          PLA
+.C:c069  E2 B1       NOOP #$B1
+.C:c06b  E2 0B       NOOP #$0B
+.C:c06d  E3 0D       ISB ($0D,X)
+.C:c06f  D8          CLD
+.C:c070  7C D7 65    NOOP $65D7,X
+.C:c073  D4 AD       NOOP $AD,X
+.C:c075  D7 8B       DCP $8B,X
+.C:c077  D7 EC       DCP $EC,X
+.C:c079  D6 00       DEC $00,X
+.C:c07b  D7 2C       DCP $2C,X
+.C:c07d  D7 37       DCP $37,X
+.C:c07f  D7 79       DCP $79,X
+.C:c081  69 D8       ADC #$D8
+.C:c083  79 52 D8    ADC $D852,Y
+.C:c086  7B 2A DA    RRA $DA2A,Y
+.C:c089  7B 11 DB    RRA $DB11,Y
+.C:c08c  7F 7A DF    RRA $DF7A,X
+.C:c08f  50 E8       BVC $C079
+.C:c091  CF 46 E5    DCP $E546
+.C:c094  CF 7D B3    DCP $B37D
+.C:c097  DF 5A D3    DCP $D35A,X
+.C:c09a  CE 64 15    DEC $1564
+.C:c09d  D0 45       BNE $C0E4
+.C:c09f  4E C4 46    LSR $46C4
+.C:c0a2  4F D2 4E    SRE $4ED2
+.C:c0a5  45 58       EOR $58
+.C:c0a7  D4 44       NOOP $44,X
+.C:c0a9  41 54       EOR ($54,X)
+.C:c0ab  C1 49       CMP ($49,X)
+.C:c0ad  4E 50 55    LSR $5550
+.C:c0b0  54 A3       NOOP $A3,X
+.C:c0b2  49 4E       EOR #$4E
+.C:c0b4  50 55       BVC $C10B
+.C:c0b6  D4 44       NOOP $44,X
+.C:c0b8  49 CD       EOR #$CD
+.C:c0ba  52          JAM
+.C:c0bb  45 41       EOR $41
+.C:c0bd  C4 4C       CPY $4C
+.C:c0bf  45 D4       EOR $D4
+.C:c0c1  47 4F       SRE $4F
+.C:c0c3  54 CF       NOOP $CF,X
+.C:c0c5  52          JAM
+.C:c0c6  55 CE       EOR $CE,X
+.C:c0c8  49 C6       EOR #$C6
+.C:c0ca  52          JAM
+.C:c0cb  45 53       EOR $53
+.C:c0cd  54 4F       NOOP $4F,X
+.C:c0cf  52          JAM
+.C:c0d0  C5 47       CMP $47
+.C:c0d2  4F 53 55    SRE $5553
+.C:c0d5  C2 52       NOOP #$52
+.C:c0d7  45 54       EOR $54
+.C:c0d9  55 52       EOR $52,X
+.C:c0db  CE 52 45    DEC $4552
+.C:c0de  CD 53 54    CMP $5453
+.C:c0e1  4F D0 4F    SRE $4FD0
+.C:c0e4  CE 57 41    DEC $4157
+.C:c0e7  49 D4       EOR #$D4
+.C:c0e9  4C 4F 41    JMP $414F
+.C:c0ec  C4 53       CPY $53
+.C:c0ee  41 56       EOR ($56,X)
+.C:c0f0  C5 56       CMP $56
+.C:c0f2  45 52       EOR $52
+.C:c0f4  49 46       EOR #$46
+.C:c0f6  D9 44 45    CMP $4544,Y
+.C:c0f9  C6 50       DEC $50
+.C:c0fb  4F 4B C5    SRE $C54B
+.C:c0fe  50 52       BVC $C152
+.C:c100  49 4E       EOR #$4E
+.C:c102  54 A3       NOOP $A3,X
+.C:c104  50 52       BVC $C158
+.C:c106  49 4E       EOR #$4E
+.C:c108  D4 43       NOOP $43,X
+.C:c10a  4F 4E D4    SRE $D44E
+.C:c10d  4C 49 53    JMP $5349
+.C:c110  D4 43       NOOP $43,X
+.C:c112  4C D2 43    JMP $43D2
+.C:c115  4D C4 53    EOR $53C4
+.C:c118  59 D3 4F    EOR $4FD3,Y
+.C:c11b  50 45       BVC $C162
+.C:c11d  CE 43 4C    DEC $4C43
+.C:c120  4F 53 C5    SRE $C553
+.C:c123  47 45       SRE $45
+.C:c125  D4 4E       NOOP $4E,X
+.C:c127  45 D7       EOR $D7
+.C:c129  54 41       NOOP $41,X
+.C:c12b  42          JAM
+.C:c12c  A8          TAY
+.C:c12d  54 CF       NOOP $CF,X
+.C:c12f  46 CE       LSR $CE
+.C:c131  53 50       SRE ($50),Y
+.C:c133  43 A8       SRE ($A8,X)

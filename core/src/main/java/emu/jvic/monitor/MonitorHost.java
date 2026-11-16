@@ -18,4 +18,13 @@ public interface MonitorHost {
      * Quits the emulator (the {@code quit} command).
      */
     void quit();
+
+    /**
+     * Prints output that isn't the direct result of a command: checkpoint hits,
+     * tracepoint lines and the results of step, next, return and until, which arrive
+     * while the machine runs, on the emulation thread.
+     *
+     * @param text The text, ending with a newline.
+     */
+    void print(String text);
 }

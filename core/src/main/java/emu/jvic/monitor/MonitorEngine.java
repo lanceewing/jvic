@@ -38,9 +38,33 @@ public final class MonitorEngine implements Debugger.Listener {
     private final AddressSpace driveSpace;
     private final List<CommandGroup> groups;
 
+    private final CheckpointManager checkpoints;
+
     private AddressSpace defaultSpace;
     private Radix radix = Radix.HEXADECIMAL;
     private boolean sideEffects;
+
+    /** The message to print when the machine stops for a checkpoint or a step. */
+    private String stopMessage;
+
+    // Stepping state: step (z), next (n) and return (ret). Cleared on any stop.
+    private static final int STEP_NONE = 0;
+    private static final int STEP_INTO = 1;
+    private static final int STEP_OVER = 2;
+    private static final int STEP_RETURN = 3;
+
+    private int stepMode = STEP_NONE;
+    private AddressSpace stepSpace;
+    private int stepRemaining;
+    /** step: an interrupt started as the count ran out; stop at the handler's first instruction. */
+    private boolean stepStopNext;
+    /** next: waiting for a JSR or an interrupt to return. */
+    private boolean stepWaiting;
+    private int stepReturnAddress;
+    private int stepReturnSp;
+    private boolean stepCountOnReturn;
+    /** return: the stack pointer when it started. */
+    private int stepBaseSp;
 
     /**
      * Creates the engine for the given machine, enabling its debugger if needed, and
@@ -58,6 +82,7 @@ public final class MonitorEngine implements Debugger.Listener {
         this.driveSpace = new AddressSpace("8", "Disk8", debugger.getDriveCpu(), null, false);
         this.defaultSpace = mainSpace;
         this.groups = CommandRegistry.create();
+        this.checkpoints = new CheckpointManager(this);
         debugger.setListener(this);
     }
 
@@ -148,8 +173,95 @@ public final class MonitorEngine implements Debugger.Listener {
 
     @Override
     public boolean onInstructionBoundary(DebugCpu cpu, int address, int interrupt) {
-        // No checkpoints or stepping yet.
+        AddressSpace space = (cpu == mainSpace.getDebugCpu()) ? mainSpace : driveSpace;
+        int previous = space.getCurrentInstruction();
+        boolean previousWasInterrupt = space.isCurrentInterrupt();
+        // The previous instruction has completed, so report its watched accesses.
+        checkpoints.reportAccesses(space);
+        space.setCurrentInstruction(address, interrupt != 0);
+
+        // An exec checkpoint doesn't fire where an interrupt pre-empts the instruction;
+        // the instruction runs, and the checkpoint fires, after RTI.
+        boolean stop = false;
+        if ((interrupt == 0) && checkpoints.hasExec(space, address)) {
+            stop = checkpoints.checkExec(space, address);
+        }
+        if ((stepMode != STEP_NONE) && (space == stepSpace)) {
+            boolean stepStop;
+            switch (stepMode) {
+                case STEP_INTO: stepStop = stepIntoBoundary(interrupt); break;
+                case STEP_OVER: stepStop = stepOverBoundary(space, address, interrupt); break;
+                default: stepStop = returnBoundary(space, previous, previousWasInterrupt); break;
+            }
+            if (stepStop && !stop) {
+                stop = true;
+                stopMessage = Disassembler6502.stateLine(space, address);
+            }
+        }
+        return stop;
+    }
+
+    private boolean stepIntoBoundary(int interrupt) {
+        if (stepStopNext) {
+            return true;
+        }
+        // The previous instruction has completed.
+        stepRemaining--;
+        if (interrupt != 0) {
+            // As in VICE, the interrupt sequence is part of the step: stop at the
+            // handler's first instruction, not here.
+            stepStopNext = (stepRemaining <= 0);
+            return false;
+        }
+        return stepRemaining <= 0;
+    }
+
+    private boolean stepOverBoundary(AddressSpace space, int address, int interrupt) {
+        int sp = space.getCpu().getStackPointer();
+        if (stepWaiting) {
+            // Wait for the JSR or interrupt to return to the same stack level.
+            if ((interrupt != 0) || (address != stepReturnAddress) || (sp < stepReturnSp)) {
+                return false;
+            }
+            stepWaiting = false;
+            if (stepCountOnReturn) {
+                stepRemaining--;
+            }
+            if (stepRemaining <= 0) {
+                return true;
+            }
+        } else {
+            stepRemaining--;
+            if (interrupt != 0) {
+                // Step over the interrupt too: wait for it to return here.
+                waitForReturn(address, sp, false);
+                return false;
+            }
+            if (stepRemaining <= 0) {
+                return true;
+            }
+        }
+        if (space.read(address, false) == 0x20) {
+            waitForReturn(address + 3, sp, true);
+        }
         return false;
+    }
+
+    private void waitForReturn(int address, int sp, boolean count) {
+        stepWaiting = true;
+        stepReturnAddress = address & 0xFFFF;
+        stepReturnSp = sp;
+        stepCountOnReturn = count;
+    }
+
+    private boolean returnBoundary(AddressSpace space, int previous, boolean previousWasInterrupt) {
+        // Stop once an RTS or RTI has taken the stack above where it was when return
+        // started, i.e. the current subroutine or interrupt handler has returned.
+        if (previousWasInterrupt) {
+            return false;
+        }
+        int opcode = space.read(previous, false);
+        return ((opcode == 0x60) || (opcode == 0x40)) && (space.getCpu().getStackPointer() > stepBaseSp);
     }
 
     @Override
@@ -157,6 +269,85 @@ public final class MonitorEngine implements Debugger.Listener {
         // As in VICE, entering the monitor moves each memspace's dot address to its PC.
         mainSpace.setDot(mainSpace.getDisplayPc());
         driveSpace.setDot(driveSpace.getDisplayPc());
+
+        String message = stopMessage;
+        stopMessage = null;
+        if ((message == null) && (debugger.getStopReason() == Debugger.STOP_JAM)) {
+            AddressSpace space = (debugger.getStopCpu() == mainSpace.getDebugCpu()) ? mainSpace : driveSpace;
+            message = "JAM at " + space.getName() + ":$" + Format.hex4(debugger.getStopAddress()) + "\n"
+                    + Disassembler6502.stateLine(space, debugger.getStopAddress());
+        }
+        stepMode = STEP_NONE;
+        stepSpace = null;
+        updateHooks();
+        if (message != null) {
+            host.print(message);
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // Checkpoints and stepping, used by the commands.
+    // ------------------------------------------------------------------------------
+
+    CheckpointManager getCheckpoints() {
+        return checkpoints;
+    }
+
+    void printAsync(String text) {
+        host.print(text);
+    }
+
+    void setStopMessage(String message) {
+        this.stopMessage = message;
+    }
+
+    boolean hasStopMessage() {
+        return stopMessage != null;
+    }
+
+    /**
+     * Turns each CPU's instruction boundary hook on only while checkpoints or stepping
+     * need it, so the emulation runs at full speed otherwise.
+     */
+    void updateHooks() {
+        for (AddressSpace space : new AddressSpace[] { mainSpace, driveSpace }) {
+            boolean needed = checkpoints.needsHooks(space) || ((stepMode != STEP_NONE) && (stepSpace == space));
+            space.getDebugCpu().setListenerHooks(needed);
+        }
+    }
+
+    /**
+     * Starts step (z) or next (n) on the default memspace for the given number of
+     * instructions, then resumes.
+     */
+    void startStep(boolean over, int count) {
+        AddressSpace space = defaultSpace;
+        stepMode = over ? STEP_OVER : STEP_INTO;
+        stepSpace = space;
+        stepRemaining = count;
+        stepStopNext = false;
+        stepWaiting = false;
+        if (over) {
+            int pc = space.getDisplayPc();
+            if (space.getCpu().isInterruptDispatched()) {
+                waitForReturn(pc, space.getCpu().getStackPointer(), true);
+            } else if (space.read(pc, false) == 0x20) {
+                waitForReturn(pc + 3, space.getCpu().getStackPointer(), true);
+            }
+        }
+        updateHooks();
+        resume();
+    }
+
+    /** Starts return (ret) on the default memspace, then resumes. */
+    void startReturn() {
+        AddressSpace space = defaultSpace;
+        stepMode = STEP_RETURN;
+        stepSpace = space;
+        stepBaseSp = space.getCpu().getStackPointer();
+        space.setCurrentInstruction(space.getDisplayPc(), space.getCpu().isInterruptDispatched());
+        updateHooks();
+        resume();
     }
 
     // ------------------------------------------------------------------------------
