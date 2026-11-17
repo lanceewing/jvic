@@ -226,12 +226,18 @@ public interface VicKeys {
         { Keys.SHIFT_RIGHT, VicKeys.RIGHT_SHIFT },
         { Keys.CAPS_LOCK, VicKeys.SHIFT_LOCK },
         { Keys.CONTROL_LEFT, VicKeys.CONTROL },
-        { Keys.LEFT, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_RIGHT, VicKeys.JOYSTICK_LEFT },
-        { Keys.UP, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_DOWN, VicKeys.JOYSTICK_UP },
-        { Keys.DOWN, VicKeys.CURSOR_DOWN, VicKeys.JOYSTICK_DOWN },
-        { Keys.RIGHT, VicKeys.CURSOR_RIGHT, VicKeys.JOYSTICK_RIGHT },
+        // Arrow keys and INSERT are the VIC cursor keys and INST when the joystick is
+        // OFF. When the joystick is ON, JOYSTICK_KEY_MAP below takes over for them.
+        { Keys.LEFT, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_RIGHT },
+        { Keys.UP, VicKeys.LEFT_SHIFT, VicKeys.CURSOR_DOWN },
+        { Keys.DOWN, VicKeys.CURSOR_DOWN },
+        { Keys.RIGHT, VicKeys.CURSOR_RIGHT },
         { Keys.HOME, VicKeys.HOME },
-        { Keys.INSERT, VicKeys.LEFT_SHIFT, VicKeys.DELETE, VicKeys.JOYSTICK_FIRE },
+        { Keys.INSERT, VicKeys.LEFT_SHIFT, VicKeys.DELETE },
+
+        // The PC's Delete key (forward delete) has no VIC equivalent (VIC INST/DEL is
+        // on Backspace), so it is always the joystick fire button, like the numpad.
+        { Keys.FORWARD_DEL, VicKeys.JOYSTICK_FIRE },
         { Keys.ESCAPE, VicKeys.RUN_STOP },
         { Keys.F1, VicKeys.F1 },
         { Keys.F2, VicKeys.LEFT_SHIFT, VicKeys.F1 },
@@ -254,7 +260,21 @@ public interface VicKeys {
         { Keys.NUMPAD_8, VicKeys.JOYSTICK_UP },  // Up
         { Keys.NUMPAD_9, VicKeys.JOYSTICK_NE },  // NE
     };
-    
+
+    /**
+     * Overrides VIC_KEY_MAP for the given libgdx keycodes while the joystick is ON. The
+     * arrow keys then act only as the joystick (no cursor keys and no SHIFT), so that games
+     * that also read the VIC cursor keys, e.g. Moon Patrol's screen centring, don't see
+     * them. INSERT is kept as a fire key for backwards compatibility.
+     */
+    public static final int[][] JOYSTICK_KEY_MAP = new int[][] {
+        { Keys.LEFT, VicKeys.JOYSTICK_LEFT },
+        { Keys.UP, VicKeys.JOYSTICK_UP },
+        { Keys.DOWN, VicKeys.JOYSTICK_DOWN },
+        { Keys.RIGHT, VicKeys.JOYSTICK_RIGHT },
+        { Keys.INSERT, VicKeys.JOYSTICK_FIRE },
+    };
+
     public static final int[][] VIC_KEY_TO_LIBGDX_KEY_MAP = new int[][] {
         { VicKeys.ONE, Keys.NUM_1 },
         { VicKeys.TWO, Keys.NUM_2 },

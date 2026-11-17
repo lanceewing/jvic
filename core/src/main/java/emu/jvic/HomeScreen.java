@@ -191,6 +191,8 @@ public class HomeScreen extends InputAdapter implements Screen {
         basicAppConfigItem.setMachineType("PAL");
         basicAppConfigItem.setRam("RAM_UNEXPANDED");
         basicAppConfigItem.setDiskWrite("persist");
+        // Arrow keys need to be cursor keys for typing/editing in BASIC.
+        basicAppConfigItem.setJoystick("OFF");
         return basicAppConfigItem;
     }
 
@@ -864,7 +866,9 @@ public class HomeScreen extends InputAdapter implements Screen {
                     }
                     appConfigItem.setRam("RAM_AUTO");
                     appConfigItem.setFileData(fileData);
-                    
+                    // Unknown program, so the safer default of cursor keys.
+                    appConfigItem.setJoystick("OFF");
+
                     processProgramSelection(appConfigItem);
                     
                 } else {

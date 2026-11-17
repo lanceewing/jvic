@@ -74,6 +74,7 @@ There are a handful of URL parameters that can be used when loading games. This 
 * type: Specifies the type of file being loaded, in case it isn't clear what it is (DISK, TAPE, CART, PRG), e.g. type=CART
 * filter: Selects the screen filtering mode. Use filter=nearest for sharp nearest-neighbour scaling, filter=linear for standard linear filtering, or a number between 0.0 and 1.0 for the soft filter blend amount, e.g. filter=0.35
 * palette: Selects the PAL palette mode. Currently palette=MID uses a midpoint palette instead of alternating the odd and even PAL palettes
+* joystick: Whether the joystick starts ON or OFF, e.g. joystick=on. Programs loaded via ?url= start with it OFF, and programs from the game list start with it ON (see Joystick keys below)
 
 Examples:
 
@@ -125,6 +126,18 @@ ALT-Y                             | Saves a screenshot on non-web targets.
 ALT-Z                             | Rotates through screen sizes.
 
 These shortcuts are handled by JVic itself rather than being passed through to the emulated VIC-20 keyboard.
+
+### Joystick keys
+The joystick icon (or ALT-J) turns the joystick ON and OFF. While it is ON, the arrow keys act only as the joystick, and while it is OFF they act only as the VIC-20 cursor keys. This stops games that read both, such as Moon Patrol (which uses the cursor keys to centre the screen), from seeing cursor key presses while you play. Turn the joystick OFF to use the cursor keys, then back ON to play.
+
+Key                               | Joystick ON          | Joystick OFF
+:---------------------------------|:---------------------|:---------------------
+Arrow keys                        | Joystick directions  | Cursor keys
+DELETE                            | Fire                 | Fire
+INSERT                            | Fire                 | INST (SHIFT + INST/DEL)
+Numeric keypad (8 directions, 0)  | Joystick, 0 is fire  | Joystick, 0 is fire
+
+Games from the game list start with the joystick ON, unless they are configured otherwise. BASIC and programs you open yourself start with it OFF.
 
 ## Installing the web app on your device.
 JVic follows the PWA (Progressive Web App) spec and can therefore be installed on your device. When you go to the https://vic20.games web site, and you haven't previously installed JVic, then the browser may promote it to you for installation. In Chrome, one of the ways it does this is to show a little installation icon at the end of the browser location field, as indicated by the yellow arrow in the screenshot below. Clicking on that icon will install JVic as if it were a standalone app on your device.

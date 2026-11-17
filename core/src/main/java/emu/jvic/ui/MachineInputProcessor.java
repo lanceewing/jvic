@@ -485,6 +485,15 @@ public class MachineInputProcessor extends InputAdapter {
                 joystickAlignment = joystickAlignment.rotateValue();
             }
         }
+        updateJoystickKeys();
+    }
+
+    /**
+     * The arrow keys and INSERT act as the joystick only while the joystick is ON, i.e.
+     * whenever the joystick icon is active, and as the VIC cursor keys/INST otherwise.
+     */
+    private void updateJoystickKeys() {
+        getKeyboardMatrix().setJoystickKeysActive(!joystickAlignment.equals(JoystickAlignment.OFF));
     }
     
     private void handleSoundToggle() {
@@ -734,6 +743,7 @@ public class MachineInputProcessor extends InputAdapter {
      */
     public void setJoystickAlignment(JoystickAlignment joystickAlignment) {
         this.joystickAlignment = joystickAlignment;
+        updateJoystickKeys();
     }
 
     public static enum JoystickAlignment {

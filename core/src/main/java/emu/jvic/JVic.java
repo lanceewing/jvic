@@ -93,6 +93,7 @@ public class JVic extends Game {
                     adhocProgram.setMachineType("PAL");
                 }
                 adhocProgram.setRam("RAM_AUTO");
+                adhocProgram.setJoystick("OFF");
                 appConfigItem = adhocProgram;
             }
             else if (args.containsKey("filePath")) {
@@ -107,6 +108,7 @@ public class JVic extends Game {
                     adhocProgram.setMachineType("PAL");
                 }
                 adhocProgram.setRam("RAM_AUTO");
+                adhocProgram.setJoystick("OFF");
                 appConfigItem = adhocProgram;
             }
         }
@@ -148,6 +150,10 @@ public class JVic extends Game {
         }
         if (args.containsKey("palette")) {
             appConfigItem.setPalette(args.get("palette"));
+        }
+        if (args.containsKey("joystick")) {
+            // "on" or "off", overriding the programs.json/ad hoc default.
+            appConfigItem.setJoystick(args.get("joystick"));
         }
     }
     
@@ -374,6 +380,7 @@ public class JVic extends Game {
             }
             appConfigItem.setRam("RAM_AUTO");
             appConfigItem.setFileData(fileData);
+            appConfigItem.setJoystick("OFF");
             homeScreen.processProgramSelection(appConfigItem);
         }
     }

@@ -317,6 +317,11 @@ public class MachineScreen implements Screen {
 
         setTextureFilterMode(appConfigItem.getTextureFilter());
         clearActiveScreenBuffers();
+
+        // Programs start with the joystick ON unless configured OFF (BASIC and user
+        // opened files are OFF). This also sets what the arrow keys are mapped to.
+        machineInputProcessor.setJoystickAlignment(appConfigItem.isJoystickOnByDefault()?
+                JoystickAlignment.LEFT : JoystickAlignment.OFF);
     }
 
     private void activateScreenResources(MachineType machineType) {

@@ -34,6 +34,11 @@ public class AppConfigItem {
 
     private String palette;
 
+    // Whether the joystick starts ON (arrow keys act as the joystick) or OFF (arrow keys act
+    // as the VIC cursor keys). Absent (null) means ON, as most programs in programs.json are
+    // joystick games; those that aren't set "OFF". BASIC and user-opened files set "OFF".
+    private String joystick;
+
     // Required for the web open file feature, as the same event that selects
     // the file needs to read the data.
     private byte[] fileData;
@@ -264,5 +269,24 @@ public class AppConfigItem {
 
     public void setPalette(String palette) {
         this.palette = palette;
+    }
+
+    public String getJoystick() {
+        return joystick;
+    }
+
+    /**
+     * @param joystick "ON" or "OFF" (case insensitive), or null for the default of ON.
+     */
+    public void setJoystick(String joystick) {
+        this.joystick = joystick;
+    }
+
+    /**
+     * @return true if the joystick should be ON when this program starts, i.e. unless the
+     *         joystick config value is explicitly "OFF".
+     */
+    public boolean isJoystickOnByDefault() {
+        return !"OFF".equalsIgnoreCase(joystick);
     }
 }

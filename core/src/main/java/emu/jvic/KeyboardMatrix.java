@@ -157,7 +157,26 @@ public abstract class KeyboardMatrix extends InputAdapter {
      * Maps libgdx keycodes to VIC keys.
      */
     private HashMap<Integer, int[]> keycodeConvHashMap;
-    
+
+    /**
+     * Maps libgdx keycodes to VIC keys while the joystick is ON. Takes precedence over
+     * keycodeConvHashMap for the keycodes it contains (the arrow keys and INSERT).
+     */
+    private HashMap<Integer, int[]> joystickKeycodeConvHashMap;
+
+    /**
+     * Whether the joystick is ON, i.e. whether the arrow keys and INSERT are mapped to the
+     * joystick rather than to the VIC cursor keys and INST.
+     */
+    private boolean joystickKeysActive;
+
+    /**
+     * The VIC keys that were pressed for each libgdx keycode that is currently down. The
+     * key up releases exactly these, so that changing the joystick mode while a key is held
+     * can't leave a VIC key or joystick direction stuck down.
+     */
+    private HashMap<Integer, int[]> pressedKeycodeVicKeys = new HashMap<Integer, int[]>();
+
     /**
      * Maps VIC keys to libgdx keycodes.
      */
@@ -184,14 +203,9 @@ public abstract class KeyboardMatrix extends InputAdapter {
         }
         
         // Converts libgdx keycodes into VIC key combinations.
-        keycodeConvHashMap = new HashMap<Integer, int[]>();
-        for (int i=0; i < VicKeys.VIC_KEY_MAP.length; i++) {
-            int[] vicKeyMapping = VicKeys.VIC_KEY_MAP[i];
-            int[] vicKeys = new int[vicKeyMapping.length - 1];
-            System.arraycopy(vicKeyMapping, 1, vicKeys, 0, vicKeyMapping.length-1);
-            keycodeConvHashMap.put(vicKeyMapping[0], vicKeys);
-        }
-        
+        keycodeConvHashMap = buildKeycodeConvHashMap(VicKeys.VIC_KEY_MAP);
+        joystickKeycodeConvHashMap = buildKeycodeConvHashMap(VicKeys.JOYSTICK_KEY_MAP);
+
         // Converts VIC key to libgdx keycode.
         vicKeyToLibgdxKeyMap = new HashMap<Integer, Integer>();
         for (int i=0; i < VicKeys.VIC_KEY_TO_LIBGDX_KEY_MAP.length; i++) {
@@ -201,14 +215,66 @@ public abstract class KeyboardMatrix extends InputAdapter {
         }
     }
     
+    private static HashMap<Integer, int[]> buildKeycodeConvHashMap(int[][] keyMap) {
+        HashMap<Integer, int[]> convHashMap = new HashMap<Integer, int[]>();
+        for (int i=0; i < keyMap.length; i++) {
+            int[] vicKeyMapping = keyMap[i];
+            int[] vicKeys = new int[vicKeyMapping.length - 1];
+            System.arraycopy(vicKeyMapping, 1, vicKeys, 0, vicKeyMapping.length-1);
+            convHashMap.put(vicKeyMapping[0], vicKeys);
+        }
+        return convHashMap;
+    }
+
+    /**
+     * Returns the VIC keys that the given libgdx keycode currently maps to, taking into
+     * account whether the joystick is ON or not.
+     *
+     * @param keycode The libgdx keycode.
+     *
+     * @return The VIC keys, or null if the keycode is not mapped.
+     */
+    private int[] getVicKeysForKeycode(int keycode) {
+        if (joystickKeysActive) {
+            int[] vicKeys = joystickKeycodeConvHashMap.get(keycode);
+            if (vicKeys != null) {
+                return vicKeys;
+            }
+        }
+        return keycodeConvHashMap.get(keycode);
+    }
+
+    /**
+     * Sets whether the joystick is ON. When ON, the arrow keys and INSERT act only as the
+     * joystick; when OFF, they act only as the VIC cursor keys and INST. Any joystick
+     * state still held is cleared on a change, e.g. a direction from the on-screen
+     * joystick, which stops being processed once hidden.
+     *
+     * @param joystickKeysActive true if the joystick is ON; otherwise false.
+     */
+    public void setJoystickKeysActive(boolean joystickKeysActive) {
+        if (this.joystickKeysActive != joystickKeysActive) {
+            this.joystickKeysActive = joystickKeysActive;
+            setKeyMatrixRow(JOYSTICK, 0);
+        }
+    }
+
+    /**
+     * @return true if the joystick is ON, i.e. the arrow keys are mapped to the joystick.
+     */
+    public boolean isJoystickKeysActive() {
+        return joystickKeysActive;
+    }
+
     public boolean keyDown(int keycode) {
         if ((keycode == Keys.ALT_LEFT) || (keycode == Keys.ALT_RIGHT)) {
             altKeyDown = true;
             return true;
         }
         if (altKeyDown) return false;
-        if (!keycodeConvHashMap.containsKey(keycode)) return false;
-        int[] vicKeys = keycodeConvHashMap.get(keycode);
+        int[] vicKeys = getVicKeysForKeycode(keycode);
+        if (vicKeys == null) return false;
+        pressedKeycodeVicKeys.put(keycode, vicKeys);
         for (int i=0; i<vicKeys.length; i++) {
             vicKeyDown(vicKeys[i]);
         }
@@ -254,9 +320,14 @@ public abstract class KeyboardMatrix extends InputAdapter {
             return true;
         }
         if (altKeyDown) return false;
-        if (!keycodeConvHashMap.containsKey(keycode)) return false;
+        // Release the VIC keys that were pressed for this keycode, which may differ from
+        // its current mapping if the joystick mode changed while the key was held.
+        int[] vicKeys = pressedKeycodeVicKeys.remove(keycode);
+        if (vicKeys == null) {
+            vicKeys = getVicKeysForKeycode(keycode);
+        }
+        if (vicKeys == null) return false;
         if (keycode != 0) {
-            int[] vicKeys = keycodeConvHashMap.get(keycode);
             for (int i=0; i<vicKeys.length; i++) {
                 vicKeyUp(vicKeys[i]);
             }
