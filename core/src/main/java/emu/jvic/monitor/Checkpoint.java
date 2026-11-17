@@ -99,6 +99,17 @@ final class Checkpoint {
 
     private String command;
 
+    private int hitCount;
+
+    /** How many times the checkpoint has been hit (for the binary monitor). */
+    int getHitCount() {
+        return hitCount;
+    }
+
+    void countHit() {
+        hitCount++;
+    }
+
     /** The monitor command to run when hit (the command command), or null. */
     String getCommand() {
         return command;

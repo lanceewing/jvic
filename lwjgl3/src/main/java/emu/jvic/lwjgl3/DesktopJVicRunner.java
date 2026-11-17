@@ -30,6 +30,7 @@ import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
 import emu.jvic.lwjgl3.disk.DesktopDiskImagePersistence;
+import emu.jvic.lwjgl3.monitor.BinaryMonitorServer;
 import emu.jvic.lwjgl3.monitor.DesktopMonitorChannel;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.memory.RamType;
@@ -49,6 +50,7 @@ public class DesktopJVicRunner extends JVicRunner {
     private volatile MonitorSession monitorSession;
     private DesktopMonitorChannel monitorChannel;
     private RemoteTextMonitor remoteMonitor;
+    private BinaryMonitorServer binaryMonitor;
 
     public DesktopJVicRunner(KeyboardMatrix keyboardMatrix, PixelData pixelData, SoundGenerator soundGenerator) {
         super(keyboardMatrix, pixelData, soundGenerator);
@@ -77,6 +79,10 @@ public class DesktopJVicRunner extends JVicRunner {
 
                 @Override
                 public void quit() {
+                    if (binaryMonitor != null) {
+                        // Sends the reply to the binary monitor's quit before exiting.
+                        binaryMonitor.stop();
+                    }
                     Gdx.app.postRunnable(() -> Gdx.app.exit());
                 }
 
@@ -100,6 +106,29 @@ public class DesktopJVicRunner extends JVicRunner {
             });
         }
         return monitorChannel;
+    }
+
+    /**
+     * Starts VICE's remote text monitor on 127.0.0.1 at the given port. It is off
+     * unless the remotemonitor command-line option is given.
+     *
+     * @param port The port, e.g. 6510.
+     *
+     * @throws java.io.IOException if the port can't be opened.
+     */
+    /**
+     * Starts VICE's binary monitor on 127.0.0.1 at the given port (for IDE
+     * debuggers). It is off unless the binarymonitor command-line option is given.
+     *
+     * @param port The port, e.g. 6502.
+     *
+     * @throws java.io.IOException if the port can't be opened.
+     */
+    public void startBinaryMonitor(int port) throws IOException {
+        if (binaryMonitor == null) {
+            getMonitorChannel();
+            binaryMonitor = new BinaryMonitorServer(monitorSession, this::enqueueMachineAction, port);
+        }
     }
 
     /**

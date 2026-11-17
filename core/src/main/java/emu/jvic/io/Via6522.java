@@ -1,6 +1,8 @@
 package emu.jvic.io;
 
 import emu.jvic.memory.MemoryMappedChip;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates a 6522 VIA IO/timer chip.
@@ -1081,5 +1083,119 @@ public class Via6522 extends MemoryMappedChip {
    */
   public int getCb2() {
     return cb2;
+  }
+
+  /**
+   * Writes the VIA's registers, timers and handshake state to a save state. Additive:
+   * reads the existing fields in a fixed order, which loadState must follow.
+   */
+  public void saveState(StateWriter out) {
+      out.writeInt(outputRegisterB);
+      out.writeInt(inputRegisterB);
+      out.writeInt(portBPins);
+      out.writeInt(dataDirectionRegisterB);
+      out.writeInt(outputRegisterA);
+      out.writeInt(inputRegisterA);
+      out.writeInt(portAPins);
+      out.writeInt(dataDirectionRegisterA);
+      out.writeInt(timer1Counter);
+      out.writeInt(timer1Latch);
+      out.writeBoolean(timer1Loaded);
+      out.writeInt(timer1Pb7);
+      out.writeInt(timer2Counter);
+      out.writeInt(timer2Latch);
+      out.writeBoolean(timer2Loaded);
+      out.writeInt(shiftRegister);
+      out.writeInt(shiftClock);
+      out.writeInt(shiftCounter);
+      out.writeBoolean(shiftingOut);
+      out.writeBoolean(timer2Shift);
+      out.writeBoolean(externalClockShift);
+      out.writeBoolean(systemClockShift);
+      out.writeBoolean(timer2ModeWrite);
+      out.writeBoolean(shiftRegisterWrite);
+      out.writeInt(auxiliaryControlRegister);
+      out.writeInt(peripheralControlRegister);
+      out.writeInt(interruptFlagRegister);
+      out.writeInt(interruptEnableRegister);
+      out.writeInt(timer1PB7Mode);
+      out.writeInt(timer1Mode);
+      out.writeInt(timer2Mode);
+      out.writeInt(shiftRegisterMode);
+      out.writeInt(portALatchMode);
+      out.writeInt(portBLatchMode);
+      out.writeInt(ca1ControlMode);
+      out.writeInt(ca2ControlMode);
+      out.writeInt(cb1ControlMode);
+      out.writeInt(cb2ControlMode);
+      out.writeInt(ca1);
+      out.writeInt(ca2);
+      out.writeInt(cb1);
+      out.writeInt(cb2);
+      out.writeInt(ca2PulseModeCount);
+      out.writeInt(cb2PulseModeCount);
+      out.writeBoolean(pb7DelayedPulseStart);
+      out.writeBoolean(timer1HasShot);
+      out.writeBoolean(timer2HasShot);
+      out.writeBoolean(timer1Underflowed);
+      out.writeInt(pb6);
+      out.writeBoolean(autoResetIrq);
+  }
+
+  /**
+   * Restores the VIA's registers, timers and handshake state from a save state
+   * written by saveState.
+   */
+  public void loadState(StateReader in) {
+      outputRegisterB = in.readInt();
+      inputRegisterB = in.readInt();
+      portBPins = in.readInt();
+      dataDirectionRegisterB = in.readInt();
+      outputRegisterA = in.readInt();
+      inputRegisterA = in.readInt();
+      portAPins = in.readInt();
+      dataDirectionRegisterA = in.readInt();
+      timer1Counter = in.readInt();
+      timer1Latch = in.readInt();
+      timer1Loaded = in.readBoolean();
+      timer1Pb7 = in.readInt();
+      timer2Counter = in.readInt();
+      timer2Latch = in.readInt();
+      timer2Loaded = in.readBoolean();
+      shiftRegister = in.readInt();
+      shiftClock = in.readInt();
+      shiftCounter = in.readInt();
+      shiftingOut = in.readBoolean();
+      timer2Shift = in.readBoolean();
+      externalClockShift = in.readBoolean();
+      systemClockShift = in.readBoolean();
+      timer2ModeWrite = in.readBoolean();
+      shiftRegisterWrite = in.readBoolean();
+      auxiliaryControlRegister = in.readInt();
+      peripheralControlRegister = in.readInt();
+      interruptFlagRegister = in.readInt();
+      interruptEnableRegister = in.readInt();
+      timer1PB7Mode = in.readInt();
+      timer1Mode = in.readInt();
+      timer2Mode = in.readInt();
+      shiftRegisterMode = in.readInt();
+      portALatchMode = in.readInt();
+      portBLatchMode = in.readInt();
+      ca1ControlMode = in.readInt();
+      ca2ControlMode = in.readInt();
+      cb1ControlMode = in.readInt();
+      cb2ControlMode = in.readInt();
+      ca1 = in.readInt();
+      ca2 = in.readInt();
+      cb1 = in.readInt();
+      cb2 = in.readInt();
+      ca2PulseModeCount = in.readInt();
+      cb2PulseModeCount = in.readInt();
+      pb7DelayedPulseStart = in.readBoolean();
+      timer1HasShot = in.readBoolean();
+      timer2HasShot = in.readBoolean();
+      timer1Underflowed = in.readBoolean();
+      pb6 = in.readInt();
+      autoResetIrq = in.readBoolean();
   }
 }

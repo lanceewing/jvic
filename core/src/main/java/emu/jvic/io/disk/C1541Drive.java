@@ -9,6 +9,8 @@ import emu.jvic.memory.Memory;
 import emu.jvic.memory.RamChip;
 import emu.jvic.memory.RomChip;
 import emu.jvic.memory.UnconnectedMemory;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * Emulates the Commodore 1541 disk drive. This is a whole machine in and of
@@ -782,5 +784,89 @@ public class C1541Drive {
                 }
             }
         };
+    }
+
+    /**
+     * Writes the drive to a save state: its CPU, memory and VIAs, the head and motor
+     * state, and the disk (its image, and the GCR data of the sector under the head,
+     * which may hold writes not yet committed).
+     */
+    public void saveState(StateWriter out) {
+        cpu.saveState(out);
+        memory.saveState(out);
+        via1.saveState(out);
+        via2.saveState(out);
+        out.writeInt(currentTrack);
+        out.writeInt(currentSectorOffset);
+        out.writeInt(currentTrackSize);
+        out.writeInt(currentHalfTrack);
+        out.writeBoolean(diskModeWrite);
+        out.writeBoolean(lastSync);
+        out.writeInt(bytesWritten);
+        out.writeInt(currentByte);
+        out.writeBoolean(byteReady);
+        out.writeBoolean(motorOn);
+        out.writeBoolean(writeProtected);
+        out.writeLong(nextMoveForward);
+        out.writeLong(totalElapsedCycles);
+        out.writeBoolean(disk != null);
+        if (disk != null) {
+            out.writeBytes(disk.copyRawImage());
+            out.writeInt((currentSector != null) ? currentSector.sectorNum : 0);
+            out.writeInts((currentSector != null) ? currentSector.gcrData : new int[0]);
+        }
+    }
+
+    /**
+     * Restores the drive from a save state written by saveState. A disk in the state
+     * replaces the disk in the drive (keeping its persistence session, if it has one).
+     */
+    public void loadState(StateReader in) {
+        cpu.loadState(in);
+        memory.loadState(in);
+        via1.loadState(in);
+        via2.loadState(in);
+        int track = in.readInt();
+        int sectorOffset = in.readInt();
+        int trackSize = in.readInt();
+        int halfTrack = in.readInt();
+        boolean modeWrite = in.readBoolean();
+        boolean sync = in.readBoolean();
+        int written = in.readInt();
+        int curByte = in.readInt();
+        boolean ready = in.readBoolean();
+        boolean motor = in.readBoolean();
+        boolean protect = in.readBoolean();
+        long nextMove = in.readLong();
+        long elapsed = in.readLong();
+        if (in.readBoolean()) {
+            byte[] image = in.readBytes();
+            if (disk == null) {
+                initialiseDisk(image, new emu.jvic.io.disk.persistence.NoOpDiskImagePersistenceSession(image), protect);
+            } else {
+                initialiseDisk(image, diskPersistenceSession, protect);
+            }
+            int sectorNum = in.readInt();
+            int[] gcr = in.readInts();
+            currentSector = disk.getSector(track, sectorNum);
+            if (gcr.length == currentSector.gcrData.length) {
+                currentSector.gcrData = gcr;
+            }
+        } else if (disk != null) {
+            ejectDisk();
+        }
+        currentTrack = track;
+        currentSectorOffset = sectorOffset;
+        currentTrackSize = trackSize;
+        currentHalfTrack = halfTrack;
+        diskModeWrite = modeWrite;
+        lastSync = sync;
+        bytesWritten = written;
+        currentByte = curByte;
+        byteReady = ready;
+        motorOn = motor;
+        writeProtected = protect;
+        nextMoveForward = nextMove;
+        totalElapsedCycles = elapsed;
     }
 }

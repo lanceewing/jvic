@@ -3,6 +3,8 @@ package emu.jvic.video;
 import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates a special PIVIC44 mode where the pixels are output at twice the speed.
@@ -86,6 +88,16 @@ public class Vic44 extends Vic {
 
     private int[] pal_palette_o = palOddRGBA8888Colours;
     private int[] pal_palette_e = palEvenRGBA8888Colours;
+
+    @Override
+    public int[] getPaletteColours() {
+        return pal_palette_e.clone();
+    }
+
+    @Override
+    public int[][] getAllPalettes() {
+        return new int[][] { pal_palette_e.clone(), pal_palette_o.clone() };
+    }
     
     // Reference that alternates on each line between even and odd PAL palettes.
     private int[] pal_palette = pal_palette_e;
@@ -1018,5 +1030,22 @@ public class Vic44 extends Vic {
      */
     public void setCharRom(byte[] charRom) {
         this.charRom = charRom;
+    }
+
+    /**
+     * Writes the VIC44's own state to a save state. Additive: reads the existing fields in a fixed
+     * order, which loadExtraState must follow.
+     */
+    @Override
+    protected void saveExtraState(StateWriter out) {
+        out.writeBoolean(pal_palette == pal_palette_o);
+    }
+
+    /**
+     * Restores the VIC44's own state from a save state written by saveExtraState.
+     */
+    @Override
+    protected void loadExtraState(StateReader in) {
+        pal_trunc_palette = pal_palette = in.readBoolean() ? pal_palette_o : pal_palette_e;
     }
 }

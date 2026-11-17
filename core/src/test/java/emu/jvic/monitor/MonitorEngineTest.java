@@ -125,9 +125,12 @@ public class MonitorEngineTest {
     }
 
     @Test
-    void unimplementedCommandsSaySo() {
-        assertOutput("The profile command is not implemented in jvic yet.\n", "profile");
-        assertOutput("The dump command is not implemented in jvic yet.\n", "dump");
+    void everyCommandInVicesListIsImplemented() {
+        for (MonitorEngine.CommandGroup group : engine.getGroups()) {
+            for (MonitorCommand command : group.commands) {
+                assertFalse(command instanceof MonitorCommand.NotImplemented, command.getName());
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------

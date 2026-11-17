@@ -4,6 +4,8 @@ import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.memory.MemoryMappedChip;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the VIC chip. The emulation is very similar to the PIVIC firmware code,
@@ -353,5 +355,101 @@ public abstract class Vic extends MemoryMappedChip {
      * @return true if a frame has just been completed.
      */
     public abstract boolean emulateCycle();
-    
+
+    /**
+     * Writes the VIC's counters and latches (its registers are in memory) to a save
+     * state. Additive: reads the existing fields in a fixed order, which loadState
+     * must follow.
+     */
+    public void saveState(StateWriter out) {
+        out.writeInt(pixelCounter);
+        out.writeInt(videoMatrixCounter);
+        out.writeInt(videoMatrixLatch);
+        out.writeInt(verticalCounter);
+        out.writeInt(horizontalCounter);
+        out.writeInt(prevHorizontalCounter);
+        out.writeInt(horizontalCellCounter);
+        out.writeInt(verticalCellCounter);
+        out.writeInt(cellDepthCounter);
+        out.writeInt(halfLineCounter);
+        out.writeInt(cellIndex);
+        out.writeInt(charData);
+        out.writeInt(charDataLatch);
+        out.writeInt(colourData);
+        out.writeBoolean(hiresMode);
+        out.writeInt(borderColour);
+        out.writeInt(pixel1);
+        out.writeInt(pixel2);
+        out.writeInt(pixel3);
+        out.writeInt(pixel4);
+        out.writeInt(pixel5);
+        out.writeInt(pixel6);
+        out.writeInt(pixel7);
+        out.writeInt(pixel8);
+        out.writeInt(fetchState);
+        out.writeInt(charDataOffset);
+        saveExtraState(out);
+    }
+
+    /**
+     * Restores the VIC's counters and latches (its registers are in memory) from a
+     * save state written by saveState.
+     */
+    public void loadState(StateReader in) {
+        pixelCounter = in.readInt();
+        videoMatrixCounter = in.readInt();
+        videoMatrixLatch = in.readInt();
+        verticalCounter = in.readInt();
+        horizontalCounter = in.readInt();
+        prevHorizontalCounter = in.readInt();
+        horizontalCellCounter = in.readInt();
+        verticalCellCounter = in.readInt();
+        cellDepthCounter = in.readInt();
+        halfLineCounter = in.readInt();
+        cellIndex = in.readInt();
+        charData = in.readInt();
+        charDataLatch = in.readInt();
+        colourData = in.readInt();
+        hiresMode = in.readBoolean();
+        borderColour = in.readInt();
+        pixel1 = in.readInt();
+        pixel2 = in.readInt();
+        pixel3 = in.readInt();
+        pixel4 = in.readInt();
+        pixel5 = in.readInt();
+        pixel6 = in.readInt();
+        pixel7 = in.readInt();
+        pixel8 = in.readInt();
+        fetchState = in.readInt();
+        charDataOffset = in.readInt();
+        loadExtraState(in);
+    }
+
+    /**
+     * The 16 colours as RGBA8888, as the debug monitor reports them (for PAL, the even
+     * line palette).
+     *
+     * @return The palette, or an empty array if the VIC doesn't say.
+     */
+    public int[] getPaletteColours() {
+        return new int[0];
+    }
+
+    /**
+     * Every palette the VIC draws with (PAL alternates between two), so that the debug
+     * monitor can turn pixels back into colour numbers.
+     *
+     * @return The palettes.
+     */
+    public int[][] getAllPalettes() {
+        return new int[][] { getPaletteColours() };
+    }
+
+    /** Subclasses write their own state here. */
+    protected void saveExtraState(StateWriter out) {
+    }
+
+    /** Subclasses read their own state here, as saveExtraState wrote it. */
+    protected void loadExtraState(StateReader in) {
+    }
 }

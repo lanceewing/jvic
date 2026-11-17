@@ -26,6 +26,8 @@ final class CheckpointManager {
         final AddressSpace space;
         final int[] execCounts = new int[0x10000];
         final WatchProxyChip[] proxies = new WatchProxyChip[0x10000];
+        /** Whether a watchpoint covers each address (proxies may also be there for the memmap). */
+        final boolean[] watched = new boolean[0x10000];
         final WatchProxyChip.Listener proxyListener;
         /** Accesses by the current instruction, reported when it completes. */
         final List<Object[]> pendingAccesses = new ArrayList<>();
@@ -140,6 +142,11 @@ final class CheckpointManager {
                     }
                 }
             }
+            System.arraycopy(watched, 0, state.watched, 0, watched.length);
+            if ((state.space == engine.getMainSpace()) && engine.getMemMap().isRecording()) {
+                // The memmap needs every access: a proxy on every address.
+                java.util.Arrays.fill(watched, true);
+            }
             reconcileProxies(state, watched);
         }
         engine.updateHooks();
@@ -169,6 +176,9 @@ final class CheckpointManager {
      * which instruction made the access).
      */
     boolean needsHooks(AddressSpace space) {
+        if ((space == engine.getMainSpace()) && engine.getMemMap().isRecording()) {
+            return true;
+        }
         for (Checkpoint checkpoint : checkpoints) {
             if ((checkpoint.getSpace() == space) && checkpoint.isEnabled()) {
                 return true;
@@ -196,6 +206,7 @@ final class CheckpointManager {
                 continue;
             }
             String text = header(checkpoint, "exec", address) + Disassembler6502.stateLine(space, address);
+            checkpoint.countHit();
             if (!checkpoint.isStop()) {
                 engine.printAsync(text);
                 if (checkpoint.getCommand() != null) {
@@ -205,6 +216,7 @@ final class CheckpointManager {
                 stop = true;
                 engine.setStopMessage(text);
                 engine.setStopCommand(checkpoint.getCommand());
+                engine.setStopCheckpoint(checkpoint);
                 if (checkpoint.isTemporary()) {
                     remove(checkpoint);
                 }
@@ -220,6 +232,15 @@ final class CheckpointManager {
      * stops the machine there.
      */
     private void onAccess(AddressSpace space, int address, int operation) {
+        SpaceState state = state(space);
+        MemMap memMap = engine.getMemMap();
+        if (memMap.isRecording() && (space == engine.getMainSpace())) {
+            memMap.record(address, state.proxies[address & 0xFFFF], operation == Checkpoint.STORE,
+                    space.getCpu().isDummyAccess());
+        }
+        if (!state.watched[address & 0xFFFF]) {
+            return;
+        }
         if ((operation == Checkpoint.LOAD) && (address == (space.getCpu().getProgramCounter() & 0xFFFF))) {
             // A read at the PC is an opcode or operand fetch (or a dummy read there),
             // not a data load. VICE doesn't count fetches as loads either.
@@ -234,6 +255,7 @@ final class CheckpointManager {
                     || !checkpoint.contains(address) || !passes(checkpoint)) {
                 continue;
             }
+            checkpoint.countHit();
             state(space).pendingAccesses.add(new Object[] {
                 checkpoint, (operation == Checkpoint.LOAD) ? "load" : "store", address,
                 space.getCurrentInstruction(),
@@ -267,6 +289,7 @@ final class CheckpointManager {
             } else if (!engine.hasStopMessage()) {
                 engine.setStopMessage(text);
                 engine.setStopCommand(checkpoint.getCommand());
+                engine.setStopCheckpoint(checkpoint);
             }
         }
         pending.clear();

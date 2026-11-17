@@ -65,6 +65,12 @@ public final class MonitorEngine implements Debugger.Listener {
 
     private final CheckpointManager checkpoints;
 
+    /** The memory map (memmapshow and friends); recording starts when first used. */
+    private final MemMap memMap = new MemMap();
+
+    /** The profiler (profile). */
+    private final Profiler profiler = new Profiler();
+
     private MonitorFileSystem fileSystem = new InMemoryMonitorFileSystem();
 
     // log and logname. The log file's path is fixed when logging starts, so a later
@@ -346,6 +352,7 @@ public final class MonitorEngine implements Debugger.Listener {
      */
     void resume() {
         resumed = true;
+        stopCheckpoint = null;
         debugger.resume();
         host.resume();
     }
@@ -368,6 +375,14 @@ public final class MonitorEngine implements Debugger.Listener {
         boolean stop = false;
         if (historyEnabled && (interrupt == 0)) {
             space.history().record(space, address);
+        }
+        if (space == mainSpace) {
+            if (memMap.isRecording() && (interrupt == 0)) {
+                memMap.exec(address, mainSpace.getMemory().getMemoryMap()[address & 0xFFFF]);
+            }
+            if (profiler.isRunning()) {
+                profiler.onBoundary(space, address, interrupt);
+            }
         }
         if ((interrupt == 0) && checkpoints.hasExec(space, address)) {
             stop = checkpoints.checkExec(space, address);
@@ -484,6 +499,22 @@ public final class MonitorEngine implements Debugger.Listener {
 
     CheckpointManager getCheckpoints() {
         return checkpoints;
+    }
+
+    MemMap getMemMap() {
+        return memMap;
+    }
+
+    Profiler getProfiler() {
+        return profiler;
+    }
+
+    /** Starts or stops memmap recording, putting the proxies in place or removing them. */
+    void setMemMapRecording(boolean recording) {
+        if (memMap.isRecording() != recording) {
+            memMap.setRecording(recording);
+            checkpoints.refresh();
+        }
     }
 
     void printAsync(String text) {
@@ -692,6 +723,17 @@ public final class MonitorEngine implements Debugger.Listener {
         this.stopMessage = message;
     }
 
+    /** The checkpoint that stopped the machine, until it resumes (for the binary monitor). */
+    private Checkpoint stopCheckpoint;
+
+    void setStopCheckpoint(Checkpoint checkpoint) {
+        this.stopCheckpoint = checkpoint;
+    }
+
+    Checkpoint getStopCheckpoint() {
+        return stopCheckpoint;
+    }
+
     /** Sets the command to run when the machine has stopped (a checkpoint's command). */
     void setStopCommand(String command) {
         this.stopCommand = command;
@@ -755,6 +797,21 @@ public final class MonitorEngine implements Debugger.Listener {
     private String autostartKind;
     private byte[] autostartData;
     private String autostartKeys;
+
+    /**
+     * After undump: stepping and assembly mode end, pending autostarts and typing
+     * are dropped, and each memspace's dot moves to its PC, as when the machine stops.
+     */
+    void onStateLoaded() {
+        stepMode = STEP_NONE;
+        stepSpace = null;
+        assemblySpace = null;
+        autostartKind = null;
+        keyboardQueue.setLength(0);
+        mainSpace.setDot(mainSpace.getDisplayPc());
+        driveSpace.setDot(driveSpace.getDisplayPc());
+        updateHooks();
+    }
 
     /** The disk in drive 8, or null if there is none. */
     D64Disk getDisk() {
@@ -823,7 +880,7 @@ public final class MonitorEngine implements Debugger.Listener {
     void updateHooks() {
         for (AddressSpace space : new AddressSpace[] { mainSpace, driveSpace }) {
             boolean needed = checkpoints.needsHooks(space) || ((stepMode != STEP_NONE) && (stepSpace == space))
-                    || historyEnabled;
+                    || historyEnabled || ((space == mainSpace) && profiler.isRunning());
             space.getDebugCpu().setListenerHooks(needed);
         }
     }

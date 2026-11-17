@@ -60,6 +60,24 @@ final class CpuHistory {
         return cycles[index(n)];
     }
 
+    int getAddress(int n) {
+        return addresses[index(n)];
+    }
+
+    /** The instruction's bytes: opcode | b1 << 8 | b2 << 16. */
+    int getBytes(int n) {
+        return bytes[index(n)];
+    }
+
+    /** A | X << 8 | Y << 16 | SP << 24. */
+    int getRegisters(int n) {
+        return registers[index(n)];
+    }
+
+    int getStatus(int n) {
+        return status[index(n)] & 0xFF;
+    }
+
     /**
      * The chis line for the n-th entry from the oldest, e.g.
      * ".C:e5e8  A5 C6       LDA $C6        A:00 X:00 Y:0a SP:f3 ..-...Z.       575937".

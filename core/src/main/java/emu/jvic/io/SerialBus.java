@@ -1,6 +1,8 @@
 package emu.jvic.io;
 
 import java.util.HashSet;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the Commodore IEC serial bus.
@@ -167,6 +169,42 @@ public class SerialBus {
             lastAtn = newAtn;
             lastData = newData;
             lastClock = newClock;
+        }
+    }
+
+    /**
+     * Writes which devices pull each line low to a save state. The devices are given in
+     * a fixed order, since they are objects, not values.
+     */
+    public void saveState(StateWriter out, Object[] devices) {
+        out.writeInt(mask(attentionPullDowns, devices));
+        out.writeInt(mask(dataPullDowns, devices));
+        out.writeInt(mask(clockPullDowns, devices));
+    }
+
+    /** Restores the lines from a save state, with the devices in the order saveState had. */
+    public void loadState(StateReader in, Object[] devices) {
+        unmask(attentionPullDowns, in.readInt(), devices);
+        unmask(dataPullDowns, in.readInt(), devices);
+        unmask(clockPullDowns, in.readInt(), devices);
+    }
+
+    private static int mask(HashSet<Object> pullDowns, Object[] devices) {
+        int mask = 0;
+        for (int i = 0; i < devices.length; i++) {
+            if (pullDowns.contains(devices[i])) {
+                mask |= 1 << i;
+            }
+        }
+        return mask;
+    }
+
+    private static void unmask(HashSet<Object> pullDowns, int mask, Object[] devices) {
+        pullDowns.clear();
+        for (int i = 0; i < devices.length; i++) {
+            if ((mask & (1 << i)) != 0) {
+                pullDowns.add(devices[i]);
+            }
         }
     }
 }

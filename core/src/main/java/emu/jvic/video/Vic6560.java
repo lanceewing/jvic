@@ -3,6 +3,8 @@ package emu.jvic.video;
 import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the NTSC VIC chip (6560).
@@ -68,6 +70,11 @@ public class Vic6560 extends Vic {
     
     // NTSC Palette data.
     private int pIndex;
+
+    @Override
+    public int[] getPaletteColours() {
+        return ntsc_palette.clone();
+    }
     
     private int[][] palette = { 
         ntsc_palette, ntsc_palette, ntsc_palette, ntsc_palette, 
@@ -1139,5 +1146,34 @@ public class Vic6560 extends Vic {
         }
 
         return frameRenderComplete;
+    }
+
+    /**
+     * Writes the 6560's own state to a save state. Additive: reads the existing fields in a fixed
+     * order, which loadExtraState must follow.
+     */
+    @Override
+    protected void saveExtraState(StateWriter out) {
+        out.writeInt(pIndex);
+        out.writeBoolean(oddLine);
+        out.writeBoolean(vblanking);
+        out.writeInt(do_vblank);
+        out.writeInt(videoMatrixLineStart);
+        out.writeBoolean(videoMatrixCarry4);
+        out.writeBoolean(videoMatrixCarry8);
+    }
+
+    /**
+     * Restores the 6560's own state from a save state written by saveExtraState.
+     */
+    @Override
+    protected void loadExtraState(StateReader in) {
+        pIndex = in.readInt();
+        oddLine = in.readBoolean();
+        vblanking = in.readBoolean();
+        do_vblank = in.readInt();
+        videoMatrixLineStart = in.readInt();
+        videoMatrixCarry4 = in.readBoolean();
+        videoMatrixCarry8 = in.readBoolean();
     }
 }

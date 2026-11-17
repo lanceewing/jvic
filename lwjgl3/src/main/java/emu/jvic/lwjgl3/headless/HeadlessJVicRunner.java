@@ -25,6 +25,7 @@ import emu.jvic.config.AppConfigItem;
 import emu.jvic.debug.Debugger;
 import emu.jvic.debug.MonitorChannel;
 import emu.jvic.lwjgl3.DesktopProgramLoader;
+import emu.jvic.lwjgl3.monitor.BinaryMonitorServer;
 import emu.jvic.lwjgl3.monitor.DesktopMonitorChannel;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.memory.RamType;
@@ -123,6 +124,7 @@ public final class HeadlessJVicRunner {
     private Machine machine;
     private MonitorSession session;
     private RemoteTextMonitor remoteMonitor;
+    private BinaryMonitorServer binaryMonitor;
     private volatile boolean quitRequested;
     private boolean warp;
     /** initbreak=ready: stop once BASIC is ready. */
@@ -184,6 +186,9 @@ public final class HeadlessJVicRunner {
             }
             if (remoteMonitor != null) {
                 remoteMonitor.stop();
+            }
+            if (binaryMonitor != null) {
+                binaryMonitor.stop();
             }
             stdout.flush();
         }
@@ -287,6 +292,17 @@ public final class HeadlessJVicRunner {
                 stderr.println("Remote monitor listening on 127.0.0.1:" + remoteMonitor.getPort());
             } catch (IOException e) {
                 stderr.println("jvic: could not start the remote monitor on port " + options.remoteMonitorPort
+                        + ": " + e.getMessage());
+                return false;
+            }
+        }
+
+        if (options.binaryMonitorPort != 0) {
+            try {
+                binaryMonitor = new BinaryMonitorServer(session, actions::offer, options.binaryMonitorPort);
+                stderr.println("Binary monitor listening on 127.0.0.1:" + binaryMonitor.getPort());
+            } catch (IOException e) {
+                stderr.println("jvic: could not start the binary monitor on port " + options.binaryMonitorPort
                         + ": " + e.getMessage());
                 return false;
             }
@@ -417,7 +433,7 @@ public final class HeadlessJVicRunner {
                     continue;
                 }
                 // Stopped, with no more input.
-                if (remoteMonitor != null) {
+                if ((remoteMonitor != null) || (binaryMonitor != null)) {
                     waitForActions();
                 } else if (atStartupStop && (options.monCommands != null)) {
                     // As VICE does after a -moncommands script that doesn't resume.

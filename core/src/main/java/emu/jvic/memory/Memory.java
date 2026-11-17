@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the memory of a 6502 machine.
@@ -243,5 +245,24 @@ public class Memory {
             convertedData[i] = ((int) data[i]) & 0xFF;
         }
         return convertedData;
+    }
+
+    /**
+     * Writes the memory's contents (RAM, and the ROM images, which are part of the
+     * array) and the last bus value to a save state. Additive: reads the existing
+     * fields in a fixed order, which loadState must follow.
+     */
+    public void saveState(StateWriter out) {
+        out.writeInt(lastBusData);
+        out.writeByteValues(mem);
+    }
+
+    /**
+     * Restores the memory's contents (RAM, and the ROM images, which are part of the
+     * array) and the last bus value from a save state written by saveState.
+     */
+    public void loadState(StateReader in) {
+        lastBusData = in.readInt();
+        in.readByteValues(mem);
     }
 }

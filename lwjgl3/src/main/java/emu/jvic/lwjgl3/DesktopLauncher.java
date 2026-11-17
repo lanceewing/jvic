@@ -10,6 +10,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowAdapter;
 
 import emu.jvic.JVic;
 import emu.jvic.lwjgl3.headless.HeadlessJVicRunner;
+import emu.jvic.lwjgl3.monitor.BinaryMonitorServer;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.monitor.MonitorSession;
 
@@ -48,6 +49,7 @@ public class DesktopLauncher {
                 new DesktopKeyboardMatrix(), new DesktopPixelData(), 
                 new DesktopSoundGenerator());
         startRemoteMonitor(desktopJVicRunner, argsMap.get("remotemonitor"));
+        startBinaryMonitor(desktopJVicRunner, argsMap.get("binarymonitor"));
         setMonitorStartup(desktopJVicRunner, argsMap);
         JVic jvic = new JVic(desktopJVicRunner, desktopDialogHandler, argsMap);
         return new Lwjgl3Application(jvic, getDefaultConfiguration(jvic));
@@ -73,6 +75,27 @@ public class DesktopLauncher {
             System.out.println("Remote monitor listening on 127.0.0.1:" + port);
         } catch (IOException e) {
             System.err.println("Could not start the remote monitor on port " + port + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Starts VICE's binary monitor if the binarymonitor option is given: on (port
+     * 6502), a port, or VICE's ip4://127.0.0.1:port form. Only on 127.0.0.1.
+     */
+    private static void startBinaryMonitor(DesktopJVicRunner runner, String option) {
+        if ((option == null) || option.equalsIgnoreCase("off") || option.equalsIgnoreCase("false")) {
+            return;
+        }
+        int port = BinaryMonitorServer.DEFAULT_PORT;
+        String portText = option.substring(option.lastIndexOf(':') + 1);
+        if (!portText.isEmpty() && portText.chars().allMatch(Character::isDigit)) {
+            port = Integer.parseInt(portText);
+        }
+        try {
+            runner.startBinaryMonitor(port);
+            System.out.println("Binary monitor listening on 127.0.0.1:" + port);
+        } catch (IOException e) {
+            System.err.println("Could not start the binary monitor on port " + port + ": " + e.getMessage());
         }
     }
 

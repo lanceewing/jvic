@@ -7,6 +7,8 @@ import java.util.concurrent.Callable;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.debug.Debugger;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 import emu.jvic.debug.WatchProxyChip;
 import emu.jvic.io.Joystick;
 import emu.jvic.io.Keyboard;
@@ -607,6 +609,106 @@ public class Machine {
      */
     public PixelData getPixelData() {
         return pixelData;
+    }
+
+    // ------------------------------------------------------------------------------
+    // Save states (used by the debug monitor's dump and undump).
+    // ------------------------------------------------------------------------------
+
+    /** The devices on the serial bus, in the fixed order the save state uses. */
+    private Object[] serialBusDevices() {
+        return new Object[] { via1, via2, c1541Drive.getVia1() };
+    }
+
+    /**
+     * A number that identifies the memory map's layout (which kind of chip is at each
+     * page), so that a save state is only loaded into a machine with the same RAM
+     * expansions and cartridge areas.
+     */
+    private int memoryMapSignature() {
+        MemoryMappedChip[] map = memory.getMemoryMap();
+        int signature = 17;
+        for (int address = 0; address < 0x10000; address += 0x100) {
+            MemoryMappedChip chip = map[address];
+            if (chip instanceof WatchProxyChip) {
+                chip = ((WatchProxyChip) chip).getTarget();
+            }
+            String name = (chip != null) ? chip.getClass().getName() : "";
+            signature = (signature * 31) + name.hashCode();
+        }
+        return signature;
+    }
+
+    /**
+     * Writes the whole machine to a save state: its configuration, memory, CPU, VIC,
+     * VIAs, serial bus, drive (with its disk) and datasette (with its tape). The
+     * sound generator's own oscillators aren't saved, so sound resumes from silence.
+     *
+     * @param out The writer.
+     */
+    public void saveState(StateWriter out) {
+        out.beginSection("CFG ");
+        out.writeString(machineType.name());
+        out.writeInt(memory.getRamExpansion());
+        out.writeInt(memoryMapSignature());
+        out.beginSection("MEM ");
+        memory.saveState(out);
+        out.beginSection("CPU ");
+        cpu.saveState(out);
+        out.beginSection("VIC ");
+        vic.saveState(out);
+        out.beginSection("VIA1");
+        via1.saveState(out);
+        out.beginSection("VIA2");
+        via2.saveState(out);
+        out.beginSection("BUS ");
+        serialBus.saveState(out, serialBusDevices());
+        out.beginSection("DRV ");
+        c1541Drive.saveState(out);
+        out.beginSection("TAPE");
+        datasette.saveState(out);
+        out.endSection();
+    }
+
+    /**
+     * Restores the machine from a save state written by {@link #saveState}. The
+     * machine must have been set up the same way (machine type, RAM expansions and
+     * cartridge areas); otherwise nothing is changed.
+     *
+     * @param in The reader.
+     *
+     * @throws StateReader.StateException if the state doesn't fit this machine or is
+     *         damaged.
+     */
+    public void loadState(StateReader in) {
+        in.section("CFG ");
+        String type = in.readString();
+        int ramExpansion = in.readInt();
+        int signature = in.readInt();
+        if (!type.equals(machineType.name())) {
+            throw new StateReader.StateException("The save state is for a " + type + " machine, not "
+                    + machineType.name() + ".");
+        }
+        if ((ramExpansion != memory.getRamExpansion()) || (signature != memoryMapSignature())) {
+            throw new StateReader.StateException("The save state was made with different RAM expansions or "
+                    + "cartridge; start jvic with the same ones first.");
+        }
+        in.section("MEM ");
+        memory.loadState(in);
+        in.section("CPU ");
+        cpu.loadState(in);
+        in.section("VIC ");
+        vic.loadState(in);
+        in.section("VIA1");
+        via1.loadState(in);
+        in.section("VIA2");
+        via2.loadState(in);
+        in.section("BUS ");
+        serialBus.loadState(in, serialBusDevices());
+        in.section("DRV ");
+        c1541Drive.loadState(in);
+        in.section("TAPE");
+        datasette.loadState(in);
     }
 
     /**

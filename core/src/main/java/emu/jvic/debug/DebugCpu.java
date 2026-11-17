@@ -170,6 +170,20 @@ public final class DebugCpu implements CpuDebugger {
     }
 
     /**
+     * Restores the boundary view after a save state has been loaded, so that the
+     * monitor shows the state's PC as it was when the state was saved.
+     *
+     * @param atBoundary Whether the CPU was stopped at an instruction boundary.
+     * @param address    The boundary address.
+     * @param interrupt  The interrupt being taken there: 0, S_IRQ or S_NMI.
+     */
+    public void restoreBoundary(boolean atBoundary, int address, int interrupt) {
+        boundaryAddress = address;
+        boundaryInterrupt = interrupt;
+        boundaryCycle = atBoundary ? cpu.getTotalCycles() : -1;
+    }
+
+    /**
      * The memspace name as VICE writes it, without the colon: "C" or "8".
      */
     public String getName() {

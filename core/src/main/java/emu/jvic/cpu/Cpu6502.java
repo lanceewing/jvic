@@ -9,6 +9,8 @@ import emu.jvic.BaseChip;
 import emu.jvic.debug.CpuDebugger;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.util.StringUtils;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates a 6502 CPU. It emulates at the machine cycle level
@@ -2642,5 +2644,92 @@ public class Cpu6502 extends BaseChip {
         // As in dispatchNextInstruction(): the I flag snapshot for this instruction's
         // end-of-instruction interrupt poll.
         interruptDisableFlagAtDispatch = interruptDisableFlag;
+    }
+
+    /**
+     * Writes the CPU's registers and micro-state (the instruction step it is on, its
+     * latches and interrupt state) to a save state. Additive: reads the existing
+     * fields in a fixed order, which loadState must follow.
+     */
+    public void saveState(StateWriter out) {
+        out.writeInt(interruptStatus);
+        out.writeInt(interruptStatusAtCycleStart);
+        out.writeInt(polledInterruptStatus);
+        out.writeBoolean(nmiLineLow);
+        out.writeBoolean(interruptDisableFlagAtDispatch);
+        out.writeBoolean(vectorHijackedByNmi);
+        out.writeBoolean(jammed);
+        out.writeInt(indexRegisterX);
+        out.writeInt(indexRegisterY);
+        out.writeInt(accumulator);
+        out.writeInt(stackPointer);
+        out.writeInt(programCounter);
+        out.writeInt(processorStatusRegister);
+        out.writeBoolean(negativeResultFlag);
+        out.writeBoolean(overflowFlag);
+        out.writeBoolean(decimalModeFlag);
+        out.writeBoolean(interruptDisableFlag);
+        out.writeBoolean(zeroResultFlag);
+        out.writeBoolean(carryFlag);
+        out.writeInt(instructionRegister);
+        out.writeInt(inputDataLatch);
+        out.writeInt(dataBusBuffer);
+        out.writeInt(currentInstructionStep);
+        out.writeInt(numOfInstructionSteps);
+        out.writeInt(effectiveAddressLow);
+        out.writeInt(effectiveAddressHigh);
+        out.writeInt(baseAddressLow);
+        out.writeInt(baseAddressHigh);
+        out.writeInt(indirectAddressLow);
+        out.writeInt(indirectAddressHigh);
+        out.writeBoolean(branchFlag);
+        out.writeInt(branchAddress);
+        out.writeLong(totalCycles);
+        // instructionSteps points into a static table: save which one.
+        out.writeByte((instructionSteps == null) ? 3 : (instructionSteps == IRQ_STEPS) ? 1
+                : (instructionSteps == NMI_STEPS) ? 2 : 0);
+    }
+
+    /**
+     * Restores the CPU's registers and micro-state (the instruction step it is on,
+     * its latches and interrupt state) from a save state written by saveState.
+     */
+    public void loadState(StateReader in) {
+        interruptStatus = in.readInt();
+        interruptStatusAtCycleStart = in.readInt();
+        polledInterruptStatus = in.readInt();
+        nmiLineLow = in.readBoolean();
+        interruptDisableFlagAtDispatch = in.readBoolean();
+        vectorHijackedByNmi = in.readBoolean();
+        jammed = in.readBoolean();
+        indexRegisterX = in.readInt();
+        indexRegisterY = in.readInt();
+        accumulator = in.readInt();
+        stackPointer = in.readInt();
+        programCounter = in.readInt();
+        processorStatusRegister = in.readInt();
+        negativeResultFlag = in.readBoolean();
+        overflowFlag = in.readBoolean();
+        decimalModeFlag = in.readBoolean();
+        interruptDisableFlag = in.readBoolean();
+        zeroResultFlag = in.readBoolean();
+        carryFlag = in.readBoolean();
+        instructionRegister = in.readInt();
+        inputDataLatch = in.readInt();
+        dataBusBuffer = in.readInt();
+        currentInstructionStep = in.readInt();
+        numOfInstructionSteps = in.readInt();
+        effectiveAddressLow = in.readInt();
+        effectiveAddressHigh = in.readInt();
+        baseAddressLow = in.readInt();
+        baseAddressHigh = in.readInt();
+        indirectAddressLow = in.readInt();
+        indirectAddressHigh = in.readInt();
+        branchFlag = in.readBoolean();
+        branchAddress = in.readInt();
+        totalCycles = in.readLong();
+        int stepsKind = in.readByte();
+        instructionSteps = (stepsKind == 3) ? null : (stepsKind == 1) ? IRQ_STEPS
+                : (stepsKind == 2) ? NMI_STEPS : INSTRUCTION_DECODE_MATRIX[instructionRegister & 0xFF];
     }
 }

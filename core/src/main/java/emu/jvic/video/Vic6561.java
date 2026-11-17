@@ -3,6 +3,8 @@ package emu.jvic.video;
 import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.snap.Snapshot;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the PAL VIC chip (6561).
@@ -105,6 +107,16 @@ public class Vic6561 extends Vic {
 
     private int[] pal_palette_o = palOddRGBA8888Colours;
     private int[] pal_palette_e = palEvenRGBA8888Colours;
+
+    @Override
+    public int[] getPaletteColours() {
+        return pal_palette_e.clone();
+    }
+
+    @Override
+    public int[][] getAllPalettes() {
+        return new int[][] { pal_palette_e.clone(), pal_palette_o.clone() };
+    }
     private int[] pal_palette_m = palMidRGBA8888Colours;
     
     // Reference that alternates on each line between even and odd PAL palettes.
@@ -1123,5 +1135,29 @@ public class Vic6561 extends Vic {
         }
         
         return frameRenderComplete;
+    }
+
+    /**
+     * Writes the 6561's own state to a save state. Additive: reads the existing fields in a fixed
+     * order, which loadExtraState must follow.
+     */
+    @Override
+    protected void saveExtraState(StateWriter out) {
+        out.writeInt(videoMatrixLineStart);
+        out.writeBoolean(videoMatrixCarry4);
+        out.writeBoolean(videoMatrixCarry8);
+        // The palette alternates between lines: save which one is in use.
+        out.writeBoolean(pal_palette == pal_palette_o);
+    }
+
+    /**
+     * Restores the 6561's own state from a save state written by saveExtraState.
+     */
+    @Override
+    protected void loadExtraState(StateReader in) {
+        videoMatrixLineStart = in.readInt();
+        videoMatrixCarry4 = in.readBoolean();
+        videoMatrixCarry8 = in.readBoolean();
+        pal_trunc_palette = pal_palette = in.readBoolean() ? pal_palette_o : pal_palette_e;
     }
 }

@@ -1,5 +1,8 @@
 package emu.jvic.io.tape;
 
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
+
 /**
  * This class holds the data for a .TAP image file.
  */
@@ -188,5 +191,27 @@ public class TapeImage {
             str.append((char)c);
         }
         return str.toString();
+    }
+
+    /** Writes the tape's pulse data and position to a save state. */
+    public void saveState(StateWriter out) {
+        out.writeInt(version);
+        out.writeInt(machine);
+        out.writeInt(videoStandard);
+        out.writeBytes(dataBuffer);
+        out.writeInt(position);
+        out.writeBoolean(endOfInput);
+    }
+
+    /** Creates a tape from a save state written by saveState. */
+    public static TapeImage fromState(StateReader in) {
+        TapeImage tape = new TapeImage(new byte[0]);
+        tape.version = in.readInt();
+        tape.machine = in.readInt();
+        tape.videoStandard = in.readInt();
+        tape.dataBuffer = in.readBytes();
+        tape.position = in.readInt();
+        tape.endOfInput = in.readBoolean();
+        return tape;
     }
 }

@@ -33,7 +33,8 @@ final class CommandRegistry {
         monitorState.commands.add(new FileCommands.LogName());
 
         CommandGroup machineState = group(groups, "Machine state commands:");
-        notImplemented(machineState, "dump", null, "undump", null);
+        machineState.commands.add(new StateCommands.Dump());
+        machineState.commands.add(new StateCommands.Undump());
         machineState.commands.add(new MachineCommands.Bank());
         machineState.commands.add(new MachineCommands.Cpu());
         machineState.commands.add(new InspectCommands.Backtrace());
@@ -44,7 +45,7 @@ final class CommandRegistry {
         machineState.commands.add(new MachineCommands.Step(true));
         machineState.commands.add(new MachineCommands.Return());
         machineState.commands.add(new MachineCommands.Step(false));
-        notImplemented(machineState, "profile", "prof");
+        machineState.commands.add(new AnalysisCommands.Profile());
         machineState.commands.add(new InspectCommands.Reset());
         machineState.commands.add(new InspectCommands.Export());
         machineState.commands.add(new MediaCommands.NoDevice("cartfreeze", "cartfreeze ",
@@ -74,7 +75,9 @@ final class CommandRegistry {
         memory.commands.add(new MemoryCommands.Text(true));
         memory.commands.add(new MemoryCommands.Mem());
         memory.commands.add(new MemoryCommands.MemChar());
-        notImplemented(memory, "memmapsave", "mmsave", "memmapshow", "mmsh", "memmapzap", "mmzap");
+        memory.commands.add(new AnalysisCommands.MemMapSave());
+        memory.commands.add(new AnalysisCommands.MemMapShow());
+        memory.commands.add(new AnalysisCommands.MemMapZap());
         memory.commands.add(new InspectCommands.MemSprite());
         memory.commands.add(new MemoryCommands.Move());
         memory.commands.add(new InspectCommands.Io());

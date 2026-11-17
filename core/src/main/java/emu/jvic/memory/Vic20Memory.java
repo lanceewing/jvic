@@ -10,6 +10,8 @@ import emu.jvic.cpu.Cpu6502;
 import emu.jvic.io.Via6522;
 import emu.jvic.snap.Snapshot;
 import emu.jvic.video.Vic;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 
 /**
  * This class emulates the VIC 20's memory.
@@ -318,5 +320,15 @@ public class Vic20Memory extends Memory {
                 mapChipToMemory(new RomChip(), 0xA000, 0xA000 + (cartData.length - 1), cartData);
             }
         }
+    }
+
+    /**
+     * The RAM expansion placement bits this memory was built with (see RamType). Used
+     * to check that a save state fits this machine.
+     *
+     * @return The placement bits.
+     */
+    public int getRamExpansion() {
+        return ramExpansion;
     }
 }

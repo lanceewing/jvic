@@ -1,5 +1,8 @@
 package emu.jvic.io.tape;
 
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
+
 /**
  * Emulates the Commodore 1530 datasette (tape drive). Currently, this is only a very
  * simple emulation, providing only what is needed to read a .TAP file, for the purposes
@@ -261,5 +264,37 @@ public class C1530Datasette {
             stop();
         }
         return tape.getNumOfCyclesToNextPulse();
+    }
+
+    /**
+     * Writes the datasette's state and its tape to a save state. Additive: reads the
+     * existing fields in a fixed order, which loadState must follow.
+     */
+    public void saveState(StateWriter out) {
+        out.writeBoolean(motorOn);
+        out.writeInt(motorTimeToLive);
+        out.writeBoolean(cassetteSwitchSense);
+        out.writeBoolean(cassetteMotorControl);
+        out.writeInt(stepSpeed);
+        out.writeInt(currentTime);
+        out.writeInt(timeOfNextPulse);
+        out.writeBoolean(tape != null);
+        if (tape != null) {
+            tape.saveState(out);
+        }
+    }
+
+    /**
+     * Restores the datasette's state and its tape from a save state written by saveState.
+     */
+    public void loadState(StateReader in) {
+        motorOn = in.readBoolean();
+        motorTimeToLive = in.readInt();
+        cassetteSwitchSense = in.readBoolean();
+        cassetteMotorControl = in.readBoolean();
+        stepSpeed = in.readInt();
+        currentTime = in.readInt();
+        timeOfNextPulse = in.readInt();
+        tape = in.readBoolean() ? TapeImage.fromState(in) : null;
     }
 }

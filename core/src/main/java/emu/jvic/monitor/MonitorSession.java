@@ -76,6 +76,19 @@ public final class MonitorSession implements MonitorHost {
     /** initbreak: stop when BASIC is ready. */
     public static final int INITBREAK_READY = -2;
 
+    /** Told when the machine stops in the monitor and when it resumes (the binary monitor). */
+    public interface EventListener {
+        /** The machine has stopped; called once per stop, on the emulation thread. */
+        void onStopped();
+
+        /** The machine is about to resume. */
+        void onResumed();
+    }
+
+    private final List<EventListener> eventListeners = new CopyOnWriteArrayList<>();
+    private final Deque<Runnable> pendingActions = new ArrayDeque<>();
+    private boolean stopReported;
+
     private MonitorFileSystem fileSystem = new InMemoryMonitorFileSystem();
 
     // Startup options (moncommands, monlog, initbreak), applied to the first machine.
@@ -159,6 +172,43 @@ public final class MonitorSession implements MonitorHost {
         this.startupPending = (monCommands != null) || (monLog != null) || (initBreak != INITBREAK_NONE);
     }
 
+    public void addEventListener(EventListener listener) {
+        eventListeners.add(listener);
+    }
+
+    public void removeEventListener(EventListener listener) {
+        eventListeners.remove(listener);
+    }
+
+    /**
+     * Runs an action once the machine is stopped in the monitor, stopping it first if
+     * it is running, as the binary monitor's commands do. Must be called on the
+     * emulation thread.
+     */
+    public void runWhenStopped(Runnable action) {
+        if (engine == null) {
+            return;
+        }
+        if (machine.isDebuggerStopped() && pendingActions.isEmpty()) {
+            reportStop();
+            action.run();
+        } else {
+            pendingActions.add(action);
+            if (!machine.isDebuggerStopped()) {
+                machine.getDebugger().requestStop();
+            }
+        }
+    }
+
+    private void reportStop() {
+        if (!stopReported) {
+            stopReported = true;
+            for (EventListener listener : eventListeners) {
+                listener.onStopped();
+            }
+        }
+    }
+
     public void addListener(MonitorChannel.Listener listener) {
         listeners.add(listener);
     }
@@ -213,6 +263,8 @@ public final class MonitorSession implements MonitorHost {
         machine = null;
         engine = null;
         pendingLines.clear();
+        pendingActions.clear();
+        stopReported = false;
     }
 
     public MonitorEngine getEngine() {
@@ -286,6 +338,13 @@ public final class MonitorSession implements MonitorHost {
                 }
             }
         }
+        reportStop();
+        while (!pendingActions.isEmpty() && machine.isDebuggerStopped()) {
+            pendingActions.poll().run();
+        }
+        if (!machine.isDebuggerStopped()) {
+            return;
+        }
         if (engine.hasPendingScript()) {
             // The rest of a playback file that a command resumed the machine from.
             engine.continueScript(this::print);
@@ -334,6 +393,10 @@ public final class MonitorSession implements MonitorHost {
     @Override
     public void resume() {
         promptSent = false;
+        stopReported = false;
+        for (EventListener listener : eventListeners) {
+            listener.onResumed();
+        }
         platform.resumeEmulation();
     }
 

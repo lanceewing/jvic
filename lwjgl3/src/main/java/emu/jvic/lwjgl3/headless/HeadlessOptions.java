@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import emu.jvic.MachineType;
+import emu.jvic.lwjgl3.monitor.BinaryMonitorServer;
 import emu.jvic.lwjgl3.monitor.RemoteTextMonitor;
 import emu.jvic.memory.RamType;
 
@@ -17,7 +18,8 @@ import emu.jvic.memory.RamType;
 final class HeadlessOptions {
 
     private static final Set<String> NAMES = new HashSet<>(Arrays.asList("headless", "machine", "ram",
-            "autostart", "autoload", "moncommands", "monlog", "initbreak", "limitcycles", "remotemonitor"));
+            "autostart", "autoload", "moncommands", "monlog", "initbreak", "limitcycles", "remotemonitor",
+            "binarymonitor"));
 
     /** initbreak: stop at the first instruction, at the reset address. */
     static final int INITBREAK_RESET = -1;
@@ -40,6 +42,8 @@ final class HeadlessOptions {
     long limitCycles;
     /** The remote monitor's port, or 0 if it is off. */
     int remoteMonitorPort;
+    /** The binary monitor's port, or 0 if it is off. */
+    int binaryMonitorPort;
 
     /**
      * Parses the options.
@@ -83,7 +87,10 @@ final class HeadlessOptions {
                     options.limitCycles = parseLimit(value);
                     break;
                 case "remotemonitor":
-                    options.remoteMonitorPort = parseRemoteMonitor(value);
+                    options.remoteMonitorPort = parsePort(value, RemoteTextMonitor.DEFAULT_PORT, name);
+                    break;
+                case "binarymonitor":
+                    options.binaryMonitorPort = parsePort(value, BinaryMonitorServer.DEFAULT_PORT, name);
                     break;
                 default:
                     // headless itself.
@@ -154,13 +161,13 @@ final class HeadlessOptions {
         throw new IllegalArgumentException("limitcycles must be a positive number, not '" + value + "'.");
     }
 
-    private static int parseRemoteMonitor(String value) {
+    private static int parsePort(String value, int defaultPort, String option) {
         if (value.equalsIgnoreCase("off") || value.equalsIgnoreCase("false")) {
             return 0;
         }
         String portText = value.substring(value.lastIndexOf(':') + 1);
         if (value.equalsIgnoreCase("on") || value.equalsIgnoreCase("true") || portText.isEmpty()) {
-            return RemoteTextMonitor.DEFAULT_PORT;
+            return defaultPort;
         }
         try {
             int port = Integer.parseInt(portText);
@@ -170,6 +177,6 @@ final class HeadlessOptions {
         } catch (NumberFormatException e) {
             // Reported below.
         }
-        throw new IllegalArgumentException("remotemonitor must be on, off or a port, not '" + value + "'.");
+        throw new IllegalArgumentException(option + " must be on, off or a port, not '" + value + "'.");
     }
 }
