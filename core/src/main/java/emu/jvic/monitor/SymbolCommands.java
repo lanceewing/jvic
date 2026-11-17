@@ -153,6 +153,7 @@ final class SymbolCommands {
             }
             try {
                 fileSystem.write(name, text.toString().getBytes(StandardCharsets.ISO_8859_1));
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }

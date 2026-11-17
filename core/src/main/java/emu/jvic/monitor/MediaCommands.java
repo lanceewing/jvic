@@ -152,6 +152,7 @@ final class MediaCommands {
                     : ImageEncoder.bmp(image, width, height);
             try {
                 engine.getFileSystem().write(name, data);
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }
@@ -285,6 +286,7 @@ final class MediaCommands {
             }
             try {
                 engine.getFileSystem().write(name, text.toString().getBytes(StandardCharsets.ISO_8859_1));
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }

@@ -188,6 +188,12 @@ final class TeaVMWorkerMonitor {
             }
 
             @Override
+            public boolean isFileStoreHidden() {
+                // Files live in the browser's store until downloaded.
+                return true;
+            }
+
+            @Override
             public boolean toggleDomConsole() {
                 TeaVMWorkerGlobalScope.postObject("MonitorDomConsole", TeaVMWorkerInterop.createEmptyObject());
                 return true;

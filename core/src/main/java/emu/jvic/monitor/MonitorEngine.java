@@ -615,6 +615,24 @@ public final class MonitorEngine implements Debugger.Listener {
         return recordName;
     }
 
+    /** Whether the web's download hint has been shown in this session. */
+    private boolean downloadHintShown;
+
+    /**
+     * Called after a command has written a file. In the browser, the first time in a
+     * session, says that the file is in the browser's store and how to download it.
+     *
+     * @param name The file's name, as the command was given it.
+     * @param out  Where to print the hint.
+     */
+    void noteFileWritten(String name, MonitorOutput out) {
+        if (!downloadHintShown && host.isFileStoreHidden()) {
+            downloadHintShown = true;
+            out.print("Saved in the browser's file store. Use download \"" + name
+                    + "\" to save it to your computer.\n");
+        }
+    }
+
     /** Starts recording typed commands to a file, which is started afresh. */
     void startRecording(String name) {
         String path = fileSystem.absolute(name);

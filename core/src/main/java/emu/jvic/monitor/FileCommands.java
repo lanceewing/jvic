@@ -78,6 +78,7 @@ final class FileCommands {
         if (device == 0) {
             try {
                 engine.getFileSystem().write(name, data);
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }
@@ -587,9 +588,12 @@ final class FileCommands {
                 throw new MonitorException(MonitorException.UNEXPECTED_TOKEN, position);
             }
             args.expectEnd();
+            boolean wasEnabled = engine.isLogEnabled();
             String error = engine.setLogEnabled(enable);
             if (error != null) {
                 out.print(error);
+            } else if (enable && !wasEnabled) {
+                engine.noteFileWritten(engine.getLogName(), out);
             }
         }
     }
@@ -651,6 +655,7 @@ final class FileCommands {
             }
             try {
                 engine.startRecording(name);
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot create '" + name + "'.\n");
             }

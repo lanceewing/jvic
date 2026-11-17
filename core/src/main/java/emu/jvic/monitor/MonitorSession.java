@@ -59,6 +59,11 @@ public final class MonitorSession implements MonitorHost {
             return false;
         }
 
+        /** See {@link MonitorHost#isFileStoreHidden()}. */
+        default boolean isFileStoreHidden() {
+            return false;
+        }
+
         /** See {@link MonitorHost#toggleDomConsole()}. */
         default boolean toggleDomConsole() {
             return false;
@@ -421,6 +426,11 @@ public final class MonitorSession implements MonitorHost {
     @Override
     public boolean downloadFile(String name, byte[] data) {
         return platform.downloadFile(name, data);
+    }
+
+    @Override
+    public boolean isFileStoreHidden() {
+        return platform.isFileStoreHidden();
     }
 
     @Override

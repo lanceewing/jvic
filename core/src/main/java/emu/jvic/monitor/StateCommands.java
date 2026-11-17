@@ -62,6 +62,7 @@ final class StateCommands {
             args.expectEnd();
             try {
                 engine.getFileSystem().write(name, save(engine));
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }

@@ -74,6 +74,17 @@ public interface MonitorHost {
     }
 
     /**
+     * Whether files written by the monitor stay in a store the user can't see
+     * directly (the browser's), so that it should say how to get them out with the
+     * download command.
+     *
+     * @return true in the browser.
+     */
+    default boolean isFileStoreHidden() {
+        return false;
+    }
+
+    /**
      * Web only: shows or hides the monitor's HTML panel (the domconsole command).
      *
      * @return false if the platform doesn't have one.

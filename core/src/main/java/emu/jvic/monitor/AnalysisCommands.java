@@ -277,6 +277,7 @@ final class AnalysisCommands {
             byte[] data = (format == 2) ? ImageEncoder.png(pixels, 256, 256) : ImageEncoder.bmp(pixels, 256, 256);
             try {
                 engine.getFileSystem().write(name, data);
+                engine.noteFileWritten(name, out);
             } catch (MonitorFileException e) {
                 out.print("Cannot open '" + name + "'.\n");
             }
