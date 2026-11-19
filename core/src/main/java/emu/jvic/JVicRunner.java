@@ -330,6 +330,102 @@ public abstract class JVicRunner {
     
     public abstract void sendNmi();
 
+    // ------------------------------------------------------------------------------
+    // Machine control hot keys (as in VICE): Alt+F9 reset, Alt+F12 power cycle,
+    // Alt+F11/Alt+F10 quick save/load, Alt+Shift+P frame advance. Only desktop and
+    // TeaVM support them; GWT and Android keep these defaults, so the keys do nothing.
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Whether this platform supports the reset, quick save/load and frame advance hot
+     * keys.
+     *
+     * @return true if supported.
+     */
+    public boolean isMachineControlSupported() {
+        return false;
+    }
+
+    /**
+     * Resets the running machine straight away, with no confirmation, as VICE does.
+     *
+     * @param powerCycle false for a reset as the RESET line does (memory is kept);
+     *                   true to turn the machine off and on, clearing RAM.
+     */
+    public void requestReset(boolean powerCycle) {
+    }
+
+    /**
+     * Saves the whole machine to the quick save slot, replacing what was there.
+     *
+     * @param slot The slot's name: one per program, from {@link MachineScreen#getQuickSaveSlot()}.
+     */
+    public void requestQuickSave(String slot) {
+    }
+
+    /**
+     * Loads the machine from the quick save slot, if it has a save.
+     *
+     * @param slot The slot's name, as for {@link #requestQuickSave(String)}.
+     */
+    public void requestQuickLoad(String slot) {
+    }
+
+    /**
+     * Runs the machine for one frame while it is paused.
+     */
+    public void requestFrameAdvance() {
+    }
+
+    /**
+     * Whether a frame has been emulated while paused (by a frame advance) that the
+     * screen hasn't shown yet. Clears the flag.
+     *
+     * @return true if the screen should copy the pixels while paused.
+     */
+    public boolean consumePausedFrame() {
+        return false;
+    }
+
+    // ------------------------------------------------------------------------------
+    // Clipboard hot keys (as in VICE): Alt+Delete copies the screen text, Alt+Insert
+    // pastes text into the keyboard buffer. Desktop only, for now.
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Whether this platform supports copying and pasting through the host clipboard.
+     *
+     * @return true if supported.
+     */
+    public boolean isClipboardSupported() {
+        return false;
+    }
+
+    /**
+     * Copies the text on the VIC-20's screen to the host clipboard.
+     */
+    public void requestCopyScreenText() {
+    }
+
+    /**
+     * Types the host clipboard's text into the VIC-20. Called on the UI thread.
+     */
+    public void requestPaste() {
+    }
+
+    /**
+     * Shows a short message over the machine screen, e.g. to confirm a quick save.
+     * Safe to call from any thread.
+     *
+     * @param message The message.
+     */
+    protected void showMessage(String message) {
+        MachineScreen screen = machineScreen;
+        if (screen != null) {
+            screen.showMessage(message);
+        }
+    }
+
     public String getPerformanceStatsText() {
         return "";
     }

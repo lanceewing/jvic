@@ -128,6 +128,13 @@ public abstract class KeyboardMatrix extends InputAdapter {
      * key. So we use it for various hot keys instead.
      */
     private boolean altKeyDown;
+
+    /**
+     * Whether each of the host's SHIFT keys is down, tracked separately from the VIC's
+     * SHIFT keys, so that hot keys such as Alt+Shift+P can check for it.
+     */
+    private boolean leftShiftKeyDown;
+    private boolean rightShiftKeyDown;
     
     /**
      * HashMap used to store mappings between Java key events and VIC 20
@@ -271,6 +278,7 @@ public abstract class KeyboardMatrix extends InputAdapter {
             altKeyDown = true;
             return true;
         }
+        trackShiftKey(keycode, true);
         if (altKeyDown) return false;
         int[] vicKeys = getVicKeysForKeycode(keycode);
         if (vicKeys == null) return false;
@@ -319,7 +327,10 @@ public abstract class KeyboardMatrix extends InputAdapter {
             altKeyDown = false;
             return true;
         }
-        if (altKeyDown) return false;
+        trackShiftKey(keycode, false);
+        // While ALT is down, keys belong to the hot keys. But a key pressed before ALT
+        // (e.g. SHIFT in Alt+Shift+P) must still be released, or it would stay down.
+        if (altKeyDown && !pressedKeycodeVicKeys.containsKey(keycode)) return false;
         // Release the VIC keys that were pressed for this keycode, which may differ from
         // its current mapping if the joystick mode changed while the key was held.
         int[] vicKeys = pressedKeycodeVicKeys.remove(keycode);
@@ -419,6 +430,23 @@ public abstract class KeyboardMatrix extends InputAdapter {
      */
     public boolean isAltKeyDown() {
         return altKeyDown;
+    }
+
+    /**
+     * Checks if either of the host's SHIFT keys is currently down.
+     *
+     * @return true if a SHIFT key is down; otherwise false.
+     */
+    public boolean isShiftKeyDown() {
+        return leftShiftKeyDown || rightShiftKeyDown;
+    }
+
+    private void trackShiftKey(int keycode, boolean down) {
+        if (keycode == Keys.SHIFT_LEFT) {
+            leftShiftKeyDown = down;
+        } else if (keycode == Keys.SHIFT_RIGHT) {
+            rightShiftKeyDown = down;
+        }
     }
     
     /**

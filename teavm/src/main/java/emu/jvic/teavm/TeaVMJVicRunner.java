@@ -1,5 +1,8 @@
 package emu.jvic.teavm;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -53,6 +56,15 @@ public class TeaVMJVicRunner extends JVicRunner {
     private ResetDiskHandler pendingResetDiskHandler;
     private final TeaVMFrameCounter frameCounter;
     private int lastConsumedFrameCount;
+
+    /**
+     * Quick saves (Alt+F11), by slot, i.e. one per program. Kept here rather than in
+     * the worker, so that they last for the rest of the page session, across programs.
+     */
+    private final Map<String, byte[]> quickSaves = new HashMap<>();
+
+    /** The slot of the quick save the worker is working on, or null. */
+    private String pendingQuickSaveSlot;
 
     public TeaVMJVicRunner() {
         super(new TeaVMKeyboardMatrix(), new TeaVMPixelData(), new TeaVMSoundGenerator());
@@ -301,6 +313,30 @@ public class TeaVMJVicRunner extends JVicRunner {
                 completeMountedDiskReset(false);
                 break;
 
+            case "QuickSaveData":
+                if (pendingQuickSaveSlot != null) {
+                    quickSaves.put(pendingQuickSaveSlot, TeaVMWorkerMonitor.toBytes(
+                            (ArrayBuffer) TeaVMWorkerInterop.getNestedObject(eventObject, "buffer")));
+                    showMessage("Quick save done");
+                }
+                pendingQuickSaveSlot = null;
+                break;
+
+            case "QuickSaveFailed":
+                pendingQuickSaveSlot = null;
+                showMessage("Quick save failed");
+                break;
+
+            case "QuickLoadDone":
+                showMessage("Quick load done");
+                break;
+
+            case "QuickLoadFailed":
+                Gdx.app.error("JVic", "Quick load failed: "
+                        + TeaVMWorkerInterop.getNestedString(eventObject, "message"));
+                showMessage("Quick load failed");
+                break;
+
             case "MonitorOutput":
                 if (monitorChannel != null) {
                     monitorChannel.output(TeaVMWorkerInterop.getNestedString(eventObject, "text"),
@@ -371,6 +407,7 @@ public class TeaVMJVicRunner extends JVicRunner {
         worker = null;
         resetMountedDiskSupported = false;
         pendingResetDiskHandler = null;
+        pendingQuickSaveSlot = null;
         clearPerformanceStats();
         Gdx.graphics.setTitle("JVic - The web-based VIC 20 emulator built with libGDX");
     }
@@ -467,6 +504,54 @@ public class TeaVMJVicRunner extends JVicRunner {
     }
 
     @Override
+    public boolean isMachineControlSupported() {
+        return true;
+    }
+
+    @Override
+    public void requestReset(boolean powerCycle) {
+        if (worker != null) {
+            TeaVMWorkerInterop.postObject(worker, "Reset", TeaVMWorkerInterop.createIntObject(powerCycle ? 1 : 0));
+        }
+    }
+
+    @Override
+    public void requestQuickSave(String slot) {
+        if ((worker != null) && (pendingQuickSaveSlot == null)) {
+            pendingQuickSaveSlot = slot;
+            TeaVMWorkerInterop.postObject(worker, "QuickSave", TeaVMWorkerInterop.createEmptyObject());
+        }
+    }
+
+    @Override
+    public void requestQuickLoad(String slot) {
+        if (worker == null) {
+            return;
+        }
+        byte[] state = quickSaves.get(slot);
+        if (state == null) {
+            showMessage("No quick save for this program");
+            return;
+        }
+        // A new buffer each time, as posting it hands it over to the worker.
+        TeaVMWorkerInterop.postArrayBufferAndObject(worker, "QuickLoad",
+                TeaVMWorkerMonitor.toArrayBuffer(state), TeaVMWorkerInterop.createEmptyObject());
+    }
+
+    @Override
+    public void requestFrameAdvance() {
+        if (worker != null) {
+            TeaVMWorkerInterop.postObject(worker, "AdvanceFrame", TeaVMWorkerInterop.createEmptyObject());
+        }
+    }
+
+    @Override
+    public boolean consumePausedFrame() {
+        // The worker bumps the frame counter when a frame advance completes a frame.
+        return hasNewFrame();
+    }
+
+    @Override
     public void stop() {
         paused = false;
         if (worker != null) {
@@ -476,6 +561,7 @@ public class TeaVMJVicRunner extends JVicRunner {
         stopped = true;
         resetMountedDiskSupported = false;
         pendingResetDiskHandler = null;
+        pendingQuickSaveSlot = null;
     }
 
     @Override

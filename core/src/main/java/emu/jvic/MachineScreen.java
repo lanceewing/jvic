@@ -161,6 +161,16 @@ public class MachineScreen implements Screen {
 
     private boolean showFPS;
 
+    /** How long a message from {@link #showMessage(String)} stays on screen. */
+    private static final long MESSAGE_DURATION_MILLIS = 2000;
+
+    /**
+     * A short message shown over the screen, e.g. "Quick save done", and the time it
+     * expires. Set from the machine thread, read by the UI thread.
+     */
+    private volatile String message;
+    private volatile long messageExpiryTime;
+
     /**
      * Details about the application currently running.
      */
@@ -415,8 +425,14 @@ public class MachineScreen implements Screen {
         }
         
         if (jvicRunner.isPaused()) {
-            // When paused, we limit the draw frequency since there isn't anything to change.
-            draw = ((fps < 30) || ((renderCount % (fps / 30)) == 0));
+            if (jvicRunner.consumePausedFrame()) {
+                // A frame advance (Alt+Shift+P) has emulated a new frame.
+                copyPixels();
+                draw = true;
+            } else {
+                // When paused, we limit the draw frequency since there isn't anything to change.
+                draw = ((fps < 30) || ((renderCount % (fps / 30)) == 0));
+            }
 
         } else {
             if (jvicRunner.hasNewFrame()) {
@@ -648,7 +664,18 @@ public class MachineScreen implements Screen {
             float overlayX = ((!viewportManager.isPortrait()) && (cameraXOffset == 0) ? 140 : 20);
             font.draw(batch, overlayText, overlayX, viewportManager.getHeight() - 20);
         }
-        
+
+        String currentMessage = message;
+        if (currentMessage != null) {
+            if (System.currentTimeMillis() < messageExpiryTime) {
+                // On the top line, which the FPS overlay leaves blank.
+                float messageX = ((!viewportManager.isPortrait()) && (cameraXOffset == 0) ? 140 : 20);
+                font.draw(batch, currentMessage, messageX, viewportManager.getHeight() - 20);
+            } else {
+                message = null;
+            }
+        }
+
         batch.end();
         
         // The joystick touch pad is updated and rendered via the Stage.
@@ -889,6 +916,37 @@ public class MachineScreen implements Screen {
      */
     public void saveScreenshot() {
         jvicRunner.saveScreenshot(screenPixmap, appConfigItem);
+    }
+
+    /**
+     * Shows a short message over the screen for a couple of seconds. Safe to call from
+     * any thread.
+     *
+     * @param message The message.
+     */
+    public void showMessage(String message) {
+        this.messageExpiryTime = System.currentTimeMillis() + MESSAGE_DURATION_MILLIS;
+        this.message = message;
+    }
+
+    /**
+     * The name of the running program's quick save slot (Alt+F11/Alt+F10): one slot
+     * per program, named after it. Programs opened from a file or dropped onto the
+     * home screen are all called "Adhoc VIC Program", so those use the file's name.
+     *
+     * @return The slot's name, safe to use as a file name.
+     */
+    public String getQuickSaveSlot() {
+        String name = (appConfigItem != null) ? appConfigItem.getName() : null;
+        if ((name == null) || name.trim().isEmpty() || "Adhoc VIC Program".equals(name)) {
+            String filePath = (appConfigItem != null) ? appConfigItem.getFilePath() : null;
+            if ((filePath != null) && !filePath.trim().isEmpty()) {
+                int separator = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+                name = "adhoc " + filePath.substring(separator + 1);
+            }
+        }
+        String slot = jvicRunner.slugify((name != null) ? name : "");
+        return slot.isEmpty() ? "default" : slot;
     }
 
     @Override

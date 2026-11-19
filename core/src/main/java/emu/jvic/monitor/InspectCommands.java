@@ -237,12 +237,12 @@ final class InspectCommands {
 
     /** Converts a 14-bit VIC address to the CPU address the VIC sees there. */
     static int cpuAddress(int vicAddress) {
-        return ((vicAddress & 0x2000) != 0) ? (vicAddress & 0x1FFF) : (0x8000 | vicAddress);
+        return emu.jvic.TextTransfer.cpuAddress(vicAddress);
     }
 
     /** The CPU address of the screen matrix, from VIC registers 0-15. */
     static int matrixAddress(int[] vicRegisters) {
-        return cpuAddress(((vicRegisters[5] & 0xF0) << 6) | ((vicRegisters[2] & 0x80) << 2));
+        return emu.jvic.TextTransfer.matrixAddress(vicRegisters);
     }
 
     // ------------------------------------------------------------------------------

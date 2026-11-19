@@ -13,6 +13,8 @@ import emu.jvic.MachineType;
 import emu.jvic.Program;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
@@ -114,6 +116,29 @@ public final class TeaVMJVicWebWorker {
                 }
                 break;
 
+            case "Reset":
+                if (machine != null) {
+                    if (TeaVMWorkerInterop.getNestedInt(eventObject, "value") != 0) {
+                        machine.powerCycle();
+                    } else {
+                        machine.reset();
+                    }
+                    onMachineStateReplaced();
+                }
+                break;
+
+            case "QuickSave":
+                quickSave();
+                break;
+
+            case "QuickLoad":
+                quickLoad(TeaVMWorkerMonitor.toBytes(TeaVMWorkerInterop.getArrayBuffer(eventObject)));
+                break;
+
+            case "AdvanceFrame":
+                advanceFrame();
+                break;
+
             case "ResetMountedDisk":
                 if (machine != null) {
                     machine.resetMountedDisk(new Machine.ResetDiskHandler() {
@@ -137,6 +162,78 @@ public final class TeaVMJVicWebWorker {
 
             default:
                 break;
+        }
+    }
+
+    /**
+     * Alt+F11: posts the machine's state to the main thread, which keeps it for the
+     * rest of the page session (QuickSaveData), or QuickSaveFailed.
+     */
+    private void quickSave() {
+        if (machine == null) {
+            TeaVMWorkerGlobalScope.postObject("QuickSaveFailed", TeaVMWorkerInterop.createEmptyObject());
+            return;
+        }
+        try {
+            StateWriter out = new StateWriter();
+            machine.saveState(out);
+            TeaVMWorkerGlobalScope.postObject("QuickSaveData", TeaVMWorkerInterop.createBufferObject(
+                    TeaVMWorkerMonitor.toArrayBuffer(out.toByteArray())));
+        } catch (RuntimeException e) {
+            TeaVMWorkerGlobalScope.logToJSConsole("TeaVM worker: quick save failed: " + e.getMessage());
+            TeaVMWorkerGlobalScope.postObject("QuickSaveFailed", TeaVMWorkerInterop.createEmptyObject());
+        }
+    }
+
+    /** Alt+F10: loads a state that the main thread kept from a quick save. */
+    private void quickLoad(byte[] state) {
+        if (machine == null) {
+            return;
+        }
+        try {
+            machine.loadState(new StateReader(state));
+            onMachineStateReplaced();
+            TeaVMWorkerGlobalScope.postObject("QuickLoadDone", TeaVMWorkerInterop.createEmptyObject());
+        } catch (RuntimeException e) {
+            // e.g. a StateReader.StateException: the machine is set up differently.
+            TeaVMWorkerGlobalScope.postObject("QuickLoadFailed",
+                    TeaVMWorkerInterop.createMessageObject(String.valueOf(e.getMessage())));
+        }
+    }
+
+    /**
+     * After a reset or quick load: drops any auto-load still to be typed into the
+     * machine, and tells the monitor, if it's in use.
+     */
+    private void onMachineStateReplaced() {
+        autoLoadProgram = null;
+        autoRunCmdQueue = null;
+        monitor.onMachineStateChanged();
+    }
+
+    /**
+     * Alt+Shift+P while paused: runs the machine to the end of the current frame. The
+     * frame counter tells the main thread there is a new frame to show.
+     */
+    private void advanceFrame() {
+        if ((machine == null) || !paused || machine.isDebuggerStopped() || monitor.isHoldingMachine()) {
+            return;
+        }
+        boolean monitorActive = monitor.isActive();
+        boolean frameComplete = false;
+        do {
+            frameComplete = machine.emulateCycle();
+            if (monitorActive && machine.checkDebuggerStop()) {
+                break;
+            }
+        } while (!frameComplete);
+        if (frameComplete) {
+            if (frameCounter != null) {
+                frameCounter.increment();
+            }
+            if (monitorActive) {
+                monitor.onFrameAdvanced();
+            }
         }
     }
 

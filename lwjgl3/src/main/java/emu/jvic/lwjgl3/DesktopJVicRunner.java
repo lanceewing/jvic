@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.PixmapIO.PNG;
@@ -23,9 +24,12 @@ import emu.jvic.Machine;
 import emu.jvic.MachineType;
 import emu.jvic.PixelData;
 import emu.jvic.Program;
+import emu.jvic.TextTransfer;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.cpu.Cpu6502;
 import emu.jvic.debug.MonitorChannel;
+import emu.jvic.debug.StateReader;
+import emu.jvic.debug.StateWriter;
 import emu.jvic.io.disk.persistence.DiskImagePersistence;
 import emu.jvic.io.disk.persistence.DiskImagePersistenceSession;
 import emu.jvic.io.disk.persistence.NoOpDiskImagePersistence;
@@ -45,6 +49,18 @@ public class DesktopJVicRunner extends JVicRunner {
     private final Queue<Runnable> pendingMachineActions = new ConcurrentLinkedQueue<Runnable>();
     
     private Machine machine;
+
+    /** Text pasted with Alt+Insert, typed in as the keyboard buffer empties. Machine thread only. */
+    private final TextTransfer textTransfer = new TextTransfer();
+
+    /**
+     * Set by a reset or quick load (on the machine thread) so that the loop drops any
+     * auto-load still pending, which would otherwise type into the new state.
+     */
+    private boolean cancelAutoLoad;
+
+    /** Set when a frame advance has emulated a frame the screen hasn't shown yet. */
+    private volatile boolean pausedFrameReady;
 
     /** The monitor, created when first needed (null until then, so no debugger runs). */
     private volatile MonitorSession monitorSession;
@@ -290,6 +306,15 @@ public class DesktopJVicRunner extends JVicRunner {
                 continue;
             }
             
+            if (cancelAutoLoad) {
+                autoLoadProgram = null;
+                autoRunCmdQueue = null;
+                cancelAutoLoad = false;
+            }
+
+            // Type any pasted text (Alt+Insert) as the keyboard buffer empties.
+            textTransfer.feed(machine.getMemory().getMemoryArray());
+
             // Check for BASIC program auto-load
             if (autoLoadProgram != null) {
                 int[] mem = machine.getMemory().getMemoryArray();
@@ -498,6 +523,148 @@ public class DesktopJVicRunner extends JVicRunner {
         if (machine != null) {
             machine.getCpu().setInterrupt(Cpu6502.S_NMI);
         }
+    }
+
+    @Override
+    public boolean isMachineControlSupported() {
+        return true;
+    }
+
+    @Override
+    public void requestReset(boolean powerCycle) {
+        enqueueMachineAction(() -> {
+            if (machine == null) {
+                return;
+            }
+            if (powerCycle) {
+                machine.powerCycle();
+            } else {
+                machine.reset();
+            }
+            onMachineStateReplaced();
+        });
+    }
+
+    @Override
+    public void requestQuickSave(String slot) {
+        enqueueMachineAction(() -> {
+            if (machine == null) {
+                return;
+            }
+            try {
+                StateWriter out = new StateWriter();
+                machine.saveState(out);
+                quickSaveFile(slot).writeBytes(out.toByteArray(), false);
+                showMessage("Quick save done");
+            } catch (RuntimeException e) {
+                Gdx.app.error("JVic", "Quick save failed", e);
+                showMessage("Quick save failed");
+            }
+        });
+    }
+
+    @Override
+    public void requestQuickLoad(String slot) {
+        enqueueMachineAction(() -> {
+            if (machine == null) {
+                return;
+            }
+            FileHandle file = quickSaveFile(slot);
+            if (!file.exists()) {
+                showMessage("No quick save for this program");
+                return;
+            }
+            try {
+                machine.loadState(new StateReader(file.readBytes()));
+                onMachineStateReplaced();
+                showMessage("Quick load done");
+            } catch (RuntimeException e) {
+                // e.g. a StateReader.StateException: the machine is set up differently.
+                Gdx.app.error("JVic", "Quick load failed: " + e.getMessage());
+                showMessage("Quick load failed");
+            }
+        });
+    }
+
+    /**
+     * The quick save file for a slot: jvic_saves/&lt;slot&gt;.jvs in the user's home
+     * directory, beside jvic_screens.
+     */
+    private FileHandle quickSaveFile(String slot) {
+        return Gdx.files.external("jvic_saves/" + slot + ".jvs");
+    }
+
+    /**
+     * After a reset or quick load: drops the auto-load and pasted text still to be
+     * typed, and tells the monitor, if it's in use, that the state has changed.
+     */
+    private void onMachineStateReplaced() {
+        cancelAutoLoad = true;
+        textTransfer.clear();
+        if (monitorSession != null) {
+            monitorSession.onMachineStateChanged();
+        }
+    }
+
+    @Override
+    public void requestFrameAdvance() {
+        enqueueMachineAction(() -> {
+            if ((machine == null) || !paused || machine.isDebuggerStopped()) {
+                return;
+            }
+            machine.update();
+            if (monitorSession != null) {
+                monitorSession.onFrame();
+                if (machine.isDebuggerStopped()) {
+                    // A breakpoint was hit during the frame.
+                    monitorSession.onMachineStopped();
+                }
+            }
+            textTransfer.feed(machine.getMemory().getMemoryArray());
+            pausedFrameReady = true;
+        });
+    }
+
+    @Override
+    public boolean consumePausedFrame() {
+        if (pausedFrameReady) {
+            pausedFrameReady = false;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isClipboardSupported() {
+        return true;
+    }
+
+    @Override
+    public void requestCopyScreenText() {
+        enqueueMachineAction(() -> {
+            if (machine == null) {
+                return;
+            }
+            String text = TextTransfer.readScreen(machine);
+            // The clipboard belongs to the UI thread.
+            Gdx.app.postRunnable(() -> {
+                Gdx.app.getClipboard().setContents(text);
+                showMessage("Screen text copied");
+            });
+        });
+    }
+
+    @Override
+    public void requestPaste() {
+        String text = Gdx.app.getClipboard().getContents();
+        if ((text == null) || text.isEmpty()) {
+            return;
+        }
+        enqueueMachineAction(() -> {
+            if (machine != null) {
+                textTransfer.queue(TextTransfer.toPetscii(text, TextTransfer.isLowerCaseMode(machine)));
+            }
+        });
     }
 
     @Override

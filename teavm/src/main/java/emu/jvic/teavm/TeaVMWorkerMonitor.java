@@ -77,6 +77,20 @@ final class TeaVMWorkerMonitor {
         return holdMachine;
     }
 
+    /** Called after a reset or quick load from a hot key has replaced the machine's state. */
+    void onMachineStateChanged() {
+        if (session != null) {
+            session.onMachineStateChanged();
+        }
+    }
+
+    /** Called after a frame advance has emulated a whole frame. */
+    void onFrameAdvanced() {
+        if (session != null) {
+            session.onFrame();
+        }
+    }
+
     /** Called when the worker has started a machine. */
     void onMachineStarted(Machine machine) {
         this.machine = machine;

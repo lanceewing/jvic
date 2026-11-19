@@ -58,6 +58,15 @@ final class TeaVMWorkerInterop {
             double headroomFactor, double busyPercent, double avgBatchWorkMillis,
             double avgBatchCycles, int audioQueueSamples, double audioQueueMillis);
 
+    @JSBody(params = "buffer", script = "return { buffer: buffer };")
+    static native JSObject createBufferObject(ArrayBuffer buffer);
+
+    @JSBody(params = "value", script = "return { value: value };")
+    static native JSObject createIntObject(int value);
+
+    @JSBody(params = "message", script = "return { message: message };")
+    static native JSObject createMessageObject(String message);
+
     @JSBody(params = "data", script = "return data && data.name ? data.name : ''; ")
     static native String getEventType(JSObject data);
 

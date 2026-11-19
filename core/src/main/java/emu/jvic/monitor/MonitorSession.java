@@ -277,6 +277,23 @@ public final class MonitorSession implements MonitorHost {
     }
 
     /**
+     * Called by the runner after something outside the monitor has replaced the
+     * machine's state, i.e. a reset or a quick load from a hot key. These can happen
+     * part-way through an instruction, so neither CPU is shown as stopped at an
+     * instruction boundary any more. Stepping, pending keybuf typing and autostarts
+     * are dropped, as after undump.
+     */
+    public void onMachineStateChanged() {
+        if (engine == null) {
+            return;
+        }
+        for (AddressSpace space : new AddressSpace[] { engine.getMainSpace(), engine.getDriveSpace() }) {
+            space.getDebugCpu().restoreBoundary(false, space.getCpu().getProgramCounter() & 0xFFFF, 0);
+        }
+        engine.onStateLoaded();
+    }
+
+    /**
      * Executes a command line, or, if the machine is running, stops it and queues the
      * line until it has stopped.
      */

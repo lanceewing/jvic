@@ -147,7 +147,33 @@ public class MachineInputProcessor extends InputAdapter {
                     handleKeyboardToggle();
                     return true;
                 case Keys.P:
-                    handlePauseToggle();
+                    if (getKeyboardMatrix().isShiftKeyDown()) {
+                        handleFrameAdvance();
+                    } else {
+                        handlePauseToggle();
+                    }
+                    return true;
+                case Keys.F9:
+                    handleReset(false);
+                    return true;
+                case Keys.F12:
+                    handleReset(true);
+                    return true;
+                case Keys.F11:
+                    handleQuickSave();
+                    return true;
+                case Keys.F10:
+                    handleQuickLoad();
+                    return true;
+                case Keys.FORWARD_DEL:
+                    if (machineScreen.getJvicRunner().isClipboardSupported()) {
+                        machineScreen.getJvicRunner().requestCopyScreenText();
+                    }
+                    return true;
+                case Keys.INSERT:
+                    if (machineScreen.getJvicRunner().isClipboardSupported()) {
+                        machineScreen.getJvicRunner().requestPaste();
+                    }
                     return true;
                 case Keys.S:
                     handleSoundToggle();
@@ -186,7 +212,57 @@ public class MachineInputProcessor extends InputAdapter {
                 handleFullScreenToggle();
             }
         }
+        else if (keycode == Keys.PAUSE) {
+            // VICE's screenshot key, the same as Alt+Y.
+            if (machineScreen.getJvicRunner().isScreenshotSupported()) {
+                machineScreen.saveScreenshot();
+            }
+            return true;
+        }
         return false;
+    }
+
+    /**
+     * Alt+F9 (reset) and Alt+F12 (power cycle), as in VICE. No confirmation is asked
+     * for, as in VICE.
+     */
+    private void handleReset(boolean powerCycle) {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        if (jvicRunner.isMachineControlSupported() && !dialogHandler.isDialogOpen()) {
+            jvicRunner.requestReset(powerCycle);
+        }
+    }
+
+    /** Alt+F11, as in VICE: saves the machine to the program's quick save slot. */
+    private void handleQuickSave() {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        if (jvicRunner.isMachineControlSupported() && !dialogHandler.isDialogOpen()) {
+            jvicRunner.requestQuickSave(machineScreen.getQuickSaveSlot());
+        }
+    }
+
+    /** Alt+F10, as in VICE: loads the machine from the program's quick save slot. */
+    private void handleQuickLoad() {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        if (jvicRunner.isMachineControlSupported() && !dialogHandler.isDialogOpen()) {
+            jvicRunner.requestQuickLoad(machineScreen.getQuickSaveSlot());
+        }
+    }
+
+    /**
+     * Alt+Shift+P, as in VICE: pauses the machine if it is running, otherwise runs it
+     * for one frame.
+     */
+    private void handleFrameAdvance() {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        if (!jvicRunner.isMachineControlSupported() || dialogHandler.isDialogOpen()) {
+            return;
+        }
+        if (jvicRunner.isPaused()) {
+            jvicRunner.requestFrameAdvance();
+        } else {
+            jvicRunner.pause();
+        }
     }
 
     /**
