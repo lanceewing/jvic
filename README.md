@@ -119,13 +119,28 @@ F11                               | Also toggles full screen mode.
 ALT-J                             | Changes the joystick alignment.
 ALT-K                             | Toggles the on-screen keyboard.
 ALT-P                             | Toggles pause/resume.
+ALT-SHIFT-P                       | Pauses, or if already paused, runs the machine for one frame.
 ALT-S                             | Toggles sound on or off.
 ALT-Q/X                           | Opens the quit confirmation dialog.
 ALT-W                             | Toggles warp speed (mainly for Desktop)
-ALT-Y                             | Saves a screenshot on non-web targets.
-ALT-Z                             | Rotates through screen sizes.
+ALT-Y                             | Saves a screenshot (a PNG download on the web).
+PAUSE                             | Also saves a screenshot.
+ALT-MINUS                         | Rotates through screen sizes.
+ALT-Z                             | Resets the mounted disk to its original image (asks first).
+ALT-B                             | Toggles the FPS/performance overlay.
+ALT-H/M                           | Opens or closes the debug monitor (Desktop and web).
+ALT-F9                            | Resets the machine, keeping memory. No confirmation.
+ALT-F12                           | Turns the machine off and on again, clearing memory. No confirmation.
+ALT-F11                           | Quick save: saves the machine's state to this program's quick save slot.
+ALT-F10                           | Quick load: loads the state from this program's quick save slot.
+ALT-DELETE                        | Copies the text on the screen to the clipboard (Desktop only).
+ALT-INSERT                        | Types the clipboard's text into the VIC-20 (Desktop only).
 
 These shortcuts are handled by JVic itself rather than being passed through to the emulated VIC-20 keyboard.
+
+There is one quick save slot per program. On Desktop, quick saves are files in the jvic_saves folder in your home directory, so they last between runs. On the web, they last until the page is closed or reloaded. A quick save only loads into a machine set up the same way (machine type, RAM expansion and cartridge).
+
+Pasted text is typed in as the VIC-20 reads the keyboard. With the normal upper case character set, letters of either case are typed as plain letters, so a BASIC listing pastes in as text rather than graphics characters. With the lower case set, the case is kept.
 
 ### Joystick keys
 The joystick icon (or ALT-J) turns the joystick ON and OFF. While it is ON, the arrow keys act only as the joystick, and while it is OFF they act only as the VIC-20 cursor keys. This stops games that read both, such as Moon Patrol (which uses the cursor keys to centre the screen), from seeing cursor key presses while you play. Turn the joystick OFF to use the cursor keys, then back ON to play.
