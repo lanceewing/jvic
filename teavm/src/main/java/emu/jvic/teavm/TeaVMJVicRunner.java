@@ -94,9 +94,51 @@ public class TeaVMJVicRunner extends JVicRunner {
             + "window.jvic.console = function() { callback(); };")
     private static native void installConsoleHook(ConsoleCallback callback);
 
+    /**
+     * True while restarting with new settings, when the page URL doesn't change.
+     */
+    private boolean restarting;
+
+    @Override
+    public boolean isMachineSettingSupported(String name) {
+        return "palette".equals(name);
+    }
+
+    @Override
+    public void applyMachineSetting(String name, String value) {
+        if (worker != null) {
+            TeaVMWorkerInterop.postObject(worker, "ApplySetting",
+                    TeaVMWorkerInterop.createSettingObject(name, (value != null) ? value : ""));
+        }
+    }
+
+    @Override
+    public boolean isRestartSupported() {
+        return true;
+    }
+
+    @Override
+    public void prepareRestart() {
+        // As stop(), but the runner isn't marked as stopped, so the machine screen stays
+        // while the new worker starts.
+        if (worker != null) {
+            TeaVMWorkerInterop.terminate(worker);
+            worker = null;
+        }
+        soundGenerator.pauseSound();
+        paused = false;
+        stopped = false;
+        resetMountedDiskSupported = false;
+        pendingResetDiskHandler = null;
+        pendingQuickSaveSlot = null;
+        restarting = true;
+    }
+
     @Override
     public void start(AppConfigItem appConfigItem) {
-        if ((TeaVMBrowser.getQueryParameter("url") == null)
+        boolean restart = restarting;
+        restarting = false;
+        if (!restart && (TeaVMBrowser.getQueryParameter("url") == null)
                 && (!"Adhoc VIC Program".equals(appConfigItem.getName()))
                 && (TeaVMBrowser.getHash().indexOf('=') < 0)
                 && (TeaVMBrowser.getHash().indexOf('/') < 0)) {

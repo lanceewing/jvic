@@ -230,6 +230,8 @@ public class TeaVMLauncher {
         mapParameterIfPresent("cmd", argsMap);
         mapParameterIfPresent("palette", argsMap);
         mapParameterIfPresent("filter", argsMap);
+        mapParameterIfPresent("joystick", argsMap);
+        mapParameterIfPresent("settings", argsMap);
     }
 
     private static void mapParameterIfPresent(String paramName, Map<String, String> argsMap) {

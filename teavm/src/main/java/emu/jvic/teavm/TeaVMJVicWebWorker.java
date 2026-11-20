@@ -127,6 +127,13 @@ public final class TeaVMJVicWebWorker {
                 }
                 break;
 
+            case "ApplySetting":
+                if (machine != null) {
+                    machine.applySetting(TeaVMWorkerInterop.getNestedString(eventObject, "settingName"),
+                            TeaVMWorkerInterop.getNestedString(eventObject, "settingValue"));
+                }
+                break;
+
             case "QuickSave":
                 quickSave();
                 break;

@@ -2,6 +2,12 @@ package emu.jvic.config;
 
 public class AppConfigItem {
 
+    /** The name given to every program the user supplies (URL, file, drop, autorun). */
+    public static final String ADHOC_NAME = "Adhoc VIC Program";
+
+    /** The name of the BASIC tile. */
+    public static final String BASIC_NAME = "BASIC";
+
     private String gameId;
     
     private String name = "";
@@ -55,6 +61,54 @@ public class AppConfigItem {
      * Constructor for AppConfigItem.
      */
     public AppConfigItem() {
+    }
+
+    /**
+     * Creates the configuration for a program the user supplied (a URL, an opened or
+     * dropped file, a desktop file path, or autorun-config.txt). Only what the file
+     * itself tells us is set: the machine type is NTSC if "NTSC" is in the path, and is
+     * otherwise left for the settings to decide.
+     *
+     * @param filePath     The program's path or URL.
+     * @param fileLocation Where the file is.
+     *
+     * @return The configuration.
+     */
+    public static AppConfigItem createAdhoc(String filePath, FileLocation fileLocation) {
+        AppConfigItem appConfigItem = new AppConfigItem();
+        appConfigItem.setName(ADHOC_NAME);
+        appConfigItem.setFilePath(filePath);
+        appConfigItem.setFileLocation(fileLocation);
+        if ((filePath != null) && filePath.toUpperCase().contains("NTSC")) {
+            appConfigItem.setMachineType("NTSC");
+        }
+        return appConfigItem;
+    }
+
+    /**
+     * @return A copy of this configuration. The file data array is shared, not copied.
+     */
+    public AppConfigItem copy() {
+        AppConfigItem copy = new AppConfigItem();
+        copy.gameId = gameId;
+        copy.name = name;
+        copy.displayName = displayName;
+        copy.filePath = filePath;
+        copy.fileType = fileType;
+        copy.iconPath = iconPath;
+        copy.machineType = machineType;
+        copy.ram = ram;
+        copy.fileLocation = fileLocation;
+        copy.status = status;
+        copy.diskWrite = diskWrite;
+        copy.autoRunCommand = autoRunCommand;
+        copy.entryName = entryName;
+        copy.loadAddress = loadAddress;
+        copy.textureFilter = textureFilter;
+        copy.palette = palette;
+        copy.joystick = joystick;
+        copy.fileData = fileData;
+        return copy;
     }
 
     public String getGameId() {

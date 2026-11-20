@@ -2,6 +2,7 @@ package emu.jvic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -41,6 +42,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import emu.jvic.config.AppConfig;
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.config.AppConfigItem.FileLocation;
+import emu.jvic.settings.LaunchOptions;
+import emu.jvic.settings.ResolvedSettings;
 import emu.jvic.ui.ConfirmHandler;
 import emu.jvic.ui.ConfirmResponseHandler;
 import emu.jvic.ui.DialogHandler;
@@ -49,6 +52,7 @@ import emu.jvic.ui.PagedScrollPane;
 import emu.jvic.ui.PaginationWidget;
 import emu.jvic.ui.TextInputResponseHandler;
 import emu.jvic.ui.ViewportManager;
+import emu.jvic.ui.settings.SettingsPanel;
 
 /**
  * The Home screen of the JVic emulator, i.e. the one that shows all of the
@@ -157,10 +161,13 @@ public class HomeScreen extends InputAdapter implements Screen {
 
         // The stage handles most of the input, but we need to handle the BACK button
         // separately.
+        // The settings panel goes first, so that it takes all input while it is open.
         portraitInputProcessor = new InputMultiplexer();
+        portraitInputProcessor.addProcessor(jvic.getSettingsPanel());
         portraitInputProcessor.addProcessor(portraitStage);
         portraitInputProcessor.addProcessor(this);
         landscapeInputProcessor = new InputMultiplexer();
+        landscapeInputProcessor.addProcessor(jvic.getSettingsPanel());
         landscapeInputProcessor.addProcessor(landscapeStage);
         landscapeInputProcessor.addProcessor(this);
     }
@@ -184,12 +191,12 @@ public class HomeScreen extends InputAdapter implements Screen {
     
     private AppConfigItem buildBasicAppConfigItem() {
         AppConfigItem basicAppConfigItem = new AppConfigItem();
-        basicAppConfigItem.setName("BASIC");
+        basicAppConfigItem.setName(AppConfigItem.BASIC_NAME);
         basicAppConfigItem.setFilePath("");
         basicAppConfigItem.setFileType("");
         basicAppConfigItem.setIconPath("screenshots/B/Basic/Basic.png");
-        basicAppConfigItem.setMachineType("PAL");
-        basicAppConfigItem.setRam("RAM_UNEXPANDED");
+        // The TV standard and RAM (PAL, unexpanded) are built-in defaults rather than
+        // set here, so that the user's settings for all programs apply to BASIC.
         basicAppConfigItem.setDiskWrite("persist");
         // Arrow keys need to be cursor keys for typing/editing in BASIC.
         basicAppConfigItem.setJoystick("OFF");
@@ -227,8 +234,15 @@ public class HomeScreen extends InputAdapter implements Screen {
         int horizPaddingUnit = 0;
 
         Button infoButton = buildButton("INFO", null, "png/info.png", 96, 96, null, null);
+        Table topButtons = new Table();
+        if (!jvic.isSettingsHidden()) {
+            // Settings for all programs. Hidden when the deployment says settings=hidden.
+            Button settingsButton = buildButton("SETTINGS", null, "png/settings.png", 96, 96, null, null);
+            topButtons.add(settingsButton).padRight(30);
+        }
+        topButtons.add(infoButton);
         currentPage.add().expandX();
-        currentPage.add(infoButton).pad(30, 0, 0, 20).align(Align.right).expandX();
+        currentPage.add(topButtons).pad(30, 0, 0, 20).align(Align.right).expandX();
         currentPage.row();
         currentPage.add().expandX();
         
@@ -341,7 +355,86 @@ public class HomeScreen extends InputAdapter implements Screen {
             landscapeStage.act(delta);
             landscapeStage.draw();
         }
+        jvic.getSettingsPanel().draw(delta);
     }
+
+    /**
+     * Opens the settings screen (for all programs), or closes it if it is open. Ignored
+     * when the deployment hides settings.
+     */
+    public void toggleSettings() {
+        SettingsPanel settingsPanel = jvic.getSettingsPanel();
+        if (settingsPanel.isOpen()) {
+            settingsPanel.close();
+        } else if (!jvic.isSettingsHidden()) {
+            settingsPanel.open(settingsHost);
+        }
+    }
+
+    /**
+     * The settings panel's view of the home screen: no program is running.
+     */
+    private final SettingsPanel.Host settingsHost = new SettingsPanel.Host() {
+        @Override
+        public boolean isMachineRunning() {
+            return false;
+        }
+
+        @Override
+        public ResolvedSettings resolveRunningProgram() {
+            return null;
+        }
+
+        @Override
+        public ResolvedSettings resolveRunningProgramWithoutLaunchOptions() {
+            return null;
+        }
+
+        @Override
+        public String getProgramKey() {
+            return null;
+        }
+
+        @Override
+        public String getProgramName() {
+            return "";
+        }
+
+        @Override
+        public boolean isAppliedLive(String id) {
+            return false;
+        }
+
+        @Override
+        public void applyLive(String id, ResolvedSettings settings) {
+            // Nothing is running.
+        }
+
+        @Override
+        public List<String> getRestartNeeded() {
+            return new ArrayList<String>();
+        }
+
+        @Override
+        public boolean isRestartSupported() {
+            return false;
+        }
+
+        @Override
+        public void restart() {
+            // Nothing is running.
+        }
+
+        @Override
+        public float getVicScreenBase() {
+            return 0;
+        }
+
+        @Override
+        public void setPausedForSettings(boolean paused) {
+            // Nothing is running.
+        }
+    };
 
     @Override
     public void resize(int width, int height) {
@@ -373,7 +466,7 @@ public class HomeScreen extends InputAdapter implements Screen {
 
     @Override
     public void hide() {
-
+        jvic.getSettingsPanel().close();
     }
 
     @Override
@@ -404,6 +497,11 @@ public class HomeScreen extends InputAdapter implements Screen {
      * @return whether the input was processed
      */
     public boolean keyUp(int keycode) {
+        if ((keycode == Keys.O) && (Gdx.input.isKeyPressed(Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Keys.ALT_RIGHT))) {
+            // Alt+O: settings, as on the machine screen.
+            toggleSettings();
+            return true;
+        }
         boolean modifierDown = 
                 Gdx.input.isKeyPressed(Keys.SHIFT_LEFT) ||
                 Gdx.input.isKeyPressed(Keys.SHIFT_RIGHT) ||
@@ -769,15 +867,37 @@ public class HomeScreen extends InputAdapter implements Screen {
                     showAboutJVicDialog();
                 } else if (appName.equals("ADD")) {
                     importProgram();
+                } else if (appName.equals("SETTINGS")) {
+                    toggleSettings();
                 }
             }
         }
     };
     
+    /**
+     * Starts a program selected from inside jvic (a tile, the open file icon, or a
+     * dropped file), with no launch options.
+     *
+     * @param appConfigItem The program's own configuration.
+     */
     public void processProgramSelection(AppConfigItem appConfigItem) {
+        processProgramSelection(appConfigItem, LaunchOptions.NONE);
+    }
+
+    /**
+     * Starts a program. Its own configuration is combined with the user's saved
+     * settings and the launch options into a copy, which the machine is started with,
+     * so the program's entry in the game list is never changed.
+     *
+     * @param appConfigItem The program's own configuration.
+     * @param launchOptions The launch options for this launch, or LaunchOptions.NONE.
+     */
+    public void processProgramSelection(AppConfigItem appConfigItem, LaunchOptions launchOptions) {
         lastProgramLaunched = appConfigItem;
+        jvic.setRunningProgram(appConfigItem, launchOptions);
+        AppConfigItem resolvedConfig = jvic.resolveProgramConfig(appConfigItem, launchOptions);
         MachineScreen machineScreen = jvic.getMachineScreen();
-        machineScreen.initMachine(appConfigItem, true);
+        machineScreen.initMachine(resolvedConfig, true);
         jvic.setScreen(machineScreen);
     }
     
@@ -855,19 +975,10 @@ public class HomeScreen extends InputAdapter implements Screen {
                         jvic.getPreferences().flush();
                     }
                     
-                    AppConfigItem appConfigItem = new AppConfigItem();
-                    appConfigItem.setName("Adhoc VIC Program");
-                    appConfigItem.setFilePath(filePath);
-                    appConfigItem.setFileLocation(FileLocation.LOCAL);
-                    if (filePath.toUpperCase().contains("NTSC")) {
-                        appConfigItem.setMachineType("NTSC");
-                    } else {
-                        appConfigItem.setMachineType("PAL");
-                    }
-                    appConfigItem.setRam("RAM_AUTO");
+                    // PAL, Auto RAM and the joystick off (the safer cursor keys for
+                    // an unknown program) are built-in defaults for user programs.
+                    AppConfigItem appConfigItem = AppConfigItem.createAdhoc(filePath, FileLocation.LOCAL);
                     appConfigItem.setFileData(fileData);
-                    // Unknown program, so the safer default of cursor keys.
-                    appConfigItem.setJoystick("OFF");
 
                     processProgramSelection(appConfigItem);
                     

@@ -49,7 +49,18 @@ public class MachineInputProcessor extends InputAdapter {
      * Whether or not the speaker is currently active, i.e. sound is on.
      */
     private boolean speakerOn;
-    
+
+    /**
+     * Whether sound should be turned off when the runner turns it on at the start of a
+     * program (the "Sound at start" setting is off).
+     */
+    private boolean soundOffAtStart;
+
+    /**
+     * The side the touch joystick goes on when it is turned on (a setting).
+     */
+    private JoystickAlignment joystickSide = JoystickAlignment.LEFT;
+
     /**
      * The current offset from centre of the camera in the X direction.
      */
@@ -202,6 +213,10 @@ public class MachineInputProcessor extends InputAdapter {
                     // The monitor, as in VICE. Ignored where it isn't supported.
                     machineScreen.toggleMonitorConsole();
                     return true;
+                case Keys.O:
+                    // Settings, as in VICE. Ignored when the deployment hides settings.
+                    machineScreen.toggleSettings();
+                    return true;
                 default:
                     return false;
             }
@@ -220,6 +235,139 @@ public class MachineInputProcessor extends InputAdapter {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param action An action from the machine screen's menu.
+     *
+     * @return true if the action can be used on this platform, now.
+     */
+    public boolean isActionAvailable(MachineAction action) {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        switch (action) {
+            case SETTINGS:
+                return machineScreen.isSettingsAvailable();
+            case RESET:
+            case POWER_CYCLE:
+            case QUICK_SAVE:
+            case QUICK_LOAD:
+                return jvicRunner.isMachineControlSupported();
+            case SCREENSHOT:
+                return jvicRunner.isScreenshotSupported();
+            case RESET_DISK:
+                return jvicRunner.canResetMountedDisk();
+            case COPY_TEXT:
+            case PASTE:
+                return jvicRunner.isClipboardSupported();
+            case MONITOR:
+                return jvicRunner.isMonitorSupported();
+            case SCREEN_SIZE:
+                // Portrait always uses the size that fits.
+                return viewportManager.isLandscape();
+            case WARP:
+            case SHORTCUTS:
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Carries out an action from the machine screen's menu, the same as its hotkey.
+     *
+     * @param action The action.
+     */
+    public void performAction(MachineAction action) {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        switch (action) {
+            case SETTINGS:
+                machineScreen.toggleSettings();
+                break;
+            case SCREEN_SIZE:
+                rotateScreenSize();
+                break;
+            case RESET:
+                handleReset(false);
+                break;
+            case POWER_CYCLE:
+                handleReset(true);
+                break;
+            case QUICK_SAVE:
+                handleQuickSave();
+                break;
+            case QUICK_LOAD:
+                handleQuickLoad();
+                break;
+            case SCREENSHOT:
+                if (jvicRunner.isScreenshotSupported()) {
+                    machineScreen.saveScreenshot();
+                }
+                break;
+            case WARP:
+                handleWarpSpeedToggle();
+                break;
+            case RESET_DISK:
+                handleDiskReset();
+                break;
+            case COPY_TEXT:
+                if (jvicRunner.isClipboardSupported()) {
+                    jvicRunner.requestCopyScreenText();
+                }
+                break;
+            case PASTE:
+                if (jvicRunner.isClipboardSupported()) {
+                    jvicRunner.requestPaste();
+                }
+                break;
+            case MONITOR:
+                machineScreen.toggleMonitorConsole();
+                break;
+            case SHORTCUTS:
+                showShortcuts();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void showShortcuts() {
+        JVicRunner jvicRunner = machineScreen.getJvicRunner();
+        StringBuilder text = new StringBuilder("Keyboard shortcuts\n\n");
+        text.append("Alt+D, Alt+Enter, F11: Full screen\n");
+        if (machineScreen.isSettingsAvailable()) {
+            text.append("Alt+O: Settings\n");
+        }
+        text.append("Alt+P: Pause / resume\n");
+        text.append("Alt+Shift+P: Advance one frame\n");
+        text.append("Alt+S: Sound on / off\n");
+        text.append("Alt+W: Warp speed\n");
+        text.append("Alt+J: Joystick\n");
+        text.append("Alt+K: On-screen keyboard\n");
+        text.append("Alt+-: Screen size\n");
+        text.append("Alt+B: FPS overlay\n");
+        if (jvicRunner.isScreenshotSupported()) {
+            text.append("Alt+Y, Pause: Screenshot\n");
+        }
+        if (jvicRunner.isMachineControlSupported()) {
+            text.append("Alt+F9: Reset\n");
+            text.append("Alt+F12: Power cycle\n");
+            text.append("Alt+F11: Quick save\n");
+            text.append("Alt+F10: Quick load\n");
+        }
+        text.append("Alt+Z: Reset the mounted disk\n");
+        if (jvicRunner.isClipboardSupported()) {
+            text.append("Alt+Del: Copy screen text\n");
+            text.append("Alt+Ins: Paste text\n");
+        }
+        if (jvicRunner.isMonitorSupported()) {
+            text.append("Alt+H: Monitor\n");
+        }
+        text.append("Alt+Q, Alt+X: Quit\n");
+        dialogHandler.showAboutDialog(text.toString(), new TextInputResponseHandler() {
+            @Override
+            public void inputTextResult(boolean success, String button) {
+                // Nothing to do.
+            }
+        });
     }
 
     /**
@@ -331,195 +479,39 @@ public class MachineInputProcessor extends InputAdapter {
                 processVirtualKeyboardKeyUp(keycode);
             }
         } else {
-            // TODO: Need to handle the magic numbers in this block in a better way.
-            boolean keyboardClicked = false;
-            boolean backArrowClicked = false;
-            boolean fullScreenClicked = false;
-            boolean speakerClicked = false;
-            boolean screenSizeClicked = false;
-            boolean pausePlayClicked = false;
-            boolean joystickClicked = false;
-
-            if (viewportManager.isPortrait()) {
-                // Portrait.
-                if (touchXY.y < 135) {
-                    if (touchXY.x < 126) {
-                        fullScreenClicked = true;
-                    } else if (touchXY.x > (viewportManager.getWidth() - 126)) {
-                        backArrowClicked = true;
-                    } else {
-                        float sixthPos = (viewportManager.getWidth() / 6);
-                        float halfPos = (viewportManager.getWidth() / 2);
-                        float thirdPos = (viewportManager.getWidth() / 3);
-                        float twoThirdPos = (viewportManager.getWidth() - (viewportManager.getWidth() / 3));
-                        float fiveSixths = (viewportManager.getWidth() - (viewportManager.getWidth() / 6));
-                        
-                        if ((touchXY.x > (sixthPos - 26)) && (touchXY.x < (sixthPos + 100))) {
-                            screenSizeClicked = true;
-                        }
-                        else if ((touchXY.x > (thirdPos - 42)) && (touchXY.x < (thirdPos + 84))) {
-                            speakerClicked = true;
-                        }
-                        else if ((touchXY.x > (halfPos - 58)) && (touchXY.x < (halfPos + 58))) {
-                            pausePlayClicked = true;
-                        }
-                        else if ((touchXY.x > (twoThirdPos - 84)) && (touchXY.x < (twoThirdPos + 42))) {
-                            keyboardClicked = true;
-                        }
-                        else if ((touchXY.x > (fiveSixths - 100)) && (touchXY.x < (fiveSixths + 26))) {
-                            joystickClicked = true;
-                        }
-                    }
+            // The icon positions come from the layout the machine screen last drew.
+            MachineIconLayout.Icon icon = machineScreen.getIconLayout().hitTest(touchXY.x, touchXY.y);
+            if (icon != null) {
+                switch (icon) {
+                    case KEYBOARD:
+                        handleKeyboardToggle();
+                        break;
+                    case JOYSTICK:
+                        handleJoystickAlignment();
+                        break;
+                    case SPEAKER:
+                        handleSoundToggle();
+                        break;
+                    case MENU:
+                        machineScreen.openMachineMenu();
+                        break;
+                    case PAUSE_PLAY:
+                        handlePauseToggle();
+                        break;
+                    case FULL_SCREEN:
+                        handleFullScreenToggle();
+                        break;
+                    case BACK:
+                        handleExitMachine();
+                        break;
+                    default:
+                        break;
                 }
-            } else {
-                // Landscape.
-                int screenTop = (int) viewportManager.getHeight();
-                if (cameraXOffset == 0) {
-                    if ((viewportManager.getVICScreenBase() > 0) || (viewportManager.getSidePaddingWidth() <= 64)) {
-                        if (touchXY.y < 104) {
-                            float leftAdjustment = (viewportManager.getWidth() / 4) - 48;
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 6 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 6 ) / 12)) - 0) - leftAdjustment)) {
-                                fullScreenClicked = true;
-                            }
-                            else
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 5 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 5 ) / 12)) - 0) - leftAdjustment)) {
-                                screenSizeClicked = true;
-                            } 
-                            else 
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 4 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 4 ) / 12)) - 0) - leftAdjustment)) {
-                                speakerClicked = true;
-                            }
-                            else
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 3 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 3 ) / 12)) - 0) - leftAdjustment)) {
-                                pausePlayClicked = true;
-                            }
-                            else
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 2 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 2 ) / 12)) - 0) - leftAdjustment)) {
-                                keyboardClicked = true;
-                            }
-                            else
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 0) - leftAdjustment)) {
-                                joystickClicked = true;
-                            }
-                            else
-                            if ((touchXY.x >= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 0 ) / 12)) - 96) - leftAdjustment) && 
-                                (touchXY.x <= ((viewportManager.getWidth() - ((viewportManager.getWidth() * 0 ) / 12)) - 0) - leftAdjustment)) {
-                                backArrowClicked = true;
-                            }
-                        }
-                    } else {
-                        // Screen in middle, buttons either side.
-                        if (touchXY.y > (screenTop - 104)) {
-                            if (touchXY.x < 112) {
-                                speakerClicked = true;
-                            } else if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                fullScreenClicked = true;
-                            }
-                        } else if (touchXY.y < 104) {
-                            if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                backArrowClicked = true;
-                            } else if (touchXY.x < 112) {
-                                keyboardClicked = true;
-                            }
-                        } else if ((touchXY.y > (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 74) &&
-                                   (touchXY.y < (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) + 42)) {
-                            if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                screenSizeClicked = true;
-                            } else if (touchXY.x < 112) {
-                                pausePlayClicked = true;
-                            }
-                        } else if ((touchXY.y > (viewportManager.getHeight() / 3) - 42) &&
-                                (touchXY.y < (viewportManager.getHeight() / 3) + 74)) {
-                             if (touchXY.x > (viewportManager.getWidth() - 112)) {
-                                 if (!joystickAlignment.equals(JoystickAlignment.RIGHT)) {
-                                     joystickClicked = true;
-                                 }
-                             } else if (touchXY.x < 112) {
-                                 if (joystickAlignment.equals(JoystickAlignment.RIGHT)) {
-                                     joystickClicked = true;
-                                 }
-                             }
-                         }
-                    }
-                }
-                else {
-                    // All buttons on same side
-                    if (((touchXY.x < 128) && (cameraXOffset < 0)) || 
-                        ((touchXY.x > (viewportManager.getWidth() - 128)) && (cameraXOffset > 0))) {
-                        
-                        if (touchXY.y > (viewportManager.getHeight() - 126)) {
-                            fullScreenClicked = true;
-                        } else if (touchXY.y < 126) {
-                            backArrowClicked = true;
-                        } else {
-                            float sixthPos = (viewportManager.getHeight() / 6);
-                            float halfPos = (viewportManager.getHeight() / 2);
-                            float thirdPos = (viewportManager.getHeight() / 3);
-                            float twoThirdPos = (viewportManager.getHeight() - (viewportManager.getHeight() / 3));
-                            float fiveSixths = (viewportManager.getHeight() - (viewportManager.getHeight() / 6));
-                            
-                            if ((touchXY.y > (sixthPos - 26)) && (touchXY.y < (sixthPos + 100))) {
-                                keyboardClicked = true;
-                            }
-                            else if ((touchXY.y > (thirdPos - 42)) && (touchXY.y < (thirdPos + 84))) {
-                                joystickClicked = true;
-                            }
-                            else if ((touchXY.y > (halfPos - 58)) && (touchXY.y < (halfPos + 58))) {
-                                pausePlayClicked = true;
-                            }
-                            else if ((touchXY.y > (twoThirdPos - 84)) && (touchXY.y < (twoThirdPos + 42))) {
-                                speakerClicked = true;
-                            }
-                            else if ((touchXY.y > (fiveSixths - 100)) && (touchXY.y < (fiveSixths + 26))) {
-                                screenSizeClicked = true;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (keyboardClicked) {
-                handleKeyboardToggle();
-            }
-            
-            if (joystickClicked) {
-                handleJoystickAlignment();
-            }
-            
-            if (speakerClicked) {
-                handleSoundToggle();
-            }
-            
-            if (screenSizeClicked) {
-                rotateScreenSize();
-            }
-            
-            if (pausePlayClicked) {
-                handlePauseToggle();
-            }
-            
-            if (fullScreenClicked) {
-                handleFullScreenToggle();
-            }
-            
-            if (backArrowClicked) {
-                handleExitMachine();
-            }
-            
-            // If joystick is ON, and the click didn't land on anything else, then treat as fire button.
-            if (!joystickAlignment.equals(JoystickAlignment.OFF)) {
-                if (!(backArrowClicked || fullScreenClicked || pausePlayClicked || screenSizeClicked || 
-                        speakerClicked || joystickClicked || keyboardClicked)) {
-                    KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
-                    keyboardMatrix.vicKeyDown(VicKeys.JOYSTICK_FIRE);
-                    keyboardMatrix.vicKeyUp(VicKeys.JOYSTICK_FIRE);
-                }
+            } else if (!joystickAlignment.equals(JoystickAlignment.OFF)) {
+                // If the joystick is ON, a tap that didn't land on an icon is the fire button.
+                KeyboardMatrix keyboardMatrix = machineScreen.getJvicRunner().getKeyboardMatrix();
+                keyboardMatrix.vicKeyDown(VicKeys.JOYSTICK_FIRE);
+                keyboardMatrix.vicKeyUp(VicKeys.JOYSTICK_FIRE);
             }
         }
 
@@ -573,6 +565,8 @@ public class MachineInputProcessor extends InputAdapter {
     }
     
     private void handleSoundToggle() {
+        // The user has chosen, so "sound at start" no longer applies.
+        soundOffAtStart = false;
         speakerOn = !speakerOn;
         machineScreen.getJvicRunner().changeSound(speakerOn);
     }
@@ -845,7 +839,63 @@ public class MachineInputProcessor extends InputAdapter {
      * @param speakerOn
      */
     public void setSpeakerOn(boolean speakerOn) {
+        if (speakerOn && soundOffAtStart) {
+            // The runner turns sound on as a program starts; the "sound at start" setting
+            // is off, so turn it off again. Only the first time.
+            soundOffAtStart = false;
+            this.speakerOn = false;
+            machineScreen.getJvicRunner().changeSound(false);
+            return;
+        }
+        if (!speakerOn) {
+            // Sound couldn't start (e.g. the browser needs a tap first), so there is
+            // nothing to turn off.
+            soundOffAtStart = false;
+        }
         this.speakerOn = speakerOn;
+    }
+
+    /**
+     * Sets whether sound should be turned off when the runner next turns it on as the
+     * program starts (the "Sound at start" setting).
+     *
+     * @param soundOffAtStart true to start with sound off.
+     */
+    public void setSoundOffAtStart(boolean soundOffAtStart) {
+        this.soundOffAtStart = soundOffAtStart;
+    }
+
+    /**
+     * Sets which side the touch joystick goes on (the "Touch joystick side" setting).
+     * If the joystick is on, it moves there now. In a landscape layout without room on
+     * the right it stays on the left.
+     *
+     * @param side LEFT or RIGHT.
+     */
+    public void setJoystickSide(JoystickAlignment side) {
+        this.joystickSide = (side == JoystickAlignment.RIGHT) ? JoystickAlignment.RIGHT : JoystickAlignment.LEFT;
+        if (!joystickAlignment.equals(JoystickAlignment.OFF)) {
+            setJoystickAlignment(this.joystickSide);
+        }
+    }
+
+    /**
+     * @return The side the touch joystick goes on when it is turned on.
+     */
+    public JoystickAlignment getJoystickSide() {
+        return joystickSide;
+    }
+
+    /**
+     * Changes the screen size now (the "Screen size" setting). Sizes that don't fit the
+     * window, and any size other than Fit in portrait, fall back to Fit.
+     *
+     * @param screenSize The screen size.
+     */
+    public void applyScreenSize(ScreenSize screenSize) {
+        this.screenSize = viewportManager.isPortrait() ? ScreenSize.FIT : screenSize;
+        ExtendViewport viewport = machineScreen.getViewport();
+        adjustWorldMinMax(viewport.getScreenWidth(), viewport.getScreenHeight(), machineScreen.getMachineType());
     }
 
     public static enum ScreenSize {

@@ -67,6 +67,9 @@ final class TeaVMWorkerInterop {
     @JSBody(params = "message", script = "return { message: message };")
     static native JSObject createMessageObject(String message);
 
+    @JSBody(params = { "name", "value" }, script = "return { settingName: name, settingValue: value };")
+    static native JSObject createSettingObject(String name, String value);
+
     @JSBody(params = "data", script = "return data && data.name ? data.name : ''; ")
     static native String getEventType(JSObject data);
 

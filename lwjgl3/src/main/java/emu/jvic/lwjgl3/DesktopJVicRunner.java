@@ -408,6 +408,50 @@ public class DesktopJVicRunner extends JVicRunner {
     }
 
     @Override
+    public boolean isMachineSettingSupported(String name) {
+        return "palette".equals(name);
+    }
+
+    @Override
+    public void applyMachineSetting(final String name, final String value) {
+        enqueueMachineAction(new Runnable() {
+            @Override
+            public void run() {
+                Machine current = machine;
+                if (current != null) {
+                    current.applySetting(name, value);
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean isRestartSupported() {
+        return true;
+    }
+
+    @Override
+    public void prepareRestart() {
+        Thread oldThread = machineThread;
+        exit = true;
+        resume();
+        if (oldThread != null) {
+            oldThread.interrupt();
+            try {
+                // The loop ends at its next check of exit, which is at most a frame away.
+                oldThread.join(5000);
+            } catch (InterruptedException e) {
+                // Carry on.
+            }
+        }
+        pendingMachineActions.clear();
+        exit = false;
+        paused = false;
+        machineThread = null;
+        machine = null;
+    }
+
+    @Override
     public void stop() {
         super.stop();
         

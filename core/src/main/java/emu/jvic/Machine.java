@@ -716,6 +716,21 @@ public class Machine {
      * (through the serial bus RESET line). The VIC has no reset line, and memory is
      * left as it is. Used by the debug monitor's reset command.
      */
+    /**
+     * Changes a setting of the running machine, for settings that can change while it
+     * runs. Called on the emulation thread. Unknown names are ignored, so a newer
+     * front end never breaks an older machine.
+     *
+     * @param name  The setting: "palette" (value "MID" for the midpoint PAL palette,
+     *              anything else for the alternating one; ignored for NTSC).
+     * @param value The value.
+     */
+    public void applySetting(String name, String value) {
+        if ("palette".equals(name) && (vic instanceof Vic6561)) {
+            ((Vic6561) vic).setPalette(value);
+        }
+    }
+
     public void reset() {
         via1.reset();
         via2.reset();

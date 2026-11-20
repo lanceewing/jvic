@@ -426,6 +426,50 @@ public abstract class JVicRunner {
         }
     }
 
+    // ------------------------------------------------------------------------------
+    // Settings: changing the running machine, and restarting the program with new
+    // settings. Desktop and TeaVM support them; GWT and Android keep these defaults.
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Whether a machine setting can be changed while the program runs.
+     *
+     * @param name The setting, as for {@link Machine#applySetting(String, String)}.
+     *
+     * @return true if {@link #applyMachineSetting(String, String)} works for it.
+     */
+    public boolean isMachineSettingSupported(String name) {
+        return false;
+    }
+
+    /**
+     * Changes a setting of the running machine, on the emulation thread.
+     *
+     * @param name  The setting, as for {@link Machine#applySetting(String, String)}.
+     * @param value The value.
+     */
+    public void applyMachineSetting(String name, String value) {
+    }
+
+    /**
+     * Whether the program can be restarted with new settings without going back to the
+     * home screen.
+     *
+     * @return true if {@link #prepareRestart()} is supported.
+     */
+    public boolean isRestartSupported() {
+        return false;
+    }
+
+    /**
+     * Stops the machine so that the program can be started again with new settings.
+     * Unlike {@link #stop()}, this doesn't count as the program ending, so the machine
+     * screen stays. {@link #start(AppConfigItem)} is called afterwards. Called on the
+     * UI thread.
+     */
+    public void prepareRestart() {
+    }
+
     public String getPerformanceStatsText() {
         return "";
     }

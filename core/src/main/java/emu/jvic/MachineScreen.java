@@ -1,6 +1,8 @@
 package emu.jvic;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.badlogic.gdx.Input.Keys;
@@ -27,7 +29,14 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import emu.jvic.config.AppConfigItem;
+import emu.jvic.settings.SettingsCatalogue;
+import emu.jvic.settings.ResolvedSettings;
 import emu.jvic.ui.DialogHandler;
+import emu.jvic.ui.MachineAction;
+import emu.jvic.ui.MachineMenu;
+import emu.jvic.ui.settings.SettingsApplier;
+import emu.jvic.ui.settings.SettingsPanel;
+import emu.jvic.ui.MachineIconLayout;
 import emu.jvic.ui.MachineInputProcessor;
 import emu.jvic.ui.MonitorConsole;
 import emu.jvic.ui.ViewportManager;
@@ -47,7 +56,7 @@ public class MachineScreen implements Screen {
         LINEAR
     }
 
-    private static final float SOFT_FILTER_BLEND = 0.4f;
+    private static final float SOFT_FILTER_BLEND = SettingsCatalogue.DEFAULT_SOFT_AMOUNT;
 
     private static final String SOFT_FILTER_VERTEX_SHADER = "attribute vec4 a_position;\n"
             + "attribute vec4 a_color;\n"
@@ -133,7 +142,17 @@ public class MachineScreen implements Screen {
     private Map<MachineType, Texture[]> machineTypeTextures;
 
     // UI components.
-    private Texture screenSizeIcon;
+    private Texture menuIcon;
+
+    /**
+     * Where the icons are drawn, which the touch handling also reads.
+     */
+    private final MachineIconLayout iconLayout = new MachineIconLayout();
+
+    /**
+     * The "..." menu, opened from the menu icon.
+     */
+    private MachineMenu machineMenu;
     private Texture playIcon;
     private Texture pauseIcon;
     private Texture muteIcon;
@@ -227,7 +246,7 @@ public class MachineScreen implements Screen {
 
         warpSpeedIcon = new Texture("png/warp_speed_icon.png");
         cameraIcon = new Texture("png/camera_icon.png");
-        screenSizeIcon = new Texture("png/screen_icon.png");
+        menuIcon = new Texture("png/menu_icon.png");
         playIcon = new Texture("png/play.png");
         pauseIcon = new Texture("png/pause.png");
         muteIcon = new Texture("png/mute_icon.png");
@@ -263,6 +282,14 @@ public class MachineScreen implements Screen {
         landscapeInputProcessor.addProcessor(jvicRunner.getKeyboardMatrix());
         landscapeInputProcessor.addProcessor(landscapeStage);
         landscapeInputProcessor.addProcessor(machineInputProcessor);
+
+        // The overlays go first, so that they take all input while they are open: the
+        // settings panel (shared with the home screen) and the "..." menu.
+        machineMenu = new MachineMenu(new SpriteBatch(), menuHandler);
+        portraitInputProcessor.addProcessor(0, machineMenu);
+        landscapeInputProcessor.addProcessor(0, machineMenu);
+        portraitInputProcessor.addProcessor(0, jvic.getSettingsPanel());
+        landscapeInputProcessor.addProcessor(0, jvic.getSettingsPanel());
 
         // If the application is running on mobile web, then show FPS enabled, but
         // for desktop web, turn off by default.
@@ -328,10 +355,17 @@ public class MachineScreen implements Screen {
         setTextureFilterMode(appConfigItem.getTextureFilter());
         clearActiveScreenBuffers();
 
+        // The settings the machine screen itself uses: screen size, FPS overlay, the
+        // touch joystick's side and whether sound starts on.
+        ResolvedSettings settings = jvic.resolveRunningProgram();
+        if (settings != null) {
+            SettingsApplier.applyAtStart(settings, this);
+        }
+
         // Programs start with the joystick ON unless configured OFF (BASIC and user
         // opened files are OFF). This also sets what the arrow keys are mapped to.
         machineInputProcessor.setJoystickAlignment(appConfigItem.isJoystickOnByDefault()?
-                JoystickAlignment.LEFT : JoystickAlignment.OFF);
+                machineInputProcessor.getJoystickSide() : JoystickAlignment.OFF);
     }
 
     private void activateScreenResources(MachineType machineType) {
@@ -426,8 +460,12 @@ public class MachineScreen implements Screen {
         
         if (jvicRunner.isPaused()) {
             if (jvicRunner.consumePausedFrame()) {
-                // A frame advance (Alt+Shift+P) has emulated a new frame.
+                // A frame advance (Alt+Shift+P, or a settings change previewed while
+                // paused) has emulated a new frame. The screens are triple buffered and
+                // draw one copy behind, so put the new frame in every buffer, or it
+                // wouldn't show until the next frame.
                 copyPixels();
+                copyPixmapToAllScreens();
                 draw = true;
             } else {
                 // When paused, we limit the draw frequency since there isn't anything to change.
@@ -457,6 +495,17 @@ public class MachineScreen implements Screen {
             }
             monitorConsole.draw(batch, delta);
         }
+
+        SettingsPanel settingsPanel = jvic.getSettingsPanel();
+        if (settingsPanel.isOpen() || machineMenu.isOpen()) {
+            // Drawn every frame while open. The screen underneath is drawn first, or the
+            // overlay would be drawn over its own previous frame.
+            if (!draw && ((monitorConsole == null) || !monitorConsole.isOpen())) {
+                draw(delta);
+            }
+            settingsPanel.draw(delta);
+            machineMenu.draw(delta);
+        }
         
         // Process any delayed key releases that are pending.
         jvicRunner.getKeyboardMatrix().checkDelayedReleaseKeys();
@@ -478,6 +527,20 @@ public class MachineScreen implements Screen {
         updateScreen = (updateScreen + 1) % 3;
         drawScreen = (drawScreen + 1) % 3;
         return true;
+    }
+
+    /**
+     * Copies the last frame copied into every screen buffer, so that it is the one
+     * drawn whichever buffer is drawn next.
+     */
+    private void copyPixmapToAllScreens() {
+        ScreenFilterMode activeFilterMode = getActiveScreenFilterMode();
+        for (int i = 0; i < 3; i++) {
+            screens[i + getTextureOffset(activeFilterMode)].draw(screenPixmap, 0, 0);
+            if (activeFilterMode == ScreenFilterMode.SOFT) {
+                screens[i + getTextureOffset(ScreenFilterMode.LINEAR)].draw(screenPixmap, 0, 0);
+            }
+        }
     }
 
     private void clearActiveScreenBuffers() {
@@ -602,53 +665,13 @@ public class MachineScreen implements Screen {
         Texture speakerIcon = machineInputProcessor.isSpeakerOn()? muteIcon : unmuteIcon;
         Texture pausePlayIcon = jvicRunner.isPaused()? playIcon : pauseIcon;
         
-        if (viewportManager.isPortrait()) {
-            // Portrait
-            batch.draw(fullScreenIcon, 20, 20);
-            batch.draw(screenSizeIcon, (viewportManager.getWidth() / 6) - 16, 20);
-            batch.draw(speakerIcon, (viewportManager.getWidth() / 3) - 32, 20);
-            batch.draw(pausePlayIcon, (viewportManager.getWidth() / 2) - 48, 20);
-            batch.draw(keyboardIcon, (viewportManager.getWidth() - (viewportManager.getWidth() / 3)) - 64, 20);
-            batch.draw(joystickIcon, (viewportManager.getWidth() - (viewportManager.getWidth() / 6)) - 80, 20);
-            batch.draw(backIcon, viewportManager.getWidth() - 116, 20);
-        } else {
-            // Landscape
-            if (cameraXOffset == 0) {
-                // Middle.
-                if ((viewportManager.getVICScreenBase() > 0) || (sidePaddingWidth <= 64)) {
-                    // The area between full landscape and full portrait.
-                    float leftAdjustment = (viewportManager.getWidth() / 4) - 48;
-                    batch.draw(fullScreenIcon, ((viewportManager.getWidth() - ((viewportManager.getWidth() * 6 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(screenSizeIcon, ((viewportManager.getWidth() - ((viewportManager.getWidth() * 5 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(speakerIcon,    ((viewportManager.getWidth() - ((viewportManager.getWidth() * 4 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(pausePlayIcon,  ((viewportManager.getWidth() - ((viewportManager.getWidth() * 3 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(keyboardIcon,   ((viewportManager.getWidth() - ((viewportManager.getWidth() * 2 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(joystickIcon,   ((viewportManager.getWidth() - ((viewportManager.getWidth() * 1 ) / 12)) - 96) - leftAdjustment, 16);
-                    batch.draw(backIcon,       ((viewportManager.getWidth() - ((viewportManager.getWidth() * 0 ) / 12)) - 96) - leftAdjustment, 16);
-                } else {
-                    // Normal landscape. Icons both sides.
-                    batch.draw(speakerIcon,   16, viewportManager.getHeight() - 112);
-                    batch.draw(pausePlayIcon, 16, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    if (joystickAlignment.equals(JoystickAlignment.RIGHT)) { 
-                        batch.draw(joystickIcon,  16, (viewportManager.getHeight() / 3) - 32);
-                    }
-                    batch.draw(keyboardIcon,  16, 0);
-                    batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, viewportManager.getHeight() - 112);
-                    batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                    if (!joystickAlignment.equals(JoystickAlignment.RIGHT)) {
-                        batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
-                    }
-                    batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
-                }
-            } else if (cameraXOffset > 0) {
-                // Right side.
-                batch.draw(fullScreenIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - 112));
-                batch.draw(screenSizeIcon, viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 6)) - 80);
-                batch.draw(speakerIcon,    viewportManager.getWidth() - 112, (viewportManager.getHeight() - (viewportManager.getHeight() / 3)) - 64);
-                batch.draw(pausePlayIcon,  viewportManager.getWidth() - 112, (viewportManager.getHeight() / 2) - 48);
-                batch.draw(joystickIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 3) - 32);
-                batch.draw(keyboardIcon,   viewportManager.getWidth() - 112, (viewportManager.getHeight() / 6) - 16);
-                batch.draw(backIcon,       viewportManager.getWidth() - 112, 16);
+        // The icon positions come from the same layout that the touch handling reads.
+        iconLayout.update(viewportManager.isPortrait(), viewportManager.getWidth(),
+                viewportManager.getHeight(), viewportManager.getVICScreenBase(), sidePaddingWidth,
+                cameraXOffset, joystickAlignment);
+        for (MachineIconLayout.Slot slot : iconLayout.getSlots()) {
+            if (slot.isVisible()) {
+                batch.draw(getIconTexture(slot.getIcon(), speakerIcon, pausePlayIcon), slot.getX(), slot.getY());
             }
         }
 
@@ -799,6 +822,34 @@ public class MachineScreen implements Screen {
         }
     }
 
+    private Texture getIconTexture(MachineIconLayout.Icon icon, Texture speakerIcon, Texture pausePlayIcon) {
+        switch (icon) {
+            case FULL_SCREEN:
+                return fullScreenIcon;
+            case MENU:
+                return menuIcon;
+            case SPEAKER:
+                return speakerIcon;
+            case PAUSE_PLAY:
+                return pausePlayIcon;
+            case KEYBOARD:
+                return keyboardIcon;
+            case JOYSTICK:
+                return joystickIcon;
+            case BACK:
+            default:
+                return backIcon;
+        }
+    }
+
+    /**
+     * @return The icon layout as last drawn, which the touch handling uses to find the
+     *         icon that was tapped.
+     */
+    public MachineIconLayout getIconLayout() {
+        return iconLayout;
+    }
+
     private float snapCameraToViewportParity(float cameraValue, float viewportWorldSize) {
         float desiredFraction = Math.abs((viewportWorldSize * 0.5f) % 1f);
         return Math.round(cameraValue - desiredFraction) + desiredFraction;
@@ -912,6 +963,176 @@ public class MachineScreen implements Screen {
     }
 
     /**
+     * Shows or hides the FPS overlay (the "Show FPS" setting).
+     *
+     * @param showFPS true to show it.
+     */
+    public void setShowFPS(boolean showFPS) {
+        this.showFPS = showFPS;
+    }
+
+    /**
+     * @return true unless the deployment hides settings (settings=hidden).
+     */
+    public boolean isSettingsAvailable() {
+        return !jvic.isSettingsHidden();
+    }
+
+    /**
+     * Opens the settings screen over the running machine, or closes it if it is open,
+     * as Alt+O does. Ignored when the deployment hides settings.
+     */
+    public void toggleSettings() {
+        SettingsPanel settingsPanel = jvic.getSettingsPanel();
+        if (settingsPanel.isOpen()) {
+            settingsPanel.close();
+        } else if (isSettingsAvailable()) {
+            machineMenu.close();
+            settingsPanel.open(settingsHost);
+        }
+    }
+
+    /**
+     * Restarts the running program with its settings as they are now, staying on the
+     * machine screen (for TV standard and RAM changes made in the settings).
+     */
+    public void restartProgram() {
+        AppConfigItem config = jvic.resolveRunningProgramConfig();
+        if ((config == null) || !jvicRunner.isRestartSupported()) {
+            return;
+        }
+        // Closing the settings first resumes a machine they paused.
+        jvic.getSettingsPanel().close();
+        machineMenu.close();
+        jvicRunner.prepareRestart();
+        initMachine(config, true);
+        // The machine type may have changed, which changes the screen's viewport.
+        resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        jvicRunner.start(config);
+    }
+
+    /**
+     * Opens the "..." menu next to its icon.
+     */
+    public void openMachineMenu() {
+        if (!jvic.getSettingsPanel().isOpen()) {
+            machineMenu.open();
+        }
+    }
+
+    /**
+     * The settings panel's view of the machine screen.
+     */
+    private final SettingsPanel.Host settingsHost = new SettingsPanel.Host() {
+        private boolean pausedForSettings;
+
+        @Override
+        public boolean isMachineRunning() {
+            return true;
+        }
+
+        @Override
+        public ResolvedSettings resolveRunningProgram() {
+            return jvic.resolveRunningProgram();
+        }
+
+        @Override
+        public ResolvedSettings resolveRunningProgramWithoutLaunchOptions() {
+            return jvic.resolveRunningProgramWithoutLaunchOptions();
+        }
+
+        @Override
+        public String getProgramKey() {
+            return jvic.getProgramKey(jvic.getRunningProgram());
+        }
+
+        @Override
+        public String getProgramName() {
+            AppConfigItem program = jvic.getRunningProgram();
+            if (program == null) {
+                return "";
+            }
+            if (AppConfigItem.ADHOC_NAME.equals(program.getName())) {
+                String filePath = program.getFilePath();
+                int separator = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+                return filePath.substring(separator + 1);
+            }
+            return program.getName();
+        }
+
+        @Override
+        public boolean isAppliedLive(String id) {
+            return SettingsApplier.isAppliedLive(id, jvicRunner);
+        }
+
+        @Override
+        public void applyLive(String id, ResolvedSettings settings) {
+            SettingsApplier.applyLive(id, settings, MachineScreen.this);
+        }
+
+        @Override
+        public List<String> getRestartNeeded() {
+            ResolvedSettings settings = jvic.resolveRunningProgram();
+            if (settings == null) {
+                return new ArrayList<String>();
+            }
+            return SettingsApplier.getRestartNeeded(appConfigItem, settings);
+        }
+
+        @Override
+        public boolean isRestartSupported() {
+            return jvicRunner.isRestartSupported();
+        }
+
+        @Override
+        public void restart() {
+            restartProgram();
+        }
+
+        @Override
+        public float getVicScreenBase() {
+            return viewportManager.getVICScreenBase();
+        }
+
+        @Override
+        public void setPausedForSettings(boolean paused) {
+            // Only resume a machine that the settings paused.
+            if (paused && !jvicRunner.isPaused()) {
+                jvicRunner.pause();
+                pausedForSettings = true;
+            } else if (!paused && pausedForSettings) {
+                pausedForSettings = false;
+                jvicRunner.resume();
+            }
+        }
+    };
+
+    /**
+     * The "..." menu's view of the machine screen.
+     */
+    private final MachineMenu.Handler menuHandler = new MachineMenu.Handler() {
+        @Override
+        public boolean isAvailable(MachineAction action) {
+            return machineInputProcessor.isActionAvailable(action);
+        }
+
+        @Override
+        public void perform(MachineAction action) {
+            machineInputProcessor.performAction(action);
+        }
+
+        @Override
+        public MachineIconLayout.Slot getMenuIconSlot() {
+            return iconLayout.getSlot(MachineIconLayout.Icon.MENU);
+        }
+
+        @Override
+        public boolean showHotkeys() {
+            return !jvicRunner.isMobile();
+        }
+    };
+
+    /**
      * Saves a screenshot of the machine's current screen contents.
      */
     public void saveScreenshot() {
@@ -933,20 +1154,12 @@ public class MachineScreen implements Screen {
      * The name of the running program's quick save slot (Alt+F11/Alt+F10): one slot
      * per program, named after it. Programs opened from a file or dropped onto the
      * home screen are all called "Adhoc VIC Program", so those use the file's name.
+     * The program's per-program settings use the same key.
      *
      * @return The slot's name, safe to use as a file name.
      */
     public String getQuickSaveSlot() {
-        String name = (appConfigItem != null) ? appConfigItem.getName() : null;
-        if ((name == null) || name.trim().isEmpty() || "Adhoc VIC Program".equals(name)) {
-            String filePath = (appConfigItem != null) ? appConfigItem.getFilePath() : null;
-            if ((filePath != null) && !filePath.trim().isEmpty()) {
-                int separator = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
-                name = "adhoc " + filePath.substring(separator + 1);
-            }
-        }
-        String slot = jvicRunner.slugify((name != null) ? name : "");
-        return slot.isEmpty() ? "default" : slot;
+        return jvic.getProgramKey(appConfigItem);
     }
 
     @Override
@@ -1011,6 +1224,8 @@ public class MachineScreen implements Screen {
     public void hide() {
         // On Android, this is also called when the "Back" button is pressed.
         KeyboardType.dispose();
+        machineMenu.close();
+        jvic.getSettingsPanel().close();
     }
 
     /**
@@ -1039,6 +1254,7 @@ public class MachineScreen implements Screen {
         if (monitorConsole != null) {
             monitorConsole.dispose();
         }
+        machineMenu.dispose();
         KeyboardType.dispose();
         keyboardIcon.dispose();
         joystickIcon.dispose();
@@ -1048,7 +1264,7 @@ public class MachineScreen implements Screen {
         unmuteIcon.dispose();
         playIcon.dispose();
         pauseIcon.dispose();
-        screenSizeIcon.dispose();
+        menuIcon.dispose();
         warpSpeedIcon.dispose();
         cameraIcon.dispose();
         if (softFilterShader != null) {

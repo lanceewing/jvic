@@ -5,11 +5,17 @@ import java.util.Map;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import emu.jvic.config.AppConfigItem;
 import emu.jvic.config.AppConfigItem.FileLocation;
-import emu.jvic.memory.RamType;
+import emu.jvic.settings.LaunchOptions;
+import emu.jvic.settings.ResolvedSettings;
+import emu.jvic.settings.ProgramIdentity;
+import emu.jvic.settings.SettingsResolver;
+import emu.jvic.settings.SettingsStore;
 import emu.jvic.ui.DialogHandler;
+import emu.jvic.ui.settings.SettingsPanel;
 
 /**
  * The main entry point in to the cross-platform part of the JVic emulator. A
@@ -57,6 +63,30 @@ public class JVic extends Game {
     private Preferences screenshotStore;
 
     /**
+     * The user's saved settings.
+     */
+    private SettingsStore settingsStore;
+
+    /**
+     * The options jvic was launched with (URL parameters, autorun-config.txt or desktop
+     * arguments), parsed from args.
+     */
+    private LaunchOptions launchOptions;
+
+    /**
+     * The program last started (its own configuration, before settings were applied),
+     * and the launch options it was started with, so that its settings can be resolved
+     * again when they change.
+     */
+    private AppConfigItem runningProgram;
+    private LaunchOptions runningLaunchOptions;
+
+    /**
+     * The settings screen, shared by the home screen and the machine screen.
+     */
+    private SettingsPanel settingsPanel;
+
+    /**
      * Constructor for JVic.
      * 
      * @param confirmHandler
@@ -71,6 +101,9 @@ public class JVic extends Game {
     public void create() {
         preferences = Gdx.app.getPreferences("jvic.preferences");
         screenshotStore = Gdx.app.getPreferences("jvic_screens.store");
+        settingsStore = new SettingsStore(Gdx.app.getPreferences(SettingsStore.PREFERENCES_NAME));
+        launchOptions = LaunchOptions.parse(args);
+        settingsPanel = new SettingsPanel(new SpriteBatch(), settingsStore, dialogHandler);
         machineScreen = new MachineScreen(this, jvicRunner, dialogHandler);
         homeScreen = new HomeScreen(this, dialogHandler);
 
@@ -83,198 +116,134 @@ public class JVic extends Game {
             }
             else if (args.containsKey("url")) {
                 String programUrl = args.get("url");
-                AppConfigItem adhocProgram = new AppConfigItem();
-                adhocProgram.setName("Adhoc VIC Program");
-                adhocProgram.setFilePath(getFilePathForProgramUrl(programUrl));
-                adhocProgram.setFileLocation(FileLocation.EXTERNAL);
-                if (programUrl.toUpperCase().contains("NTSC")) {
-                    adhocProgram.setMachineType("NTSC");
-                } else {
-                    adhocProgram.setMachineType("PAL");
-                }
-                adhocProgram.setRam("RAM_AUTO");
-                adhocProgram.setJoystick("OFF");
-                appConfigItem = adhocProgram;
+                appConfigItem = AppConfigItem.createAdhoc(getFilePathForProgramUrl(programUrl),
+                        FileLocation.EXTERNAL);
             }
             else if (args.containsKey("filePath")) {
-                String filePath = args.get("filePath");
-                AppConfigItem adhocProgram = new AppConfigItem();
-                adhocProgram.setName("Adhoc VIC Program");
-                adhocProgram.setFilePath(filePath);
-                adhocProgram.setFileLocation(FileLocation.ABSOLUTE);
-                if (filePath.toUpperCase().contains("NTSC")) {
-                    adhocProgram.setMachineType("NTSC");
-                } else {
-                    adhocProgram.setMachineType("PAL");
-                }
-                adhocProgram.setRam("RAM_AUTO");
-                adhocProgram.setJoystick("OFF");
-                appConfigItem = adhocProgram;
+                appConfigItem = AppConfigItem.createAdhoc(args.get("filePath"), FileLocation.ABSOLUTE);
             }
         }
         
         setScreen(homeScreen);
         
         if (appConfigItem != null) {
-            applyConfigArgs(appConfigItem, args);
-            homeScreen.processProgramSelection(appConfigItem);
-        }
-    }
-    
-    /**
-     * Checks for and applies any additional config that might be provided in the args Map.
-     * 
-     * @param adhocProgram
-     * @param args
-     */
-    private void applyConfigArgs(AppConfigItem appConfigItem, Map<String, String> args) {
-        applyRamConfig(appConfigItem, args.get("ram"));
-        applyTvConfig(appConfigItem, args.get("tv"));
-        String diskWriteArg = args.get("diskwrite");
-        if (diskWriteArg == null) {
-            diskWriteArg = args.get("dskwrt");
-        }
-        applyDiskWriteConfig(appConfigItem, diskWriteArg);
-        applyProgramType(appConfigItem, args.get("type"));
-        if (args.containsKey("entry")) {
-            appConfigItem.setEntryName(args.get("entry"));
-        }
-        if (args.containsKey("addr")) {
-            appConfigItem.setLoadAddress(args.get("addr"));
-        }
-        if (args.containsKey("cmd")) {
-            appConfigItem.setAutoRunCommand(args.get("cmd"));
-        }
-        if (args.containsKey("filter")) {
-            appConfigItem.setTextureFilter(args.get("filter"));
-        }
-        if (args.containsKey("palette")) {
-            appConfigItem.setPalette(args.get("palette"));
-        }
-        if (args.containsKey("joystick")) {
-            // "on" or "off", overriding the programs.json/ad hoc default.
-            appConfigItem.setJoystick(args.get("joystick"));
-        }
-    }
-    
-    /**
-     * Checks for and applies program type config that might be provided in the args Map.
-     * 
-     * @param appConfigItem
-     * @param tv One of TAPE, DISK, PRG, CART, PCV.
-     */
-    private void applyProgramType(AppConfigItem appConfigItem, String type) {
-        if (type != null) {
-            switch (type.toUpperCase()) {
-                case "TAPE":
-                    appConfigItem.setFileType("TAPE");
-                    break;
-                case "DISK":
-                    appConfigItem.setFileType("DISK");
-                    break;
-                case "PRG":
-                    appConfigItem.setFileType("PRG");
-                    break;
-                case "CART":
-                    appConfigItem.setFileType("CART");
-                    break;
-                case "PCV":
-                    appConfigItem.setFileType("PCV");
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-    
-    /**
-     * Checks for and applies TV config that might be provided in the args Map.
-     * 
-     * @param appConfigItem
-     * @param tv Either "PAL" or "NTSC"; or null if not set.
-     */
-    private void applyTvConfig(AppConfigItem appConfigItem, String tv) {
-        if (tv != null) {
-            switch (tv.toUpperCase()) {
-                case "PAL":
-                    appConfigItem.setMachineType("PAL");
-                    break;
-                case "NTSC":
-                    appConfigItem.setMachineType("NTSC");
-                    break;
-                case "VIC44":
-                    appConfigItem.setMachineType("VIC44");
-                    break;
-                case "VIC44K":
-                    appConfigItem.setMachineType("VIC44K");
-                default:
-                    break;
-            }
-        }
-    }
-    
-    /**
-     * Checks for and applies RAM config that might be provided in the args Map.
-     * 
-     * @param appConfigItem
-     * @param ram
-     */
-    private void applyRamConfig(AppConfigItem appConfigItem, String ram) {
-        if (ram != null) {
-            switch (ram.toUpperCase()) {
-                case "0K":
-                case "UNEXPANDED":
-                case "UNEXP":
-                    appConfigItem.setRam(RamType.RAM_UNEXPANDED.name());
-                    break;
-                case "3K":
-                    appConfigItem.setRam(RamType.RAM_3K.name());
-                    break;
-                case "8K":
-                    appConfigItem.setRam(RamType.RAM_8K.name());
-                    break;
-                case "16K":
-                    appConfigItem.setRam(RamType.RAM_16K.name());
-                    break;
-                case "24K": 
-                    appConfigItem.setRam(RamType.RAM_24K.name());
-                    break;
-                case "32K":
-                    appConfigItem.setRam(RamType.RAM_32K.name());
-                    break;
-                case "35K":
-                    appConfigItem.setRam(RamType.RAM_35K.name());
-                    break;
-                default:
-                    // Not recognised.
-                    break;
-            }
+            // The launch options apply only to this first launch, not to later ones
+            // started from the home screen.
+            homeScreen.processProgramSelection(appConfigItem, launchOptions);
         }
     }
 
     /**
-     * Checks for and applies disk write config that might be provided in the args Map.
+     * Works out the configuration to start a program with, from its own configuration,
+     * the user's saved settings and the launch options. The program's own configuration
+     * isn't changed.
      *
-     * @param appConfigItem
-     * @param diskWrite Either "off", "temp", or "persist"; or null if not set.
+     * @param program The program's own configuration.
+     * @param launch  The launch options for this launch, or {@link LaunchOptions#NONE}.
+     *
+     * @return The configuration to start the machine with.
      */
-    private void applyDiskWriteConfig(AppConfigItem appConfigItem, String diskWrite) {
-        if (diskWrite != null) {
-            switch (diskWrite.toUpperCase()) {
-                case "OFF":
-                    appConfigItem.setDiskWrite("off");
-                    break;
-                case "TEMP":
-                    appConfigItem.setDiskWrite("temp");
-                    break;
-                case "PERSIST":
-                    appConfigItem.setDiskWrite("persist");
-                    break;
-                default:
-                    // Not recognised.
-                    break;
-            }
+    public AppConfigItem resolveProgramConfig(AppConfigItem program, LaunchOptions launch) {
+        return new SettingsResolver(settingsStore).resolveProgram(program, launch,
+                getProgramKey(program), isSettingsHidden());
+    }
+
+    /**
+     * Remembers the program being started, so that its settings can be resolved again
+     * while it runs.
+     *
+     * @param program The program's own configuration.
+     * @param launch  The launch options it was started with.
+     */
+    public void setRunningProgram(AppConfigItem program, LaunchOptions launch) {
+        this.runningProgram = program;
+        this.runningLaunchOptions = launch;
+    }
+
+    /**
+     * Resolves the settings for the program last started, as they are now.
+     *
+     * @return The settings, or null if no program has been started.
+     */
+    public ResolvedSettings resolveRunningProgram() {
+        if (runningProgram == null) {
+            return null;
         }
+        return new SettingsResolver(settingsStore).resolve(runningProgram, runningLaunchOptions,
+                getProgramKey(runningProgram), isSettingsHidden());
+    }
+
+    /**
+     * Resolves the settings for the program last started as they would be without its
+     * launch options: what the program uses from now on, which is what the settings
+     * screen shows for "this program".
+     *
+     * @return The settings, or null if no program has been started.
+     */
+    public ResolvedSettings resolveRunningProgramWithoutLaunchOptions() {
+        if (runningProgram == null) {
+            return null;
+        }
+        return new SettingsResolver(settingsStore).resolve(runningProgram, LaunchOptions.NONE,
+                getProgramKey(runningProgram), isSettingsHidden());
+    }
+
+    /**
+     * Works out the configuration to restart the program last started with, from its
+     * settings now. Its launch options still apply.
+     *
+     * @return The configuration, or null if no program has been started.
+     */
+    public AppConfigItem resolveRunningProgramConfig() {
+        return (runningProgram != null) ? resolveProgramConfig(runningProgram, runningLaunchOptions) : null;
+    }
+
+    /**
+     * @return The program last started (its own configuration), or null if none.
+     */
+    public AppConfigItem getRunningProgram() {
+        return runningProgram;
+    }
+
+    /**
+     * Gets the settings screen, which the home screen and the machine screen share.
+     *
+     * @return The SettingsPanel.
+     */
+    public SettingsPanel getSettingsPanel() {
+        return settingsPanel;
+    }
+
+    /**
+     * Gets the key that identifies a program's quick save slot and per-program settings.
+     *
+     * @param program The program's configuration. May be null.
+     *
+     * @return The key, safe to use as a file name.
+     */
+    public String getProgramKey(AppConfigItem program) {
+        String name = ProgramIdentity.keyName(program);
+        return ProgramIdentity.key(jvicRunner.slugify((name != null) ? name : ""));
+    }
+
+    /**
+     * Returns true if this deployment hides the settings screen (settings=hidden). Saved
+     * settings are then ignored for the whole session, so the deployment always runs as
+     * its author set it up.
+     *
+     * @return true if settings are hidden.
+     */
+    public boolean isSettingsHidden() {
+        return (launchOptions != null) && launchOptions.isSettingsHidden();
+    }
+
+    /**
+     * Gets the user's saved settings.
+     *
+     * @return The SettingsStore.
+     */
+    public SettingsStore getSettingsStore() {
+        return settingsStore;
     }
 
     /**
@@ -354,6 +323,7 @@ public class JVic extends Game {
         // super dispose does not call dispose on the screen.
         machineScreen.dispose();
         homeScreen.dispose();
+        settingsPanel.dispose();
 
         // Save the preferences when the emulator is closed.
         preferences.flush();
@@ -369,18 +339,8 @@ public class JVic extends Game {
     public void fileDropped(String filePath, byte[] fileData) {
         // File drop is only 
         if (getScreen() == homeScreen) {
-            AppConfigItem appConfigItem = new AppConfigItem();
-            appConfigItem.setName("Adhoc VIC Program");
-            appConfigItem.setFilePath(filePath);
-            appConfigItem.setFileLocation(FileLocation.LOCAL);
-            if (filePath.toUpperCase().contains("NTSC")) {
-                appConfigItem.setMachineType("NTSC");
-            } else {
-                appConfigItem.setMachineType("PAL");
-            }
-            appConfigItem.setRam("RAM_AUTO");
+            AppConfigItem appConfigItem = AppConfigItem.createAdhoc(filePath, FileLocation.LOCAL);
             appConfigItem.setFileData(fileData);
-            appConfigItem.setJoystick("OFF");
             homeScreen.processProgramSelection(appConfigItem);
         }
     }
