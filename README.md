@@ -162,7 +162,7 @@ Numeric keypad (8 directions, 0)  | Joystick, 0 is fire  | Joystick, 0 is fire
 Games from the game list start with the joystick ON, unless they are configured otherwise. BASIC and programs you open yourself start with it OFF.
 
 ## Settings
-JVic's settings screen is opened from the gear icon on the home screen, from Settings in the machine screen's menu, or with ALT-O. Settings are saved, so they are still there the next time you use JVic: in the browser's storage on the web, and in the .prefs folder in your home directory on Desktop.
+JVic's settings screen is opened from the gear icon in the bottom left corner of the home screen, from Settings in the machine screen's menu, or with ALT-O. Settings are saved, so they are still there the next time you use JVic: in the browser's storage on the web, and in the .prefs folder in your home directory on Desktop.
 
 When it is opened over a running program, the settings screen sits beside the VIC 20 screen (or below it in portrait), so that you can see the effect of display changes as you make them. The machine is paused while it is open, unless you turn that off.
 

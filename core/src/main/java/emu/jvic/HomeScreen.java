@@ -234,15 +234,8 @@ public class HomeScreen extends InputAdapter implements Screen {
         int horizPaddingUnit = 0;
 
         Button infoButton = buildButton("INFO", null, "png/info.png", 96, 96, null, null);
-        Table topButtons = new Table();
-        if (!jvic.isSettingsHidden()) {
-            // Settings for all programs. Hidden when the deployment says settings=hidden.
-            Button settingsButton = buildButton("SETTINGS", null, "png/settings.png", 96, 96, null, null);
-            topButtons.add(settingsButton).padRight(30);
-        }
-        topButtons.add(infoButton);
         currentPage.add().expandX();
-        currentPage.add(topButtons).pad(30, 0, 0, 20).align(Align.right).expandX();
+        currentPage.add(infoButton).pad(30, 0, 0, 20).align(Align.right).expandX();
         currentPage.row();
         currentPage.add().expandX();
         
@@ -265,9 +258,21 @@ public class HomeScreen extends InputAdapter implements Screen {
         }
         
         Button addButton = buildButton("ADD", null, "png/open_file.png", 96, 96, null, null);
+        // The bottom row is its own table spanning both columns, so that the settings
+        // button can sit in the bottom left corner without widening the first column,
+        // which the title's padding assumes is empty.
+        Table bottomButtons = new Table();
+        if (!jvic.isSettingsHidden()) {
+            // Settings for all programs. Hidden when the deployment says settings=hidden.
+            // This uses a translucent version of the settings icon, to match the info and
+            // open file icons.
+            Button settingsButton = buildButton("SETTINGS", null, "png/settings_home.png", 96, 96, null, null);
+            bottomButtons.add(settingsButton).padLeft(20).align(Align.left);
+        }
+        bottomButtons.add().expandX();
+        bottomButtons.add(addButton).padRight(20).align(Align.right);
         currentPage.row();
-        currentPage.add().expandX();
-        currentPage.add(addButton).pad(0, 0, 30, 20).align(Align.right).expandX();
+        currentPage.add(bottomButtons).colspan(2).padBottom(30).fillX().expandX();
         
         PagedScrollPane pagedScrollPane = new PagedScrollPane();
         pagedScrollPane.setHomeScreen(this);
