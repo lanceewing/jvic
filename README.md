@@ -75,6 +75,10 @@ There are a handful of URL parameters that can be used when loading games. This 
 * filter: Selects the screen filtering mode. Use filter=nearest for sharp nearest-neighbour scaling, filter=linear for standard linear filtering, or a number between 0.0 and 1.0 for the soft filter blend amount, e.g. filter=0.35
 * palette: Selects the PAL palette mode. Currently palette=MID uses a midpoint palette instead of alternating the odd and even PAL palettes
 * joystick: Whether the joystick starts ON or OFF, e.g. joystick=on. Programs loaded via ?url= start with it OFF, and programs from the game list start with it ON (see Joystick keys below)
+* diskwrite: Whether changes to a disk are kept: off, temp (until the page is closed) or persist, e.g. diskwrite=temp
+* settings: settings=hidden hides the settings screen and ignores any saved settings (see Settings below)
+
+URL parameters apply only to the program they start, and they win over any saved settings (see Settings below).
 
 Examples:
 
@@ -102,7 +106,9 @@ Icons                                 | Description                          |Ic
 ![](assets/png/unmute_icon.png)       |Turns on sound.                       |![](assets/png/mute_icon.png)         |Turns off sound.
 ![](assets/png/pause.png)             |Pauses the emulator.                  |![](assets/png/play.png)              |Resumes emulation.
 ![](assets/png/joystick_icon.png)     |Toggles display of joystick.          |![](assets/png/back_arrow.png)        |Goes back to the JVic home screen.
-![](assets/png/screen_icon.png)       |Changes screen size.                  |                                      |
+![](assets/png/menu_icon.png)         |Opens the menu (see below).           |                                      |
+
+The menu icon opens a list of actions, each of which also has a keyboard shortcut: Settings, Screen size (landscape only), Reset, Power cycle, Quick save, Quick load, Screenshot, Warp speed, Reset disk, Monitor, Keyboard shortcuts, and on Desktop, Copy screen text and Paste text. An action is only listed where it is supported, e.g. Monitor isn't available in every build.
 
 It is important to note that if you have accessed JVic directly via a game URL (either one of the /#/ paths, or by using the ?url= request parameter), then the speaker icon will initially be muted. This is because web browsers do not allow sound to be played automatically without a user interaction. In this scenario, you will need to click the speaker icon to turn sound on.
 
@@ -113,6 +119,7 @@ When the machine screen is active, the following physical keyboard shortcuts are
 
 Shortcut                          | Action
 :---------------------------------|:-----------------------------------------------
+ALT-O                             | Opens or closes the settings screen (also on the home screen).
 ALT-D                             | Toggles full screen mode.
 ALT-ENTER                         | Also toggles full screen mode.
 F11                               | Also toggles full screen mode.
@@ -153,6 +160,51 @@ INSERT                            | Fire                 | INST (SHIFT + INST/DE
 Numeric keypad (8 directions, 0)  | Joystick, 0 is fire  | Joystick, 0 is fire
 
 Games from the game list start with the joystick ON, unless they are configured otherwise. BASIC and programs you open yourself start with it OFF.
+
+## Settings
+JVic's settings screen is opened from the gear icon on the home screen, from Settings in the machine screen's menu, or with ALT-O. Settings are saved, so they are still there the next time you use JVic: in the browser's storage on the web, and in the .prefs folder in your home directory on Desktop.
+
+When it is opened over a running program, the settings screen sits beside the VIC 20 screen (or below it in portrait), so that you can see the effect of display changes as you make them. The machine is paused while it is open, unless you turn that off.
+
+### This program and All programs
+Over a running program, the settings screen starts on **This program**, which shows the settings the program uses and saves any change for that program only. Switch to **All programs** (or press TAB) to change the settings that every program uses unless something more specific says otherwise. From the home screen, the settings are always for all programs.
+
+Under each setting, a line says where its value comes from: set for this program, set by this program (its entry in the game list), from the settings for all programs, or the default. Where a value has been saved, a Reset button next to it goes back to the value it would otherwise have. "Reset this program's settings" and "Reset all settings" are under General.
+
+Settings that are the same for all programs (such as screen size) say so, and changing them on This program changes them for all programs.
+
+### Which value wins
+From lowest to highest, a setting's value comes from:
+
+1. JVic's default.
+2. Your setting for all programs.
+3. The program's own entry in the game list (or, for a program you open yourself, "NTSC" in its file name).
+4. Your setting for this program.
+5. URL parameters or autorun-config.txt, for that run only. These are never saved.
+
+So a game in the list that needs 16K NTSC still gets it if your general setting is unexpanded PAL, but you can still change it for that game. Games in the list use their own RAM and joystick settings (auto detection and ON, unless their entry says otherwise), so the RAM setting for all programs mainly affects BASIC and programs you open yourself, and the joystick setting for all programs affects programs you open yourself.
+
+### When changes take effect
+Display settings (screen filter, soft amount, PAL palette, screen size, FPS overlay) and the touch joystick side are applied straight away. A change to the TV standard or the RAM expansion needs the program to be restarted, so the settings screen offers "Restart now" (it can also be reached from the keyboard, by moving down past the last setting). The joystick at start, sound at start and disk write settings are used the next time a program starts.
+
+### The settings
+Section     | Setting                       | Choices
+:-----------|:------------------------------|:-------------------------------------------------------------
+Machine     | TV standard                   | PAL, NTSC (VIC44 and VIC44K with "Show advanced options")
+Machine     | RAM expansion                 | Auto, Unexpanded, 3K, 8K, 16K, 24K, 32K, 35K
+Display     | Screen filter                 | Sharp, Smooth, Soft
+Display     | Soft amount                   | 0.00 to 1.00 (shown for the soft filter)
+Display     | PAL palette                   | Alternating, Midpoint
+Display     | Screen size                   | Fit, 2x to 8x (landscape; only sizes that fit are used)
+Display     | Show FPS                      | On, Off
+Sound       | Sound at start                | On, Off (web browsers still need a tap before sound can play)
+Controls    | Joystick at start             | On, Off
+Controls    | Touch joystick side           | Left, Right
+Media       | Disk writes                   | Automatic, Off, This session, Save
+General     | Pause while settings are open | On, Off
+General     | Show advanced options         | On, Off
+
+The settings screen can be used with the keyboard: UP and DOWN move between settings, LEFT and RIGHT change the value, ENTER opens a section or presses a button, TAB switches between This program and All programs, and ESC goes back.
 
 ## Installing the web app on your device.
 JVic follows the PWA (Progressive Web App) spec and can therefore be installed on your device. When you go to the https://vic20.games web site, and you haven't previously installed JVic, then the browser may promote it to you for installation. In Chrome, one of the ways it does this is to show a little installation icon at the end of the browser location field, as indicated by the yellow arrow in the screenshot below. Clicking on that icon will install JVic as if it were a standalone app on your device.
@@ -232,6 +284,10 @@ Supported settings include:
 * type: Specifies the program type (DISK, TAPE, CART, PRG)
 * filter: Selects the screen filtering mode. Use nearest, linear, or a number between 0.0 and 1.0 for the soft filter blend amount
 * palette: Selects the PAL palette mode. Default PAL behaviour is to alternative between the odd and even line palettes. Specifying MID for the palette uses a palette that is the mid point between the odd and even palettes. Ignored for NTSC.
+* joystick: Whether the joystick starts ON or OFF
+* settings: Use settings=hidden to hide the settings screen (the gear icon, the menu's Settings entry and ALT-O). Saved settings are then ignored, so the program always runs exactly as configured here. This matters on itch.io, where all HTML games share the same browser storage, so settings saved for one JVic-based game could otherwise affect another.
+
+The values in autorun-config.txt win over any settings the player has saved.
 
 For example, the following autorun-config.txt file would boot directly into a bundled PRG with explicit machine settings:
 
@@ -243,6 +299,7 @@ type=prg
 tv=pal
 filter=0.25
 palette=mid
+settings=hidden
 ```
 
 With that file in place, you can deploy the whole JVic build plus your game file to a static host or embedded web game platform, and JVic will start directly in that program when the page loads.
